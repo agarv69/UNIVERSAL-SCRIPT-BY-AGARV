@@ -20,7 +20,7 @@ G2L["2"] = Instance.new("Frame", G2L["1"]);
 G2L["2"]["BorderSizePixel"] = 0;
 G2L["2"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["2"]["Size"] = UDim2.new(0, 400, 0, 300);
-G2L["2"]["Position"] = UDim2.new(0.05231, 0, 0.31469, 0);
+G2L["2"]["Position"] = UDim2.new(0.04473, 0, 0.35839, 0);
 G2L["2"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["2"]["Name"] = [[MainFrame]];
 
@@ -69,7 +69,7 @@ G2L["5"]["Position"] = UDim2.new(0.9125, 0, 0, 0);
 G2L["6"] = Instance.new("Frame", G2L["2"]);
 G2L["6"]["BorderSizePixel"] = 0;
 G2L["6"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["6"]["Size"] = UDim2.new(0, 100, 0, 275);
+G2L["6"]["Size"] = UDim2.new(0, 80, 0, 275);
 G2L["6"]["Position"] = UDim2.new(0, 0, 0.08333, 0);
 G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["6"]["Name"] = [[SideBar]];
@@ -83,26 +83,25 @@ G2L["7"]["CanvasSize"] = UDim2.new(0, 0, 1, 0);
 G2L["7"]["ScrollBarImageTransparency"] = 0.33;
 G2L["7"]["BackgroundColor3"] = Color3.fromRGB(14, 14, 14);
 G2L["7"]["VerticalScrollBarPosition"] = Enum.VerticalScrollBarPosition.Left;
-G2L["7"]["Size"] = UDim2.new(0, 99, 0, 274);
-G2L["7"]["Position"] = UDim2.new(0.01, 0, -0.0003, 0);
+G2L["7"]["Size"] = UDim2.new(0, 79, 0, 274);
+G2L["7"]["Position"] = UDim2.new(0.01, 0, 0.00333, 0);
 G2L["7"]["BorderColor3"] = Color3.fromRGB(127, 127, 127);
-G2L["7"]["ScrollBarThickness"] = 6;
-
-
--- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.UIListLayout
-G2L["8"] = Instance.new("UIListLayout", G2L["7"]);
-G2L["8"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
-
-
--- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.UIPadding
-G2L["9"] = Instance.new("UIPadding", G2L["7"]);
-G2L["9"]["PaddingTop"] = UDim.new(0, 5);
-G2L["9"]["PaddingLeft"] = UDim.new(0, 7);
+G2L["7"]["ScrollBarThickness"] = 4;
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.PageHandler
-G2L["a"] = Instance.new("LocalScript", G2L["7"]);
-G2L["a"]["Name"] = [[PageHandler]];
+G2L["8"] = Instance.new("LocalScript", G2L["7"]);
+G2L["8"]["Name"] = [[PageHandler]];
+
+
+-- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.UIListLayout
+G2L["9"] = Instance.new("UIListLayout", G2L["7"]);
+G2L["9"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.UIPadding
+G2L["a"] = Instance.new("UIPadding", G2L["7"]);
+G2L["a"]["PaddingTop"] = UDim.new(0, 5);
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.MAIN
@@ -111,11 +110,10 @@ G2L["b"]["TextSize"] = 17;
 G2L["b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["b"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
 G2L["b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Sarpanch.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["b"]["Size"] = UDim2.new(0, 92, 0, 30);
+G2L["b"]["Size"] = UDim2.new(0, 79, 0, 30);
 G2L["b"]["BorderColor3"] = Color3.fromRGB(71, 71, 71);
 G2L["b"]["Text"] = [[MAIN]];
 G2L["b"]["Name"] = [[MAIN]];
-G2L["b"]["Position"] = UDim2.new(0, 0, -0, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.ESP
@@ -124,11 +122,11 @@ G2L["c"]["TextSize"] = 17;
 G2L["c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["c"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
 G2L["c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Sarpanch.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["c"]["Size"] = UDim2.new(0, 92, 0, 30);
+G2L["c"]["Size"] = UDim2.new(0, 79, 0, 30);
 G2L["c"]["BorderColor3"] = Color3.fromRGB(71, 71, 71);
 G2L["c"]["Text"] = [[ESP]];
 G2L["c"]["Name"] = [[ESP]];
-G2L["c"]["Position"] = UDim2.new(0, 0, -0, 0);
+G2L["c"]["Position"] = UDim2.new(0, 0, 0.11111, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.UIStroke
@@ -172,8 +170,8 @@ G2L["10"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.PageHandler
-local function C_a()
-local script = G2L["a"];
+local function C_8()
+local script = G2L["8"];
 	-- Services
 	local scrollingFrame = script.Parent -- ScrollingFrame inside SideBar
 	local contentArea = scrollingFrame.Parent.Parent.ContentArea -- MainFrame > ContentArea
@@ -217,6 +215,6 @@ local script = G2L["a"];
 	    3. That's it — no need to touch this script
 	]]
 end;
-task.spawn(C_a);
+task.spawn(C_8);
 
 return G2L["1"], require;
