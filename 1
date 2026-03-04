@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 16 | Scripts: 1 | Modules: 0 | Tags: 0
+-- Instances: 21 | Scripts: 2 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -50,7 +50,7 @@ G2L["4"]["Name"] = [[TITLE]];
 G2L["4"]["Position"] = UDim2.new(0, 8, 0, 0);
 
 
--- StarterGui.ScreenGui.MainFrame.TopBar.CloseGUI
+-- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeGUI
 G2L["5"] = Instance.new("TextButton", G2L["3"]);
 G2L["5"]["BorderSizePixel"] = 0;
 G2L["5"]["TextSize"] = 20;
@@ -61,119 +61,210 @@ G2L["5"]["BackgroundTransparency"] = 1;
 G2L["5"]["Size"] = UDim2.new(0, 35, 0, 25);
 G2L["5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["5"]["Text"] = [[-]];
-G2L["5"]["Name"] = [[CloseGUI]];
+G2L["5"]["Name"] = [[MinimizeGUI]];
 G2L["5"]["Position"] = UDim2.new(0.9125, 0, 0, 0);
 
 
+-- StarterGui.ScreenGui.MainFrame.TopBar.DragHandler
+G2L["6"] = Instance.new("LocalScript", G2L["3"]);
+G2L["6"]["Name"] = [[DragHandler]];
+
+
 -- StarterGui.ScreenGui.MainFrame.SideBar
-G2L["6"] = Instance.new("Frame", G2L["2"]);
-G2L["6"]["BorderSizePixel"] = 0;
-G2L["6"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["6"]["Size"] = UDim2.new(0, 80, 0, 275);
-G2L["6"]["Position"] = UDim2.new(0, 0, 0.08333, 0);
-G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["6"]["Name"] = [[SideBar]];
-G2L["6"]["BackgroundTransparency"] = 1;
+G2L["7"] = Instance.new("Frame", G2L["2"]);
+G2L["7"]["BorderSizePixel"] = 0;
+G2L["7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["7"]["Size"] = UDim2.new(0, 80, 0, 275);
+G2L["7"]["Position"] = UDim2.new(0, 0, 0.08333, 0);
+G2L["7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["7"]["Name"] = [[SideBar]];
+G2L["7"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame
-G2L["7"] = Instance.new("ScrollingFrame", G2L["6"]);
-G2L["7"]["Active"] = true;
-G2L["7"]["ScrollingDirection"] = Enum.ScrollingDirection.Y;
-G2L["7"]["CanvasSize"] = UDim2.new(0, 0, 1, 0);
-G2L["7"]["ElasticBehavior"] = Enum.ElasticBehavior.Always;
-G2L["7"]["BackgroundColor3"] = Color3.fromRGB(14, 14, 14);
-G2L["7"]["VerticalScrollBarPosition"] = Enum.VerticalScrollBarPosition.Left;
-G2L["7"]["AutomaticCanvasSize"] = Enum.AutomaticSize.Y;
-G2L["7"]["Size"] = UDim2.new(0, 79, 0, 274);
-G2L["7"]["Position"] = UDim2.new(0.01, 0, 0.00333, 0);
-G2L["7"]["BorderColor3"] = Color3.fromRGB(127, 127, 127);
-G2L["7"]["ScrollBarThickness"] = 0;
+G2L["8"] = Instance.new("ScrollingFrame", G2L["7"]);
+G2L["8"]["Active"] = true;
+G2L["8"]["ScrollingDirection"] = Enum.ScrollingDirection.Y;
+G2L["8"]["CanvasSize"] = UDim2.new(0, 0, 1, 0);
+G2L["8"]["ElasticBehavior"] = Enum.ElasticBehavior.Always;
+G2L["8"]["BackgroundColor3"] = Color3.fromRGB(14, 14, 14);
+G2L["8"]["VerticalScrollBarPosition"] = Enum.VerticalScrollBarPosition.Left;
+G2L["8"]["AutomaticCanvasSize"] = Enum.AutomaticSize.Y;
+G2L["8"]["Size"] = UDim2.new(0, 79, 0, 274);
+G2L["8"]["Position"] = UDim2.new(0.01, 0, 0.00333, 0);
+G2L["8"]["BorderColor3"] = Color3.fromRGB(127, 127, 127);
+G2L["8"]["ScrollBarThickness"] = 0;
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.PageHandler
-G2L["8"] = Instance.new("LocalScript", G2L["7"]);
-G2L["8"]["Name"] = [[PageHandler]];
+G2L["9"] = Instance.new("LocalScript", G2L["8"]);
+G2L["9"]["Name"] = [[PageHandler]];
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.UIListLayout
-G2L["9"] = Instance.new("UIListLayout", G2L["7"]);
-G2L["9"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+G2L["a"] = Instance.new("UIListLayout", G2L["8"]);
+G2L["a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
+G2L["a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.UIPadding
-G2L["a"] = Instance.new("UIPadding", G2L["7"]);
-G2L["a"]["PaddingTop"] = UDim.new(0, 5);
+G2L["b"] = Instance.new("UIPadding", G2L["8"]);
+G2L["b"]["PaddingTop"] = UDim.new(0, 7);
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.MAIN
-G2L["b"] = Instance.new("TextButton", G2L["7"]);
-G2L["b"]["TextSize"] = 17;
-G2L["b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["b"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
-G2L["b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Sarpanch.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["b"]["Size"] = UDim2.new(0, 78, 0, 30);
-G2L["b"]["BorderColor3"] = Color3.fromRGB(71, 71, 71);
-G2L["b"]["Text"] = [[MAIN]];
-G2L["b"]["Name"] = [[MAIN]];
-G2L["b"]["Position"] = UDim2.new(0.01282, 0, 0, 0);
-
-
--- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.ESP
-G2L["c"] = Instance.new("TextButton", G2L["7"]);
+G2L["c"] = Instance.new("TextButton", G2L["8"]);
 G2L["c"]["TextSize"] = 17;
 G2L["c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["c"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
 G2L["c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Sarpanch.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["c"]["Size"] = UDim2.new(0, 78, 0, 30);
+G2L["c"]["LayoutOrder"] = 1;
 G2L["c"]["BorderColor3"] = Color3.fromRGB(71, 71, 71);
-G2L["c"]["Text"] = [[ESP]];
-G2L["c"]["Name"] = [[ESP]];
-G2L["c"]["Position"] = UDim2.new(0.01282, 0, 0.11111, 0);
+G2L["c"]["Text"] = [[MAIN]];
+G2L["c"]["Name"] = [[MAIN]];
+G2L["c"]["Position"] = UDim2.new(0.01282, 0, 0, 0);
+
+
+-- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.ESP
+G2L["d"] = Instance.new("TextButton", G2L["8"]);
+G2L["d"]["TextSize"] = 17;
+G2L["d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["d"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
+G2L["d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Sarpanch.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["d"]["Size"] = UDim2.new(0, 78, 0, 30);
+G2L["d"]["LayoutOrder"] = 2;
+G2L["d"]["BorderColor3"] = Color3.fromRGB(71, 71, 71);
+G2L["d"]["Text"] = [[ESP]];
+G2L["d"]["Name"] = [[ESP]];
+G2L["d"]["Position"] = UDim2.new(0.01282, 0, 0.11111, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.UIStroke
-G2L["d"] = Instance.new("UIStroke", G2L["2"]);
-G2L["d"]["BorderOffset"] = UDim.new(0.001, 0);
-G2L["d"]["Color"] = Color3.fromRGB(255, 255, 255);
-G2L["d"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
-G2L["d"]["LineJoinMode"] = Enum.LineJoinMode.Bevel;
+G2L["e"] = Instance.new("UIStroke", G2L["2"]);
+G2L["e"]["BorderOffset"] = UDim.new(0.001, 0);
+G2L["e"]["Color"] = Color3.fromRGB(255, 255, 255);
+G2L["e"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
+G2L["e"]["LineJoinMode"] = Enum.LineJoinMode.Bevel;
 
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea
-G2L["e"] = Instance.new("Frame", G2L["2"]);
-G2L["e"]["BorderSizePixel"] = 0;
-G2L["e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["e"]["Size"] = UDim2.new(0, 300, 0, 275);
-G2L["e"]["Position"] = UDim2.new(0.25, 0, 0.08333, 0);
-G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["e"]["Name"] = [[ContentArea]];
-G2L["e"]["BackgroundTransparency"] = 1;
+G2L["f"] = Instance.new("Frame", G2L["2"]);
+G2L["f"]["BorderSizePixel"] = 0;
+G2L["f"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["f"]["Size"] = UDim2.new(0, 300, 0, 275);
+G2L["f"]["Position"] = UDim2.new(0.25, 0, 0.08333, 0);
+G2L["f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["f"]["Name"] = [[ContentArea]];
+G2L["f"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MAINPage
-G2L["f"] = Instance.new("Frame", G2L["e"]);
-G2L["f"]["BorderSizePixel"] = 0;
-G2L["f"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["f"]["Size"] = UDim2.new(0, 322, 0, 275);
-G2L["f"]["Position"] = UDim2.new(-0.07333, 0, 0, 0);
-G2L["f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["f"]["Name"] = [[MAINPage]];
+G2L["10"] = Instance.new("Frame", G2L["f"]);
+G2L["10"]["BorderSizePixel"] = 0;
+G2L["10"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["10"]["Size"] = UDim2.new(0, 320, 0, 274);
+G2L["10"]["Position"] = UDim2.new(-0.06733, 0, 0.00333, 0);
+G2L["10"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["10"]["Name"] = [[MAINPage]];
+G2L["10"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MAINPage.ScrollingFrame
+G2L["11"] = Instance.new("ScrollingFrame", G2L["10"]);
+G2L["11"]["Active"] = true;
+G2L["11"]["ScrollingDirection"] = Enum.ScrollingDirection.Y;
+G2L["11"]["BorderSizePixel"] = 0;
+G2L["11"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["11"]["AutomaticCanvasSize"] = Enum.AutomaticSize.Y;
+G2L["11"]["Size"] = UDim2.new(0, 320, 0, 274);
+G2L["11"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["11"]["ScrollBarThickness"] = 5;
+G2L["11"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MAINPage.ScrollingFrame.UIListLayout
+G2L["12"] = Instance.new("UIListLayout", G2L["11"]);
+G2L["12"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MAINPage.ScrollingFrame.UIPadding
+G2L["13"] = Instance.new("UIPadding", G2L["11"]);
+G2L["13"]["PaddingTop"] = UDim.new(0, 7);
+G2L["13"]["PaddingRight"] = UDim.new(0, 10);
+G2L["13"]["PaddingLeft"] = UDim.new(0, 10);
+G2L["13"]["PaddingBottom"] = UDim.new(0, 7);
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MAINPage.ScrollingFrame.Frame
+G2L["14"] = Instance.new("Frame", G2L["11"]);
+G2L["14"]["BorderSizePixel"] = 0;
+G2L["14"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["14"]["Size"] = UDim2.new(0, 300, 0, 100);
+G2L["14"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.ESPPage
-G2L["10"] = Instance.new("Frame", G2L["e"]);
-G2L["10"]["BorderSizePixel"] = 0;
-G2L["10"]["BackgroundColor3"] = Color3.fromRGB(25, 255, 9);
-G2L["10"]["Size"] = UDim2.new(0, 321, 0, 274);
-G2L["10"]["Position"] = UDim2.new(-0.07, 0, 0, 0);
-G2L["10"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["10"]["Name"] = [[ESPPage]];
+G2L["15"] = Instance.new("Frame", G2L["f"]);
+G2L["15"]["Visible"] = false;
+G2L["15"]["BorderSizePixel"] = 0;
+G2L["15"]["BackgroundColor3"] = Color3.fromRGB(25, 255, 9);
+G2L["15"]["Size"] = UDim2.new(0, 321, 0, 274);
+G2L["15"]["Position"] = UDim2.new(-0.07333, 0, 0.00364, 0);
+G2L["15"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["15"]["Name"] = [[ESPPage]];
 
 
+-- StarterGui.ScreenGui.MainFrame.TopBar.DragHandler
+local function C_6()
+local script = G2L["6"];
+	-- DragHandler
+	-- Handles dragging the GUI and minimize/maximize functionality
+	
+	local TopBar = script.Parent
+	local MainFrame = TopBar.Parent
+	local MinimizeButton = TopBar.MinimizeGUI
+	
+	-- Enable built-in dragging
+	MainFrame.Draggable = true
+	MainFrame.Active = true
+	
+	-- References to content that should be hidden when minimized
+	local SideBar = MainFrame.SideBar
+	local ContentArea = MainFrame.ContentArea
+	
+	-- State
+	local isMinimized = false
+	
+	-- Original sizes for restoring
+	local originalMainFrameSize = MainFrame.Size
+	
+	-- Minimize/Unminimize function
+	local function toggleMinimize()
+		isMinimized = not isMinimized
+		
+		if isMinimized then
+			-- Minimize: hide content, show only TopBar
+			SideBar.Visible = false
+			ContentArea.Visible = false
+			MainFrame.Size = UDim2.new(0, 400, 0, 25) -- Only TopBar height
+			MinimizeButton.Text = "+"
+		else
+			-- Unminimize: show content
+			SideBar.Visible = true
+			ContentArea.Visible = true
+			MainFrame.Size = originalMainFrameSize
+			MinimizeButton.Text = "-"
+		end
+	end
+	
+	-- Connect minimize button
+	MinimizeButton.MouseButton1Click:Connect(toggleMinimize)
+end;
+task.spawn(C_6);
 -- StarterGui.ScreenGui.MainFrame.SideBar.ScrollingFrame.PageHandler
-local function C_8()
-local script = G2L["8"];
+local function C_9()
+local script = G2L["9"];
 	-- PageHandler
 	-- Handles sidebar button clicks and shows the matching page in ContentArea
 	
@@ -256,6 +347,6 @@ local script = G2L["8"];
 	    That is all, no other changes needed
 	]]
 end;
-task.spawn(C_8);
+task.spawn(C_9);
 
 return G2L["1"], require;
