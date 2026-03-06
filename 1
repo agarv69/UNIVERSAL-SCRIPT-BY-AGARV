@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 41 | Scripts: 4 | Modules: 0 | Tags: 0
+-- Instances: 41 | Scripts: 5 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -248,7 +248,7 @@ G2L["16"]["Position"] = UDim2.new(0.88166, 0, 0, 0);
 G2L["17"] = Instance.new("Frame", G2L["11"]);
 G2L["17"]["BorderSizePixel"] = 0;
 G2L["17"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["17"]["Size"] = UDim2.new(0, 169, 0, 25);
+G2L["17"]["Size"] = UDim2.new(0, 169, 0, 20);
 G2L["17"]["Position"] = UDim2.new(0.00294, 0, 0.175, 0);
 G2L["17"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["17"]["Name"] = [[WalkspeedRow]];
@@ -278,7 +278,7 @@ G2L["19"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["19"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["19"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["19"]["BackgroundTransparency"] = 1;
-G2L["19"]["Size"] = UDim2.new(0, 88, 0, 25);
+G2L["19"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["19"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["19"]["Text"] = [[Walk Speed]];
 G2L["19"]["Name"] = [[WalkspeedText]];
@@ -287,6 +287,7 @@ G2L["19"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.WalkspeedRow.WalkspeedSpeedChanger
 G2L["1a"] = Instance.new("TextBox", G2L["17"]);
+G2L["1a"]["CursorPosition"] = -1;
 G2L["1a"]["Name"] = [[WalkspeedSpeedChanger]];
 G2L["1a"]["TextWrapped"] = true;
 G2L["1a"]["TextSize"] = 14;
@@ -301,73 +302,78 @@ G2L["1a"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["1a"]["Text"] = [[]];
 
 
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.WalkspeedRow.WalkspeedScript
+G2L["1b"] = Instance.new("LocalScript", G2L["17"]);
+G2L["1b"]["Name"] = [[WalkspeedScript]];
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.JumppowerRow
+G2L["1c"] = Instance.new("Frame", G2L["11"]);
+G2L["1c"]["BorderSizePixel"] = 0;
+G2L["1c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1c"]["Size"] = UDim2.new(0, 169, 0, 20);
+G2L["1c"]["Position"] = UDim2.new(0.00294, 0, 0.175, 0);
+G2L["1c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1c"]["Name"] = [[JumppowerRow]];
+G2L["1c"]["LayoutOrder"] = 3;
+G2L["1c"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.JumppowerRow.JumppowerTickBox
+G2L["1d"] = Instance.new("TextButton", G2L["1c"]);
+G2L["1d"]["TextSize"] = 14;
+G2L["1d"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1d"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1d"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1d"]["Size"] = UDim2.new(0, 16, 0, 16);
+G2L["1d"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
+G2L["1d"]["Text"] = [[]];
+G2L["1d"]["Name"] = [[JumppowerTickBox]];
+G2L["1d"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.JumppowerRow.JumppowerText
+G2L["1e"] = Instance.new("TextLabel", G2L["1c"]);
+G2L["1e"]["BorderSizePixel"] = 0;
+G2L["1e"]["TextSize"] = 14;
+G2L["1e"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["1e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1e"]["BackgroundTransparency"] = 1;
+G2L["1e"]["Size"] = UDim2.new(0, 88, 0, 20);
+G2L["1e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1e"]["Text"] = [[Jump Power]];
+G2L["1e"]["Name"] = [[JumppowerText]];
+G2L["1e"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.JumppowerRow.JumppowerJumpChanger
+G2L["1f"] = Instance.new("TextBox", G2L["1c"]);
+G2L["1f"]["CursorPosition"] = -1;
+G2L["1f"]["Name"] = [[JumppowerJumpChanger]];
+G2L["1f"]["TextWrapped"] = true;
+G2L["1f"]["TextSize"] = 14;
+G2L["1f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1f"]["TextScaled"] = true;
+G2L["1f"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1f"]["PlaceholderText"] = [[(50)]];
+G2L["1f"]["Size"] = UDim2.new(0, 46, 0, 16);
+G2L["1f"]["Position"] = UDim2.new(0.69822, 0, 0.16, 0);
+G2L["1f"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
+G2L["1f"]["Text"] = [[]];
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.JumppowerRow.JumppowerScript
+G2L["20"] = Instance.new("LocalScript", G2L["1c"]);
+G2L["20"]["Name"] = [[JumppowerScript]];
+
+
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.UIListLayout
-G2L["1b"] = Instance.new("UIListLayout", G2L["10"]);
-G2L["1b"]["Padding"] = UDim.new(0, 7);
-G2L["1b"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
-
-
--- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.Movement2Group
-G2L["1c"] = Instance.new("Frame", G2L["10"]);
-G2L["1c"]["BackgroundColor3"] = Color3.fromRGB(17, 17, 17);
-G2L["1c"]["BorderMode"] = Enum.BorderMode.Middle;
-G2L["1c"]["Size"] = UDim2.new(0, 170, 0, 100);
-G2L["1c"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
-G2L["1c"]["Name"] = [[Movement2Group]];
-G2L["1c"]["LayoutOrder"] = 1;
-
-
--- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.Movement2Group.MovementScript
-G2L["1d"] = Instance.new("LocalScript", G2L["1c"]);
-G2L["1d"]["Name"] = [[MovementScript]];
-
-
--- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.Movement2Group.UIListLayout
-G2L["1e"] = Instance.new("UIListLayout", G2L["1c"]);
-G2L["1e"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
-
-
--- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.Movement2Group.MovementAccentColor
-G2L["1f"] = Instance.new("Frame", G2L["1c"]);
-G2L["1f"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["1f"]["AutomaticSize"] = Enum.AutomaticSize.X;
-G2L["1f"]["Size"] = UDim2.new(0, 169, 0, 2);
-G2L["1f"]["Position"] = UDim2.new(0.00294, 0, 0.00658, 0);
-G2L["1f"]["BorderColor3"] = Color3.fromRGB(0, 92, 189);
-G2L["1f"]["Name"] = [[MovementAccentColor]];
-
-
--- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.Movement2Group.MovementTitle
-G2L["20"] = Instance.new("TextLabel", G2L["1c"]);
-G2L["20"]["TextWrapped"] = true;
-G2L["20"]["BorderSizePixel"] = 0;
-G2L["20"]["TextSize"] = 14;
-G2L["20"]["TextScaled"] = true;
-G2L["20"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["20"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["20"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["20"]["BackgroundTransparency"] = 0.95;
-G2L["20"]["Size"] = UDim2.new(0, 169, 0, 15);
-G2L["20"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["20"]["Text"] = [[Movement]];
-G2L["20"]["LayoutOrder"] = 1;
-G2L["20"]["Name"] = [[MovementTitle]];
-G2L["20"]["Position"] = UDim2.new(0.00294, 0, 0.03289, 0);
-
-
--- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.Movement2Group.MovementTitle.MovementMinimize
-G2L["21"] = Instance.new("TextButton", G2L["20"]);
-G2L["21"]["BorderSizePixel"] = 0;
-G2L["21"]["TextSize"] = 14;
-G2L["21"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["21"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["21"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["21"]["BackgroundTransparency"] = 1;
-G2L["21"]["Size"] = UDim2.new(0, 20, 0, 15);
-G2L["21"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["21"]["Text"] = [[-]];
-G2L["21"]["Name"] = [[MovementMinimize]];
-G2L["21"]["Position"] = UDim2.new(0.88166, 0, 0, 0);
+G2L["21"] = Instance.new("UIListLayout", G2L["10"]);
+G2L["21"]["Padding"] = UDim.new(0, 7);
+G2L["21"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar
@@ -464,279 +470,385 @@ task.spawn(C_5);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.MovementScript
 local function C_12()
 local script = G2L["12"];
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	
 	-- Get references to GUI elements
 	local MovementGroup = script.Parent
-	local WalkspeedTickBox = MovementGroup.WalkspeedRow.WalkspeedTickBox
-	local WalkspeedSpeedChanger = MovementGroup.WalkspeedRow.WalkspeedSpeedChanger
-	local MovementAccentColor = MovementGroup.MovementAccentColor
 	local MovementMinimize = MovementGroup.MovementTitle.MovementMinimize
-	local WalkspeedRow = MovementGroup.WalkspeedRow
 	
-	-- State variables
-	local isEnabled = false
-	local currentSpeed = 16 -- Default speed
-	local lastValidSpeed = 16 -- Track last valid speed for reversion
-	local isInfinite = false
-	
-	-- Get accent color
-	local accentColor = MovementAccentColor.BackgroundColor3
-	
-	-- Initialize tickbox state (unticked by default)
-	WalkspeedTickBox.BackgroundColor3 = Color3.new(0, 0, 0) -- Black when unticked
-	WalkspeedSpeedChanger.Text = "(16)" -- Show default speed
+	-- Automatically find all Row frames inside MovementGroup
+	local function getRows()
+		local rows = {}
+		for _, child in ipairs(MovementGroup:GetChildren()) do
+			if child:IsA("Frame") and string.sub(child.Name, -3) == "Row" then
+				table.insert(rows, child)
+			end
+		end
+		return rows
+	end
 	
 	-- Groupbox minimize functionality
 	local isMinimized = false
 	local originalSize = MovementGroup.Size
-	local minimizedSize = UDim2.new(0, 170, 0, 20) -- Just enough for title and accent color
+	local minimizedSize = UDim2.new(0, 170, 0, 20)
 	
 	MovementMinimize.MouseButton1Click:Connect(function()
 		isMinimized = not isMinimized
-		
+		local rows = getRows()
+	
 		if isMinimized then
 			MovementGroup.Size = minimizedSize
-			WalkspeedRow.Visible = false
+			for _, row in ipairs(rows) do
+				row.Visible = false
+			end
 			MovementMinimize.Text = "+"
 		else
 			MovementGroup.Size = originalSize
-			WalkspeedRow.Visible = true
+			for _, row in ipairs(rows) do
+				row.Visible = true
+			end
 			MovementMinimize.Text = "-"
 		end
 	end)
-	
-	-- Function to update walkspeed
-	local function updateWalkspeed()
-	    local character = LocalPlayer.Character
-	    if character then
-	        local humanoid = character:FindFirstChildOfClass("Humanoid")
-	        if humanoid then
-	            if isInfinite then
-	                humanoid.WalkSpeed = math.huge
-	            else
-	                humanoid.WalkSpeed = currentSpeed
-	            end
-	        end
-	    end
-	end
-	
-	-- Function to set tickbox appearance
-	local function setTickboxState(ticked)
-	    if ticked then
-	        WalkspeedTickBox.BackgroundColor3 = accentColor
-	    else
-	        WalkspeedTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-	    end
-	end
-	
-	-- Tickbox click handler
-	WalkspeedTickBox.MouseButton1Click:Connect(function()
-	    isEnabled = not isEnabled
-	    setTickboxState(isEnabled)
-	    
-	    if isEnabled then
-	        updateWalkspeed()
-	    else
-	        -- Reset to default when disabled
-	        local character = LocalPlayer.Character
-	        if character then
-	            local humanoid = character:FindFirstChildOfClass("Humanoid")
-	            if humanoid then
-	                humanoid.WalkSpeed = 16
-	            end
-	        end
-	    end
-	end)
-	
-	-- Speed changer focus lost handler
-	WalkspeedSpeedChanger.FocusLost:Connect(function(enterPressed)
-	    local text = string.lower(WalkspeedSpeedChanger.Text)
-	    
-	    -- Check for "inf" (case-insensitive)
-	    if text == "inf" then
-	        isInfinite = true
-	        currentSpeed = math.huge
-	        lastValidSpeed = math.huge
-	        WalkspeedSpeedChanger.Text = "inf"
-	    else
-	        -- Check if it's a valid number
-	        local number = tonumber(text)
-	        if number then
-	            isInfinite = false
-	            currentSpeed = number
-	            lastValidSpeed = number
-	            WalkspeedSpeedChanger.Text = tostring(number)
-	        else
-	            -- Invalid input - revert to last valid speed
-	            if lastValidSpeed == math.huge then
-	                WalkspeedSpeedChanger.Text = "inf"
-	            else
-	                WalkspeedSpeedChanger.Text = tostring(lastValidSpeed)
-	            end
-	        end
-	    end
-	    
-	    -- Update walkspeed if enabled
-	    if isEnabled then
-	        updateWalkspeed()
-	    end
-	end)
-	
-	-- Handle character spawns
-	LocalPlayer.CharacterAdded:Connect(function(character)
-	    if isEnabled then
-	        -- Wait for humanoid to load
-	        local humanoid = character:WaitForChild("Humanoid")
-	        if isInfinite then
-	            humanoid.WalkSpeed = math.huge
-	        else
-	            humanoid.WalkSpeed = currentSpeed
-	        end
-	    end
-	end)
-	
 end;
 task.spawn(C_12);
--- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.Movement2Group.MovementScript
-local function C_1d()
-local script = G2L["1d"];
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.WalkspeedRow.WalkspeedScript
+local function C_1b()
+local script = G2L["1b"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
+	local TextService = game:GetService("TextService")
 	
 	-- Get references to GUI elements
-	local MovementGroup = script.Parent
-	local WalkspeedTickBox = MovementGroup.WalkspeedRow.WalkspeedTickBox
-	local WalkspeedSpeedChanger = MovementGroup.WalkspeedRow.WalkspeedSpeedChanger
+	local WalkspeedRow = script.Parent
+	local WalkspeedTickBox = WalkspeedRow.WalkspeedTickBox
+	local WalkspeedSpeedChanger = WalkspeedRow.WalkspeedSpeedChanger
+	local MovementGroup = WalkspeedRow.Parent
 	local MovementAccentColor = MovementGroup.MovementAccentColor
-	local MovementMinimize = MovementGroup.MovementTitle.MovementMinimize
-	local WalkspeedRow = MovementGroup.WalkspeedRow
 	
 	-- State variables
 	local isEnabled = false
-	local currentSpeed = 16 -- Default speed
-	local lastValidSpeed = 16 -- Track last valid speed for reversion
+	local currentSpeed = 16
+	local lastValidSpeed = 16
 	local isInfinite = false
 	
-	-- Get accent color
 	local accentColor = MovementAccentColor.BackgroundColor3
 	
-	-- Initialize tickbox state (unticked by default)
-	WalkspeedTickBox.BackgroundColor3 = Color3.new(0, 0, 0) -- Black when unticked
-	WalkspeedSpeedChanger.Text = "(16)" -- Show default speed
+	WalkspeedTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	WalkspeedSpeedChanger.Text = "(16)"
 	
-	-- Groupbox minimize functionality
-	local isMinimized = false
-	local originalSize = MovementGroup.Size
-	local minimizedSize = UDim2.new(0, 170, 0, 20) -- Just enough for title and accent color
+	-- Get the top level ScreenGui to parent tooltip to
+	local function getScreenGui()
+		local parent = WalkspeedRow
+		while parent do
+			if parent:IsA("ScreenGui") then
+				return parent
+			end
+			parent = parent.Parent
+		end
+	end
 	
-	MovementMinimize.MouseButton1Click:Connect(function()
-		isMinimized = not isMinimized
-		
-		if isMinimized then
-			MovementGroup.Size = minimizedSize
-			WalkspeedRow.Visible = false
-			MovementMinimize.Text = "+"
+	-- Create tooltip frame
+	local tooltipFrame = Instance.new("Frame")
+	tooltipFrame.Name = "WalkspeedTooltip"
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	tooltipFrame.BorderSizePixel = 0
+	tooltipFrame.ZIndex = 100
+	tooltipFrame.AutomaticSize = Enum.AutomaticSize.XY
+	
+	local tooltipStroke = Instance.new("UIStroke")
+	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
+	tooltipStroke.Thickness = 1
+	tooltipStroke.Parent = tooltipFrame
+	
+	local tooltipPadding = Instance.new("UIPadding")
+	tooltipPadding.PaddingTop = UDim.new(0, 6)
+	tooltipPadding.PaddingBottom = UDim.new(0, 6)
+	tooltipPadding.PaddingLeft = UDim.new(0, 6)
+	tooltipPadding.PaddingRight = UDim.new(0, 6)
+	tooltipPadding.Parent = tooltipFrame
+	
+	local tooltipText = Instance.new("TextLabel")
+	tooltipText.Name = "TooltipText"
+	tooltipText.BackgroundTransparency = 1
+	tooltipText.Text = "Changes your character walk speed"
+	tooltipText.TextColor3 = Color3.new(1, 1, 1)
+	tooltipText.TextSize = 14
+	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
+	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
+	tooltipText.Font = Enum.Font.GothamSemibold
+	tooltipText.TextWrapped = true
+	tooltipText.AutomaticSize = Enum.AutomaticSize.XY
+	tooltipText.Size = UDim2.new(0, 200, 0, 0)
+	tooltipText.ZIndex = 101
+	tooltipText.Parent = tooltipFrame
+	
+	tooltipFrame.Visible = false
+	tooltipFrame.Parent = getScreenGui()
+	
+	local function showTooltip()
+		local absPos = WalkspeedTickBox.AbsolutePosition
+		local absSize = WalkspeedTickBox.AbsoluteSize
+		tooltipFrame.Position = UDim2.new(0, absPos.X + absSize.X + 10, 0, absPos.Y)
+		tooltipFrame.Visible = true
+	end
+	
+	local function hideTooltip()
+		tooltipFrame.Visible = false
+	end
+	
+	WalkspeedTickBox.MouseEnter:Connect(showTooltip)
+	WalkspeedTickBox.MouseLeave:Connect(hideTooltip)
+	
+	local function updateWalkspeed()
+		local character = LocalPlayer.Character
+		if character then
+			local humanoid = character:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				if isInfinite then
+					humanoid.WalkSpeed = math.huge
+				else
+					humanoid.WalkSpeed = currentSpeed
+				end
+			end
+		end
+	end
+	
+	local function setTickboxState(ticked)
+		if ticked then
+			WalkspeedTickBox.BackgroundColor3 = accentColor
 		else
-			MovementGroup.Size = originalSize
-			WalkspeedRow.Visible = true
-			MovementMinimize.Text = "-"
+			WalkspeedTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+		end
+	end
+	
+	WalkspeedTickBox.MouseButton1Click:Connect(function()
+		isEnabled = not isEnabled
+		setTickboxState(isEnabled)
+	
+		if isEnabled then
+			updateWalkspeed()
+		else
+			local character = LocalPlayer.Character
+			if character then
+				local humanoid = character:FindFirstChildOfClass("Humanoid")
+				if humanoid then
+					humanoid.WalkSpeed = 16
+				end
+			end
 		end
 	end)
 	
-	-- Function to update walkspeed
-	local function updateWalkspeed()
-	    local character = LocalPlayer.Character
-	    if character then
-	        local humanoid = character:FindFirstChildOfClass("Humanoid")
-	        if humanoid then
-	            if isInfinite then
-	                humanoid.WalkSpeed = math.huge
-	            else
-	                humanoid.WalkSpeed = currentSpeed
-	            end
-	        end
-	    end
-	end
+	WalkspeedSpeedChanger.FocusLost:Connect(function()
+		local text = string.lower(WalkspeedSpeedChanger.Text)
 	
-	-- Function to set tickbox appearance
-	local function setTickboxState(ticked)
-	    if ticked then
-	        WalkspeedTickBox.BackgroundColor3 = accentColor
-	    else
-	        WalkspeedTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-	    end
-	end
+		if text == "inf" then
+			isInfinite = true
+			currentSpeed = math.huge
+			lastValidSpeed = math.huge
+			WalkspeedSpeedChanger.Text = "inf"
+		else
+			local number = tonumber(text)
+			if number then
+				isInfinite = false
+				currentSpeed = number
+				lastValidSpeed = number
+				WalkspeedSpeedChanger.Text = tostring(number)
+			else
+				if lastValidSpeed == math.huge then
+					WalkspeedSpeedChanger.Text = "inf"
+				else
+					WalkspeedSpeedChanger.Text = tostring(lastValidSpeed)
+				end
+			end
+		end
 	
-	-- Tickbox click handler
-	WalkspeedTickBox.MouseButton1Click:Connect(function()
-	    isEnabled = not isEnabled
-	    setTickboxState(isEnabled)
-	    
-	    if isEnabled then
-	        updateWalkspeed()
-	    else
-	        -- Reset to default when disabled
-	        local character = LocalPlayer.Character
-	        if character then
-	            local humanoid = character:FindFirstChildOfClass("Humanoid")
-	            if humanoid then
-	                humanoid.WalkSpeed = 16
-	            end
-	        end
-	    end
+		if isEnabled then
+			updateWalkspeed()
+		end
 	end)
 	
-	-- Speed changer focus lost handler
-	WalkspeedSpeedChanger.FocusLost:Connect(function(enterPressed)
-	    local text = string.lower(WalkspeedSpeedChanger.Text)
-	    
-	    -- Check for "inf" (case-insensitive)
-	    if text == "inf" then
-	        isInfinite = true
-	        currentSpeed = math.huge
-	        lastValidSpeed = math.huge
-	        WalkspeedSpeedChanger.Text = "inf"
-	    else
-	        -- Check if it's a valid number
-	        local number = tonumber(text)
-	        if number then
-	            isInfinite = false
-	            currentSpeed = number
-	            lastValidSpeed = number
-	            WalkspeedSpeedChanger.Text = tostring(number)
-	        else
-	            -- Invalid input - revert to last valid speed
-	            if lastValidSpeed == math.huge then
-	                WalkspeedSpeedChanger.Text = "inf"
-	            else
-	                WalkspeedSpeedChanger.Text = tostring(lastValidSpeed)
-	            end
-	        end
-	    end
-	    
-	    -- Update walkspeed if enabled
-	    if isEnabled then
-	        updateWalkspeed()
-	    end
-	end)
-	
-	-- Handle character spawns
 	LocalPlayer.CharacterAdded:Connect(function(character)
-	    if isEnabled then
-	        -- Wait for humanoid to load
-	        local humanoid = character:WaitForChild("Humanoid")
-	        if isInfinite then
-	            humanoid.WalkSpeed = math.huge
-	        else
-	            humanoid.WalkSpeed = currentSpeed
-	        end
-	    end
+		if isEnabled then
+			local humanoid = character:WaitForChild("Humanoid")
+			if isInfinite then
+				humanoid.WalkSpeed = math.huge
+			else
+				humanoid.WalkSpeed = currentSpeed
+			end
+		end
+	end)
+end;
+task.spawn(C_1b);
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftScroll.MovementGroup.JumppowerRow.JumppowerScript
+local function C_20()
+local script = G2L["20"];
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local TextService = game:GetService("TextService")
+	
+	-- Get references to GUI elements
+	local JumppowerRow = script.Parent
+	local JumppowerTickBox = JumppowerRow.JumppowerTickBox
+	local JumppowerJumpChanger = JumppowerRow.JumppowerJumpChanger
+	local MovementGroup = JumppowerRow.Parent
+	local MovementAccentColor = MovementGroup.MovementAccentColor
+	
+	-- State variables
+	local isEnabled = false
+	local currentJump = 50
+	local lastValidJump = 50
+	local isInfinite = false
+	
+	local accentColor = MovementAccentColor.BackgroundColor3
+	
+	JumppowerTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	JumppowerJumpChanger.Text = "(50)"
+	
+	-- Get the top level ScreenGui to parent tooltip to
+	local function getScreenGui()
+		local parent = JumppowerRow
+		while parent do
+			if parent:IsA("ScreenGui") then
+				return parent
+			end
+			parent = parent.Parent
+		end
+	end
+	
+	-- Create tooltip frame
+	local tooltipFrame = Instance.new("Frame")
+	tooltipFrame.Name = "JumppowerTooltip"
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	tooltipFrame.BorderSizePixel = 0
+	tooltipFrame.ZIndex = 100
+	tooltipFrame.AutomaticSize = Enum.AutomaticSize.XY
+	
+	local tooltipStroke = Instance.new("UIStroke")
+	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
+	tooltipStroke.Thickness = 1
+	tooltipStroke.Parent = tooltipFrame
+	
+	local tooltipPadding = Instance.new("UIPadding")
+	tooltipPadding.PaddingTop = UDim.new(0, 6)
+	tooltipPadding.PaddingBottom = UDim.new(0, 6)
+	tooltipPadding.PaddingLeft = UDim.new(0, 6)
+	tooltipPadding.PaddingRight = UDim.new(0, 6)
+	tooltipPadding.Parent = tooltipFrame
+	
+	local tooltipText = Instance.new("TextLabel")
+	tooltipText.Name = "TooltipText"
+	tooltipText.BackgroundTransparency = 1
+	tooltipText.Text = "Changes your character jump power"
+	tooltipText.TextColor3 = Color3.new(1, 1, 1)
+	tooltipText.TextSize = 14
+	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
+	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
+	tooltipText.Font = Enum.Font.GothamSemibold
+	tooltipText.TextWrapped = true
+	tooltipText.AutomaticSize = Enum.AutomaticSize.XY
+	tooltipText.Size = UDim2.new(0, 200, 0, 0)
+	tooltipText.ZIndex = 101
+	tooltipText.Parent = tooltipFrame
+	
+	tooltipFrame.Visible = false
+	tooltipFrame.Parent = getScreenGui()
+	
+	local function showTooltip()
+		local absPos = JumppowerTickBox.AbsolutePosition
+		local absSize = JumppowerTickBox.AbsoluteSize
+		tooltipFrame.Position = UDim2.new(0, absPos.X + absSize.X + 10, 0, absPos.Y)
+		tooltipFrame.Visible = true
+	end
+	
+	local function hideTooltip()
+		tooltipFrame.Visible = false
+	end
+	
+	JumppowerTickBox.MouseEnter:Connect(showTooltip)
+	JumppowerTickBox.MouseLeave:Connect(hideTooltip)
+	
+	local function updateJumppower()
+		local character = LocalPlayer.Character
+		if character then
+			local humanoid = character:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				humanoid.UseJumpPower = true
+				if isInfinite then
+					humanoid.JumpPower = math.huge
+				else
+					humanoid.JumpPower = currentJump
+				end
+			end
+		end
+	end
+	
+	local function setTickboxState(ticked)
+		if ticked then
+			JumppowerTickBox.BackgroundColor3 = accentColor
+		else
+			JumppowerTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+		end
+	end
+	
+	JumppowerTickBox.MouseButton1Click:Connect(function()
+		isEnabled = not isEnabled
+		setTickboxState(isEnabled)
+	
+		if isEnabled then
+			updateJumppower()
+		else
+			local character = LocalPlayer.Character
+			if character then
+				local humanoid = character:FindFirstChildOfClass("Humanoid")
+				if humanoid then
+					humanoid.UseJumpPower = true
+					humanoid.JumpPower = 50
+				end
+			end
+		end
 	end)
 	
+	JumppowerJumpChanger.FocusLost:Connect(function()
+		local text = string.lower(JumppowerJumpChanger.Text)
+	
+		if text == "inf" then
+			isInfinite = true
+			currentJump = math.huge
+			lastValidJump = math.huge
+			JumppowerJumpChanger.Text = "inf"
+		else
+			local number = tonumber(text)
+			if number then
+				isInfinite = false
+				currentJump = number
+				lastValidJump = number
+				JumppowerJumpChanger.Text = tostring(number)
+			else
+				if lastValidJump == math.huge then
+					JumppowerJumpChanger.Text = "inf"
+				else
+					JumppowerJumpChanger.Text = tostring(lastValidJump)
+				end
+			end
+		end
+	
+		if isEnabled then
+			updateJumppower()
+		end
+	end)
+	
+	LocalPlayer.CharacterAdded:Connect(function(character)
+		if isEnabled then
+			local humanoid = character:WaitForChild("Humanoid")
+			humanoid.UseJumpPower = true
+			if isInfinite then
+				humanoid.JumpPower = math.huge
+			else
+				humanoid.JumpPower = currentJump
+			end
+		end
+	end)
 end;
-task.spawn(C_1d);
+task.spawn(C_20);
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
 local function C_25()
 local script = G2L["25"];
