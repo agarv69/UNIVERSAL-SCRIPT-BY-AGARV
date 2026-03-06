@@ -7,11 +7,14 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 72 | Scripts: 12 | Modules: 0 | Tags: 0
+-- Instances: 73 | Scripts: 12 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
 G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+G2L["1"]["IgnoreGuiInset"] = true;
+G2L["1"]["DisplayOrder"] = 999999999;
+G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets;
 G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 G2L["1"]["ResetOnSpawn"] = false;
 
@@ -23,7 +26,7 @@ G2L["2"]["ZIndex"] = 10;
 G2L["2"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
 G2L["2"]["Selectable"] = true;
 G2L["2"]["Size"] = UDim2.new(0, 450, 0, 300);
-G2L["2"]["Position"] = UDim2.new(0.06166, 77, 0.38899, -5);
+G2L["2"]["Position"] = UDim2.new(0.06166, -13, 0.38899, 9);
 G2L["2"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["2"]["Name"] = [[MainFrame]];
 
@@ -719,94 +722,226 @@ G2L["40"]["Padding"] = UDim.new(0, 7);
 G2L["40"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 
--- StarterGui.ScreenGui.MainFrame.TopBar
-G2L["41"] = Instance.new("Frame", G2L["2"]);
+-- StarterGui.ScreenGui.MainFrame.ContentArea.SettingsPage
+G2L["41"] = Instance.new("Frame", G2L["d"]);
+G2L["41"]["Visible"] = false;
 G2L["41"]["BorderSizePixel"] = 0;
-G2L["41"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
-G2L["41"]["Size"] = UDim2.new(0, 442, 0, 25);
+G2L["41"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["41"]["Size"] = UDim2.new(0, 365, 0, 262);
 G2L["41"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["41"]["Name"] = [[TopBar]];
+G2L["41"]["Name"] = [[SettingsPage]];
+
+
+-- StarterGui.ScreenGui.MainFrame.TopBar
+G2L["42"] = Instance.new("Frame", G2L["2"]);
+G2L["42"]["BorderSizePixel"] = 0;
+G2L["42"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
+G2L["42"]["Size"] = UDim2.new(0, 442, 0, 25);
+G2L["42"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["42"]["Name"] = [[TopBar]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
-G2L["42"] = Instance.new("LocalScript", G2L["41"]);
-G2L["42"]["Name"] = [[MinimizeDragScript]];
+G2L["43"] = Instance.new("LocalScript", G2L["42"]);
+G2L["43"]["Name"] = [[MinimizeDragScript]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeGUI
-G2L["43"] = Instance.new("TextButton", G2L["41"]);
-G2L["43"]["BorderSizePixel"] = 0;
-G2L["43"]["TextSize"] = 14;
-G2L["43"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["43"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["43"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["43"]["BackgroundTransparency"] = 1;
-G2L["43"]["Size"] = UDim2.new(0, 25, 0, 25);
-G2L["43"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["43"]["Text"] = [[-]];
-G2L["43"]["Name"] = [[MinimizeGUI]];
-G2L["43"]["Position"] = UDim2.new(0.99919, -25, 0, 0);
+G2L["44"] = Instance.new("TextButton", G2L["42"]);
+G2L["44"]["BorderSizePixel"] = 0;
+G2L["44"]["TextSize"] = 14;
+G2L["44"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["44"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["44"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["44"]["BackgroundTransparency"] = 1;
+G2L["44"]["Size"] = UDim2.new(0, 25, 0, 25);
+G2L["44"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["44"]["Text"] = [[-]];
+G2L["44"]["Name"] = [[MinimizeGUI]];
+G2L["44"]["Position"] = UDim2.new(0.99919, -25, 0, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLE
-G2L["44"] = Instance.new("TextLabel", G2L["41"]);
-G2L["44"]["BorderSizePixel"] = 0;
-G2L["44"]["TextSize"] = 12;
-G2L["44"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["44"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["44"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["44"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["44"]["BackgroundTransparency"] = 1;
-G2L["44"]["Size"] = UDim2.new(0, 200, 0, 25);
-G2L["44"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["44"]["Text"] = [[Universal Script GUI  |  by agarvv]];
-G2L["44"]["Name"] = [[TITLE]];
+G2L["45"] = Instance.new("TextLabel", G2L["42"]);
+G2L["45"]["BorderSizePixel"] = 0;
+G2L["45"]["TextSize"] = 12;
+G2L["45"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["45"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["45"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["45"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["45"]["BackgroundTransparency"] = 1;
+G2L["45"]["Size"] = UDim2.new(0, 200, 0, 25);
+G2L["45"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["45"]["Text"] = [[Universal Script GUI  |  by agarvv]];
+G2L["45"]["Name"] = [[TITLE]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame
-G2L["45"] = Instance.new("Frame", G2L["1"]);
-G2L["45"]["BorderSizePixel"] = 0;
-G2L["45"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["45"]["Size"] = UDim2.new(0, 80, 0, 88);
-G2L["45"]["Position"] = UDim2.new(0.03924, 0, 0.11218, 0);
-G2L["45"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["45"]["Name"] = [[KeybindFrame]];
-G2L["45"]["BackgroundTransparency"] = 1;
+G2L["46"] = Instance.new("Frame", G2L["1"]);
+G2L["46"]["BorderSizePixel"] = 0;
+G2L["46"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["46"]["Size"] = UDim2.new(0, 80, 0, 88);
+G2L["46"]["Position"] = UDim2.new(0.03924, 0, 0.11218, 0);
+G2L["46"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["46"]["Name"] = [[KeybindFrame]];
+G2L["46"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.ScreenGui.KeybindFrame.ToggleUntoggleUI
-G2L["46"] = Instance.new("TextButton", G2L["45"]);
-G2L["46"]["TextSize"] = 14;
-G2L["46"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["46"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["46"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["46"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["46"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["46"]["Text"] = [[Toggle UI]];
-G2L["46"]["Name"] = [[ToggleUntoggleUI]];
+G2L["47"] = Instance.new("TextButton", G2L["46"]);
+G2L["47"]["TextSize"] = 14;
+G2L["47"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["47"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["47"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["47"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["47"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["47"]["Text"] = [[Toggle UI]];
+G2L["47"]["Name"] = [[ToggleUntoggleUI]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.UIListLayout
-G2L["47"] = Instance.new("UIListLayout", G2L["45"]);
-G2L["47"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+G2L["48"] = Instance.new("UIListLayout", G2L["46"]);
+G2L["48"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 
 -- StarterGui.ScreenGui.KeybindFrame.LockUnlockUI
-G2L["48"] = Instance.new("TextButton", G2L["45"]);
-G2L["48"]["TextSize"] = 14;
-G2L["48"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["48"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["48"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["48"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["48"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["48"]["Text"] = [[Lock UI]];
-G2L["48"]["Name"] = [[LockUnlockUI]];
+G2L["49"] = Instance.new("TextButton", G2L["46"]);
+G2L["49"]["TextSize"] = 14;
+G2L["49"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["49"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["49"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["49"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["49"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["49"]["Text"] = [[Lock UI]];
+G2L["49"]["Name"] = [[LockUnlockUI]];
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.PageHandler
 local function C_5()
 local script = G2L["5"];
-	print("Hello world!")
+	-- ============================================
+	-- PAGE HANDLER SCRIPT
+	-- ============================================
+	-- This script handles switching between different pages in your GUI.
+	-- When you add more pages, follow the comments marked with "TODO:"
+	-- ============================================
+	
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+	
+	-- Wait for the GUI to load
+	local ScreenGui = PlayerGui:WaitForChild("ScreenGui")
+	local MainFrame = ScreenGui:WaitForChild("MainFrame")
+	local SideBar = MainFrame:WaitForChild("SideBar")
+	local ContentArea = MainFrame:WaitForChild("ContentArea")
+	
+	-- ============================================
+	-- PAGE CONFIGURATION
+	-- ============================================
+	-- Add your pages here! Each entry needs:
+	-- - buttonName: The name of the button in the SideBar
+	-- - pageName: The name of the page frame in ContentArea
+	-- ============================================
+	
+	local pageConfig = {
+	    {buttonName = "MainPG", pageName = "MainPage"},
+	    {buttonName = "SettingsPG", pageName = "SettingsPage"},
+	    -- TODO: Add more pages here following the same format:
+	    -- {buttonName = "YourButtonName", pageName = "YourPageName"},
+	    -- Example:
+	    -- {buttonName = "CombatPG", pageName = "CombatPage"},
+	    -- {buttonName = "DashboardPG", pageName = "DashboardPage"},
+	    -- {buttonName = "VisualPG", pageName = "VisualPage"},
+	}
+	
+	-- ============================================
+	-- COLOR CONFIGURATION
+	-- ============================================
+	-- Customize these colors to match your GUI theme
+	local ACTIVE_COLOR = Color3.fromRGB(27, 27, 27)  -- Grey color for active page button
+	local INACTIVE_COLOR = Color3.fromRGB(0, 0, 0) -- White color for inactive buttons
+	
+	-- Track the currently active page
+	local currentPage = nil
+	local activeButton = nil
+	
+	-- ============================================
+	-- FUNCTION: Switch to a specific page
+	-- ============================================
+	-- Parameters:
+	--   buttonName: Name of the sidebar button that was clicked
+	--   pageName: Name of the page frame to show
+	-- ============================================
+	
+	local function switchPage(buttonName, pageName)
+	    -- Hide all pages first
+	    for _, config in pageConfig do
+	        local page = ContentArea:FindFirstChild(config.pageName)
+	        if page then
+	            page.Visible = false
+	        end
+	    end
+	    
+	    -- Reset all buttons to inactive color
+	    for _, config in pageConfig do
+	        local button = SideBar:FindFirstChild(config.buttonName)
+	        if button and button:IsA("TextButton") then
+	            button.BackgroundColor3 = INACTIVE_COLOR
+	        end
+	    end
+	    
+	    -- Show the selected page
+	    local selectedPage = ContentArea:FindFirstChild(pageName)
+	    if selectedPage then
+	        selectedPage.Visible = true
+	        currentPage = pageName
+	    else
+	        warn("Page not found: " .. pageName)
+	    end
+	    
+	    -- Set the clicked button to active color (grey)
+	    local selectedButton = SideBar:FindFirstChild(buttonName)
+	    if selectedButton and selectedButton:IsA("TextButton") then
+	        selectedButton.BackgroundColor3 = ACTIVE_COLOR
+	        activeButton = buttonName
+	    end
+	end
+	
+	-- ============================================
+	-- SETUP: Connect buttons to their pages
+	-- ============================================
+	-- This section connects each sidebar button to its corresponding page.
+	-- When you add a new page to pageConfig above, you don't need to change this!
+	-- ============================================
+	
+	for _, config in pageConfig do
+	    local button = SideBar:FindFirstChild(config.buttonName)
+	    
+	    if button and button:IsA("TextButton") then
+	        button.MouseButton1Click:Connect(function()
+	            switchPage(config.buttonName, config.pageName)
+	        end)
+	    else
+	        warn("Button not found: " .. config.buttonName)
+	    end
+	end
+	
+	-- ============================================
+	-- INITIALIZE: Load MainPage on startup
+	-- ============================================
+	-- This automatically shows MainPage when the GUI loads.
+	-- Change "MainPG" and "MainPage" if you want a different default page.
+	-- ============================================
+	
+	local defaultButton = "MainPG"  -- TODO: Change this to your default button name
+	local defaultPage = "MainPage"  -- TODO: Change this to your default page name
+	
+	-- Wait a moment to ensure everything is loaded
+	task.wait(0.1)
+	switchPage(defaultButton, defaultPage)
+	
+	print("Page Handler initialized! Default page: " .. defaultPage)
 	
 end;
 task.spawn(C_5);
@@ -2106,8 +2241,8 @@ local script = G2L["3f"];
 end;
 task.spawn(C_3f);
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
-local function C_42()
-local script = G2L["42"];
+local function C_43()
+local script = G2L["43"];
 	-- DragHandler
 	-- Handles dragging the GUI and minimize/maximize functionality
 	
@@ -2151,6 +2286,6 @@ local script = G2L["42"];
 	-- Connect minimize button
 	MinimizeButton.MouseButton1Click:Connect(toggleMinimize)
 end;
-task.spawn(C_42);
+task.spawn(C_43);
 
 return G2L["1"], require;
