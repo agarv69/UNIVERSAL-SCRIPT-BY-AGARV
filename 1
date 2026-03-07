@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 87 | Scripts: 15 | Modules: 0 | Tags: 0
+-- Instances: 88 | Scripts: 16 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -924,48 +924,53 @@ G2L["53"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["53"]["BackgroundTransparency"] = 1;
 G2L["53"]["Size"] = UDim2.new(0, 200, 0, 25);
 G2L["53"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["53"]["Text"] = [[Universal Script GUI  |  by agarvv]];
+G2L["53"]["Text"] = [[Universal Script GUI  |  by agarvv  |  60 fps]];
 G2L["53"]["Name"] = [[TITLE]];
 
 
+-- StarterGui.ScreenGui.MainFrame.TopBar.TITLEScript
+G2L["54"] = Instance.new("LocalScript", G2L["50"]);
+G2L["54"]["Name"] = [[TITLEScript]];
+
+
 -- StarterGui.ScreenGui.KeybindFrame
-G2L["54"] = Instance.new("Frame", G2L["1"]);
-G2L["54"]["BorderSizePixel"] = 0;
-G2L["54"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["54"]["Size"] = UDim2.new(0, 80, 0, 88);
-G2L["54"]["Position"] = UDim2.new(0.03924, 0, 0.11218, 0);
-G2L["54"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["54"]["Name"] = [[KeybindFrame]];
-G2L["54"]["BackgroundTransparency"] = 1;
+G2L["55"] = Instance.new("Frame", G2L["1"]);
+G2L["55"]["BorderSizePixel"] = 0;
+G2L["55"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["55"]["Size"] = UDim2.new(0, 80, 0, 88);
+G2L["55"]["Position"] = UDim2.new(0.03924, 0, 0.11218, 0);
+G2L["55"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["55"]["Name"] = [[KeybindFrame]];
+G2L["55"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.ScreenGui.KeybindFrame.ToggleUntoggleUI
-G2L["55"] = Instance.new("TextButton", G2L["54"]);
-G2L["55"]["TextSize"] = 14;
-G2L["55"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["55"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["55"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["55"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["55"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["55"]["Text"] = [[Toggle UI]];
-G2L["55"]["Name"] = [[ToggleUntoggleUI]];
+G2L["56"] = Instance.new("TextButton", G2L["55"]);
+G2L["56"]["TextSize"] = 14;
+G2L["56"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["56"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["56"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["56"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["56"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["56"]["Text"] = [[Toggle UI]];
+G2L["56"]["Name"] = [[ToggleUntoggleUI]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.UIListLayout
-G2L["56"] = Instance.new("UIListLayout", G2L["54"]);
-G2L["56"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+G2L["57"] = Instance.new("UIListLayout", G2L["55"]);
+G2L["57"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 
 -- StarterGui.ScreenGui.KeybindFrame.LockUnlockUI
-G2L["57"] = Instance.new("TextButton", G2L["54"]);
-G2L["57"]["TextSize"] = 14;
-G2L["57"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["57"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["57"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["57"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["57"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["57"]["Text"] = [[Lock UI]];
-G2L["57"]["Name"] = [[LockUnlockUI]];
+G2L["58"] = Instance.new("TextButton", G2L["55"]);
+G2L["58"]["TextSize"] = 14;
+G2L["58"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["58"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["58"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["58"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["58"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["58"]["Text"] = [[Lock UI]];
+G2L["58"]["Name"] = [[LockUnlockUI]];
 
 
 -- StarterGui.ScreenGui.MainFrame.SideBar.PageHandler
@@ -2764,5 +2769,30 @@ local script = G2L["51"];
 	MinimizeButton.MouseButton1Click:Connect(toggleMinimize)
 end;
 task.spawn(C_51);
+-- StarterGui.ScreenGui.MainFrame.TopBar.TITLEScript
+local function C_54()
+local script = G2L["54"];
+	local RunService = game:GetService("RunService")
+	
+	local TopRow = script.Parent
+	local Title = TopRow.TITLE
+	
+	local fps = 0
+	local frameCount = 0
+	local frameTimer = tick()
+	
+	RunService.RenderStepped:Connect(function()
+		frameCount += 1
+	
+		if (tick() - frameTimer) >= 1 then
+			fps = frameCount
+			frameTimer = tick()
+			frameCount = 0
+		end
+	
+		Title.Text = "Universal Script GUI | by agarvv | " .. fps .. " fps"
+	end)
+end;
+task.spawn(C_54);
 
 return G2L["1"], require;
