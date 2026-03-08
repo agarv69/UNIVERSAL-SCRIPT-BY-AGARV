@@ -460,23 +460,23 @@ G2L["2a"]["LayoutOrder"] = 4;
 G2L["2a"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainRightScroll.CharacterGroup.TpPlayerRow1.TpPlayerDropdown
-G2L["2b"] = Instance.new("TextButton", G2L["2a"]);
-G2L["2b"]["TextTransparency"] = 1;
-G2L["2b"]["TextSize"] = 14;
-G2L["2b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["2b"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 25);
-G2L["2b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["2b"]["Size"] = UDim2.new(0, 161, 0, 16);
-G2L["2b"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
-G2L["2b"]["Text"] = [[Dropdown]];
-G2L["2b"]["Name"] = [[TpPlayerDropdown]];
-G2L["2b"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
-
-
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainRightScroll.CharacterGroup.TpPlayerRow1.TpPlayerScript
-G2L["2c"] = Instance.new("LocalScript", G2L["2a"]);
-G2L["2c"]["Name"] = [[TpPlayerScript]];
+G2L["2b"] = Instance.new("LocalScript", G2L["2a"]);
+G2L["2b"]["Name"] = [[TpPlayerScript]];
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainRightScroll.CharacterGroup.TpPlayerRow1.TpPlayerDropdown
+G2L["2c"] = Instance.new("TextButton", G2L["2a"]);
+G2L["2c"]["TextTransparency"] = 1;
+G2L["2c"]["TextSize"] = 14;
+G2L["2c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2c"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 25);
+G2L["2c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["2c"]["Size"] = UDim2.new(0, 161, 0, 16);
+G2L["2c"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
+G2L["2c"]["Text"] = [[Dropdown]];
+G2L["2c"]["Name"] = [[TpPlayerDropdown]];
+G2L["2c"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainRightScroll.AntiGroup
@@ -1903,8 +1903,8 @@ local script = G2L["27"];
 end;
 task.spawn(C_27);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainRightScroll.CharacterGroup.TpPlayerRow1.TpPlayerScript
-local function C_2c()
-local script = G2L["2c"];
+local function C_2b()
+local script = G2L["2b"];
 	local Players = game:GetService("Players")
 	local UserInputService = game:GetService("UserInputService")
 	
@@ -1958,7 +1958,7 @@ local script = G2L["2c"];
 	panel.BorderSizePixel = 0
 	panel.Position = UDim2.new(0, 0, 0, 0)
 	panel.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
-	panel.ZIndex = 50
+	panel.ZIndex = 999
 	panel.Visible = false
 	panel.ClipsDescendants = false
 	panel.Parent = TpPlayerDropdown
@@ -2107,7 +2107,7 @@ local script = G2L["2c"];
 			rowBtn.MouseButton1Click:Connect(function()
 				selectedPlayer = p
 				TpPlayerRow1:SetAttribute("SelectedPlayer", p.Name)
-				buildList(searchBox.Text)
+				closeDropdown()
 			end)
 		end
 	
@@ -2120,8 +2120,6 @@ local script = G2L["2c"];
 		mainArrow.Visible = false
 		panel.Visible = true
 		searchBox.Text = ""
-		task.wait()
-		searchBox:CaptureFocus()
 		buildList("")
 	end
 	
@@ -2195,7 +2193,7 @@ local script = G2L["2c"];
 	
 	TpPlayerRow1:SetAttribute("SelectedPlayer", "")
 end;
-task.spawn(C_2c);
+task.spawn(C_2b);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainRightScroll.AntiGroup.AntiScript
 local function C_2e()
 local script = G2L["2e"];
