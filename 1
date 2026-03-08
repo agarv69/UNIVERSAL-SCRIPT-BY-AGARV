@@ -8065,7 +8065,13 @@ local script = G2L["d7"];
 												local savedValue = data[row.Name .. "_" .. child.Name]
 												if savedValue == "ON" and not isOn(child) then
 													pcall(function()
-														firesignal(child.MouseButton1Click)
+														if firesignal then
+															firesignal(child.MouseButton1Click)
+														elseif firebutton then
+															firebutton(child)
+														else
+															child.MouseButton1Click:Fire()
+														end
 													end)
 													task.wait(0.1)
 												end
