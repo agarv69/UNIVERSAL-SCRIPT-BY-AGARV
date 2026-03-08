@@ -7956,8 +7956,9 @@ local script = G2L["d7"];
 	
 	local FILE_NAME = "universalscript_save.txt"
 	local saveEnabled = false
-	local ACCENT = Color3.fromRGB(0, 123, 255)
+	local isApplyingLoad = false
 	local BLACK = Color3.new(0, 0, 0)
+	local ACCENT = Color3.fromRGB(0, 123, 255)
 	
 	local function getScreenGui()
 		local parent = SaveRow
@@ -7965,10 +7966,6 @@ local script = G2L["d7"];
 			if parent:IsA("ScreenGui") then return parent end
 			parent = parent.Parent
 		end
-	end
-	
-	local function getAccent()
-		return SettingsGroup.MainSettingsAccentColor.BackgroundColor3
 	end
 	
 	local function readFile()
@@ -7992,8 +7989,21 @@ local script = G2L["d7"];
 	end
 	
 	local function isOn(tickbox)
-		local c = tickbox.BackgroundColor3
-		return c ~= BLACK
+		return tickbox.BackgroundColor3 ~= BLACK
+	end
+	
+	local function loadSave()
+		local data = readFile()
+		if not data then return nil end
+		local decoded = {}
+		for line in data:gmatch("[^\n]+") do
+			local key, value = line:match("(.-)=(.+)")
+			if key and value then
+				decoded[key] = value
+			end
+		end
+		if decoded["saveEnabled"] ~= "true" then return nil end
+		return next(decoded) and decoded or nil
 	end
 	
 	local function saveData()
@@ -8032,22 +8042,9 @@ local script = G2L["d7"];
 		writeFile(table.concat(lines, "\n"))
 	end
 	
-	local function loadSave()
-		local data = readFile()
-		if not data then return nil end
-		local decoded = {}
-		for line in data:gmatch("[^\n]+") do
-			local key, value = line:match("(.-)=(.+)")
-			if key and value then
-				decoded[key] = value
-			end
-		end
-		if decoded["saveEnabled"] ~= "true" then return nil end
-		return next(decoded) and decoded or nil
-	end
-	
 	local function applyLoad(data)
-		if not data then return end
+		if not data or isApplyingLoad then return end
+		isApplyingLoad = true
 	
 		local contentArea = getScreenGui().MainFrame.ContentArea
 		task.wait(0.5)
@@ -8067,7 +8064,7 @@ local script = G2L["d7"];
 													pcall(function()
 														firesignal(child.MouseButton1Click)
 													end)
-													task.wait(0.1)
+													task.wait(0.15)
 												end
 											end
 											if child:IsA("TextBox") then
@@ -8085,9 +8082,11 @@ local script = G2L["d7"];
 				end
 			end
 		end
+	
+		task.wait(0.5)
+		isApplyingLoad = false
 	end
 	
-	-- Auto save loop
 	task.spawn(function()
 		while true do
 			task.wait(2)
@@ -8097,7 +8096,6 @@ local script = G2L["d7"];
 		end
 	end)
 	
-	-- Save on leave
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			saveData()
@@ -8112,7 +8110,7 @@ local script = G2L["d7"];
 	
 	SaveTickBox.MouseButton1Click:Connect(function()
 		saveEnabled = not saveEnabled
-		SaveTickBox.BackgroundColor3 = saveEnabled and getAccent() or BLACK
+		SaveTickBox.BackgroundColor3 = saveEnabled and ACCENT or BLACK
 		if saveEnabled then
 			saveData()
 		else
@@ -8120,13 +8118,12 @@ local script = G2L["d7"];
 		end
 	end)
 	
-	-- Auto load on script run
 	task.spawn(function()
 		task.wait(1.5)
 		local data = loadSave()
 		if not data then return end
 		saveEnabled = true
-		SaveTickBox.BackgroundColor3 = getAccent()
+		SaveTickBox.BackgroundColor3 = ACCENT
 		applyLoad(data)
 	end)
 end;
