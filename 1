@@ -2113,7 +2113,13 @@ local script = G2L["2b"];
 			rowBtn.MouseButton1Click:Connect(function()
 				selectedPlayer = p
 				TpPlayerRow1:SetAttribute("SelectedPlayer", p.Name)
-				closeDropdown()
+				isOpen = false
+				panel.Visible = false
+				mainLabel.Visible = true
+				mainArrow.Visible = true
+				mainArrow.Text = "▼"
+				mainLabel.Text = p.Name
+				mainLabel.TextColor3 = WHITE
 			end)
 		end
 	
