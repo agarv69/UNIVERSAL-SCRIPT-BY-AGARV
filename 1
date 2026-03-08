@@ -1951,17 +1951,23 @@ local script = G2L["2b"];
 	mainArrow.ZIndex = 2
 	mainArrow.Parent = TpPlayerDropdown
 	
-	-- Panel sits ON TOP of button at same position, overlaps it when open
+	local function getScreenGui()
+		local parent = TpPlayerRow1
+		while parent do
+			if parent:IsA("ScreenGui") then return parent end
+			parent = parent.Parent
+		end
+	end
+	
+	-- Panel parented to ScreenGui so it renders over everything
 	local panel = Instance.new("Frame")
 	panel.Name = "DropdownPanel"
 	panel.BackgroundColor3 = BG
 	panel.BorderSizePixel = 0
-	panel.Position = UDim2.new(0, 0, 0, 0)
-	panel.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
+	panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT)
 	panel.ZIndex = 999
 	panel.Visible = false
-	panel.ClipsDescendants = false
-	panel.Parent = TpPlayerDropdown
+	panel.Parent = getScreenGui()
 	
 	local panelStroke = Instance.new("UIStroke")
 	panelStroke.Color = BORDER
@@ -1981,7 +1987,7 @@ local script = G2L["2b"];
 	searchBox.Font = Enum.Font.Code
 	searchBox.TextXAlignment = Enum.TextXAlignment.Left
 	searchBox.ClearTextOnFocus = false
-	searchBox.ZIndex = 51
+	searchBox.ZIndex = 1000
 	searchBox.Parent = panel
 	
 	local searchPad = Instance.new("UIPadding")
@@ -1998,7 +2004,7 @@ local script = G2L["2b"];
 	searchArrow.TextSize = 14
 	searchArrow.Font = Enum.Font.Code
 	searchArrow.BorderSizePixel = 0
-	searchArrow.ZIndex = 52
+	searchArrow.ZIndex = 1001
 	searchArrow.Parent = panel
 	
 	local scrollFrame = Instance.new("ScrollingFrame")
@@ -2009,7 +2015,7 @@ local script = G2L["2b"];
 	scrollFrame.ScrollBarThickness = 2
 	scrollFrame.ScrollBarImageColor3 = BORDER
 	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-	scrollFrame.ZIndex = 51
+	scrollFrame.ZIndex = 1000
 	scrollFrame.Parent = panel
 	
 	local listLayout = Instance.new("UIListLayout")
@@ -2027,7 +2033,7 @@ local script = G2L["2b"];
 		local visibleRows = math.min(rowCount, MAX_ROWS)
 		local scrollH = visibleRows * ROW_HEIGHT
 		scrollFrame.Size = UDim2.new(1, 0, 0, scrollH)
-		panel.Size = UDim2.new(1, 0, 0, ROW_HEIGHT + scrollH)
+		panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT + scrollH)
 		scrollFrame.CanvasSize = UDim2.new(0, 0, 0, rowCount * ROW_HEIGHT)
 	end
 	
@@ -2062,7 +2068,7 @@ local script = G2L["2b"];
 			row.BackgroundColor3 = isSelected and HOVER or BG
 			row.BorderSizePixel = 0
 			row.LayoutOrder = i
-			row.ZIndex = 52
+			row.ZIndex = 1001
 			row.Parent = scrollFrame
 	
 			local thumb = Instance.new("ImageLabel")
@@ -2070,7 +2076,7 @@ local script = G2L["2b"];
 			thumb.Position = UDim2.new(1, -16, 0.5, -6)
 			thumb.BackgroundTransparency = 1
 			thumb.Image = getThumb(p.UserId)
-			thumb.ZIndex = 53
+			thumb.ZIndex = 1002
 			thumb.Parent = row
 	
 			local nameLabel = Instance.new("TextLabel")
@@ -2083,14 +2089,14 @@ local script = G2L["2b"];
 			nameLabel.Font = Enum.Font.Code
 			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 			nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
-			nameLabel.ZIndex = 53
+			nameLabel.ZIndex = 1002
 			nameLabel.Parent = row
 	
 			local rowBtn = Instance.new("TextButton")
 			rowBtn.Size = UDim2.new(1, 0, 1, 0)
 			rowBtn.BackgroundTransparency = 1
 			rowBtn.Text = ""
-			rowBtn.ZIndex = 54
+			rowBtn.ZIndex = 1003
 			rowBtn.Parent = row
 	
 			rowBtn.MouseEnter:Connect(function()
@@ -2118,7 +2124,13 @@ local script = G2L["2b"];
 		isOpen = true
 		mainLabel.Visible = false
 		mainArrow.Visible = false
+	
+		local absPos = TpPlayerDropdown.AbsolutePosition
+		local absSize = TpPlayerDropdown.AbsoluteSize
+		panel.Position = UDim2.new(0, absPos.X, 0, absPos.Y)
+		panel.Size = UDim2.new(0, absSize.X, 0, ROW_HEIGHT)
 		panel.Visible = true
+	
 		searchBox.Text = ""
 		buildList("")
 	end
