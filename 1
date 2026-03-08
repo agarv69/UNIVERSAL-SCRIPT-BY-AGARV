@@ -7908,12 +7908,12 @@ task.spawn(C_ca);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.SettingsPage.SettingsLeftSide.MainSettingsGroup.MainSettingsScript
 local function C_d1()
 local script = G2L["d1"];
-	local MiscGroup = script.Parent
-	local MiscMinimize = MiscGroup.MiscTitle.MiscMinimize
+	local MainSettingsGroup = script.Parent
+	local MainSettingsMinimize = MainSettingsGroup.MainSettingsTitle.MainSettingsMinimize
 	
 	local function getRows()
 		local rows = {}
-		for _, child in ipairs(MiscGroup:GetChildren()) do
+		for _, child in ipairs(MainSettingsGroup:GetChildren()) do
 			if child:IsA("Frame") and string.find(child.Name, "Row") then
 				table.insert(rows, child)
 			end
@@ -7922,24 +7922,24 @@ local script = G2L["d1"];
 	end
 	
 	local isMinimized = false
-	local originalSize = MiscGroup.Size
+	local originalSize = MainSettingsGroup.Size
 	local minimizedSize = UDim2.new(0, 170, 0, 20)
 	
-	MiscMinimize.MouseButton1Click:Connect(function()
+	MainSettingsMinimize.MouseButton1Click:Connect(function()
 		isMinimized = not isMinimized
 		local rows = getRows()
 		if isMinimized then
-			MiscGroup.Size = minimizedSize
+			MainSettingsGroup.Size = minimizedSize
 			for _, row in ipairs(rows) do
 				row.Visible = false
 			end
-			MiscMinimize.Text = "+"
+			MainSettingsMinimize.Text = "+"
 		else
-			MiscGroup.Size = originalSize
+			MainSettingsGroup.Size = originalSize
 			for _, row in ipairs(rows) do
 				row.Visible = true
 			end
-			MiscMinimize.Text = "-"
+			MainSettingsMinimize.Text = "-"
 		end
 	end)
 end;
@@ -8065,13 +8065,7 @@ local script = G2L["d7"];
 												local savedValue = data[row.Name .. "_" .. child.Name]
 												if savedValue == "ON" and not isOn(child) then
 													pcall(function()
-														if firesignal then
-															firesignal(child.MouseButton1Click)
-														elseif firebutton then
-															firebutton(child)
-														else
-															child.MouseButton1Click:Fire()
-														end
+														firesignal(child.MouseButton1Click)
 													end)
 													task.wait(0.1)
 												end
