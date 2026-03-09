@@ -2899,7 +2899,7 @@ G2L["106"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["106"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["106"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["106"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["106"]["Text"] = [[13]];
+G2L["106"]["Text"] = [[14]];
 G2L["106"]["Name"] = [[LockUnlockUI]];
 
 
@@ -7146,7 +7146,7 @@ local script = G2L["a3"];
 			local myChar = LocalPlayer.Character
 			local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
 			local maxDist = ESPGroup:GetAttribute("ESPMaxDist") or 1000
-			local useDisplay = ESPGroup.Parent.Parent:FindFirstChild("ESPSGroup") and ESPGroup.Parent.Parent.ESPSGroup:GetAttribute("UseDisplayName")
+			local useDisplay = ESPGroup.Parent.Parent:FindFirstChild("VisualRightSide") and ESPGroup.Parent.Parent.VisualRightSide:FindFirstChild("ESPSGroup") and ESPGroup.Parent.Parent.VisualRightSide.ESPSGroup:GetAttribute("UseDisplayName")
 			local showDist = ESPGroup:GetAttribute("ShowDist")
 			local espEnabled = ESPGroup:GetAttribute("ESPEnabled") ~= false
 			for plr, data in pairs(ESPGuis) do
@@ -7285,7 +7285,22 @@ local script = G2L["a3"];
 	if ESPGroup.Parent.Parent:FindFirstChild("ESPSGroup") then
 		ESPGroup.Parent.Parent.ESPSGroup:GetAttributeChangedSignal("UseDisplayName"):Connect(updateDisplayName)
 	end
-	
+	ESPGroup:GetAttributeChangedSignal("ESPEnabled"):Connect(function()
+		local espEnabled = ESPGroup:GetAttribute("ESPEnabled")
+		for plr, data in pairs(ESPGuis) do
+			if data and data.BillboardGui then
+				data.BillboardGui.Enabled = espEnabled and isEnabled
+			end
+		end
+	end)
+	ESPGroup.Parent.Parent.VisualRightSide.ESPSGroup:GetAttributeChangedSignal("UseDisplayName"):Connect(function()
+		local useDisplay = ESPGroup.Parent.Parent.VisualRightSide.ESPSGroup:GetAttribute("UseDisplayName")
+		for plr, data in pairs(ESPGuis) do
+			if data and data.NameLabel then
+				data.NameLabel.Text = useDisplay and plr.DisplayName or plr.Name
+			end
+		end
+	end)
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			disable()
@@ -7461,7 +7476,10 @@ local script = G2L["ac"];
 		end
 		ESPGroup:SetAttribute("ShowDist", isEnabled)
 	end)
-	
+	ESPGroup:GetAttributeChangedSignal("ESPEnabled"):Connect(function()
+		local espEnabled = ESPGroup:GetAttribute("ESPEnabled")
+		ESPGroup:SetAttribute("ShowDist", espEnabled and isEnabled)
+	end)
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			isEnabled = false
@@ -7677,7 +7695,14 @@ local script = G2L["b0"];
 			end
 		end
 	end)
-	
+	ESPGroup:GetAttributeChangedSignal("ESPEnabled"):Connect(function()
+		local espEnabled = ESPGroup:GetAttribute("ESPEnabled")
+		for plr, highlight in pairs(ESPGuis) do
+			if highlight and typeof(highlight) == "Instance" then
+				highlight.Enabled = espEnabled and isEnabled
+			end
+		end
+	end)
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			disable()
@@ -7801,19 +7826,6 @@ local script = G2L["bc"];
 		local espGroup = visualPage.VisualLeftSide:FindFirstChild("ESPGroup")
 		if espGroup then
 			espGroup:SetAttribute("ESPEnabled", isEnabled)
-			for _, row in pairs(espGroup:GetChildren()) do
-				if row:IsA("Frame") and string.find(row.Name, "Row") then
-					for _, child in pairs(row:GetChildren()) do
-						if child:IsA("LocalScript") then
-							if isEnabled then
-								child.Disabled = false
-							else
-								child.Disabled = true
-							end
-						end
-					end
-				end
-			end
 		end
 	end)
 	
