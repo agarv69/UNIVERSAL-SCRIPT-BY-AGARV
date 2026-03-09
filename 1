@@ -2899,7 +2899,7 @@ G2L["106"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["106"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["106"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["106"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["106"]["Text"] = [[10]];
+G2L["106"]["Text"] = [[11]];
 G2L["106"]["Name"] = [[LockUnlockUI]];
 
 
@@ -7165,7 +7165,16 @@ local script = G2L["a3"];
 						local dist = (myHRP.Position - targetHRP.Position).Magnitude
 						if dist <= maxDist then
 							data.BillboardGui.Enabled = true
-							data.NameLabel.Text = useDisplay and plr.DisplayName or plr.Name
+							local showDist = ESPGroup:GetAttribute("ShowDist")
+							local name = useDisplay and plr.DisplayName or plr.Name
+							local dist = myHRP and targetHRP and string.format("%.1f", (myHRP.Position - targetHRP.Position).Magnitude)
+							if isEnabled and showDist then
+								data.NameLabel.Text = name .. " | " .. dist
+							elseif isEnabled then
+								data.NameLabel.Text = name
+							elseif showDist then
+								data.NameLabel.Text = dist
+							end
 							data.NameLabel.TextColor3 = ESPColor
 						else
 							data.BillboardGui.Enabled = false
@@ -7254,7 +7263,7 @@ local script = G2L["a7"];
 	
 	local tooltipLabel = Instance.new("TextLabel")
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Maximum distance to show ESP on players, default is 1000"
+	tooltipLabel.Text = "Maximum distance to show ESP on players. Default is 1000, INF to see all players "
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -7309,30 +7318,11 @@ task.spawn(C_a7);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.VisualPage.VisualLeftSide.ESPGroup.ESPDistanceRow.ESPDistanceScript
 local function C_ac()
 local script = G2L["ac"];
-	local Players = game:GetService("Players")
-	local RunService = game:GetService("RunService")
-	local LocalPlayer = Players.LocalPlayer
-	
 	local ESPGroup = script.Parent.Parent
 	local ESPAccentColor = ESPGroup:WaitForChild("ESPAccentColor")
 	local ESPDistanceTickBox = script.Parent:WaitForChild("ESPDistanceTickBox")
 	
 	local isEnabled = false
-	local ESPColor = Color3.fromRGB(255, 255, 255)
-	local ESPGuis = {}
-	local renderConnection = nil
-	
-	ESPGroup:GetAttributeChangedSignal("ESPColor"):Connect(function()
-		local newColor = ESPGroup:GetAttribute("ESPColor")
-		if newColor then
-			ESPColor = newColor
-			for plr, data in pairs(ESPGuis) do
-				if data and data.DistLabel then
-					data.DistLabel.TextColor3 = newColor
-				end
-			end
-		end
-	end)
 	
 	local function getAccent()
 		return ESPAccentColor.BackgroundColor3
@@ -7369,7 +7359,7 @@ local script = G2L["ac"];
 	
 	local tooltipLabel = Instance.new("TextLabel")
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Shows distance to players under their character"
+	tooltipLabel.Text = "Shows distance to players next to their name"
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -7391,129 +7381,20 @@ local script = G2L["ac"];
 		tooltipFrame.Visible = false
 	end)
 	
-	local function createDistGui(targetPlayer)
-		local char = targetPlayer.Character
-		if not char then return end
-		local hrp = char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-	
-		local old = hrp:FindFirstChild("ESPDistGui_" .. targetPlayer.Name)
-		if old then old:Destroy() end
-	
-		local bb = Instance.new("BillboardGui")
-		bb.Name = "ESPDistGui_" .. targetPlayer.Name
-		bb.Size = UDim2.new(0, 200, 0, 30)
-		bb.StudsOffset = Vector3.new(0, -3, 0)
-		bb.ExtentsOffset = Vector3.new(0, -1, 0)
-		bb.Adornee = hrp
-		bb.AlwaysOnTop = true
-		bb.Enabled = true
-		bb.Parent = hrp
-	
-		local label = Instance.new("TextLabel")
-		label.Name = "DistLabel"
-		label.Size = UDim2.new(1, 0, 1, 0)
-		label.BackgroundTransparency = 1
-		label.Text = "0"
-		label.TextColor3 = ESPColor
-		label.TextStrokeTransparency = 0
-		label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-		label.TextSize = 14
-		label.Font = Enum.Font.GothamSemibold
-		label.Parent = bb
-	
-		ESPGuis[targetPlayer] = {BillboardGui = bb, DistLabel = label}
-	
-		local humanoid = char:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			humanoid.Died:Connect(function()
-				if ESPGuis[targetPlayer] and ESPGuis[targetPlayer].BillboardGui then
-					ESPGuis[targetPlayer].BillboardGui:Destroy()
-				end
-				ESPGuis[targetPlayer] = nil
-			end)
-		end
-	end
-	
-	local function removeDistGui(targetPlayer)
-		if ESPGuis[targetPlayer] then
-			if ESPGuis[targetPlayer].BillboardGui then
-				ESPGuis[targetPlayer].BillboardGui:Destroy()
-			end
-			ESPGuis[targetPlayer] = nil
-		end
-	end
-	
-	local function enable()
-		isEnabled = true
-		ESPDistanceTickBox.BackgroundColor3 = getAccent()
-		for _, plr in pairs(Players:GetPlayers()) do
-			if plr ~= LocalPlayer then
-				createDistGui(plr)
-				plr.CharacterAdded:Connect(function()
-					task.wait(0.5)
-					if isEnabled then createDistGui(plr) end
-				end)
-			end
-		end
-		renderConnection = RunService.RenderStepped:Connect(function()
-			local myChar = LocalPlayer.Character
-			local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
-			local maxDist = ESPGroup:GetAttribute("ESPMaxDist") or 1000
-			for plr, data in pairs(ESPGuis) do
-				if data and data.DistLabel and data.BillboardGui and myHRP then
-					local targetChar = plr.Character
-					local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-					if targetHRP then
-						local dist = (myHRP.Position - targetHRP.Position).Magnitude
-						local studsBelow = math.clamp(dist / 50, 2, 6)
-						data.BillboardGui.StudsOffset = Vector3.new(0, -studsBelow, 0)
-						if dist <= maxDist then
-							data.BillboardGui.Enabled = true
-							data.DistLabel.Text = string.format("%.1f", dist)
-							data.DistLabel.TextColor3 = ESPColor
-						else
-							data.BillboardGui.Enabled = false
-						end
-					end
-				end
-			end
-		end)
-	end
-	
-	local function disable()
-		isEnabled = false
-		ESPDistanceTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-		if renderConnection then
-			renderConnection:Disconnect()
-			renderConnection = nil
-		end
-		for plr in pairs(ESPGuis) do
-			removeDistGui(plr)
-		end
-	end
-	
-	Players.PlayerAdded:Connect(function(plr)
-		if isEnabled and plr ~= LocalPlayer then
-			createDistGui(plr)
-			plr.CharacterAdded:Connect(function()
-				task.wait(0.5)
-				if isEnabled then createDistGui(plr) end
-			end)
-		end
-	end)
-	
-	Players.PlayerRemoving:Connect(function(plr)
-		removeDistGui(plr)
-	end)
-	
 	ESPDistanceTickBox.MouseButton1Click:Connect(function()
-		if isEnabled then disable() else enable() end
+		isEnabled = not isEnabled
+		if isEnabled then
+			ESPDistanceTickBox.BackgroundColor3 = getAccent()
+		else
+			ESPDistanceTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+		end
+		ESPGroup:SetAttribute("ShowDist", isEnabled)
 	end)
 	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
-			disable()
+			isEnabled = false
+			ESPGroup:SetAttribute("ShowDist", false)
 			tooltipFrame:Destroy()
 		end
 	end)
