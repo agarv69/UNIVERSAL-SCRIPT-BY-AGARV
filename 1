@@ -2899,7 +2899,7 @@ G2L["106"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["106"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["106"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["106"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["106"]["Text"] = [[9]];
+G2L["106"]["Text"] = [[10]];
 G2L["106"]["Name"] = [[LockUnlockUI]];
 
 
@@ -7280,14 +7280,21 @@ local script = G2L["a7"];
 	ESPMaxDistChanger.PlaceholderText = tostring(defaultDist)
 	
 	ESPMaxDistChanger.FocusLost:Connect(function()
-		local num = tonumber(ESPMaxDistChanger.Text)
-		if num and num > 0 then
-			num = math.clamp(num, 1, 100000)
-			ESPGroup:SetAttribute("ESPMaxDist", num)
-			ESPMaxDistChanger.PlaceholderText = tostring(num)
+		local input = ESPMaxDistChanger.Text
+		if input:lower() == "inf" then
+			ESPGroup:SetAttribute("ESPMaxDist", math.huge)
+			ESPMaxDistChanger.PlaceholderText = "inf"
 			ESPMaxDistChanger.Text = ""
 		else
-			ESPMaxDistChanger.Text = ""
+			local num = tonumber(input)
+			if num and num > 0 then
+				num = math.clamp(num, 1, 100000)
+				ESPGroup:SetAttribute("ESPMaxDist", num)
+				ESPMaxDistChanger.PlaceholderText = tostring(num)
+				ESPMaxDistChanger.Text = ""
+			else
+				ESPMaxDistChanger.Text = ""
+			end
 		end
 	end)
 	
@@ -7312,28 +7319,20 @@ local script = G2L["ac"];
 	
 	local isEnabled = false
 	local ESPColor = Color3.fromRGB(255, 255, 255)
+	local ESPGuis = {}
+	local renderConnection = nil
 	
 	ESPGroup:GetAttributeChangedSignal("ESPColor"):Connect(function()
 		local newColor = ESPGroup:GetAttribute("ESPColor")
 		if newColor then
 			ESPColor = newColor
 			for plr, data in pairs(ESPGuis) do
-				if data then
-					if data.NameLabel then
-						data.NameLabel.TextColor3 = newColor
-					end
-					if data.DistLabel then
-						data.DistLabel.TextColor3 = newColor
-					end
-					if typeof(data) == "Instance" and data:IsA("Highlight") then
-						data.OutlineColor = newColor
-					end
+				if data and data.DistLabel then
+					data.DistLabel.TextColor3 = newColor
 				end
 			end
 		end
 	end)
-	local ESPGuis = {}
-	local renderConnection = nil
 	
 	local function getAccent()
 		return ESPAccentColor.BackgroundColor3
@@ -7405,6 +7404,7 @@ local script = G2L["ac"];
 		bb.Name = "ESPDistGui_" .. targetPlayer.Name
 		bb.Size = UDim2.new(0, 200, 0, 30)
 		bb.StudsOffset = Vector3.new(0, -3, 0)
+		bb.ExtentsOffset = Vector3.new(0, -1, 0)
 		bb.Adornee = hrp
 		bb.AlwaysOnTop = true
 		bb.Enabled = true
@@ -7459,17 +7459,19 @@ local script = G2L["ac"];
 		renderConnection = RunService.RenderStepped:Connect(function()
 			local myChar = LocalPlayer.Character
 			local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+			local maxDist = ESPGroup:GetAttribute("ESPMaxDist") or 1000
 			for plr, data in pairs(ESPGuis) do
-				if data and data.DistLabel and myHRP then
+				if data and data.DistLabel and data.BillboardGui and myHRP then
 					local targetChar = plr.Character
 					local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
 					if targetHRP then
 						local dist = (myHRP.Position - targetHRP.Position).Magnitude
-						local maxDist = ESPGroup:GetAttribute("ESPMaxDist") or 1000
+						local studsBelow = math.clamp(dist / 50, 2, 6)
+						data.BillboardGui.StudsOffset = Vector3.new(0, -studsBelow, 0)
 						if dist <= maxDist then
+							data.BillboardGui.Enabled = true
 							data.DistLabel.Text = string.format("%.1f", dist)
 							data.DistLabel.TextColor3 = ESPColor
-							data.BillboardGui.Enabled = true
 						else
 							data.BillboardGui.Enabled = false
 						end
@@ -7823,6 +7825,19 @@ local script = G2L["bc"];
 		local espGroup = visualPage.VisualLeftSide:FindFirstChild("ESPGroup")
 		if espGroup then
 			espGroup:SetAttribute("ESPEnabled", isEnabled)
+			for _, row in pairs(espGroup:GetChildren()) do
+				if row:IsA("Frame") and string.find(row.Name, "Row") then
+					for _, child in pairs(row:GetChildren()) do
+						if child:IsA("LocalScript") then
+							if isEnabled then
+								child.Disabled = false
+							else
+								child.Disabled = true
+							end
+						end
+					end
+				end
+			end
 		end
 	end)
 	
