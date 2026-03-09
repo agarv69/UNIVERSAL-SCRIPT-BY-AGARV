@@ -2899,7 +2899,7 @@ G2L["106"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["106"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["106"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["106"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["106"]["Text"] = [[12]];
+G2L["106"]["Text"] = [[13]];
 G2L["106"]["Name"] = [[LockUnlockUI]];
 
 
@@ -7148,6 +7148,7 @@ local script = G2L["a3"];
 			local maxDist = ESPGroup:GetAttribute("ESPMaxDist") or 1000
 			local useDisplay = ESPGroup.Parent.Parent:FindFirstChild("ESPSGroup") and ESPGroup.Parent.Parent.ESPSGroup:GetAttribute("UseDisplayName")
 			local showDist = ESPGroup:GetAttribute("ShowDist")
+			local espEnabled = ESPGroup:GetAttribute("ESPEnabled") ~= false
 			for plr, data in pairs(ESPGuis) do
 				if data and data.NameLabel and data.BillboardGui then
 					local targetChar = plr.Character
@@ -7156,7 +7157,7 @@ local script = G2L["a3"];
 						local dist = (myHRP.Position - targetHRP.Position).Magnitude
 						local distText = string.format("%.1f", dist)
 						local name = useDisplay and plr.DisplayName or plr.Name
-						if dist <= maxDist then
+						if dist <= maxDist and espEnabled and (isEnabled or showDist) then
 							data.BillboardGui.Enabled = true
 							if isEnabled and showDist then
 								data.NameLabel.Text = name .. " | " .. distText
@@ -7164,8 +7165,6 @@ local script = G2L["a3"];
 								data.NameLabel.Text = name
 							elseif showDist then
 								data.NameLabel.Text = distText
-							else
-								data.BillboardGui.Enabled = false
 							end
 							data.NameLabel.TextColor3 = ESPColor
 						else
@@ -7200,7 +7199,8 @@ local script = G2L["a3"];
 		isEnabled = false
 		ESPNameTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 		local showDist = ESPGroup:GetAttribute("ShowDist")
-		if not showDist then
+		local espEnabled = ESPGroup:GetAttribute("ESPEnabled") ~= false
+		if not showDist or not espEnabled then
 			if renderConnection then
 				renderConnection:Disconnect()
 				renderConnection = nil
@@ -7233,6 +7233,7 @@ local script = G2L["a3"];
 	
 	ESPGroup:GetAttributeChangedSignal("ShowDist"):Connect(function()
 		local showDist = ESPGroup:GetAttribute("ShowDist")
+		local espEnabled = ESPGroup:GetAttribute("ESPEnabled") ~= false
 		if not isEnabled and not showDist then
 			if renderConnection then
 				renderConnection:Disconnect()
@@ -7241,7 +7242,7 @@ local script = G2L["a3"];
 			for plr in pairs(ESPGuis) do
 				removeNameGui(plr)
 			end
-		elseif not isEnabled and showDist then
+		elseif not isEnabled and showDist and espEnabled then
 			for _, plr in pairs(Players:GetPlayers()) do
 				if plr ~= LocalPlayer then
 					createNameGui(plr)
@@ -7250,6 +7251,40 @@ local script = G2L["a3"];
 			startRender()
 		end
 	end)
+	
+	ESPGroup:GetAttributeChangedSignal("ESPEnabled"):Connect(function()
+		local espEnabled = ESPGroup:GetAttribute("ESPEnabled") ~= false
+		if not espEnabled then
+			if renderConnection then
+				renderConnection:Disconnect()
+				renderConnection = nil
+			end
+			for plr in pairs(ESPGuis) do
+				removeNameGui(plr)
+			end
+		elseif not isEnabled and not ESPGroup:GetAttribute("ShowDist") then
+			for _, plr in pairs(Players:GetPlayers()) do
+				if plr ~= LocalPlayer then
+					createNameGui(plr)
+				end
+			end
+			startRender()
+		end
+	end)
+	
+	local function updateDisplayName()
+		local useDisplay = ESPGroup.Parent.Parent:FindFirstChild("ESPSGroup") and ESPGroup.Parent.Parent.ESPSGroup:GetAttribute("UseDisplayName")
+		for plr, data in pairs(ESPGuis) do
+			if data and data.NameLabel then
+				local name = useDisplay and plr.DisplayName or plr.Name
+				data.NameLabel.Text = name
+			end
+		end
+	end
+	
+	if ESPGroup.Parent.Parent:FindFirstChild("ESPSGroup") then
+		ESPGroup.Parent.Parent.ESPSGroup:GetAttributeChangedSignal("UseDisplayName"):Connect(updateDisplayName)
+	end
 	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
@@ -7546,7 +7581,11 @@ local script = G2L["b0"];
 		highlight.Enabled = true
 	
 		RunService.RenderStepped:Connect(function()
-			if not isEnabled then return end
+			local espEnabled = ESPGroup:GetAttribute("ESPEnabled") ~= false
+			if not isEnabled or not espEnabled then
+				highlight.Enabled = false
+				return
+			end
 			local myChar = LocalPlayer.Character
 			local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
 			local targetChar = targetPlayer.Character
@@ -7596,8 +7635,11 @@ local script = G2L["b0"];
 	local function disable()
 		isEnabled = false
 		ESPOutlineTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-		for plr in pairs(ESPGuis) do
-			removeOutline(plr)
+		local espEnabled = ESPGroup:GetAttribute("ESPEnabled") ~= false
+		if not espEnabled then
+			for plr in pairs(ESPGuis) do
+				removeOutline(plr)
+			end
 		end
 	end
 	
@@ -7617,6 +7659,23 @@ local script = G2L["b0"];
 	
 	ESPOutlineTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then disable() else enable() end
+	end)
+	
+	ESPGroup:GetAttributeChangedSignal("ESPEnabled"):Connect(function()
+		local espEnabled = ESPGroup:GetAttribute("ESPEnabled") ~= false
+		if not espEnabled then
+			for plr in pairs(ESPGuis) do
+				removeOutline(plr)
+			end
+		elseif isEnabled then
+			for _, plr in pairs(Players:GetPlayers()) do
+				if plr ~= LocalPlayer then
+					if not ESPGuis[plr] then
+						createOutline(plr)
+					end
+				end
+			end
+		end
 	end)
 	
 	script.AncestryChanged:Connect(function()
