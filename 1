@@ -2899,7 +2899,7 @@ G2L["106"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["106"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["106"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["106"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["106"]["Text"] = [[8]];
+G2L["106"]["Text"] = [[9]];
 G2L["106"]["Name"] = [[LockUnlockUI]];
 
 
@@ -7011,33 +7011,25 @@ local script = G2L["a3"];
 	local LocalPlayer = Players.LocalPlayer
 	
 	local ESPGroup = script.Parent.Parent
-	local ESPAccentColor = ESPGroup.ESPAccentColor
-	local ESPNameTickBox = script.Parent.ESPNameTickBox
+	local ESPAccentColor = ESPGroup:WaitForChild("ESPAccentColor")
+	local ESPNameTickBox = script.Parent:WaitForChild("ESPNameTickBox")
 	
 	local isEnabled = false
 	local ESPColor = Color3.fromRGB(255, 255, 255)
+	local ESPGuis = {}
+	local renderConnection = nil
 	
 	ESPGroup:GetAttributeChangedSignal("ESPColor"):Connect(function()
 		local newColor = ESPGroup:GetAttribute("ESPColor")
 		if newColor then
 			ESPColor = newColor
 			for plr, data in pairs(ESPGuis) do
-				if data then
-					if data.NameLabel then
-						data.NameLabel.TextColor3 = newColor
-					end
-					if data.DistLabel then
-						data.DistLabel.TextColor3 = newColor
-					end
-					if typeof(data) == "Instance" and data:IsA("Highlight") then
-						data.OutlineColor = newColor
-					end
+				if data and data.NameLabel then
+					data.NameLabel.TextColor3 = newColor
 				end
 			end
 		end
 	end)
-	local ESPGuis = {}
-	local renderConnection = nil
 	
 	local function getAccent()
 		return ESPAccentColor.BackgroundColor3
@@ -7059,16 +7051,19 @@ local script = G2L["a3"];
 	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
 	tooltipFrame.Visible = false
 	tooltipFrame.Parent = getScreenGui()
+	
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Color3.fromRGB(57, 57, 57)
 	stroke.Thickness = 1
 	stroke.Parent = tooltipFrame
+	
 	local padding = Instance.new("UIPadding")
 	padding.PaddingTop = UDim.new(0, 6)
 	padding.PaddingBottom = UDim.new(0, 6)
 	padding.PaddingLeft = UDim.new(0, 6)
 	padding.PaddingRight = UDim.new(0, 6)
 	padding.Parent = tooltipFrame
+	
 	local tooltipLabel = Instance.new("TextLabel")
 	tooltipLabel.BackgroundTransparency = 1
 	tooltipLabel.Text = "Shows player names above their character"
@@ -7157,17 +7152,25 @@ local script = G2L["a3"];
 				end)
 			end
 		end
-		renderConnection = game:GetService("RunService").RenderStepped:Connect(function()
+		renderConnection = RunService.RenderStepped:Connect(function()
+			local myChar = LocalPlayer.Character
+			local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+			local maxDist = ESPGroup:GetAttribute("ESPMaxDist") or 1000
+			local useDisplay = ESPGroup.Parent.Parent:FindFirstChild("ESPSGroup") and ESPGroup.Parent.Parent.ESPSGroup:GetAttribute("UseDisplayName")
 			for plr, data in pairs(ESPGuis) do
-				local maxDist = ESPGroup:GetAttribute("ESPMaxDist") or 1000
-				local targetChar = plr.Character
-				local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-				if data and data.NameLabel and myHRP and targetHRP and (myHRP.Position - targetHRP.Position).Magnitude <= maxDist then
-				elseif data and data.BillboardGui then
-					data.BillboardGui.Enabled = false
-					local useDisplay = ESPGroup.Parent.Parent:FindFirstChild("ESPSGroup") and ESPGroup.Parent.Parent.ESPSGroup:GetAttribute("UseDisplayName")
-					data.NameLabel.Text = useDisplay and plr.DisplayName or plr.Name
-					data.NameLabel.TextColor3 = ESPColor
+				if data and data.NameLabel and data.BillboardGui then
+					local targetChar = plr.Character
+					local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+					if myHRP and targetHRP then
+						local dist = (myHRP.Position - targetHRP.Position).Magnitude
+						if dist <= maxDist then
+							data.BillboardGui.Enabled = true
+							data.NameLabel.Text = useDisplay and plr.DisplayName or plr.Name
+							data.NameLabel.TextColor3 = ESPColor
+						else
+							data.BillboardGui.Enabled = false
+						end
+					end
 				end
 			end
 		end)
@@ -7180,7 +7183,7 @@ local script = G2L["a3"];
 			renderConnection:Disconnect()
 			renderConnection = nil
 		end
-		for plr, _ in pairs(ESPGuis) do
+		for plr in pairs(ESPGuis) do
 			removeNameGui(plr)
 		end
 	end
@@ -7215,7 +7218,11 @@ task.spawn(C_a3);
 local function C_a7()
 local script = G2L["a7"];
 	local ESPGroup = script.Parent.Parent
-	local ESPMaxDistTickBox = script.Parent:WaitForChild("ESPMaxDistTickBox")
+	local ESPMaxDistRow = script.Parent
+	local ESPMaxDistTickBox = ESPMaxDistRow:WaitForChild("ESPMaxDistTickBox")
+	local ESPMaxDistChanger = ESPMaxDistRow:WaitForChild("ESPMaxDistChanger")
+	
+	local defaultDist = 1000
 	
 	local function getScreenGui()
 		local parent = ESPGroup
@@ -7269,8 +7276,24 @@ local script = G2L["a7"];
 		tooltipFrame.Visible = false
 	end)
 	
+	ESPGroup:SetAttribute("ESPMaxDist", defaultDist)
+	ESPMaxDistChanger.PlaceholderText = tostring(defaultDist)
+	
+	ESPMaxDistChanger.FocusLost:Connect(function()
+		local num = tonumber(ESPMaxDistChanger.Text)
+		if num and num > 0 then
+			num = math.clamp(num, 1, 100000)
+			ESPGroup:SetAttribute("ESPMaxDist", num)
+			ESPMaxDistChanger.PlaceholderText = tostring(num)
+			ESPMaxDistChanger.Text = ""
+		else
+			ESPMaxDistChanger.Text = ""
+		end
+	end)
+	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
+			ESPGroup:SetAttribute("ESPMaxDist", 1000)
 			tooltipFrame:Destroy()
 		end
 	end)
@@ -7724,11 +7747,10 @@ task.spawn(C_b6);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.VisualPage.VisualRightSide.ESPSGroup.ESPEnableRow.ESPEnableScript
 local function C_bc()
 local script = G2L["bc"];
-	local ESPSGroup = script.Parent
+	local ESPSGroup = script.Parent.Parent
 	local ESPSAccentColor = ESPSGroup.ESPSAccentColor
 	
-	local ESPEnableRow = ESPSGroup.ESPEnableRow
-	local ESPEnableTickBox = ESPEnableRow.ESPEnableTickBox
+	local ESPEnableTickBox = script.Parent:WaitForChild("ESPEnableTickBox")
 	
 	local isEnabled = false
 	
@@ -7768,7 +7790,7 @@ local script = G2L["bc"];
 	
 	local tooltipText = Instance.new("TextLabel")
 	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Enable or disable ESP."
+	tooltipText.Text = "Enable or disable ESP"
 	tooltipText.TextColor3 = Color3.new(1, 1, 1)
 	tooltipText.TextSize = 14
 	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
@@ -7797,9 +7819,20 @@ local script = G2L["bc"];
 		else
 			ESPEnableTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 		end
-		ESPSGroup.Parent.Parent:SetAttribute("ESPEnabled", isEnabled)
+		local visualPage = ESPSGroup.Parent.Parent
+		local espGroup = visualPage.VisualLeftSide:FindFirstChild("ESPGroup")
+		if espGroup then
+			espGroup:SetAttribute("ESPEnabled", isEnabled)
+		end
 	end)
 	
+	ESPEnableTickBox.BackgroundColor3 = getAccent()
+	isEnabled = true
+	local visualPage = ESPSGroup.Parent.Parent
+	local espGroup = visualPage.VisualLeftSide:FindFirstChild("ESPGroup")
+	if espGroup then
+		espGroup:SetAttribute("ESPEnabled", true)
+	end
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			tooltipFrame:Destroy()
