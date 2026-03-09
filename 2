@@ -3239,7 +3239,7 @@ G2L["122"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["122"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["122"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["122"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["122"]["Text"] = [[2]];
+G2L["122"]["Text"] = [[3]];
 G2L["122"]["Name"] = [[LockUnlockUI]];
 
 
@@ -9256,7 +9256,7 @@ local script = G2L["fc"];
 	
 				local target = nil
 				for _, v in pairs(workspace:GetDescendants()) do
-					if v:IsA("BasePart") and v ~= character.HumanoidRootPart and v.Anchored then
+					if v:IsA("BasePart") and not v:IsDescendantOf(character) and v.CanCollide then
 						target = v
 						break
 					end
