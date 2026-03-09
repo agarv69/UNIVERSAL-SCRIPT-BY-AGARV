@@ -2813,24 +2813,24 @@ G2L["fa"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["fa"]["Text"] = [[]];
 
 
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.MainGroup.BkitFixRow
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.MainGroup.BKitFixRow
 G2L["fb"] = Instance.new("Frame", G2L["f0"]);
 G2L["fb"]["BorderSizePixel"] = 0;
 G2L["fb"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["fb"]["Size"] = UDim2.new(0, 169, 0, 20);
 G2L["fb"]["Position"] = UDim2.new(0.00294, 0, 0.175, 0);
 G2L["fb"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["fb"]["Name"] = [[BkitFixRow]];
+G2L["fb"]["Name"] = [[BKitFixRow]];
 G2L["fb"]["LayoutOrder"] = 10;
 G2L["fb"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.MainGroup.BkitFixRow.BkitFixScript
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.MainGroup.BKitFixRow.BKitFixScript
 G2L["fc"] = Instance.new("LocalScript", G2L["fb"]);
-G2L["fc"]["Name"] = [[BkitFixScript]];
+G2L["fc"]["Name"] = [[BKitFixScript]];
 
 
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.MainGroup.BkitFixRow.BkitFixButton
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.MainGroup.BKitFixRow.BKitFixButton
 G2L["fd"] = Instance.new("TextButton", G2L["fb"]);
 G2L["fd"]["TextSize"] = 14;
 G2L["fd"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
@@ -2839,7 +2839,7 @@ G2L["fd"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]],
 G2L["fd"]["Size"] = UDim2.new(0, 161, 0, 16);
 G2L["fd"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["fd"]["Text"] = [[Fix Bkit]];
-G2L["fd"]["Name"] = [[BkitFixButton]];
+G2L["fd"]["Name"] = [[BKitFixButton]];
 G2L["fd"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
 
@@ -9220,7 +9220,7 @@ local script = G2L["f7"];
 	end)
 end;
 task.spawn(C_f7);
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.MainGroup.BkitFixRow.BkitFixScript
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.MainGroup.BKitFixRow.BKitFixScript
 local function C_fc()
 local script = G2L["fc"];
 	local Players = game:GetService("Players")
@@ -9235,20 +9235,31 @@ local script = G2L["fc"];
 	
 		task.spawn(function()
 			local success, err = pcall(function()
-				for _, v in pairs(LocalPlayer.Character:GetChildren()) do
-					if v:HasTag("The Chosen One by TomazDev") then
-						v.Script.Enabled = false
-						task.wait()
-						v.Script.Enabled = true
-					end
+				local rs = game:GetService("ReplicatedStorage")
+	
+				if not rs:FindFirstChild("Brick") then
+					local brick = Instance.new("Part")
+					brick.Name = "Brick"
+					brick.Parent = rs
 				end
-				for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
-					if v:HasTag("The Chosen One by TomazDev") then
-						v.Script.Enabled = false
-						task.wait()
-						v.Script.Enabled = true
-					end
+	
+				local character = LocalPlayer.Character
+				if not character then error("No character") end
+	
+				local buildTool = character:FindFirstChild("Build") or LocalPlayer.Backpack:FindFirstChild("Build")
+				if not buildTool then error("No build tool") end
+	
+				if buildTool.Parent == LocalPlayer.Backpack then
+					buildTool.Parent = character
+					task.wait(0.1)
 				end
+	
+				buildTool.Script.Event:FireServer(
+					rs.Brick,
+					Enum.NormalId.Top,
+					character.HumanoidRootPart.Position + Vector3.new(0, 5, 0),
+					"normal"
+				)
 			end)
 	
 			if success then
