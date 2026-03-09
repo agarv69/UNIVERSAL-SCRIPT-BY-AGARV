@@ -3208,10 +3208,10 @@ G2L["11f"] = Instance.new("Frame", G2L["1"]);
 G2L["11f"]["BorderSizePixel"] = 0;
 G2L["11f"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["11f"]["Size"] = UDim2.new(0, 80, 0, 88);
-G2L["11f"]["Position"] = UDim2.new(0.03924, 0, 0.11218, 0);
+G2L["11f"]["Position"] = UDim2.new(0.86136, 0, 0.14277, 0);
 G2L["11f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["11f"]["Name"] = [[KeybindFrame]];
-G2L["11f"]["BackgroundTransparency"] = 1;
+G2L["11f"]["BackgroundTransparency"] = 0.9;
 
 
 -- StarterGui.ScreenGui.KeybindFrame.ToggleUntoggleUI
@@ -3239,7 +3239,7 @@ G2L["122"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["122"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["122"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["122"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["122"]["Text"] = [[Lock UI]];
+G2L["122"]["Text"] = [[3]];
 G2L["122"]["Name"] = [[LockUnlockUI]];
 
 
@@ -9254,8 +9254,18 @@ local script = G2L["fc"];
 					task.wait(0.1)
 				end
 	
+				local target = nil
+				for _, v in pairs(workspace:GetDescendants()) do
+					if v:IsA("BasePart") and not v:IsDescendantOf(character) and v.CanCollide then
+						target = v
+						break
+					end
+				end
+	
+				if not target then error("No target part found") end
+	
 				buildTool.Script.Event:FireServer(
-					workspace.Terrain,
+					target,
 					Enum.NormalId.Top,
 					character.HumanoidRootPart.Position + Vector3.new(0, 5, 0),
 					"normal"
