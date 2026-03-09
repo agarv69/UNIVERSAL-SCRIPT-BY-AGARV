@@ -3239,7 +3239,7 @@ G2L["122"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["122"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["122"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["122"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["122"]["Text"] = [[1]];
+G2L["122"]["Text"] = [[2]];
 G2L["122"]["Name"] = [[LockUnlockUI]];
 
 
@@ -9242,6 +9242,34 @@ local script = G2L["fc"];
 					brick.Name = "Brick"
 					brick.Parent = rs
 				end
+	
+				local character = LocalPlayer.Character
+				if not character then error("No character") end
+	
+				local buildTool = character:FindFirstChild("Build") or LocalPlayer.Backpack:FindFirstChild("Build")
+				if not buildTool then error("No build tool") end
+	
+				if buildTool.Parent == LocalPlayer.Backpack then
+					buildTool.Parent = character
+					task.wait(0.1)
+				end
+	
+				local target = nil
+				for _, v in pairs(workspace:GetDescendants()) do
+					if v:IsA("BasePart") and v ~= character.HumanoidRootPart and v.Anchored then
+						target = v
+						break
+					end
+				end
+	
+				if not target then error("No target part found") end
+	
+				buildTool.Script.Event:FireServer(
+					target,
+					Enum.NormalId.Top,
+					character.HumanoidRootPart.Position + Vector3.new(0, 5, 0),
+					"normal"
+				)
 			end)
 	
 			if success then
