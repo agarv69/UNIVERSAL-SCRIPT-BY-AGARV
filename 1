@@ -3022,7 +3022,7 @@ G2L["111"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["111"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["111"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["111"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["111"]["Text"] = [[24]];
+G2L["111"]["Text"] = [[25]];
 G2L["111"]["Name"] = [[LockUnlockUI]];
 
 
@@ -5103,6 +5103,7 @@ local script = G2L["52"];
 	local MiscAccentColor = MiscGroup.MiscAccentColor
 	
 	local player = game.Players.LocalPlayer
+	local UserGameSettings = UserSettings():GetService("UserGameSettings")
 	
 	-- ============================================================
 	-- SCREENGUI HELPER
@@ -5161,49 +5162,132 @@ local script = G2L["52"];
 	end)
 	
 	-- ============================================================
-	-- ORIGINAL BUTTON TEXT (saved so we can restore it)
+	-- BUTTON TEXT HELPERS
 	-- ============================================================
 	local originalText = WWalkButton.Text
 	
-	local function setButtonText(text)
+	-- TextScaled for the "Executed!" state (change true/false here)
+	local EXECUTED_TEXT_SCALED = true
+	
+	local function setButtonText(text, useTextScaled)
 		WWalkButton.Text = text
 		WWalkButton.Font = Enum.Font.Inconsolata
+		WWalkButton.TextScaled = useTextScaled or false
 	end
 	
 	local function resetButtonText()
 		WWalkButton.Text = originalText
 		WWalkButton.Font = Enum.Font.Inconsolata
+		WWalkButton.TextScaled = false
+	end
+	
+	-- ============================================================
+	-- STATE
+	-- ============================================================
+	local isExecuted = false   -- true after a successful execute
+	local debounce = false
+	
+	-- ============================================================
+	-- RESET / DEATH DETECTION  (restores button when character resets)
+	-- ============================================================
+	local function onCharacterAdded()
+		isExecuted = false
+		debounce = false
+		resetButtonText()
+	
+		-- Restore camera zoom so character doesn't go invisible on zoom-in.
+		-- CameraMinZoomDistance is set to 2.5 so the player can never zoom
+		-- close enough (<2 studs) to trigger the transparency fade-out.
+		-- If you want to allow zooming closer, lower this number (minimum ~2.1).
+		-- If you want to allow zooming further, raise CameraMaxZoomDistance.
+		player.CameraMinZoomDistance = 2.5   -- << change this to adjust min zoom
+		player.CameraMaxZoomDistance = 128   -- << change this to adjust max zoom
+	end
+	
+	player.CharacterAdded:Connect(onCharacterAdded)
+	
+	-- ============================================================
+	-- CAMERA / SENSITIVITY RESTORE ON RESET
+	-- ============================================================
+	-- Save the player's real settings BEFORE the script messes with them.
+	-- These are captured at script startup (before Execute is ever clicked).
+	local savedMinZoom    = player.CameraMinZoomDistance
+	local savedMaxZoom    = player.CameraMaxZoomDistance
+	
+	-- CAMERA SENSITIVITY:
+	-- The wall walk script can change GamepadCameraSensitivity.
+	-- We save it here so we can restore it after reset.
+	-- If your sensitivity still feels wrong after reset, manually set
+	-- MANUAL_SENSITIVITY below to a number between 0 and 10 (default Roblox = 2),
+	-- then change USE_MANUAL_SENSITIVITY to true.
+	local USE_MANUAL_SENSITIVITY = false   -- << set to true to force a fixed sens
+	local MANUAL_SENSITIVITY     = 2       -- << change this number (0–10) if needed
+	local savedSensitivity = UserGameSettings.GamepadCameraSensitivity
+	
+	local function restoreCamera()
+		player.CameraMinZoomDistance = savedMinZoom
+		player.CameraMaxZoomDistance = savedMaxZoom
+		if USE_MANUAL_SENSITIVITY then
+			UserGameSettings.GamepadCameraSensitivity = MANUAL_SENSITIVITY
+		else
+			UserGameSettings.GamepadCameraSensitivity = savedSensitivity
+		end
 	end
 	
 	-- ============================================================
 	-- BUTTON CLICK
 	-- ============================================================
-	local debounce = false
-	
 	WWalkButton.MouseButton1Click:Connect(function()
+	
+		-- If currently showing "Executed!" text, clicking just resets the text
+		-- without running the script again
+		if isExecuted then
+			isExecuted = false
+			debounce = false
+			resetButtonText()
+			return
+		end
+	
 		if debounce then return end
 		debounce = true
+	
+		-- Save camera state right before executing in case it wasn't saved yet
+		savedMinZoom   = player.CameraMinZoomDistance
+		savedMaxZoom   = player.CameraMaxZoomDistance
+		savedSensitivity = UserGameSettings.GamepadCameraSensitivity
 	
 		local ok, err = pcall(function()
 			loadstring(game:HttpGet("https://pastebin.com/raw/zXk4Rq2r"))()
 		end)
 	
 		if ok then
-			setButtonText("Executed! Please reset to turn it off")
-		else
-			setButtonText("Failed to Execute")
-		end
+			isExecuted = true
+			-- TextScaled = true so the long message fits the button
+			setButtonText("Executed! Please reset to turn it off", EXECUTED_TEXT_SCALED)
+			-- Restore zoom immediately so zooming in doesn't make char invisible
+			player.CameraMinZoomDistance = 2.5
+			player.CameraMaxZoomDistance = savedMaxZoom
+			-- debounce stays true — button won't re-execute while showing "Executed!"
+			-- Clicking the button again (handled above) will reset it
 	
-		task.wait(5)
-		resetButtonText()
-		debounce = false
+		else
+			-- Failed: show message for 3 seconds then auto-reset
+			setButtonText("Failed to Execute", false)
+			task.wait(3)
+			-- Only reset if we're still in the failed state (not already reset)
+			if not isExecuted then
+				resetButtonText()
+				debounce = false
+			end
+		end
 	end)
 	
 	-- ============================================================
-	-- CLEANUP ON REMOVE
+	-- CLEANUP ON SCRIPT REMOVE
 	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
+			restoreCamera()
 			tooltipFrame:Destroy()
 		end
 	end)
