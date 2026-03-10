@@ -2945,7 +2945,7 @@ G2L["10a"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["10a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["10a"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["10a"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["10a"]["Text"] = [[19]];
+G2L["10a"]["Text"] = [[20]];
 G2L["10a"]["Name"] = [[LockUnlockUI]];
 
 
@@ -7022,7 +7022,6 @@ task.spawn(C_94);
 local function C_97()
 local script = G2L["97"];
 	local Players = game:GetService("Players")
-	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
 	
 	local InvisRow = script.Parent
@@ -7031,8 +7030,7 @@ local script = G2L["97"];
 	local CharacterAccentColor = CharacterGroup.CharacterAccentColor
 	
 	local isEnabled = false
-	local fakeCharacter = nil
-	local renderConnection = nil
+	local storedTransparencies = {}
 	
 	local function getAccent()
 		return CharacterAccentColor.BackgroundColor3
@@ -7091,128 +7089,50 @@ local script = G2L["97"];
 		tooltipFrame.Visible = false
 	end)
 	
-	local storedTransparencies = {}
-	
-	local function hideRealCharacter(character)
-		storedTransparencies = {}
-		for _, v in pairs(character:GetDescendants()) do
-			if v:IsA("BasePart") or v:IsA("Decal") then
-				storedTransparencies[v] = v.Transparency
-				v.LocalTransparencyModifier = 0.7
-			end
-		end
-	end
-	
-	local function showRealCharacter(character)
-		for _, v in pairs(character:GetDescendants()) do
-			if v:IsA("BasePart") or v:IsA("Decal") then
-				v.LocalTransparencyModifier = 0
-			end
-		end
-		storedTransparencies = {}
-	end
-	
-	local function cleanupFake()
-		if renderConnection then
-			renderConnection:Disconnect()
-			renderConnection = nil
-		end
-		if fakeCharacter then
-			pcall(function() fakeCharacter:Destroy() end)
-			fakeCharacter = nil
-		end
-	end
-	
-	local function makeInvisible()
-		local character = LocalPlayer.Character
-		if not character then return end
-		local hrp = character:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-	
-		character.Archivable = true
-		cleanupFake()
-	
-		fakeCharacter = character:Clone()
-	
-		for _, v in pairs(fakeCharacter:GetDescendants()) do
-			if v:IsA("BodyVelocity") or v:IsA("BodyGyro") or v:IsA("BodyPosition") or v:IsA("LocalScript") or v:IsA("Script") then
-				v:Destroy()
-			end
-		end
-	
-		local fakeHum = fakeCharacter:FindFirstChildOfClass("Humanoid")
-		if fakeHum then
-			fakeHum.PlatformStand = true
-			fakeHum:Destroy()
-		end
-	
-		for _, v in pairs(fakeCharacter:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.Anchored = true
-				v.CanCollide = false
-				v.Massless = true
-			end
-		end
-		fakeCharacter.Parent = workspace
-		fakeCharacter.HumanoidRootPart.CFrame = hrp.CFrame
-	
-		hideRealCharacter(character)
-	
-		renderConnection = RunService.RenderStepped:Connect(function()
-			local char = LocalPlayer.Character
-			if not char then return end
-			local realHRP = char:FindFirstChild("HumanoidRootPart")
-			if not realHRP or not fakeCharacter then return end
-			local fakeHRP = fakeCharacter:FindFirstChild("HumanoidRootPart")
-			if not fakeHRP then return end
-	
-			fakeHRP.CFrame = realHRP.CFrame
-	
-			for _, realMotor in pairs(char:GetDescendants()) do
-				if realMotor:IsA("Motor6D") and realMotor.Part1 then
-					local fakePart0 = fakeCharacter:FindFirstChild(realMotor.Part0 and realMotor.Part0.Name or "")
-					local fakePart1 = fakeCharacter:FindFirstChild(realMotor.Part1.Name)
-					if fakePart0 and fakePart1 then
-						local fakeMotor = fakePart0:FindFirstChild(realMotor.Name)
-						if fakeMotor then
-							fakeMotor.Transform = realMotor.Transform
-						end
-					end
-				end
-			end
-		end)
-	end
-	
-	local function makeVisible()
-		local character = LocalPlayer.Character
-		if character then
-			showRealCharacter(character)
-		end
-		cleanupFake()
-	end
-	
 	local function enable()
 		isEnabled = true
 		InvisTickBox.BackgroundColor3 = getAccent()
-		makeInvisible()
+		local char = LocalPlayer.Character
+		if not char then return end
+		storedTransparencies = {}
+		for _, v in pairs(char:GetDescendants()) do
+			if v:IsA("BasePart") or v:IsA("Decal") then
+				storedTransparencies[v] = v.Transparency
+				v.Transparency = 1
+			end
+		end
+		local charAdded
+		charAdded = LocalPlayer.CharacterAdded:Connect(function(newChar)
+			if isEnabled then
+				task.wait(0.5)
+				storedTransparencies = {}
+				for _, v in pairs(newChar:GetDescendants()) do
+					if v:IsA("BasePart") or v:IsA("Decal") then
+						storedTransparencies[v] = v.Transparency
+						v.Transparency = 1
+					end
+				end
+			else
+				charAdded:Disconnect()
+			end
+		end)
 	end
 	
 	local function disable()
 		isEnabled = false
 		InvisTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-		makeVisible()
+		local char = LocalPlayer.Character
+		if not char then return end
+		for _, v in pairs(char:GetDescendants()) do
+			if v:IsA("BasePart") or v:IsA("Decal") then
+				v.Transparency = storedTransparencies[v] or 0
+			end
+		end
+		storedTransparencies = {}
 	end
 	
 	InvisTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then disable() else enable() end
-	end)
-	
-	LocalPlayer.CharacterAdded:Connect(function()
-		cleanupFake()
-		if isEnabled then
-			task.wait(1)
-			makeInvisible()
-		end
 	end)
 	
 	script.AncestryChanged:Connect(function()
