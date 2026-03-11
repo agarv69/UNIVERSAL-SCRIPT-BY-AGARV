@@ -3077,7 +3077,7 @@ G2L["116"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["116"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["116"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["116"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["116"]["Text"] = [[27]];
+G2L["116"]["Text"] = [[28]];
 G2L["116"]["Name"] = [[LockUnlockUI]];
 
 
@@ -9167,7 +9167,13 @@ task.spawn(C_ee);
 local function C_f4()
 local script = G2L["f4"];
 	-- ============================================================
-	-- SCRIPT START
+	-- CHATSPY SCRIPT
+	-- Mirrors the TCO script's OnIncomingMessage logic exactly:
+	--   - Preserves the game's custom name color tags (brown/yellow/blue)
+	--   - Shows hidden ";" command messages with (HIDDEN CHAT) label
+	--   - Shows muted player messages with (MUTED) label
+	--   - Shows IQ genius/dumb labels
+	--   - Does NOT strip or override the existing prefix color system
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -9175,7 +9181,7 @@ local script = G2L["f4"];
 	local ChatSpyRow = script.Parent
 	local ChatSpyTickBox = ChatSpyRow.ChatSpyTickBox
 	local ChatSpyText = ChatSpyRow.ChatSpyText
-	local MainGroup = ChatSpyRow.Parent           -- MainGroup
+	local MainGroup = ChatSpyRow.Parent
 	local MainAccentColor = MainGroup.MainAccentColor
 	
 	-- ============================================================
@@ -9190,8 +9196,7 @@ local script = G2L["f4"];
 	end
 	
 	-- ============================================================
-	-- TOOLTIP SETUP
-	-- Tooltip shows when hovering over ChatSpyTickBox
+	-- TOOLTIP
 	-- ============================================================
 	local tooltipFrame = Instance.new("Frame")
 	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
@@ -9213,7 +9218,7 @@ local script = G2L["f4"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Shows hidden/command chat from all players, highlighted in red"
+	tooltipLabel.Text = "Reveals hidden commands, muted players, and IQ-filtered chat from all players"
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -9230,10 +9235,92 @@ local script = G2L["f4"];
 		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
 		tooltipFrame.Visible = true
 	end)
-	
 	ChatSpyTickBox.MouseLeave:Connect(function()
 		tooltipFrame.Visible = false
 	end)
+	
+	-- ============================================================
+	-- NAME COLOR SYSTEM
+	-- Matches TCO's exact color values for each player type.
+	-- These are the custom game colors, NOT Roblox defaults.
+	-- ============================================================
+	-- Is this the OG server? (workspace has a "Cubes" child in OG)
+	local isog = workspace:FindFirstChild("Cubes") ~= nil
+	
+	local namecolors = {
+		peasant  = isog and {128, 128, 128} or {150, 103, 102},  -- brown/gray
+		arken    = {4,   175, 236},   -- blue  (enlighten/arken)
+		admin    = {245, 205, 48},    -- yellow
+		hidden   = {255, 0,   0},     -- red   (hidden chat / muted)
+		iqgenius = {255, 179, 179},   -- light pink
+		iqdumb   = {200, 0,   0},     -- dark red
+	}
+	
+	local function rgb(t)
+		return string.format("rgb(%d,%d,%d)", t[1], t[2], t[3])
+	end
+	
+	local function hexcolor(t)
+		return "#" .. Color3.fromRGB(t[1], t[2], t[3]):ToHex()
+	end
+	
+	-- Build the same prefix TCO builds, but with extra spy labels appended
+	local function buildPrefix(plr, cn, extraLabels)
+		-- extraLabels is a string like " (HIDDEN CHAT)" or " (MUTED)" or ""
+		local name = plr.DisplayName
+		local col = namecolors[cn] or namecolors.peasant
+		local hex = hexcolor(col)
+		local colstr = rgb(col)
+		extraLabels = extraLabels or ""
+	
+		-- TCO uses bold+brackets on OG servers, italic+parens elsewhere
+		if isog then
+			return string.format(
+				'<font color="%s"><b><font color="%s">[%s%s]: </font></b></font>',
+				hex, colstr, name, extraLabels
+			)
+		else
+			return string.format(
+				'<font color="%s"><i><font color="%s">(%s%s) </font></i></font>',
+				hex, colstr, name, extraLabels
+			)
+		end
+	end
+	
+	-- ============================================================
+	-- DETERMINE PLAYER COLOR CLASS
+	-- Replicates TCO's logic: neutral=peasant, Arken attr=arken,
+	-- non-neutral=admin, muted=hidden
+	-- ============================================================
+	local function getColorClass(plr)
+		local muted = plr:HasTag("Muted")
+		if muted then
+			return "hidden", true   -- (cn, isMuted)
+		end
+		if plr.Neutral == true then
+			if plr:GetAttribute("Arken") == true then
+				return "arken", false
+			else
+				return "peasant", false
+			end
+		else
+			return "admin", false
+		end
+	end
+	
+	-- ============================================================
+	-- IQ LABEL
+	-- ============================================================
+	local function getIQLabel(plr)
+		local iq = plr:GetAttribute("IQ")
+		if not iq then return nil end
+		if iq >= 200 then
+			return "genius 🧠", "iqgenius"
+		elseif iq <= 50 then
+			return "dumb 🤪", "iqdumb"
+		end
+		return nil, nil
+	end
 	
 	-- ============================================================
 	-- STATE
@@ -9242,16 +9329,18 @@ local script = G2L["f4"];
 	local previousHandler = nil
 	
 	-- ============================================================
-	-- CHAT SPY LOGIC
+	-- ENABLE / DISABLE
 	-- ============================================================
 	local function enable()
 		isEnabled = true
 		ChatSpyTickBox.BackgroundColor3 = MainAccentColor.BackgroundColor3
 	
+		-- Store whatever handler was set before us
 		previousHandler = game.TextChatService.OnIncomingMessage
 	
 		game.TextChatService.OnIncomingMessage = function(message)
-			-- Run previous handler if one existed
+			-- Always run the previous handler first so existing game
+			-- chat formatting still applies for messages we don't touch
 			if previousHandler then
 				pcall(previousHandler, message)
 			end
@@ -9263,20 +9352,30 @@ local script = G2L["f4"];
 			if not plr then return end
 	
 			local text = message.Text or ""
+			local isHidden  = string.sub(text, 1, 1) == ";"
+			local cn, isMuted = getColorClass(plr)
+			local iqLabel, iqCN = getIQLabel(plr)
 	
-			-- Catch hidden/command messages starting with ";"
-			if string.sub(text, 1, 1) == ";" then
-				local displayName = plr.DisplayName
-				local userName = plr.Name
-				local label = (displayName ~= userName)
-					and (displayName .. "/" .. userName)
-					or userName
+			-- Override cn with IQ class if applicable
+			if iqCN then cn = iqCN end
 	
-				message.PrefixText = string.format(
-					'<font color="rgb(255,80,80)"><b>[SPY] %s (HIDDEN): </b></font>',
-					label
-				)
+			-- Only rewrite prefix if this is a message we're spying on:
+			--   hidden ";" command, muted player message, or IQ-filtered message
+			if isHidden or isMuted or iqLabel then
+				local extra = ""
+				if isHidden  then extra = extra .. " (HIDDEN CHAT)" end
+				if isMuted   then extra = extra .. " (MUTED)"       end
+				if iqLabel   then extra = extra .. " (" .. iqLabel .. ")" end
+	
+				message.PrefixText = buildPrefix(plr, cn, extra)
+	
+				-- For hidden messages: reveal the actual text including the ";"
+				-- (the game normally hides it — we just leave message.Text alone
+				--  since Roblox shows it to us but hides it from others)
 			end
+			-- Normal visible messages from non-muted, non-hidden players:
+			-- we do nothing, so the game's own OnIncomingMessage (previousHandler)
+			-- keeps the custom color tags intact exactly as they are.
 		end
 	end
 	
@@ -9284,7 +9383,7 @@ local script = G2L["f4"];
 		isEnabled = false
 		ChatSpyTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
-		-- Restore previous handler
+		-- Restore the handler that was there before we hooked in
 		if previousHandler ~= nil then
 			game.TextChatService.OnIncomingMessage = previousHandler
 		else
@@ -9305,7 +9404,7 @@ local script = G2L["f4"];
 	end)
 	
 	-- ============================================================
-	-- CLEANUP ON SCRIPT REMOVE
+	-- CLEANUP
 	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
@@ -9504,7 +9603,9 @@ task.spawn(C_fc);
 local function C_ff()
 local script = G2L["ff"];
 	-- ============================================================
-	-- SCRIPT START
+	-- AUTO DROP ON DEATH SCRIPT
+	-- Drops ALL tools (including Enlighten) on death.
+	-- Picks them back up as fast as possible on respawn.
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -9512,7 +9613,7 @@ local script = G2L["ff"];
 	local ADODeathRow = script.Parent
 	local ADODeathTickBox = ADODeathRow.ADODeathTickBox
 	local ADODeathText = ADODeathRow.ADODeathText
-	local MainGroup = ADODeathRow.Parent           -- MainGroup
+	local MainGroup = ADODeathRow.Parent
 	local MainAccentColor = MainGroup.MainAccentColor
 	
 	-- ============================================================
@@ -9527,8 +9628,7 @@ local script = G2L["ff"];
 	end
 	
 	-- ============================================================
-	-- TOOLTIP SETUP
-	-- Tooltip shows when hovering over ADODeathTickBox
+	-- TOOLTIP
 	-- ============================================================
 	local tooltipFrame = Instance.new("Frame")
 	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
@@ -9550,7 +9650,7 @@ local script = G2L["ff"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Auto drops ALL tools (including Enlighten) on death and picks them back up on respawn"
+	tooltipLabel.Text = "Auto drops ALL tools (including Enlighten) on death and picks them back up instantly on respawn"
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -9567,7 +9667,6 @@ local script = G2L["ff"];
 		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
 		tooltipFrame.Visible = true
 	end)
-	
 	ADODeathTickBox.MouseLeave:Connect(function()
 		tooltipFrame.Visible = false
 	end)
@@ -9575,18 +9674,18 @@ local script = G2L["ff"];
 	-- ============================================================
 	-- STATE
 	-- ============================================================
-	local isEnabled = false
-	local charConn = nil
-	local TAG = "ADODeathDropped"
+	local isEnabled  = false
+	local charConn   = nil
+	local TAG        = "ADODeathDropped"
 	
 	-- ============================================================
-	-- TOOL HELPERS
+	-- DROP ALL TOOLS (death)
 	-- ============================================================
 	local function dropAllTools()
 		local char = LocalPlayer.Character
 		if not char then return end
 	
-		-- Pull everything from backpack into character first
+		-- Pull backpack into character so everything is in one place
 		for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
 			if tool:IsA("Tool") then
 				tool.Parent = char
@@ -9595,7 +9694,7 @@ local script = G2L["ff"];
 	
 		task.wait(0.05)
 	
-		-- Drop ALL tools from character into workspace, Enlighten included
+		-- Drop every tool into workspace, Enlighten included
 		for _, tool in ipairs(char:GetChildren()) do
 			if tool:IsA("Tool") then
 				tool:AddTag(TAG)
@@ -9604,39 +9703,51 @@ local script = G2L["ff"];
 		end
 	end
 	
-	local function pickupDroppedTools()
-		local char = LocalPlayer.Character
-		if not char then return end
-		local hum = char:FindFirstChildWhichIsA("Humanoid")
-		if not hum or hum.Health <= 0 then return end
+	-- ============================================================
+	-- PICKUP TOOLS (respawn)
+	-- Tries immediately, then retries every 0.1s for up to 3s
+	-- so tools are grabbed the moment the humanoid is ready,
+	-- before other players can snatch them.
+	-- ============================================================
+	local function pickupDroppedTools(char)
+		local deadline = tick() + 3  -- give up after 3 seconds
 	
-		for _, obj in ipairs(workspace:GetChildren()) do
-			if obj:IsA("Tool") and obj:HasTag(TAG) and obj:FindFirstChild("Handle") then
-				hum:EquipTool(obj)
+		repeat
+			local hum = char:FindFirstChildWhichIsA("Humanoid")
+			if hum and hum.Health > 0 then
+				for _, obj in ipairs(workspace:GetChildren()) do
+					if obj:IsA("Tool") and obj:HasTag(TAG) and obj:FindFirstChild("Handle") then
+						hum:EquipTool(obj)
+					end
+				end
+				-- Check if any tagged tools are still in workspace
+				local remaining = false
+				for _, obj in ipairs(workspace:GetChildren()) do
+					if obj:IsA("Tool") and obj:HasTag(TAG) then
+						remaining = true
+						break
+					end
+				end
+				if not remaining then break end  -- all picked up, done
 			end
-		end
+			task.wait(0.1)
+		until tick() > deadline or not isEnabled
 	end
 	
 	-- ============================================================
 	-- CHARACTER SETUP
-	-- Called each time a new character spawns
 	-- ============================================================
 	local function setupCharacter(char)
-		-- Wait for humanoid to exist
-		local hum = char:FindFirstChildWhichIsA("Humanoid")
-		if not hum then
-			hum = char:WaitForChild("Humanoid", 10)
-		end
-		if not hum then return end
-	
-		-- Pick up any tools dropped from last death
-		task.delay(1.5, function()
-			if isEnabled then
-				pickupDroppedTools()
-			end
+		-- Start pickup attempt immediately — don't wait for humanoid first
+		task.spawn(function()
+			pickupDroppedTools(char)
 		end)
 	
-		-- Watch for death
+		-- Watch for death on this character
+		local hum = char:FindFirstChildWhichIsA("Humanoid")
+			or char:WaitForChild("Humanoid", 10)
+		if not hum then return end
+	
 		hum.Died:Connect(function()
 			if not isEnabled then return end
 			task.wait(0.05)
@@ -9651,12 +9762,10 @@ local script = G2L["ff"];
 		isEnabled = true
 		ADODeathTickBox.BackgroundColor3 = MainAccentColor.BackgroundColor3
 	
-		-- Hook current character
 		if LocalPlayer.Character then
 			setupCharacter(LocalPlayer.Character)
 		end
 	
-		-- Hook future characters
 		charConn = LocalPlayer.CharacterAdded:Connect(function(char)
 			if isEnabled then
 				setupCharacter(char)
@@ -9686,7 +9795,7 @@ local script = G2L["ff"];
 	end)
 	
 	-- ============================================================
-	-- CLEANUP ON SCRIPT REMOVE
+	-- CLEANUP
 	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
