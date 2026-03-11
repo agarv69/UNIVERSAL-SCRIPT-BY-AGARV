@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[3]];
+G2L["11e"]["Text"] = [[4]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9874,21 +9874,28 @@ local script = G2L["102"];
 	-- NNOCLIP SCRIPT
 	-- Explorer: MiscGroup > NNoclipRow > NNoclipScript
 	-- Refs: NNoclipTickBox, NNoclipText (in NNoclipRow)
-	-- When ON: forces CanCollide=true on all your parts every frame
-	--          so admins cannot noclip you through blocks.
+	--
+	-- When admins noclip you they do one or more of:
+	--   1. Set CanCollide = false on your parts
+	--   2. Set PlatformStand = true on your Humanoid
+	--   3. Force your Humanoid into the Physics state
+	-- This script counters all three every RenderStepped frame.
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local NNoclipRow    = script.Parent
+	local NNoclipRow     = script.Parent
 	local NNoclipTickBox = NNoclipRow.NNoclipTickBox
-	local MiscGroup     = NNoclipRow.Parent
+	local MiscGroup      = NNoclipRow.Parent
 	
-	-- Accent color — walk up to find it
-	local accentColor = MiscGroup:FindFirstChild("MiscAccentColor")
-		or MiscGroup.Parent:FindFirstChild("MainAccentColor", true)
+	-- Find accent color (searches MiscGroup then walks up)
+	local function getAccentColor()
+		local a = MiscGroup:FindFirstChild("MiscAccentColor")
+			or MiscGroup.Parent and MiscGroup.Parent:FindFirstChild("MainAccentColor", true)
+		return a and a.BackgroundColor3 or Color3.new(1, 1, 1)
+	end
 	
 	-- ============================================================
 	-- SCREENGUI HELPER
@@ -9924,7 +9931,7 @@ local script = G2L["102"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Prevents admins from noclipping you through blocks. Forces collision on every frame."
+	tooltipLabel.Text = "Prevents admins from noclipping you through blocks by blocking PlatformStand, Physics state, and CanCollide changes."
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -9946,57 +9953,85 @@ local script = G2L["102"];
 	end)
 	
 	-- ============================================================
-	-- ACCENT COLOR HELPER
-	-- ============================================================
-	local function getAccentColor()
-		if accentColor then
-			return accentColor.BackgroundColor3
-		end
-		-- fallback white if not found
-		return Color3.new(1, 1, 1)
-	end
-	
-	-- ============================================================
 	-- STATE
 	-- ============================================================
-	local isEnabled = false
-	local loopConn  = nil
-	local charConn  = nil
+	local isEnabled  = false
+	local loopConn   = nil
+	local charConn   = nil
+	local stateConns = {}  -- tracks StateChanged connections per character
 	
 	-- ============================================================
-	-- CORE: force CanCollide on character every frame
+	-- SETUP FOR A CHARACTER
 	-- ============================================================
-	local function enforceOnChar(char)
+	local function setupChar(char)
 		if not char then return end
-		for _, part in ipairs(char:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = true
+	
+		local humanoid = char:WaitForChild("Humanoid", 5)
+		if not humanoid then return end
+	
+		-- Block the Physics humanoid state (what noclip uses)
+		pcall(function()
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+		end)
+	
+		-- If already in Physics state, kick it out immediately
+		pcall(function()
+			if humanoid:GetState() == Enum.HumanoidStateType.Physics then
+				humanoid:ChangeState(Enum.HumanoidStateType.Running)
 			end
-		end
+		end)
+	
+		-- Watch for state changes and block Physics state
+		local conn = humanoid.StateChanged:Connect(function(_, newState)
+			if newState == Enum.HumanoidStateType.Physics then
+				pcall(function()
+					humanoid:ChangeState(Enum.HumanoidStateType.Running)
+				end)
+			end
+		end)
+		table.insert(stateConns, conn)
 	end
 	
+	local function cleanupStateConns()
+		for _, c in ipairs(stateConns) do
+			pcall(function() c:Disconnect() end)
+		end
+		stateConns = {}
+	end
+	
+	-- ============================================================
+	-- ENABLE / DISABLE
+	-- ============================================================
 	local function enable()
 		isEnabled = true
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
 	
-		-- Apply to current character immediately
+		-- Setup current character
 		local char = LocalPlayer.Character
-		if char then enforceOnChar(char) end
+		if char then setupChar(char) end
 	
-		-- Re-apply on respawn
+		-- Setup on respawn
 		charConn = LocalPlayer.CharacterAdded:Connect(function(newChar)
 			newChar:WaitForChild("HumanoidRootPart")
-			enforceOnChar(newChar)
+			setupChar(newChar)
 		end)
 	
-		-- Every frame: if any part got set to CanCollide=false, flip it back
+		-- Every frame: enforce CanCollide=true and PlatformStand=false
 		loopConn = RunService.RenderStepped:Connect(function()
 			local c = LocalPlayer.Character
 			if not c then return end
+	
+			-- Force CanCollide on all parts
 			for _, part in ipairs(c:GetDescendants()) do
 				if part:IsA("BasePart") and not part.CanCollide then
 					part.CanCollide = true
 				end
+			end
+	
+			-- Force PlatformStand off (this is what makes you noclip through things)
+			local hum = c:FindFirstChildOfClass("Humanoid")
+			if hum and hum.PlatformStand then
+				hum.PlatformStand = false
 			end
 		end)
 	end
@@ -10007,6 +10042,18 @@ local script = G2L["102"];
 	
 		if loopConn then loopConn:Disconnect(); loopConn = nil end
 		if charConn then charConn:Disconnect(); charConn = nil end
+		cleanupStateConns()
+	
+		-- Re-enable Physics state on humanoid (restore default)
+		local char = LocalPlayer.Character
+		if char then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum then
+				pcall(function()
+					hum:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
+				end)
+			end
+		end
 	end
 	
 	-- ============================================================
