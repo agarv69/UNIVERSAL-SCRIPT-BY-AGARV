@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[8]];
+G2L["11e"]["Text"] = [[9]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9871,25 +9871,23 @@ task.spawn(C_ff);
 local function C_102()
 local script = G2L["102"];
 	-- ============================================================
-	-- NNOCLIP SCRIPT
-	-- Explorer: MiscGroup > NNoclipRow > NNoclipScript
-	-- Prevents noclip through walls and stops falling while noclipped
+	-- NNOCLIP SCRIPT (FIXED VERSION)
 	-- ============================================================
 	
-	local Players     = game:GetService("Players")
-	local RunService  = game:GetService("RunService")
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local NNoclipRow     = script.Parent
+	local NNoclipRow = script.Parent
 	local NNoclipTickBox = NNoclipRow.NNoclipTickBox
-	local MiscGroup      = NNoclipRow.Parent
+	local MiscGroup = NNoclipRow.Parent
 	
 	local function getAccentColor()
 		local a = MiscGroup:FindFirstChild("MiscAccentColor")
-			or MiscGroup.Parent and MiscGroup.Parent:FindFirstChild("MainAccentColor", true)
-		return a and a.BackgroundColor3 or Color3.new(1, 1, 1)
+		return a and a.BackgroundColor3 or Color3.new(1,1,1)
 	end
 	
+	-- TOOLTIP (unchanged)
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -9898,45 +9896,29 @@ local script = G2L["102"];
 		end
 	end
 	
-	-- ============================================================
-	-- TOOLTIP (UNCHANGED)
-	-- ============================================================
-	
 	local tooltipFrame = Instance.new("Frame")
-	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16,16,16)
 	tooltipFrame.BorderSizePixel = 0
 	tooltipFrame.ZIndex = 100
+	tooltipFrame.Size = UDim2.new(0,212,0,0)
 	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
 	tooltipFrame.Visible = false
 	tooltipFrame.Parent = getScreenGui()
 	
-	local tooltipStroke = Instance.new("UIStroke", tooltipFrame)
-	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
-	
-	local tooltipPadding = Instance.new("UIPadding", tooltipFrame)
-	tooltipPadding.PaddingTop    = UDim.new(0, 6)
-	tooltipPadding.PaddingBottom = UDim.new(0, 6)
-	tooltipPadding.PaddingLeft   = UDim.new(0, 6)
-	tooltipPadding.PaddingRight  = UDim.new(0, 6)
-	
-	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
+	local tooltipLabel = Instance.new("TextLabel",tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
 	tooltipLabel.Text = "Prevents admins from noclipping you through blocks."
-	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
+	tooltipLabel.TextColor3 = Color3.new(1,1,1)
 	tooltipLabel.TextSize = 14
-	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
-	tooltipLabel.TextYAlignment = Enum.TextYAlignment.Top
 	tooltipLabel.Font = Enum.Font.GothamSemibold
+	tooltipLabel.Size = UDim2.new(0,200,0,0)
 	tooltipLabel.TextWrapped = true
-	tooltipLabel.Size = UDim2.new(0, 200, 0, 0)
 	tooltipLabel.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipLabel.ZIndex = 101
 	
 	NNoclipTickBox.MouseEnter:Connect(function()
-		local abs  = NNoclipTickBox.AbsolutePosition
+		local abs = NNoclipTickBox.AbsolutePosition
 		local size = NNoclipTickBox.AbsoluteSize
-		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+		tooltipFrame.Position = UDim2.new(0,abs.X + size.X + 10,0,abs.Y)
 		tooltipFrame.Visible = true
 	end)
 	
@@ -9944,140 +9926,96 @@ local script = G2L["102"];
 		tooltipFrame.Visible = false
 	end)
 	
-	-- ============================================================
 	-- CONSTANTS
-	-- ============================================================
-	
 	local CHAR_HALF_HEIGHT = 2.1
-	local CHAR_HALF_WIDTH  = 0.6
-	local PUSH_EXTRA       = 0.05
-	local FLOOR_SCAN       = 12
-	local JUMP_GRACE_TIME  = 0.35
-	
-	-- ============================================================
-	-- STATE
-	-- ============================================================
+	local CHAR_HALF_WIDTH = 0.6
+	local PUSH_EXTRA = 0.05
+	local FLOOR_SCAN = 12
 	
 	local isEnabled = false
-	local loopConn  = nil
-	local charConn  = nil
-	local lastJumpTime = 0
+	local loopConn
 	
 	local function enable()
 	
 		isEnabled = true
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
 	
-		local function setupCharacter(char)
-	
-			local hrp = char:WaitForChild("HumanoidRootPart")
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-	
-			if humanoid then
-				humanoid.StateChanged:Connect(function(_, new)
-					if new == Enum.HumanoidStateType.Jumping then
-						lastJumpTime = tick()
-					end
-				end)
-			end
-		end
-	
-		if LocalPlayer.Character then
-			setupCharacter(LocalPlayer.Character)
-		end
-	
-		charConn = LocalPlayer.CharacterAdded:Connect(setupCharacter)
-	
 		loopConn = RunService.RenderStepped:Connect(function()
 	
-			pcall(function()
+			local char = LocalPlayer.Character
+			if not char then return end
 	
-				local char = LocalPlayer.Character
-				if not char then return end
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
 	
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if not hrp or not humanoid then return end
 	
-				if not hrp then return end
+			local pos = hrp.Position
+			local cf = hrp.CFrame
 	
-				local rayParams = RaycastParams.new()
-				rayParams.FilterType = Enum.RaycastFilterType.Exclude
-				rayParams.FilterDescendantsInstances = {char}
+			local rayParams = RaycastParams.new()
+			rayParams.FilterType = Enum.RaycastFilterType.Exclude
+			rayParams.FilterDescendantsInstances = {char}
 	
-				local pos = hrp.Position
-				local cf  = hrp.CFrame
+			-- FLOOR SUPPORT (only when falling)
+			if hrp.AssemblyLinearVelocity.Y < -5 then
 	
-				-- =================================================
-				-- FLOOR LOCK (prevents falling)
-				-- =================================================
+				local hit = workspace:Raycast(
+					pos,
+					Vector3.new(0,-FLOOR_SCAN,0),
+					rayParams
+				)
 	
-				if tick() - lastJumpTime > JUMP_GRACE_TIME then
+				if hit then
 	
-					local downHit = workspace:Raycast(
-						pos,
-						Vector3.new(0,-FLOOR_SCAN,0),
-						rayParams
-					)
+					local surfaceY = hit.Position.Y + CHAR_HALF_HEIGHT
 	
-					if downHit then
+					if pos.Y < surfaceY then
 	
-						local surfaceY = downHit.Position.Y + CHAR_HALF_HEIGHT
+						hrp.CFrame = CFrame.new(
+							pos.X,
+							surfaceY,
+							pos.Z
+						)
 	
-						if pos.Y < surfaceY + 0.05 then
-	
-							local newPos = Vector3.new(pos.X,surfaceY,pos.Z)
-	
-							local vel = hrp.AssemblyLinearVelocity
-							hrp.AssemblyLinearVelocity = Vector3.new(vel.X,0,vel.Z)
-	
-							hrp.CFrame = CFrame.new(newPos,newPos + cf.LookVector)
-	
-							pos = newPos
-	
-							if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
-								humanoid:ChangeState(Enum.HumanoidStateType.Running)
-							end
-	
-						end
-					end
-	
-				end
-	
-				-- =================================================
-				-- WALL PUSH
-				-- =================================================
-	
-				local newPos   = pos
-				local scanDist = CHAR_HALF_WIDTH + 1
-	
-				local dirs = {
-					cf.LookVector,
-					-cf.LookVector,
-					cf.RightVector,
-					-cf.RightVector
-				}
-	
-				for _, dir in ipairs(dirs) do
-	
-					local result = workspace:Raycast(pos,dir * scanDist,rayParams)
-	
-					if result then
-	
-						local dist = (result.Position - pos).Magnitude
-	
-						if dist < CHAR_HALF_WIDTH then
-							newPos = newPos + (-dir * (CHAR_HALF_WIDTH - dist + PUSH_EXTRA))
-						end
+						local vel = hrp.AssemblyLinearVelocity
+						hrp.AssemblyLinearVelocity = Vector3.new(vel.X,0,vel.Z)
 	
 					end
 	
 				end
+			end
 	
-				if (newPos - pos).Magnitude > 0.01 then
-					hrp.CFrame = CFrame.new(newPos,newPos + cf.LookVector)
+			-- WALL PUSH
+			local newPos = pos
+			local scanDist = CHAR_HALF_WIDTH + 1
+	
+			local dirs = {
+				cf.LookVector,
+				-cf.LookVector,
+				cf.RightVector,
+				-cf.RightVector
+			}
+	
+			for _,dir in ipairs(dirs) do
+	
+				local result = workspace:Raycast(pos,dir * scanDist,rayParams)
+	
+				if result then
+	
+					local dist = (result.Position - pos).Magnitude
+	
+					if dist < CHAR_HALF_WIDTH then
+						newPos = newPos + (-dir * (CHAR_HALF_WIDTH - dist + PUSH_EXTRA))
+					end
+	
 				end
 	
-			end)
+			end
+	
+			if (newPos - pos).Magnitude > 0.01 then
+				hrp.CFrame = CFrame.new(newPos,newPos + cf.LookVector)
+			end
 	
 		end)
 	
@@ -10090,19 +10028,9 @@ local script = G2L["102"];
 	
 		if loopConn then
 			loopConn:Disconnect()
-			loopConn = nil
-		end
-	
-		if charConn then
-			charConn:Disconnect()
-			charConn = nil
 		end
 	
 	end
-	
-	-- ============================================================
-	-- TOGGLE
-	-- ============================================================
 	
 	NNoclipTickBox.MouseButton1Click:Connect(function()
 	
@@ -10110,24 +10038,6 @@ local script = G2L["102"];
 			disable()
 		else
 			enable()
-		end
-	
-	end)
-	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
-	
-	script.AncestryChanged:Connect(function()
-	
-		if not script:IsDescendantOf(game) then
-	
-			if isEnabled then
-				disable()
-			end
-	
-			tooltipFrame:Destroy()
-	
 		end
 	
 	end)
