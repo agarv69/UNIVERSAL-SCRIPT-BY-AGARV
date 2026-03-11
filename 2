@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[8]];
+G2L["11e"]["Text"] = [[9]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9874,16 +9874,11 @@ local script = G2L["102"];
 	-- NNOCLIP SCRIPT
 	-- Explorer: MiscGroup > NNoclipRow > NNoclipScript
 	--
-	-- FLOOR PAD logic:
-	--   Every frame, raycast straight down from feet (HRP - half height).
-	--   If a solid block is detected within DETECT_RANGE studs below feet:
-	--     - Place anchored invisible pad ON TOP of that block surface
-	--     - Character physics naturally stands on it
-	--   If nothing detected (air below) or block is far away:
-	--     - Move pad far away so it doesn't affect anything
-	--
-	-- WALL PUSH logic:
-	--   4 horizontal rays. If inside a wall, push HRP out.
+	-- Detection casts BOTH down and up from feet so it finds
+	-- blocks whether you are above, on, or inside/below them.
+	-- Pad is placed on top of nearest detected surface.
+	-- Pad is parked at -9999 when nothing detected (air).
+	-- Jump is preserved - we detect upward velocity and park pad.
 	-- ============================================================
 	
 	local Players     = game:GetService("Players")
@@ -9955,17 +9950,41 @@ local script = G2L["102"];
 	-- ============================================================
 	-- CONSTANTS
 	-- ============================================================
-	local CHAR_HALF_HEIGHT = 2.1   -- HRP center to feet (R15)
-	local CHAR_HALF_WIDTH  = 0.6   -- HRP center to sides
+	local CHAR_HALF_HEIGHT = 2.1
+	local CHAR_HALF_WIDTH  = 0.6
 	local PUSH_EXTRA       = 0.05
-	
-	-- How far below feet we scan for a block.
-	-- 4 studs means: detects blocks up to 4 studs below your feet.
-	-- This covers thin blocks you've been pushed into.
-	local DETECT_RANGE     = 4.0
-	
+	local SCAN_DOWN        = 5     -- studs below feet to scan
+	local SCAN_UP          = 5     -- studs above feet to scan (catches blocks you fell into)
 	local PAD_NAME         = "NNoclipFloorPad"
-	local PAD_PARKED       = Vector3.new(0, -9999, 0) -- off-map when not in use
+	local PARKED           = CFrame.new(0, -9999, 0)
+	-- How fast upward velocity must be before we consider it a jump
+	-- and temporarily park the pad so it doesn't catch us mid-jump
+	local JUMP_VEL_THRESHOLD = 10
+	
+	-- ============================================================
+	-- PAD
+	-- ============================================================
+	local floorPad = nil
+	
+	local function createPad()
+		if floorPad then floorPad:Destroy() end
+		local pad = Instance.new("Part")
+		pad.Name         = PAD_NAME
+		pad.Size         = Vector3.new(4, 0.2, 4)
+		pad.Transparency = 1
+		pad.Anchored     = true
+		pad.CanCollide   = true
+		pad.CFrame       = PARKED
+		pad.Parent       = workspace
+		floorPad = pad
+	end
+	
+	local function destroyPad()
+		if floorPad then
+			floorPad:Destroy()
+			floorPad = nil
+		end
+	end
 	
 	-- ============================================================
 	-- STATE
@@ -9973,38 +9992,16 @@ local script = G2L["102"];
 	local isEnabled = false
 	local loopConn  = nil
 	local charConn  = nil
-	local floorPad  = nil
-	
-	local function createPad(char)
-		destroyPad()
-		local pad = Instance.new("Part")
-		pad.Name         = PAD_NAME
-		pad.Size         = Vector3.new(4, 0.2, 4)
-		pad.Transparency = 1
-		pad.Anchored     = true
-		pad.CanCollide   = true
-		pad.CFrame       = CFrame.new(PAD_PARKED)
-		pad.Parent       = workspace  -- workspace so it's a real collidable surface
-		floorPad = pad
-	end
-	
-	function destroyPad()
-		if floorPad then
-			floorPad:Destroy()
-			floorPad = nil
-		end
-	end
 	
 	local function enable()
 		isEnabled = true
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
 	
-		local char = LocalPlayer.Character
-		if char then createPad(char) end
+		createPad()
 	
 		charConn = LocalPlayer.CharacterAdded:Connect(function(newChar)
 			newChar:WaitForChild("HumanoidRootPart")
-			createPad(newChar)
+			createPad()
 		end)
 	
 		loopConn = RunService.RenderStepped:Connect(function()
@@ -10016,33 +10013,66 @@ local script = G2L["102"];
 	
 				local rayParams = RaycastParams.new()
 				rayParams.FilterType = Enum.RaycastFilterType.Exclude
-				-- Exclude character AND the pad itself so they don't interfere
 				rayParams.FilterDescendantsInstances = {char, floorPad}
 	
 				local pos   = hrp.Position
 				local cf    = hrp.CFrame
 				local feetY = pos.Y - CHAR_HALF_HEIGHT
+				local feetOrigin = Vector3.new(pos.X, feetY, pos.Z)
 	
 				-- ------------------------------------------------
-				-- FLOOR DETECTION
-				-- Cast from feet downward by DETECT_RANGE studs.
-				-- If we hit something, place pad right on its surface.
-				-- If nothing, park pad off-map.
+				-- JUMP CHECK
+				-- If moving upward fast (jumping), park pad so we
+				-- don't land on it mid-jump. Once velocity slows
+				-- or goes negative (falling) the pad comes back.
 				-- ------------------------------------------------
-				local feetOrigin = Vector3.new(pos.X, feetY, pos.Z)
-				local downResult = workspace:Raycast(
+				local velY = hrp.AssemblyLinearVelocity.Y
+				if velY > JUMP_VEL_THRESHOLD then
+					floorPad.CFrame = PARKED
+					return
+				end
+	
+				-- ------------------------------------------------
+				-- DETECTION: cast DOWN then UP from feet
+				-- Down catches: block below you (normal standing)
+				-- Up catches:   block you fell into / are inside
+				-- Pick whichever hit is closest to feet level.
+				-- ------------------------------------------------
+				local bestSurfaceY = nil
+	
+				-- Cast downward from feet
+				local downHit = workspace:Raycast(
 					feetOrigin,
-					Vector3.new(0, -DETECT_RANGE, 0),
+					Vector3.new(0, -SCAN_DOWN, 0),
 					rayParams
 				)
+				if downHit then
+					bestSurfaceY = downHit.Position.Y
+				end
 	
-				if downResult then
-					-- Place pad flat on top of the detected surface
-					local surfaceY = downResult.Position.Y
-					floorPad.CFrame = CFrame.new(pos.X, surfaceY + 0.1, pos.Z)
+				-- Cast upward from feet (catches blocks you're inside)
+				local upHit = workspace:Raycast(
+					feetOrigin,
+					Vector3.new(0, SCAN_UP, 0),
+					rayParams
+				)
+				if upHit then
+					-- upHit.Position.Y is the BOTTOM of the block above
+					-- We want the top of the block our feet are inside
+					-- so we use downHit if available, otherwise use upHit bottom - pad sits under block
+					if not bestSurfaceY then
+						-- no downhit — we're fully inside a block
+						-- place pad just below the bottom of the block above our feet
+						bestSurfaceY = upHit.Position.Y - 0.2
+					end
+				end
+	
+				if bestSurfaceY then
+					-- Place pad so its top surface is exactly at bestSurfaceY
+					floorPad.CFrame = CFrame.new(pos.X, bestSurfaceY + 0.1, pos.Z)
 				else
-					-- Nothing below — park pad so it doesn't hold us up in air
-					floorPad.CFrame = CFrame.new(PAD_PARKED)
+					-- Nothing found — air below and above, park pad
+					floorPad.CFrame = PARKED
 				end
 	
 				-- ------------------------------------------------
