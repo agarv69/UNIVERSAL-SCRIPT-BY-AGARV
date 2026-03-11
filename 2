@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[5]];
+G2L["11e"]["Text"] = [[6]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9875,20 +9875,14 @@ local script = G2L["102"];
 	-- Explorer: MiscGroup > NNoclipRow > NNoclipScript
 	-- Refs: NNoclipTickBox, NNoclipText (in NNoclipRow)
 	--
-	-- How admin noclip works in TCO:
-	--   They set PlatformStand=true AND zero out / remove the
-	--   VectorForce/BodyGyro so you fall through blocks.
-	--   OR they fire a server script that sets your HRP Network
-	--   ownership so the server can move you freely.
-	--
-	-- Our fix: every frame we
-	--   1. Force CanCollide=true on all character parts
-	--   2. Force PlatformStand=false (unless wall walk is active)
-	--   3. Detect if we are inside a part (noclipped) and if so,
-	--      push the HRP upward to the nearest surface above us
+	-- Approach: every Heartbeat, raycast downward from HRP.
+	-- If the floor hit is ABOVE the HRP bottom (meaning we are
+	-- inside a block), snap HRP on top of it immediately.
+	-- Only triggers when actually inside a block — walking
+	-- against a wall or jumping doesn't trigger it.
 	-- ============================================================
 	
-	local Players   = game:GetService("Players")
+	local Players    = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
 	
@@ -9936,7 +9930,7 @@ local script = G2L["102"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Prevents admins from noclipping you through blocks."
+	tooltipLabel.Text = "Snaps you on top of blocks if an admin noclips you inside one."
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -9958,123 +9952,58 @@ local script = G2L["102"];
 	end)
 	
 	-- ============================================================
-	-- DETECT IF WALL WALK IS ACTIVE
-	-- Wall walk adds a BodyGyro and VectorForce to HRP and sets
-	-- PlatformStand=true. We check for these so we don't fight it.
+	-- CONSTANTS
+	-- HRP center is ~3 studs above the ground for R15
+	-- We use 3.2 as the threshold — if floor hit is within 3.2
+	-- studs ABOVE the HRP bottom, we are inside a block.
 	-- ============================================================
-	local function isWallWalkActive(char)
-		if not char then return false end
-		local hrp = char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return false end
-		-- Wall walk puts a VectorForce inside HRP
-		return hrp:FindFirstChildOfClass("VectorForce") ~= nil
-			or hrp:FindFirstChildOfClass("BodyVelocity") ~= nil
-	end
-	
-	-- ============================================================
-	-- CHECK IF A POINT IS INSIDE A SOLID PART
-	-- ============================================================
-	local function isInsidePart(pos, char)
-		local params = OverlapParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = {char}
-		local parts = workspace:GetPartBoundsInBox(
-			CFrame.new(pos),
-			Vector3.new(1, 1, 1),
-			params
-		)
-		for _, p in ipairs(parts) do
-			if p.CanCollide then
-				return true, p
-			end
-		end
-		return false
-	end
-	
-	-- ============================================================
-	-- FIND SURFACE ABOVE TO PUSH TO (escape noclip)
-	-- ============================================================
-	local function findEscapePosition(hrp, char)
-		local origin = hrp.Position
-		local UP     = Vector3.new(0, 1, 0)
-	
-		local rayParams = RaycastParams.new()
-		rayParams.FilterType = Enum.RaycastFilterType.Exclude
-		rayParams.FilterDescendantsInstances = {char}
-	
-		-- Cast upward to find surface above
-		local upResult = workspace:Raycast(origin, UP * 50, rayParams)
-		if upResult then
-			return upResult.Position + UP * 3.5
-		end
-	
-		-- Cast downward to find surface below
-		local downResult = workspace:Raycast(origin, -UP * 50, rayParams)
-		if downResult then
-			return downResult.Position + UP * 3.5
-		end
-	
-		return nil
-	end
+	local HRP_TO_FLOOR = 3.2   -- studs from HRP center to feet
+	local SNAP_OFFSET  = 3.5   -- studs above hit surface to snap to
 	
 	-- ============================================================
 	-- STATE
 	-- ============================================================
 	local isEnabled = false
 	local loopConn  = nil
-	local charConn  = nil
 	
 	local function enable()
 		isEnabled = true
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
 	
-		charConn = LocalPlayer.CharacterAdded:Connect(function() end)
+		loopConn = RunService.Heartbeat:Connect(function()
+			pcall(function()
+				local char = LocalPlayer.Character
+				if not char then return end
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				if not hrp then return end
 	
-		loopConn = RunService.RenderStepped:Connect(function()
-			local char = LocalPlayer.Character
-			if not char then return end
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if not hrp then return end
-			local hum = char:FindFirstChildOfClass("Humanoid")
+				local rayParams = RaycastParams.new()
+				rayParams.FilterType = Enum.RaycastFilterType.Exclude
+				rayParams.FilterDescendantsInstances = {char}
 	
-			local wallWalk = isWallWalkActive(char)
+				local hrpPos = hrp.Position
 	
-			-- 1. Always force CanCollide = true on all parts
-			for _, part in ipairs(char:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.CanCollide = true
+				-- Cast downward from HRP center
+				local result = workspace:Raycast(hrpPos, Vector3.new(0, -50, 0), rayParams)
+				if not result then return end
+	
+				local floorY   = result.Position.Y
+				local hrpFeetY = hrpPos.Y - HRP_TO_FLOOR
+	
+				-- If the floor surface is ABOVE our feet, we are inside a block
+				if floorY > hrpFeetY then
+					-- Snap on top of the surface, preserving X/Z and look direction
+					local newPos = Vector3.new(hrpPos.X, floorY + SNAP_OFFSET, hrpPos.Z)
+					hrp.CFrame = CFrame.new(newPos, newPos + hrp.CFrame.LookVector)
 				end
-			end
-	
-			-- 2. Only force PlatformStand=false if wall walk is NOT active
-			--    (wall walk needs PlatformStand=true to function)
-			if not wallWalk and hum and hum.PlatformStand then
-				hum.PlatformStand = false
-			end
-	
-			-- 3. If we are inside a solid part (being noclipped through blocks),
-			--    teleport us to the nearest surface to escape
-			if not wallWalk then
-				local inside, _ = isInsidePart(hrp.Position, char)
-				if inside then
-					local escapePos = findEscapePosition(hrp, char)
-					if escapePos then
-						hrp.CFrame = CFrame.new(escapePos, escapePos + hrp.CFrame.LookVector)
-						if hum then
-							hum.PlatformStand = false
-						end
-					end
-				end
-			end
+			end)
 		end)
 	end
 	
 	local function disable()
 		isEnabled = false
 		NNoclipTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-	
 		if loopConn then loopConn:Disconnect(); loopConn = nil end
-		if charConn then charConn:Disconnect(); charConn = nil end
 	end
 	
 	-- ============================================================
