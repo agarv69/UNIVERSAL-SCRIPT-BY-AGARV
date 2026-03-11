@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[6]];
+G2L["11e"]["Text"] = [[7]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9873,17 +9873,10 @@ local script = G2L["102"];
 	-- ============================================================
 	-- NNOCLIP SCRIPT
 	-- Explorer: MiscGroup > NNoclipRow > NNoclipScript
-	-- Refs: NNoclipTickBox, NNoclipText (in NNoclipRow)
-	--
-	-- Approach: every Heartbeat, raycast downward from HRP.
-	-- If the floor hit is ABOVE the HRP bottom (meaning we are
-	-- inside a block), snap HRP on top of it immediately.
-	-- Only triggers when actually inside a block — walking
-	-- against a wall or jumping doesn't trigger it.
 	-- ============================================================
 	
-	local Players    = game:GetService("Players")
-	local RunService = game:GetService("RunService")
+	local Players     = game:GetService("Players")
+	local RunService  = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
 	
 	local NNoclipRow     = script.Parent
@@ -9896,9 +9889,6 @@ local script = G2L["102"];
 		return a and a.BackgroundColor3 or Color3.new(1, 1, 1)
 	end
 	
-	-- ============================================================
-	-- SCREENGUI HELPER
-	-- ============================================================
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -9930,7 +9920,7 @@ local script = G2L["102"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Snaps you on top of blocks if an admin noclips you inside one."
+	tooltipLabel.Text = "Prevents admins from noclipping you through blocks."
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -9952,17 +9942,22 @@ local script = G2L["102"];
 	end)
 	
 	-- ============================================================
-	-- CONSTANTS
-	-- HRP center is ~3 studs above the ground for R15
-	-- We use 3.2 as the threshold — if floor hit is within 3.2
-	-- studs ABOVE the HRP bottom, we are inside a block.
+	-- CORE LOGIC
+	--
+	-- Every RenderStepped (faster than Heartbeat, before physics):
+	--   Cast 6 rays: down, up, forward, back, left, right from HRP.
+	--   For each ray, if the hit surface is INSIDE the character
+	--   bounding box (meaning we overlapped into it), push us out.
+	--
+	-- For the floor specifically: if floor hit is above HRP bottom,
+	-- place HRP so feet sit exactly on the floor surface.
 	-- ============================================================
-	local HRP_TO_FLOOR = 3.2   -- studs from HRP center to feet
-	local SNAP_OFFSET  = 3.5   -- studs above hit surface to snap to
 	
-	-- ============================================================
-	-- STATE
-	-- ============================================================
+	-- R15 character dimensions (studs)
+	local CHAR_HALF_HEIGHT = 2.1  -- HRP center to feet
+	local CHAR_HALF_WIDTH  = 0.6  -- HRP center to side/front/back
+	local PUSH_EXTRA       = 0.05 -- tiny extra gap to avoid re-triggering
+	
 	local isEnabled = false
 	local loopConn  = nil
 	
@@ -9970,31 +9965,63 @@ local script = G2L["102"];
 		isEnabled = true
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
 	
-		loopConn = RunService.Heartbeat:Connect(function()
+		loopConn = RunService.RenderStepped:Connect(function()
 			pcall(function()
 				local char = LocalPlayer.Character
 				if not char then return end
 				local hrp = char:FindFirstChild("HumanoidRootPart")
 				if not hrp then return end
+				local hum = char:FindFirstChildOfClass("Humanoid")
 	
 				local rayParams = RaycastParams.new()
 				rayParams.FilterType = Enum.RaycastFilterType.Exclude
 				rayParams.FilterDescendantsInstances = {char}
 	
-				local hrpPos = hrp.Position
+				local pos = hrp.Position
+				local cf  = hrp.CFrame
+				local newPos = pos  -- we accumulate corrections
 	
-				-- Cast downward from HRP center
-				local result = workspace:Raycast(hrpPos, Vector3.new(0, -50, 0), rayParams)
-				if not result then return end
+				-- ---- DOWN: feet inside a block? ----
+				-- Cast from HRP center downward. If hit is above feet, snap feet to surface.
+				local down = workspace:Raycast(pos, Vector3.new(0, -(CHAR_HALF_HEIGHT + 1), 0), rayParams)
+				if down then
+					local floorY = down.Position.Y
+					local feetY  = pos.Y - CHAR_HALF_HEIGHT
+					if floorY > feetY then
+						-- Feet are below the surface — place them exactly on it
+						newPos = Vector3.new(newPos.X, floorY + CHAR_HALF_HEIGHT + PUSH_EXTRA, newPos.Z)
+					end
+				end
 	
-				local floorY   = result.Position.Y
-				local hrpFeetY = hrpPos.Y - HRP_TO_FLOOR
+				-- ---- SIDES: torso/arms inside a wall? ----
+				-- Cast from HRP outward in 4 horizontal directions.
+				-- If hit is closer than our half-width, push away from the wall.
+				local dirs = {
+					cf.LookVector,
+					-cf.LookVector,
+					cf.RightVector,
+					-cf.RightVector,
+				}
+				local scanDist = CHAR_HALF_WIDTH + 1
+				for _, dir in ipairs(dirs) do
+					local result = workspace:Raycast(pos, dir * scanDist, rayParams)
+					if result then
+						local dist = (result.Position - pos).Magnitude
+						if dist < CHAR_HALF_WIDTH then
+							-- We overlapped into the wall — push back out
+							local pushBack = -dir * (CHAR_HALF_WIDTH - dist + PUSH_EXTRA)
+							newPos = newPos + pushBack
+						end
+					end
+				end
 	
-				-- If the floor surface is ABOVE our feet, we are inside a block
-				if floorY > hrpFeetY then
-					-- Snap on top of the surface, preserving X/Z and look direction
-					local newPos = Vector3.new(hrpPos.X, floorY + SNAP_OFFSET, hrpPos.Z)
-					hrp.CFrame = CFrame.new(newPos, newPos + hrp.CFrame.LookVector)
+				-- ---- APPLY if we corrected anything ----
+				if (newPos - pos).Magnitude > 0.01 then
+					hrp.CFrame = CFrame.new(newPos, newPos + cf.LookVector)
+					-- Make sure humanoid treats this as standing
+					if hum then
+						hum.PlatformStand = false
+					end
 				end
 			end)
 		end)
