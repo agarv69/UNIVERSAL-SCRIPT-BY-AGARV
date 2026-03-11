@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[5]];
+G2L["11e"]["Text"] = [[6]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10033,45 +10033,22 @@ local script = G2L["102"];
 				end
 	
 				-- ------------------------------------------------
-				-- DETECTION: cast DOWN then UP from feet
-				-- Down catches: block below you (normal standing)
-				-- Up catches:   block you fell into / are inside
-				-- Pick whichever hit is closest to feet level.
+				-- FLOOR DETECTION (much longer ray so it always
+				-- finds the nearest floor when noclipped)
 				-- ------------------------------------------------
-				local bestSurfaceY = nil
-	
-				-- Cast downward from feet
 				local downHit = workspace:Raycast(
-					feetOrigin,
-					Vector3.new(0, -SCAN_DOWN, 0),
+					pos,
+					Vector3.new(0, -50, 0),
 					rayParams
 				)
+	
 				if downHit then
-					bestSurfaceY = downHit.Position.Y
-				end
-	
-				-- Cast upward from feet (catches blocks you're inside)
-				local upHit = workspace:Raycast(
-					feetOrigin,
-					Vector3.new(0, SCAN_UP, 0),
-					rayParams
-				)
-				if upHit then
-					-- upHit.Position.Y is the BOTTOM of the block above
-					-- We want the top of the block our feet are inside
-					-- so we use downHit if available, otherwise use upHit bottom - pad sits under block
-					if not bestSurfaceY then
-						-- no downhit — we're fully inside a block
-						-- place pad just below the bottom of the block above our feet
-						bestSurfaceY = upHit.Position.Y - 0.2
-					end
-				end
-	
-				if bestSurfaceY then
-					-- Place pad so its top surface is exactly at bestSurfaceY
-					floorPad.CFrame = CFrame.new(pos.X, bestSurfaceY + 0.1, pos.Z)
+					floorPad.CFrame = CFrame.new(
+						pos.X,
+						downHit.Position.Y + 0.1,
+						pos.Z
+					)
 				else
-					-- Nothing found — air below and above, park pad
 					floorPad.CFrame = PARKED
 				end
 	
