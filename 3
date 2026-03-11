@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[9]];
+G2L["11e"]["Text"] = [[5]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9871,11 +9871,12 @@ task.spawn(C_ff);
 local function C_102()
 local script = G2L["102"];
 	-- ============================================================
-	-- NNOCLIP SCRIPT (FIXED VERSION)
+	-- NNOCLIP SCRIPT (SMOOTH VERSION)
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
+	
 	local LocalPlayer = Players.LocalPlayer
 	
 	local NNoclipRow = script.Parent
@@ -9887,7 +9888,6 @@ local script = G2L["102"];
 		return a and a.BackgroundColor3 or Color3.new(1,1,1)
 	end
 	
-	-- TOOLTIP (unchanged)
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -9896,12 +9896,14 @@ local script = G2L["102"];
 		end
 	end
 	
+	-- tooltip
+	
 	local tooltipFrame = Instance.new("Frame")
 	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16,16,16)
 	tooltipFrame.BorderSizePixel = 0
 	tooltipFrame.ZIndex = 100
-	tooltipFrame.Size = UDim2.new(0,212,0,0)
 	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipFrame.Size = UDim2.new(0,212,0,0)
 	tooltipFrame.Visible = false
 	tooltipFrame.Parent = getScreenGui()
 	
@@ -9910,9 +9912,9 @@ local script = G2L["102"];
 	tooltipLabel.Text = "Prevents admins from noclipping you through blocks."
 	tooltipLabel.TextColor3 = Color3.new(1,1,1)
 	tooltipLabel.TextSize = 14
+	tooltipLabel.TextWrapped = true
 	tooltipLabel.Font = Enum.Font.GothamSemibold
 	tooltipLabel.Size = UDim2.new(0,200,0,0)
-	tooltipLabel.TextWrapped = true
 	tooltipLabel.AutomaticSize = Enum.AutomaticSize.Y
 	
 	NNoclipTickBox.MouseEnter:Connect(function()
@@ -9926,11 +9928,10 @@ local script = G2L["102"];
 		tooltipFrame.Visible = false
 	end)
 	
-	-- CONSTANTS
-	local CHAR_HALF_HEIGHT = 2.1
+	-- constants
+	
 	local CHAR_HALF_WIDTH = 0.6
 	local PUSH_EXTRA = 0.05
-	local FLOOR_SCAN = 12
 	
 	local isEnabled = false
 	local loopConn
@@ -9940,15 +9941,13 @@ local script = G2L["102"];
 		isEnabled = true
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
 	
-		loopConn = RunService.RenderStepped:Connect(function()
+		loopConn = RunService.Heartbeat:Connect(function()
 	
 			local char = LocalPlayer.Character
 			if not char then return end
 	
 			local hrp = char:FindFirstChild("HumanoidRootPart")
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-	
-			if not hrp or not humanoid then return end
+			if not hrp then return end
 	
 			local pos = hrp.Position
 			local cf = hrp.CFrame
@@ -9957,36 +9956,6 @@ local script = G2L["102"];
 			rayParams.FilterType = Enum.RaycastFilterType.Exclude
 			rayParams.FilterDescendantsInstances = {char}
 	
-			-- FLOOR SUPPORT (only when falling)
-			if hrp.AssemblyLinearVelocity.Y < -5 then
-	
-				local hit = workspace:Raycast(
-					pos,
-					Vector3.new(0,-FLOOR_SCAN,0),
-					rayParams
-				)
-	
-				if hit then
-	
-					local surfaceY = hit.Position.Y + CHAR_HALF_HEIGHT
-	
-					if pos.Y < surfaceY then
-	
-						hrp.CFrame = CFrame.new(
-							pos.X,
-							surfaceY,
-							pos.Z
-						)
-	
-						local vel = hrp.AssemblyLinearVelocity
-						hrp.AssemblyLinearVelocity = Vector3.new(vel.X,0,vel.Z)
-	
-					end
-	
-				end
-			end
-	
-			-- WALL PUSH
 			local newPos = pos
 			local scanDist = CHAR_HALF_WIDTH + 1
 	
@@ -10010,7 +9979,6 @@ local script = G2L["102"];
 					end
 	
 				end
-	
 			end
 	
 			if (newPos - pos).Magnitude > 0.01 then
