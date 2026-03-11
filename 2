@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[9]];
+G2L["11e"]["Text"] = [[5]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9870,7 +9870,6 @@ task.spawn(C_ff);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.MiscGroup.NNoclipRow.NNoclipScript
 local function C_102()
 local script = G2L["102"];
-	
 	-- ============================================================
 	-- NNOCLIP SCRIPT (BLOCK STAND + FORCED JUMP)
 	-- ============================================================
@@ -9956,7 +9955,6 @@ local script = G2L["102"];
 	
 		-- Forced Jump System
 		UserInputService.JumpRequest:Connect(function()
-	
 			if jumpDebounce then return end
 	
 			local char = LocalPlayer.Character
@@ -9964,38 +9962,25 @@ local script = G2L["102"];
 	
 			local hrp = char:FindFirstChild("HumanoidRootPart")
 			local humanoid = char:FindFirstChildOfClass("Humanoid")
-	
 			if not hrp or not humanoid then return end
 	
 			local rayParams = RaycastParams.new()
 			rayParams.FilterType = Enum.RaycastFilterType.Exclude
 			rayParams.FilterDescendantsInstances = {char}
 	
-			local hit = workspace:Raycast(
-				hrp.Position,
-				Vector3.new(0,-6,0),
-				rayParams
-			)
+			local hit = workspace:Raycast(hrp.Position, Vector3.new(0,-6,0), rayParams)
 	
 			if hit then
-	
 				jumpDebounce = true
-	
 				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-	
 				local vel = hrp.AssemblyLinearVelocity
-				hrp.AssemblyLinearVelocity =
-					Vector3.new(vel.X, humanoid.JumpPower, vel.Z)
-	
+				hrp.AssemblyLinearVelocity = Vector3.new(vel.X, humanoid.JumpPower, vel.Z)
 				task.wait(0.15)
-	
 				jumpDebounce = false
 			end
-	
 		end)
 	
 		loopConn = RunService.RenderStepped:Connect(function()
-	
 			local char = LocalPlayer.Character
 			if not char then return end
 	
@@ -10009,88 +9994,67 @@ local script = G2L["102"];
 			rayParams.FilterType = Enum.RaycastFilterType.Exclude
 			rayParams.FilterDescendantsInstances = {char}
 	
-			-- floor snap
-			local hit = workspace:Raycast(
-				pos,
-				Vector3.new(0,-FLOOR_SCAN,0),
-				rayParams
-			)
-	
+			-- =================================================
+			-- FLOOR SNAP (prevents falling while noclipped)
+			-- =================================================
+			local hit = workspace:Raycast(pos, Vector3.new(0,-FLOOR_SCAN,0), rayParams)
 			if hit then
-	
 				local surfaceY = hit.Position.Y + CHAR_HALF_HEIGHT
-	
 				if pos.Y < surfaceY then
-	
 					local vel = hrp.AssemblyLinearVelocity
-					hrp.AssemblyLinearVelocity =
-						Vector3.new(vel.X,0,vel.Z)
+					hrp.AssemblyLinearVelocity = Vector3.new(vel.X,0,vel.Z)
 	
-					hrp.CFrame = CFrame.new(
-						pos.X,
-						surfaceY,
-						pos.Z
-					)
+					-- rotation unlocked: keep current orientation
+					hrp.CFrame = CFrame.new(Vector3.new(pos.X,surfaceY,pos.Z)) * CFrame.fromMatrix(Vector3.new(), cf.RightVector, cf.UpVector)
 	
 					pos = hrp.Position
-	
 				end
 			end
 	
+			-- =================================================
 			-- WALL PUSH
-	
+			-- =================================================
 			local newPos = pos
 			local scanDist = CHAR_HALF_WIDTH + 1
 	
-			local dirs = {
-				cf.LookVector,
-				-cf.LookVector,
-				cf.RightVector,
-				-cf.RightVector
-			}
+			local dirs = {cf.LookVector, -cf.LookVector, cf.RightVector, -cf.RightVector}
 	
-			for _,dir in ipairs(dirs) do
-	
-				local result = workspace:Raycast(pos,dir * scanDist,rayParams)
-	
+			for _, dir in ipairs(dirs) do
+				local result = workspace:Raycast(pos, dir * scanDist, rayParams)
 				if result then
-	
 					local dist = (result.Position - pos).Magnitude
-	
 					if dist < CHAR_HALF_WIDTH then
 						newPos = newPos + (-dir * (CHAR_HALF_WIDTH - dist + PUSH_EXTRA))
 					end
-	
 				end
 			end
 	
 			if (newPos - pos).Magnitude > 0.01 then
-				hrp.CFrame = CFrame.new(newPos, newPos + hrp.CFrame.LookVector)
+				-- rotation unlocked: keep current orientation
+				local currentCFrame = hrp.CFrame
+				hrp.CFrame = CFrame.new(newPos) * CFrame.fromMatrix(Vector3.new(), currentCFrame.RightVector, currentCFrame.UpVector)
 			end
-	
 		end)
-	
 	end
 	
 	local function disable()
-	
 		isEnabled = false
 		NNoclipTickBox.BackgroundColor3 = Color3.new(0,0,0)
-	
 		if loopConn then
 			loopConn:Disconnect()
 		end
-	
 	end
 	
-	NNoclipTickBox.MouseButton1Click:Connect(function()
+	-- ============================================================
+	-- TOGGLE
+	-- ============================================================
 	
+	NNoclipTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then
 			disable()
 		else
 			enable()
 		end
-	
 	end)
 end;
 task.spawn(C_102);
