@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[7]];
+G2L["11e"]["Text"] = [[8]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9952,6 +9952,7 @@ local script = G2L["102"];
 	local CHAR_HALF_WIDTH  = 0.6
 	local PUSH_EXTRA       = 0.05
 	local FLOOR_SCAN       = 12
+	local JUMP_GRACE_TIME  = 0.35
 	
 	-- ============================================================
 	-- STATE
@@ -9960,15 +9961,32 @@ local script = G2L["102"];
 	local isEnabled = false
 	local loopConn  = nil
 	local charConn  = nil
+	local lastJumpTime = 0
 	
 	local function enable()
 	
 		isEnabled = true
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
 	
-		charConn = LocalPlayer.CharacterAdded:Connect(function(newChar)
-			newChar:WaitForChild("HumanoidRootPart")
-		end)
+		local function setupCharacter(char)
+	
+			local hrp = char:WaitForChild("HumanoidRootPart")
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+	
+			if humanoid then
+				humanoid.StateChanged:Connect(function(_, new)
+					if new == Enum.HumanoidStateType.Jumping then
+						lastJumpTime = tick()
+					end
+				end)
+			end
+		end
+	
+		if LocalPlayer.Character then
+			setupCharacter(LocalPlayer.Character)
+		end
+	
+		charConn = LocalPlayer.CharacterAdded:Connect(setupCharacter)
 	
 		loopConn = RunService.RenderStepped:Connect(function()
 	
@@ -9978,6 +9996,8 @@ local script = G2L["102"];
 				if not char then return end
 	
 				local hrp = char:FindFirstChild("HumanoidRootPart")
+				local humanoid = char:FindFirstChildOfClass("Humanoid")
+	
 				if not hrp then return end
 	
 				local rayParams = RaycastParams.new()
@@ -9988,36 +10008,43 @@ local script = G2L["102"];
 				local cf  = hrp.CFrame
 	
 				-- =================================================
-				-- FLOOR LOCK (prevents falling while noclipped)
+				-- FLOOR LOCK (prevents falling)
 				-- =================================================
 	
-				local downHit = workspace:Raycast(
-					pos,
-					Vector3.new(0,-FLOOR_SCAN,0),
-					rayParams
-				)
+				if tick() - lastJumpTime > JUMP_GRACE_TIME then
 	
-				if downHit then
+					local downHit = workspace:Raycast(
+						pos,
+						Vector3.new(0,-FLOOR_SCAN,0),
+						rayParams
+					)
 	
-					local surfaceY = downHit.Position.Y + CHAR_HALF_HEIGHT
+					if downHit then
 	
-					if pos.Y < surfaceY + 0.05 then
+						local surfaceY = downHit.Position.Y + CHAR_HALF_HEIGHT
 	
-						local newPos = Vector3.new(pos.X,surfaceY,pos.Z)
+						if pos.Y < surfaceY + 0.05 then
 	
-						-- cancel falling velocity
-						local vel = hrp.AssemblyLinearVelocity
-						hrp.AssemblyLinearVelocity = Vector3.new(vel.X,0,vel.Z)
+							local newPos = Vector3.new(pos.X,surfaceY,pos.Z)
 	
-						-- snap to block surface
-						hrp.CFrame = CFrame.new(newPos,newPos + cf.LookVector)
+							local vel = hrp.AssemblyLinearVelocity
+							hrp.AssemblyLinearVelocity = Vector3.new(vel.X,0,vel.Z)
 	
-						pos = newPos
+							hrp.CFrame = CFrame.new(newPos,newPos + cf.LookVector)
+	
+							pos = newPos
+	
+							if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+								humanoid:ChangeState(Enum.HumanoidStateType.Running)
+							end
+	
+						end
 					end
+	
 				end
 	
 				-- =================================================
-				-- WALL PUSH (UNCHANGED)
+				-- WALL PUSH
 				-- =================================================
 	
 				local newPos   = pos
@@ -10041,7 +10068,9 @@ local script = G2L["102"];
 						if dist < CHAR_HALF_WIDTH then
 							newPos = newPos + (-dir * (CHAR_HALF_WIDTH - dist + PUSH_EXTRA))
 						end
+	
 					end
+	
 				end
 	
 				if (newPos - pos).Magnitude > 0.01 then
@@ -10051,6 +10080,7 @@ local script = G2L["102"];
 			end)
 	
 		end)
+	
 	end
 	
 	local function disable()
@@ -10067,10 +10097,11 @@ local script = G2L["102"];
 			charConn:Disconnect()
 			charConn = nil
 		end
+	
 	end
 	
 	-- ============================================================
-	-- TOGGLE (UNCHANGED)
+	-- TOGGLE
 	-- ============================================================
 	
 	NNoclipTickBox.MouseButton1Click:Connect(function()
@@ -10096,6 +10127,7 @@ local script = G2L["102"];
 			end
 	
 			tooltipFrame:Destroy()
+	
 		end
 	
 	end)
