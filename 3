@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[6]];
+G2L["11e"]["Text"] = [[7]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9873,12 +9873,7 @@ local script = G2L["102"];
 	-- ============================================================
 	-- NNOCLIP SCRIPT
 	-- Explorer: MiscGroup > NNoclipRow > NNoclipScript
-	--
-	-- Detection casts BOTH down and up from feet so it finds
-	-- blocks whether you are above, on, or inside/below them.
-	-- Pad is placed on top of nearest detected surface.
-	-- Pad is parked at -9999 when nothing detected (air).
-	-- Jump is preserved - we detect upward velocity and park pad.
+	-- Prevents noclip through walls and stops falling while noclipped
 	-- ============================================================
 	
 	local Players     = game:GetService("Players")
@@ -9904,8 +9899,9 @@ local script = G2L["102"];
 	end
 	
 	-- ============================================================
-	-- TOOLTIP
+	-- TOOLTIP (UNCHANGED)
 	-- ============================================================
+	
 	local tooltipFrame = Instance.new("Frame")
 	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 	tooltipFrame.BorderSizePixel = 0
@@ -9943,6 +9939,7 @@ local script = G2L["102"];
 		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
 		tooltipFrame.Visible = true
 	end)
+	
 	NNoclipTickBox.MouseLeave:Connect(function()
 		tooltipFrame.Visible = false
 	end)
@@ -9950,123 +9947,97 @@ local script = G2L["102"];
 	-- ============================================================
 	-- CONSTANTS
 	-- ============================================================
+	
 	local CHAR_HALF_HEIGHT = 2.1
 	local CHAR_HALF_WIDTH  = 0.6
 	local PUSH_EXTRA       = 0.05
-	local SCAN_DOWN        = 5     -- studs below feet to scan
-	local SCAN_UP          = 5     -- studs above feet to scan (catches blocks you fell into)
-	local PAD_NAME         = "NNoclipFloorPad"
-	local PARKED           = CFrame.new(0, -9999, 0)
-	-- How fast upward velocity must be before we consider it a jump
-	-- and temporarily park the pad so it doesn't catch us mid-jump
-	local JUMP_VEL_THRESHOLD = 10
-	
-	-- ============================================================
-	-- PAD
-	-- ============================================================
-	local floorPad = nil
-	
-	local function createPad()
-		if floorPad then floorPad:Destroy() end
-		local pad = Instance.new("Part")
-		pad.Name         = PAD_NAME
-		pad.Size         = Vector3.new(4, 0.2, 4)
-		pad.Transparency = 1
-		pad.Anchored     = true
-		pad.CanCollide   = true
-		pad.CFrame       = PARKED
-		pad.Parent       = workspace
-		floorPad = pad
-	end
-	
-	local function destroyPad()
-		if floorPad then
-			floorPad:Destroy()
-			floorPad = nil
-		end
-	end
+	local FLOOR_SCAN       = 12
 	
 	-- ============================================================
 	-- STATE
 	-- ============================================================
+	
 	local isEnabled = false
 	local loopConn  = nil
 	local charConn  = nil
 	
 	local function enable()
+	
 		isEnabled = true
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
 	
-		createPad()
-	
 		charConn = LocalPlayer.CharacterAdded:Connect(function(newChar)
 			newChar:WaitForChild("HumanoidRootPart")
-			createPad()
 		end)
 	
 		loopConn = RunService.RenderStepped:Connect(function()
+	
 			pcall(function()
+	
 				local char = LocalPlayer.Character
 				if not char then return end
+	
 				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if not hrp or not floorPad then return end
+				if not hrp then return end
 	
 				local rayParams = RaycastParams.new()
 				rayParams.FilterType = Enum.RaycastFilterType.Exclude
-				rayParams.FilterDescendantsInstances = {char, floorPad}
+				rayParams.FilterDescendantsInstances = {char}
 	
-				local pos   = hrp.Position
-				local cf    = hrp.CFrame
-				local feetY = pos.Y - CHAR_HALF_HEIGHT
-				local feetOrigin = Vector3.new(pos.X, feetY + 2, pos.Z)
+				local pos = hrp.Position
+				local cf  = hrp.CFrame
 	
-				-- ------------------------------------------------
-				-- JUMP CHECK
-				-- If moving upward fast (jumping), park pad so we
-				-- don't land on it mid-jump. Once velocity slows
-				-- or goes negative (falling) the pad comes back.
-				-- ------------------------------------------------
-				local velY = hrp.AssemblyLinearVelocity.Y
-				if velY > JUMP_VEL_THRESHOLD then
-					floorPad.CFrame = PARKED
-					return
-				end
+				-- =================================================
+				-- FLOOR LOCK (prevents falling while noclipped)
+				-- =================================================
 	
-				-- ------------------------------------------------
-				-- FLOOR DETECTION (much longer ray so it always
-				-- finds the nearest floor when noclipped)
-				-- ------------------------------------------------
 				local downHit = workspace:Raycast(
 					pos,
-					Vector3.new(0, -50, 0),
+					Vector3.new(0,-FLOOR_SCAN,0),
 					rayParams
 				)
 	
 				if downHit then
-					floorPad.CFrame = CFrame.new(
-						pos.X,
-						downHit.Position.Y + 0.1,
-						pos.Z
-					)
-				else
-					floorPad.CFrame = PARKED
+	
+					local surfaceY = downHit.Position.Y + CHAR_HALF_HEIGHT
+	
+					if pos.Y < surfaceY + 0.05 then
+	
+						local newPos = Vector3.new(pos.X,surfaceY,pos.Z)
+	
+						-- cancel falling velocity
+						local vel = hrp.AssemblyLinearVelocity
+						hrp.AssemblyLinearVelocity = Vector3.new(vel.X,0,vel.Z)
+	
+						-- snap to block surface
+						hrp.CFrame = CFrame.new(newPos,newPos + cf.LookVector)
+	
+						pos = newPos
+					end
 				end
 	
-				-- ------------------------------------------------
-				-- WALL PUSH: 4 horizontal rays
-				-- ------------------------------------------------
+				-- =================================================
+				-- WALL PUSH (UNCHANGED)
+				-- =================================================
+	
 				local newPos   = pos
 				local scanDist = CHAR_HALF_WIDTH + 1
+	
 				local dirs = {
 					cf.LookVector,
 					-cf.LookVector,
 					cf.RightVector,
-					-cf.RightVector,
+					-cf.RightVector
 				}
+	
 				for _, dir in ipairs(dirs) do
-					local result = workspace:Raycast(pos, dir * scanDist, rayParams)
+	
+					local result = workspace:Raycast(pos,dir * scanDist,rayParams)
+	
 					if result then
+	
 						local dist = (result.Position - pos).Magnitude
+	
 						if dist < CHAR_HALF_WIDTH then
 							newPos = newPos + (-dir * (CHAR_HALF_WIDTH - dist + PUSH_EXTRA))
 						end
@@ -10074,39 +10045,59 @@ local script = G2L["102"];
 				end
 	
 				if (newPos - pos).Magnitude > 0.01 then
-					hrp.CFrame = CFrame.new(newPos, newPos + cf.LookVector)
+					hrp.CFrame = CFrame.new(newPos,newPos + cf.LookVector)
 				end
+	
 			end)
+	
 		end)
 	end
 	
 	local function disable()
+	
 		isEnabled = false
-		NNoclipTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-		if loopConn then loopConn:Disconnect(); loopConn = nil end
-		if charConn then charConn:Disconnect(); charConn = nil end
-		destroyPad()
+		NNoclipTickBox.BackgroundColor3 = Color3.new(0,0,0)
+	
+		if loopConn then
+			loopConn:Disconnect()
+			loopConn = nil
+		end
+	
+		if charConn then
+			charConn:Disconnect()
+			charConn = nil
+		end
 	end
 	
 	-- ============================================================
-	-- TOGGLE
+	-- TOGGLE (UNCHANGED)
 	-- ============================================================
+	
 	NNoclipTickBox.MouseButton1Click:Connect(function()
+	
 		if isEnabled then
 			disable()
 		else
 			enable()
 		end
+	
 	end)
 	
 	-- ============================================================
 	-- CLEANUP
 	-- ============================================================
+	
 	script.AncestryChanged:Connect(function()
+	
 		if not script:IsDescendantOf(game) then
-			if isEnabled then disable() end
+	
+			if isEnabled then
+				disable()
+			end
+	
 			tooltipFrame:Destroy()
 		end
+	
 	end)
 end;
 task.spawn(C_102);
