@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[8]];
+G2L["11e"]["Text"] = [[10]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9955,44 +9955,40 @@ local script = G2L["102"];
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
 	
 		-- Forced Jump System
-		UserInputService.JumpRequest:Connect(function()
+		local jumpHeld = false
 	
-			if jumpDebounce then return end
-	
-			local char = LocalPlayer.Character
-			if not char then return end
-	
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-	
-			if not hrp or not humanoid then return end
-	
-			local rayParams = RaycastParams.new()
-			rayParams.FilterType = Enum.RaycastFilterType.Exclude
-			rayParams.FilterDescendantsInstances = {char}
-	
-			local hit = workspace:Raycast(
-				hrp.Position,
-				Vector3.new(0,-6,0),
-				rayParams
-			)
-	
-			if hit then
-	
-				jumpDebounce = true
-	
-				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-	
-				local vel = hrp.AssemblyLinearVelocity
-				hrp.AssemblyLinearVelocity =
-					Vector3.new(vel.X, humanoid.JumpPower, vel.Z)
-	
-				task.wait(0.15)
-	
-				jumpDebounce = false
+		UserInputService.InputBegan:Connect(function(input, gameProcessed)
+			if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+				jumpHeld = true
 			end
-	
 		end)
+	
+		UserInputService.InputEnded:Connect(function(input, gameProcessed)
+			if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+				jumpHeld = false
+			end
+		end)
+	
+		-- inside RenderStepped loop:
+		if jumpHeld then
+			local char = LocalPlayer.Character
+			if char then
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				local humanoid = char:FindFirstChildOfClass("Humanoid")
+				if hrp and humanoid then
+					local rayParams = RaycastParams.new()
+					rayParams.FilterType = Enum.RaycastFilterType.Exclude
+					rayParams.FilterDescendantsInstances = {char}
+	
+					local hit = workspace:Raycast(hrp.Position, Vector3.new(0,-6,0), rayParams)
+					if hit then
+						humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+						local vel = hrp.AssemblyLinearVelocity
+						hrp.AssemblyLinearVelocity = Vector3.new(vel.X, humanoid.JumpPower, vel.Z)
+					end
+				end
+			end
+		end
 	
 		loopConn = RunService.RenderStepped:Connect(function()
 	
@@ -10065,7 +10061,9 @@ local script = G2L["102"];
 			end
 	
 			if (newPos - pos).Magnitude > 0.01 then
-				hrp.CFrame = CFrame.new(newPos) * CFrame.Angles(0, cf.Rotation.Y, 0)
+				-- Only change position, keep the rotation intact
+				local currentCFrame = hrp.CFrame
+				hrp.CFrame = CFrame.new(newPos) * CFrame.fromMatrix(Vector3.new(), currentCFrame.RightVector, currentCFrame.UpVector)
 			end
 	
 		end)
