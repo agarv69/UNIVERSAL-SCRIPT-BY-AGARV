@@ -3077,7 +3077,7 @@ G2L["116"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["116"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["116"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["116"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["116"]["Text"] = [[29]];
+G2L["116"]["Text"] = [[30]];
 G2L["116"]["Name"] = [[LockUnlockUI]];
 
 
@@ -9168,10 +9168,13 @@ local function C_f4()
 local script = G2L["f4"];
 	-- ============================================================
 	-- CHATSPY SCRIPT
-	-- This is a direct port of the TCO script's oimremake function.
-	-- When ON:  replaces OnIncomingMessage with TCO's full system,
-	--           showing hidden/muted/IQ chat with correct colors.
-	-- When OFF: restores whatever handler was set before.
+	-- Sets OnIncomingMessage ONCE at startup (never swaps it out).
+	-- The spychat variable controls what it shows/hides.
+	-- Emoji icons match TCO format:
+	--   🚫 = hidden ";" command chat
+	--   🤐 = muted player
+	--   🤪 = dumb IQ
+	--   🧠 = genius IQ
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -9216,7 +9219,7 @@ local script = G2L["f4"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Reveals hidden commands, muted players, and IQ-filtered chat with correct color tags"
+	tooltipLabel.Text = "Reveals hidden commands, muted players, and IQ chat with emoji labels"
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -9238,7 +9241,7 @@ local script = G2L["f4"];
 	end)
 	
 	-- ============================================================
-	-- TCO COLOR TABLES  (copied exactly from oimremake)
+	-- TCO COLOR TABLES (exact copy from TCO oimremake)
 	-- ============================================================
 	local isog = workspace:FindFirstChild("Cubes") ~= nil
 	
@@ -9260,118 +9263,116 @@ local script = G2L["f4"];
 	end
 	
 	-- ============================================================
-	-- THE SPY HANDLER  (direct port of TCO's oimremake)
-	-- spychat=true means we ARE spying (same as TCO's spychat flag)
+	-- SPY STATE
+	-- This single variable is read by the handler every message.
+	-- Toggling it is all that's needed — handler stays set forever.
 	-- ============================================================
-	local function makeHandler(spychat)
-		return function(mdata)
-			local plr = mdata.TextSource
-				and mdata.TextSource.UserId
-				and Players:GetPlayerByUserId(mdata.TextSource.UserId)
-			if not plr then return end
+	local spychat = false
+	local isEnabled = false
 	
-			-- 1. Determine base color class (same logic as TCO)
-			local cn = ""
-			if plr.Neutral == true then
-				if plr:GetAttribute("Arken") == true then
-					cn = "arken"
-				else
-					cn = "peasant"
-				end
+	-- ============================================================
+	-- SINGLE PERSISTENT HANDLER
+	-- Set once at script startup. Never replaced.
+	-- Reads spychat variable each message.
+	-- ============================================================
+	game.TextChatService.OnIncomingMessage = function(mdata)
+		local plr = mdata.TextSource
+			and mdata.TextSource.UserId
+			and Players:GetPlayerByUserId(mdata.TextSource.UserId)
+		if not plr then return end
+	
+		-- 1. Base color class (exact TCO logic)
+		local cn
+		if plr.Neutral == true then
+			if plr:GetAttribute("Arken") == true then
+				cn = "arken"
 			else
-				cn = "admin"
+				cn = "peasant"
 			end
+		else
+			cn = "admin"
+		end
 	
-			-- 2. Muted check
-			local muted = plr:HasTag("Muted")
-			if muted then
+		-- 2. Muted check (exact TCO logic)
+		local muted = plr:HasTag("Muted")
+		if muted then
+			cn = "hidden"
+			if not spychat then
+				mdata.Text = ""  -- hide message when spy is off
+			end
+		end
+	
+		-- 3. Hidden ";" command check (exact TCO logic)
+		local hidden = false
+		if string.sub(mdata.Text, 1, 1) == ";" then
+			if spychat then
 				cn = "hidden"
-				if not spychat then
-					mdata.Text = ""   -- hide message text when spy is OFF
-				end
-			end
-	
-			-- 3. Hidden ";" command check
-			local hidden = false
-			if string.sub(mdata.Text, 1, 1) == ";" then
-				if spychat then
-					cn = "hidden"
-					hidden = true
-				else
-					mdata.Text = ""   -- hide message text when spy is OFF
-				end
-			end
-	
-			-- 4. IQ check (only label when spychat is ON, same as TCO)
-			local iq = nil
-			if spychat and plr:GetAttribute("IQ") then
-				if plr:GetAttribute("IQ") >= 200 then
-					iq = "genius \u{1F9E0}"
-					cn = "iqgenius"
-				elseif plr:GetAttribute("IQ") <= 50 then
-					iq = "dumb \u{1F92A}"
-					cn = "iqdumb"
-				end
-			end
-	
-			-- 5. Build prefix — identical string format to TCO
-			local r = namecolors[cn][1]
-			local g = namecolors[cn][2]
-			local b = namecolors[cn][3]
-			local hex = namecolorshex[cn]
-			local displayName = plr.DisplayName
-	
-			local hiddenLabel = hidden and " (HIDDEN CHAT)" or ""
-			local iqLabel     = iq    and (" (" .. iq .. ")") or ""
-			local mutedLabel  = muted and " (MUTED)" or ""
-	
-			if isog then
-				mdata.PrefixText = "<font color=\"" .. hex .. "\"><b><font color='rgb(" .. r .. "," .. g .. "," .. b .. ")'>[" .. displayName .. hiddenLabel .. iqLabel .. mutedLabel .. "]: </font></b></font>"
+				hidden = true
 			else
-				mdata.PrefixText = "<font color=\"" .. hex .. "\"><i><font color='rgb(" .. r .. "," .. g .. "," .. b .. ")'>(" .. displayName .. hiddenLabel .. iqLabel .. mutedLabel .. ") </font></i></font>"
+				mdata.Text = ""  -- hide message when spy is off
 			end
+		end
+	
+		-- 4. IQ check — only show labels when spychat is ON
+		local iqEmoji = nil
+		if spychat and plr:GetAttribute("IQ") then
+			local iq = plr:GetAttribute("IQ")
+			if iq >= 200 then
+				iqEmoji = "\u{1F9E0}"  -- 🧠
+				cn = "iqgenius"
+			elseif iq <= 50 then
+				iqEmoji = "\u{1FA84}"  -- 🪄 fallback, use below
+				iqEmoji = "\u{1F92A}"  -- 🤪
+				cn = "iqdumb"
+			end
+		end
+	
+		-- 5. Build emoji prefix for spy labels
+		-- Format: "🚫 (username)" or "🤐 (username)" or "🧠 (username)" etc.
+		local icon = ""
+		if spychat then
+			if hidden then
+				icon = "\u{1F6AB} "   -- 🚫 hidden command chat
+			elseif muted then
+				icon = "\u{1F910} "   -- 🤐 muted player
+			elseif iqEmoji then
+				icon = iqEmoji .. " " -- 🤪 or 🧠
+			end
+		end
+	
+		-- 6. Build PrefixText — exact same format as TCO oimremake
+		local r   = namecolors[cn][1]
+		local g   = namecolors[cn][2]
+		local b   = namecolors[cn][3]
+		local hex = namecolorshex[cn]
+		local displayName = plr.DisplayName
+	
+		if isog then
+			-- OG server: bold brackets [name]:
+			mdata.PrefixText = "<font color=\"" .. hex .. "\"><b><font color='rgb(" .. r .. "," .. g .. "," .. b .. ")'>" .. icon .. "[" .. displayName .. "]: </font></b></font>"
+		else
+			-- Normal server: italic parens (name)
+			mdata.PrefixText = "<font color=\"" .. hex .. "\"><i><font color='rgb(" .. r .. "," .. g .. "," .. b .. ")'>" .. icon .. "(" .. displayName .. ") </font></i></font>"
 		end
 	end
 	
 	-- ============================================================
-	-- STATE
-	-- ============================================================
-	local isEnabled      = false
-	local previousHandler = nil
-	
-	-- ============================================================
-	-- ENABLE / DISABLE
+	-- TOGGLE FUNCTIONS
 	-- ============================================================
 	local function enable()
 		isEnabled = true
+		spychat = true
 		ChatSpyTickBox.BackgroundColor3 = MainAccentColor.BackgroundColor3
-	
-		-- Save whatever was set before (could be nil or another handler)
-		previousHandler = game.TextChatService.OnIncomingMessage
-	
-		-- Set our handler with spychat = true
-		game.TextChatService.OnIncomingMessage = makeHandler(true)
 	end
 	
 	local function disable()
 		isEnabled = false
+		spychat = false
 		ChatSpyTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-	
-		-- Restore previous handler.
-		-- If there was nothing before, set our handler with spychat=false
-		-- so muted/hidden messages still get blanked out correctly for
-		-- normal players (same as TCO running with spychat=false).
-		if previousHandler ~= nil then
-			game.TextChatService.OnIncomingMessage = previousHandler
-		else
-			-- Default off-state: still apply TCO color tags but without spy
-			game.TextChatService.OnIncomingMessage = makeHandler(false)
-		end
-		previousHandler = nil
 	end
 	
 	-- ============================================================
-	-- TICKBOX TOGGLE
+	-- TICKBOX CLICK
 	-- ============================================================
 	ChatSpyTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then
@@ -9386,7 +9387,7 @@ local script = G2L["f4"];
 	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
-			if isEnabled then disable() end
+			spychat = false
 			tooltipFrame:Destroy()
 		end
 	end)
