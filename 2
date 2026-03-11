@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[7]];
+G2L["11e"]["Text"] = [[8]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -9873,6 +9873,17 @@ local script = G2L["102"];
 	-- ============================================================
 	-- NNOCLIP SCRIPT
 	-- Explorer: MiscGroup > NNoclipRow > NNoclipScript
+	--
+	-- FLOOR PAD logic:
+	--   Every frame, raycast straight down from feet (HRP - half height).
+	--   If a solid block is detected within DETECT_RANGE studs below feet:
+	--     - Place anchored invisible pad ON TOP of that block surface
+	--     - Character physics naturally stands on it
+	--   If nothing detected (air below) or block is far away:
+	--     - Move pad far away so it doesn't affect anything
+	--
+	-- WALL PUSH logic:
+	--   4 horizontal rays. If inside a wall, push HRP out.
 	-- ============================================================
 	
 	local Players     = game:GetService("Players")
@@ -9942,86 +9953,121 @@ local script = G2L["102"];
 	end)
 	
 	-- ============================================================
-	-- CORE LOGIC
-	--
-	-- Every RenderStepped (faster than Heartbeat, before physics):
-	--   Cast 6 rays: down, up, forward, back, left, right from HRP.
-	--   For each ray, if the hit surface is INSIDE the character
-	--   bounding box (meaning we overlapped into it), push us out.
-	--
-	-- For the floor specifically: if floor hit is above HRP bottom,
-	-- place HRP so feet sit exactly on the floor surface.
+	-- CONSTANTS
 	-- ============================================================
+	local CHAR_HALF_HEIGHT = 2.1   -- HRP center to feet (R15)
+	local CHAR_HALF_WIDTH  = 0.6   -- HRP center to sides
+	local PUSH_EXTRA       = 0.05
 	
-	-- R15 character dimensions (studs)
-	local CHAR_HALF_HEIGHT = 2.1  -- HRP center to feet
-	local CHAR_HALF_WIDTH  = 0.6  -- HRP center to side/front/back
-	local PUSH_EXTRA       = 0.05 -- tiny extra gap to avoid re-triggering
+	-- How far below feet we scan for a block.
+	-- 4 studs means: detects blocks up to 4 studs below your feet.
+	-- This covers thin blocks you've been pushed into.
+	local DETECT_RANGE     = 4.0
 	
+	local PAD_NAME         = "NNoclipFloorPad"
+	local PAD_PARKED       = Vector3.new(0, -9999, 0) -- off-map when not in use
+	
+	-- ============================================================
+	-- STATE
+	-- ============================================================
 	local isEnabled = false
 	local loopConn  = nil
+	local charConn  = nil
+	local floorPad  = nil
+	
+	local function createPad(char)
+		destroyPad()
+		local pad = Instance.new("Part")
+		pad.Name         = PAD_NAME
+		pad.Size         = Vector3.new(4, 0.2, 4)
+		pad.Transparency = 1
+		pad.Anchored     = true
+		pad.CanCollide   = true
+		pad.CFrame       = CFrame.new(PAD_PARKED)
+		pad.Parent       = workspace  -- workspace so it's a real collidable surface
+		floorPad = pad
+	end
+	
+	function destroyPad()
+		if floorPad then
+			floorPad:Destroy()
+			floorPad = nil
+		end
+	end
 	
 	local function enable()
 		isEnabled = true
 		NNoclipTickBox.BackgroundColor3 = getAccentColor()
+	
+		local char = LocalPlayer.Character
+		if char then createPad(char) end
+	
+		charConn = LocalPlayer.CharacterAdded:Connect(function(newChar)
+			newChar:WaitForChild("HumanoidRootPart")
+			createPad(newChar)
+		end)
 	
 		loopConn = RunService.RenderStepped:Connect(function()
 			pcall(function()
 				local char = LocalPlayer.Character
 				if not char then return end
 				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if not hrp then return end
-				local hum = char:FindFirstChildOfClass("Humanoid")
+				if not hrp or not floorPad then return end
 	
 				local rayParams = RaycastParams.new()
 				rayParams.FilterType = Enum.RaycastFilterType.Exclude
-				rayParams.FilterDescendantsInstances = {char}
+				-- Exclude character AND the pad itself so they don't interfere
+				rayParams.FilterDescendantsInstances = {char, floorPad}
 	
-				local pos = hrp.Position
-				local cf  = hrp.CFrame
-				local newPos = pos  -- we accumulate corrections
+				local pos   = hrp.Position
+				local cf    = hrp.CFrame
+				local feetY = pos.Y - CHAR_HALF_HEIGHT
 	
-				-- ---- DOWN: feet inside a block? ----
-				-- Cast from HRP center downward. If hit is above feet, snap feet to surface.
-				local down = workspace:Raycast(pos, Vector3.new(0, -(CHAR_HALF_HEIGHT + 1), 0), rayParams)
-				if down then
-					local floorY = down.Position.Y
-					local feetY  = pos.Y - CHAR_HALF_HEIGHT
-					if floorY > feetY then
-						-- Feet are below the surface — place them exactly on it
-						newPos = Vector3.new(newPos.X, floorY + CHAR_HALF_HEIGHT + PUSH_EXTRA, newPos.Z)
-					end
+				-- ------------------------------------------------
+				-- FLOOR DETECTION
+				-- Cast from feet downward by DETECT_RANGE studs.
+				-- If we hit something, place pad right on its surface.
+				-- If nothing, park pad off-map.
+				-- ------------------------------------------------
+				local feetOrigin = Vector3.new(pos.X, feetY, pos.Z)
+				local downResult = workspace:Raycast(
+					feetOrigin,
+					Vector3.new(0, -DETECT_RANGE, 0),
+					rayParams
+				)
+	
+				if downResult then
+					-- Place pad flat on top of the detected surface
+					local surfaceY = downResult.Position.Y
+					floorPad.CFrame = CFrame.new(pos.X, surfaceY + 0.1, pos.Z)
+				else
+					-- Nothing below — park pad so it doesn't hold us up in air
+					floorPad.CFrame = CFrame.new(PAD_PARKED)
 				end
 	
-				-- ---- SIDES: torso/arms inside a wall? ----
-				-- Cast from HRP outward in 4 horizontal directions.
-				-- If hit is closer than our half-width, push away from the wall.
+				-- ------------------------------------------------
+				-- WALL PUSH: 4 horizontal rays
+				-- ------------------------------------------------
+				local newPos   = pos
+				local scanDist = CHAR_HALF_WIDTH + 1
 				local dirs = {
 					cf.LookVector,
 					-cf.LookVector,
 					cf.RightVector,
 					-cf.RightVector,
 				}
-				local scanDist = CHAR_HALF_WIDTH + 1
 				for _, dir in ipairs(dirs) do
 					local result = workspace:Raycast(pos, dir * scanDist, rayParams)
 					if result then
 						local dist = (result.Position - pos).Magnitude
 						if dist < CHAR_HALF_WIDTH then
-							-- We overlapped into the wall — push back out
-							local pushBack = -dir * (CHAR_HALF_WIDTH - dist + PUSH_EXTRA)
-							newPos = newPos + pushBack
+							newPos = newPos + (-dir * (CHAR_HALF_WIDTH - dist + PUSH_EXTRA))
 						end
 					end
 				end
 	
-				-- ---- APPLY if we corrected anything ----
 				if (newPos - pos).Magnitude > 0.01 then
 					hrp.CFrame = CFrame.new(newPos, newPos + cf.LookVector)
-					-- Make sure humanoid treats this as standing
-					if hum then
-						hum.PlatformStand = false
-					end
 				end
 			end)
 		end)
@@ -10031,6 +10077,8 @@ local script = G2L["102"];
 		isEnabled = false
 		NNoclipTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 		if loopConn then loopConn:Disconnect(); loopConn = nil end
+		if charConn then charConn:Disconnect(); charConn = nil end
+		destroyPad()
 	end
 	
 	-- ============================================================
