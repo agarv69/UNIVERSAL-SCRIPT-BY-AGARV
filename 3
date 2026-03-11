@@ -3134,7 +3134,7 @@ G2L["11e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["11e"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["11e"]["LayoutOrder"] = 30;
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11e"]["Text"] = [[7]];
+G2L["11e"]["Text"] = [[8]];
 G2L["11e"]["Name"] = [[VersionNumber]];
 G2L["11e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10065,7 +10065,7 @@ local script = G2L["102"];
 			end
 	
 			if (newPos - pos).Magnitude > 0.01 then
-				hrp.CFrame = CFrame.new(newPos,newPos + cf.LookVector)
+				hrp.CFrame = CFrame.new(newPos) * CFrame.Angles(0, cf.Rotation.Y, 0)
 			end
 	
 		end)
