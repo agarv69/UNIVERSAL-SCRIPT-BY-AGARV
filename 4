@@ -3214,7 +3214,7 @@ G2L["125"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["125"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["125"]["LayoutOrder"] = 30;
 G2L["125"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["125"]["Text"] = [[8]];
+G2L["125"]["Text"] = [[10]];
 G2L["125"]["Name"] = [[VersionNumber]];
 G2L["125"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10259,9 +10259,12 @@ local script = G2L["115"];
 	
 	local isEnabled = false
 	local deleteLog = {}
+	local lastAnnounce = {}
+	
 	local DELETE_LIMIT = 10
 	local TIME_WINDOW = 60
 	local DELETE_RADIUS = 24
+	local ANNOUNCE_COOLDOWN = 120
 	
 	GriefTickBox.BackgroundColor3 = Color3.new(0,0,0)
 	
@@ -10320,9 +10323,6 @@ local script = G2L["115"];
 		tooltipFrame.Visible = false
 	end)
 	
-	-- ============================================================
-	-- UTILITY
-	-- ============================================================
 	local function holdingDelete(player)
 		local char = player.Character
 		if not char then return false end
@@ -10345,9 +10345,6 @@ local script = G2L["115"];
 		end
 	end
 	
-	-- ============================================================
-	-- DETECTION (Heartbeat snapshot method from your working script)
-	-- ============================================================
 	local bricksFolder = nil
 	local previousBricks = {}
 	
@@ -10355,10 +10352,8 @@ local script = G2L["115"];
 		if not bricksFolder then return "Server" end
 		if brick:IsDescendantOf(bricksFolder) then
 			local parent = brick.Parent
-			if parent then
-				if Players:FindFirstChild(parent.Name) then
-					return parent.Name
-				end
+			if parent and Players:FindFirstChild(parent.Name) then
+				return parent.Name
 			end
 		end
 		return "Server"
@@ -10405,10 +10400,7 @@ local script = G2L["115"];
 				end
 	
 				if closest and closest.Name ~= ownerName then
-					-- print every single delete to console
-					print(closest.Name .. " deleted " .. ownerName .. "'s brick")
 	
-					-- track for chat announce
 					deleteLog[closest.Name] = deleteLog[closest.Name] or {}
 					table.insert(deleteLog[closest.Name], tick())
 	
@@ -10422,10 +10414,10 @@ local script = G2L["115"];
 					deleteLog[closest.Name] = valid
 	
 					if #valid >= DELETE_LIMIT then
-						local now2 = tick()
-						if not announceCooldown[closest.Name] or now2 - announceCooldown[closest.Name] >= 120 then
-							sendChat("🚨DETECTED GRIEF: " .. closest.DisplayName)
-							announceCooldown[closest.Name] = now2
+						local lastTime = lastAnnounce[closest.Name] or 0
+						if now - lastTime >= ANNOUNCE_COOLDOWN then
+							sendChat("DETECTED GRIEF: " .. closest.DisplayName)
+							lastAnnounce[closest.Name] = now
 						end
 						deleteLog[closest.Name] = {}
 					end
@@ -10436,19 +10428,17 @@ local script = G2L["115"];
 		previousBricks = currentBricks
 	end)
 	
-	-- ============================================================
-	-- ENABLE / DISABLE
-	-- ============================================================
 	local function enable()
 		isEnabled = true
 		bricksFolder = workspace:FindFirstChild("Bricks")
 		if bricksFolder then
 			previousBricks = snapshot()
 		end
+	
 		if ProtectionAccentColor then
 			GriefTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
 		else
-			GriefTickBox.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+			GriefTickBox.BackgroundColor3 = Color3.fromRGB(0,170,255)
 		end
 	end
 	
@@ -10456,12 +10446,9 @@ local script = G2L["115"];
 		isEnabled = false
 		deleteLog = {}
 		previousBricks = {}
-		GriefTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+		GriefTickBox.BackgroundColor3 = Color3.new(0,0,0)
 	end
 	
-	-- ============================================================
-	-- TICKBOX TOGGLE
-	-- ============================================================
 	GriefTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then
 			disable()
@@ -10470,13 +10457,10 @@ local script = G2L["115"];
 		end
 	end)
 	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
-			tooltipFrame:Destroy()
 			isEnabled = false
+			tooltipFrame:Destroy()
 		end
 	end)
 end;
