@@ -1,12 +1,15 @@
-local VERSION = 160
+local VERSION = 150
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
-local DELETE_RADIUS = 24
 local monitoring = true
+local DELETE_RADIUS = 24
 
 print("Delete Detector Running [ID "..VERSION.."]")
+
+local bricksFolder = workspace:WaitForChild("Bricks")
 
 local function holdingDelete(player)
 	local char = player.Character
@@ -19,52 +22,54 @@ local function holdingDelete(player)
 	return false
 end
 
-local function getBrickOwner(brick)
-	if not brick:IsDescendantOf(workspace.Bricks) then
-		return nil
+local previousBricks = {}
+
+local function snapshot()
+	local current = {}
+	for _, obj in pairs(bricksFolder:GetDescendants()) do
+		if obj:IsA("BasePart") and obj.Name == "Brick" then
+			current[obj] = obj.Position
+		end
 	end
-	
-	local parent = brick.Parent
-	if not parent then return nil end
-	
-	if parent.Parent == workspace.Bricks then
-		return parent.Name
-	end
-	
-	return nil
+	return current
 end
 
-workspace.DescendantRemoving:Connect(function(obj)
+previousBricks = snapshot()
+
+RunService.Heartbeat:Connect(function()
 	if not monitoring then return end
-	if not obj:IsA("BasePart") then return end
-	if obj.Name ~= "Brick" then return end
 	
-	local ownerName = getBrickOwner(obj)
-	if not ownerName then return end
+	local currentBricks = snapshot()
 	
-	local pos = obj.Position
-	local closest = nil
-	local closestDist = DELETE_RADIUS
-	
-	for _, player in pairs(Players:GetPlayers()) do
-		local char = player.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			local dist = (char.HumanoidRootPart.Position - pos).Magnitude
-			if dist <= closestDist and holdingDelete(player) then
-				closestDist = dist
-				closest = player
+	for oldBrick, oldPos in pairs(previousBricks) do
+		if not currentBricks[oldBrick] then
+			
+			local closest = nil
+			local closestDist = DELETE_RADIUS
+			
+			for _, player in pairs(Players:GetPlayers()) do
+				local char = player.Character
+				if char and char:FindFirstChild("HumanoidRootPart") then
+					local dist = (char.HumanoidRootPart.Position - oldPos).Magnitude
+					if dist <= closestDist and holdingDelete(player) then
+						closestDist = dist
+						closest = player
+					end
+				end
+			end
+			
+			if closest then
+				print(closest.Name.." deleted a brick")
 			end
 		end
 	end
 	
-	if closest and closest.Name ~= ownerName then
-		print(closest.Name .. " griefed " .. ownerName)
-	end
+	previousBricks = currentBricks
 end)
 
 LocalPlayer.Chatted:Connect(function(msg)
 	if msg == ";stop" then
 		monitoring = false
-		print("Stopped [ID "..VERSION.."]")
+		print("Delete Detector Stopped [ID "..VERSION.."]")
 	end
 end)
