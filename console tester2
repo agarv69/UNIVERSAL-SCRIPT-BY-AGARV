@@ -1,4 +1,4 @@
-local VERSION = 130
+local VERSION = 135
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -23,10 +23,20 @@ workspace.DescendantRemoving:Connect(function(obj)
 	if not monitoring then return end
 	if obj:IsA("BasePart") and obj.Name == "Brick" then
 		
-		local ownerFolder = obj.Parent
-		if not ownerFolder then return end
-		local ownerName = ownerFolder.Name
-
+		local fullPath = obj:GetFullName()
+		
+		local ownerName = nil
+		local parts = string.split(fullPath, ".")
+		
+		for i = 1, #parts do
+			if parts[i] == "Bricks" and parts[i+1] then
+				ownerName = parts[i+1]
+				break
+			end
+		end
+		
+		if not ownerName then return end
+		
 		local pos = obj.Position
 		local closest = nil
 		local closestDist = DELETE_RADIUS
