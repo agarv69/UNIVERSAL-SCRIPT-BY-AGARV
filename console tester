@@ -1,32 +1,46 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local workspace = game:GetService("Workspace")
-
 local bricksFolder = workspace:WaitForChild("Bricks")
 
-local DETECTION_DISTANCE = 20
 local monitoring = true
+local DETECTION_DISTANCE = 30
 
-print("Advanced Delete Detection Running")
+print("Delete Detector Running")
 
 LocalPlayer.Chatted:Connect(function(msg)
 	if msg:lower() == ";stop" then
 		monitoring = false
-		print("Detection Stopped")
+		print("Stopped")
 	end
 end)
 
-local function getClosestPlayer(pos)
+local function holdingDelete(player)
+	local char = player.Character
+	if not char then return false end
+	
+	local tool = char:FindFirstChild("Delete")
+	if tool and tool:IsA("Tool") then
+		return true
+	end
+	
+	return false
+end
+
+local function closestDeleteHolder(position)
 	local closest = nil
 	local closestDist = math.huge
 	
 	for _, player in pairs(Players:GetPlayers()) do
-		local char = player.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			local dist = (char.HumanoidRootPart.Position - pos).Magnitude
-			if dist < closestDist then
-				closestDist = dist
-				closest = player
+		if player ~= LocalPlayer then
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				if holdingDelete(player) then
+					local dist = (char.HumanoidRootPart.Position - position).Magnitude
+					if dist < closestDist then
+						closestDist = dist
+						closest = player
+					end
+				end
 			end
 		end
 	end
@@ -34,42 +48,20 @@ local function getClosestPlayer(pos)
 	return closest, closestDist
 end
 
-local function isHoldingDelete(player)
-	local char = player.Character
-	if not char then return false end
-	local tool = char:FindFirstChild("Delete")
-	if tool and tool:IsA("Tool") then
-		return true
-	end
-	return false
-end
-
-local function monitorFolder(folder)
-	folder.ChildRemoved:Connect(function(brick)
-		if not monitoring then return end
-		if not brick:IsA("BasePart") then return end
+workspace.DescendantRemoving:Connect(function(obj)
+	if not monitoring then return end
+	
+	if obj:IsA("BasePart") and obj.Name == "Brick" and obj:IsDescendantOf(bricksFolder) then
 		
-		local lastPos = brick.Position
-		task.wait(0.05)
+		local lastPosition = obj.Position
 		
-		local closestPlayer, distance = getClosestPlayer(lastPos)
+		task.wait(0.03)
 		
-		if closestPlayer and distance <= DETECTION_DISTANCE then
-			if isHoldingDelete(closestPlayer) then
-				print(closestPlayer.Name .. " detected")
-			end
+		local player, distance = closestDeleteHolder(lastPosition)
+		
+		if player and distance <= DETECTION_DISTANCE then
+			print(player.Name .. " detected")
 		end
-	end)
-end
-
-for _, folder in pairs(bricksFolder:GetChildren()) do
-	if folder:IsA("Folder") then
-		monitorFolder(folder)
-	end
-end
-
-bricksFolder.ChildAdded:Connect(function(folder)
-	if folder:IsA("Folder") then
-		monitorFolder(folder)
+		
 	end
 end)
