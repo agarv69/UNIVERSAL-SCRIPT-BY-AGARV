@@ -3309,7 +3309,7 @@ G2L["12d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["12d"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["12d"]["LayoutOrder"] = 30;
 G2L["12d"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["12d"]["Text"] = [[4]];
+G2L["12d"]["Text"] = [[5]];
 G2L["12d"]["Name"] = [[VersionNumber]];
 G2L["12d"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10340,9 +10340,9 @@ task.spawn(C_10f);
 local function C_114()
 local script = G2L["114"];
 	-- ============================================================
-	-- GRIEF PRO (DELETE TOOL ONLY)
-	-- Admin-only auto ;clearinv on block spam
-	-- Default limit: 10 deletes in 60 seconds
+	-- GRIEF PRO (DELETE DETECTION - NORMAL SERVERS)
+	-- Auto ;clearinv when someone deletes too many blocks
+	-- Default: 10 deletes in 60 seconds
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -10357,10 +10357,10 @@ local script = G2L["114"];
 	local ProtectionAccentColor = ProtectionGroup:WaitForChild("ProtectionAccentColor")
 	
 	-- ============================================================
-	-- SETTINGS
+	-- SETTINGS (CHANGE THIS NUMBER)
 	-- ============================================================
 	
-	local DELETE_LIMIT = 10
+	local DELETE_LIMIT = 10   -- 🔥 CHANGE THIS TO 1 FOR INSTANT CLEAR
 	local TIME_WINDOW = 60
 	
 	-- ============================================================
@@ -10368,8 +10368,8 @@ local script = G2L["114"];
 	-- ============================================================
 	
 	local isEnabled = false
-	local deleteConnection = nil
 	local deleteLog = {}
+	local connections = {}
 	
 	-- ============================================================
 	-- SCREENGUI HELPER
@@ -10409,7 +10409,7 @@ local script = G2L["114"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Automatically clears inventory if a player deletes 10+ blocks within 60 seconds."
+	tooltipLabel.Text = "Automatically clears inventory if a player deletes too many blocks within 60 seconds."
 	tooltipLabel.TextColor3 = Color3.new(1,1,1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextWrapped = true
@@ -10432,14 +10432,6 @@ local script = G2L["114"];
 	end)
 	
 	-- ============================================================
-	-- ADMIN CHECK
-	-- ============================================================
-	
-	local function isAdmin()
-		return LocalPlayer.Team and LocalPlayer.Team.Name == "Chosen"
-	end
-	
-	-- ============================================================
 	-- CLEAR INVENTORY
 	-- ============================================================
 	
@@ -10449,62 +10441,58 @@ local script = G2L["114"];
 		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
 		else
-			game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
+			game:GetService("ReplicatedStorage")
+				.DefaultChatSystemChatEvents
+				.SayMessageRequest
+				:FireServer(message, "All")
 		end
 	end
 	
 	-- ============================================================
-	-- DELETE DETECTION
+	-- DELETE DETECTION (Workspace.Bricks.Username)
 	-- ============================================================
 	
-	local function connectDeleteTool()
+	local function connectDeleteDetection()
 	
-		local function hookTool(tool)
-			if tool.Name ~= "Delete" then return end
-			if not tool:FindFirstChild("Script") then return end
-			if not tool.Script:FindFirstChild("Event") then return end
+		local bricksFolder = workspace:FindFirstChild("Bricks")
+		if not bricksFolder then return end
 	
-			deleteConnection = tool.Script.Event.OnClientEvent:Connect(function(targetPart)
+		for _, folder in ipairs(bricksFolder:GetChildren()) do
 	
-				if not isEnabled then return end
-				if not isAdmin() then return end
-				if not targetPart then return end
+			if folder:IsA("Folder") then
 	
-				local ownerFolder = targetPart.Parent
-				if not ownerFolder then return end
+				local ownerName = folder.Name
 	
-				local offenderName = ownerFolder.Name
-				if offenderName == LocalPlayer.Name then return end
+				local connection = folder.ChildRemoved:Connect(function(child)
 	
-				deleteLog[offenderName] = deleteLog[offenderName] or {}
-				table.insert(deleteLog[offenderName], tick())
+					if not isEnabled then return end
+					if child.Name ~= "Brick" then return end
+					if ownerName == LocalPlayer.Name then return end
 	
-				local now = tick()
-				local validTimes = {}
+					deleteLog[ownerName] = deleteLog[ownerName] or {}
+					table.insert(deleteLog[ownerName], tick())
 	
-				for _, t in ipairs(deleteLog[offenderName]) do
-					if now - t <= TIME_WINDOW then
-						table.insert(validTimes, t)
+					local now = tick()
+					local valid = {}
+	
+					for _, t in ipairs(deleteLog[ownerName]) do
+						if now - t <= TIME_WINDOW then
+							table.insert(valid, t)
+						end
 					end
-				end
 	
-				deleteLog[offenderName] = validTimes
+					deleteLog[ownerName] = valid
 	
-				if #validTimes >= DELETE_LIMIT then
-					clearInventory(offenderName)
-					deleteLog[offenderName] = {}
-				end
+					if #valid >= DELETE_LIMIT then
+						clearInventory(ownerName)
+						deleteLog[ownerName] = {}
+					end
 	
-			end)
+				end)
+	
+				table.insert(connections, connection)
+			end
 		end
-	
-		local backpack = LocalPlayer:WaitForChild("Backpack")
-	
-		for _, tool in ipairs(backpack:GetChildren()) do
-			hookTool(tool)
-		end
-	
-		backpack.ChildAdded:Connect(hookTool)
 	end
 	
 	-- ============================================================
@@ -10514,18 +10502,18 @@ local script = G2L["114"];
 	local function enable()
 		isEnabled = true
 		GriefTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
-		connectDeleteTool()
+		connectDeleteDetection()
 	end
 	
 	local function disable()
 		isEnabled = false
 		GriefTickBox.BackgroundColor3 = Color3.new(0,0,0)
 	
-		if deleteConnection then
-			deleteConnection:Disconnect()
-			deleteConnection = nil
+		for _, c in ipairs(connections) do
+			c:Disconnect()
 		end
 	
+		connections = {}
 		deleteLog = {}
 	end
 	
@@ -10543,8 +10531,8 @@ local script = G2L["114"];
 	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
-			if deleteConnection then
-				deleteConnection:Disconnect()
+			for _, c in ipairs(connections) do
+				c:Disconnect()
 			end
 			tooltipFrame:Destroy()
 		end
