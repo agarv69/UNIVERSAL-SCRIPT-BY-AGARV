@@ -3309,7 +3309,7 @@ G2L["12d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["12d"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["12d"]["LayoutOrder"] = 30;
 G2L["12d"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["12d"]["Text"] = [[5]];
+G2L["12d"]["Text"] = [[6]];
 G2L["12d"]["Name"] = [[VersionNumber]];
 G2L["12d"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10340,13 +10340,11 @@ task.spawn(C_10f);
 local function C_114()
 local script = G2L["114"];
 	-- ============================================================
-	-- GRIEF PRO (DELETE DETECTION - NORMAL SERVERS)
-	-- Auto ;clearinv when someone deletes too many blocks
-	-- Default: 10 deletes in 60 seconds
+	-- GRIEF PRO (SIMPLE DETECTION)
+	-- Prints username when 1 of their bricks is deleted
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
-	local TextChatService = game:GetService("TextChatService")
 	local LocalPlayer = Players.LocalPlayer
 	
 	local GriefRow = script.Parent
@@ -10357,18 +10355,10 @@ local script = G2L["114"];
 	local ProtectionAccentColor = ProtectionGroup:WaitForChild("ProtectionAccentColor")
 	
 	-- ============================================================
-	-- SETTINGS (CHANGE THIS NUMBER)
-	-- ============================================================
-	
-	local DELETE_LIMIT = 10   -- 🔥 CHANGE THIS TO 1 FOR INSTANT CLEAR
-	local TIME_WINDOW = 60
-	
-	-- ============================================================
 	-- STATE
 	-- ============================================================
 	
 	local isEnabled = false
-	local deleteLog = {}
 	local connections = {}
 	
 	-- ============================================================
@@ -10409,7 +10399,7 @@ local script = G2L["114"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Automatically clears inventory if a player deletes too many blocks within 60 seconds."
+	tooltipLabel.Text = "Prints the username when one of their bricks is deleted."
 	tooltipLabel.TextColor3 = Color3.new(1,1,1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextWrapped = true
@@ -10432,24 +10422,7 @@ local script = G2L["114"];
 	end)
 	
 	-- ============================================================
-	-- CLEAR INVENTORY
-	-- ============================================================
-	
-	local function clearInventory(playerName)
-		local message = ";clearinv " .. playerName
-	
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
-		else
-			game:GetService("ReplicatedStorage")
-				.DefaultChatSystemChatEvents
-				.SayMessageRequest
-				:FireServer(message, "All")
-		end
-	end
-	
-	-- ============================================================
-	-- DELETE DETECTION (Workspace.Bricks.Username)
+	-- DELETE DETECTION
 	-- ============================================================
 	
 	local function connectDeleteDetection()
@@ -10469,24 +10442,7 @@ local script = G2L["114"];
 					if child.Name ~= "Brick" then return end
 					if ownerName == LocalPlayer.Name then return end
 	
-					deleteLog[ownerName] = deleteLog[ownerName] or {}
-					table.insert(deleteLog[ownerName], tick())
-	
-					local now = tick()
-					local valid = {}
-	
-					for _, t in ipairs(deleteLog[ownerName]) do
-						if now - t <= TIME_WINDOW then
-							table.insert(valid, t)
-						end
-					end
-	
-					deleteLog[ownerName] = valid
-	
-					if #valid >= DELETE_LIMIT then
-						clearInventory(ownerName)
-						deleteLog[ownerName] = {}
-					end
+					print(ownerName)
 	
 				end)
 	
@@ -10514,7 +10470,6 @@ local script = G2L["114"];
 		end
 	
 		connections = {}
-		deleteLog = {}
 	end
 	
 	GriefTickBox.MouseButton1Click:Connect(function()
