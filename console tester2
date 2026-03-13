@@ -1,4 +1,4 @@
-local VERSION = 120
+local VERSION = 130
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -6,12 +6,27 @@ local LocalPlayer = Players.LocalPlayer
 local monitoring = true
 local DELETE_RADIUS = 24
 
-print("Delete Detector Running [ID "..VERSION.."]")
+print("Grief Detector Running [ID "..VERSION.."]")
+
+local function holdingDelete(player)
+	local char = player.Character
+	if not char then return false end
+	for _, obj in pairs(char:GetChildren()) do
+		if obj:IsA("Tool") and obj.Name:lower():find("delete") then
+			return true
+		end
+	end
+	return false
+end
 
 workspace.DescendantRemoving:Connect(function(obj)
 	if not monitoring then return end
 	if obj:IsA("BasePart") and obj.Name == "Brick" then
 		
+		local ownerFolder = obj.Parent
+		if not ownerFolder then return end
+		local ownerName = ownerFolder.Name
+
 		local pos = obj.Position
 		local closest = nil
 		local closestDist = DELETE_RADIUS
@@ -20,15 +35,18 @@ workspace.DescendantRemoving:Connect(function(obj)
 			local char = player.Character
 			if char and char:FindFirstChild("HumanoidRootPart") then
 				local dist = (char.HumanoidRootPart.Position - pos).Magnitude
-				if dist <= closestDist then
-					closestDist = dist
-					closest = player
+				if dist <= closestDist and holdingDelete(player) then
+					
+					if player.Name ~= ownerName then
+						closestDist = dist
+						closest = player
+					end
 				end
 			end
 		end
 
 		if closest then
-			print(closest.Name .. " deleted a brick")
+			print(closest.Name .. " griefed " .. ownerName)
 		end
 	end
 end)
@@ -36,6 +54,6 @@ end)
 LocalPlayer.Chatted:Connect(function(msg)
 	if msg == ";stop" then
 		monitoring = false
-		print("Delete Detector Stopped [ID "..VERSION.."]")
+		print("Grief Detector Stopped [ID "..VERSION.."]")
 	end
 end)
