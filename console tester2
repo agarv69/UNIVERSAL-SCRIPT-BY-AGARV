@@ -1,4 +1,4 @@
-local VERSION = 150
+local VERSION = 170
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -24,11 +24,27 @@ end
 
 local previousBricks = {}
 
+local function getOwner(brick)
+	if brick:IsDescendantOf(bricksFolder) then
+		local parent = brick.Parent
+		if parent then
+			local possiblePlayer = Players:FindFirstChild(parent.Name)
+			if possiblePlayer then
+				return parent.Name
+			end
+		end
+	end
+	return "Server"
+end
+
 local function snapshot()
 	local current = {}
 	for _, obj in pairs(bricksFolder:GetDescendants()) do
 		if obj:IsA("BasePart") and obj.Name == "Brick" then
-			current[obj] = obj.Position
+			current[obj] = {
+				position = obj.Position,
+				owner = getOwner(obj)
+			}
 		end
 	end
 	return current
@@ -41,8 +57,11 @@ RunService.Heartbeat:Connect(function()
 	
 	local currentBricks = snapshot()
 	
-	for oldBrick, oldPos in pairs(previousBricks) do
+	for oldBrick, data in pairs(previousBricks) do
 		if not currentBricks[oldBrick] then
+			
+			local oldPos = data.position
+			local ownerName = data.owner
 			
 			local closest = nil
 			local closestDist = DELETE_RADIUS
@@ -58,8 +77,8 @@ RunService.Heartbeat:Connect(function()
 				end
 			end
 			
-			if closest then
-				print(closest.Name.." deleted a brick")
+			if closest and closest.Name ~= ownerName then
+				print(closest.Name.." deleted "..ownerName.."'s brick")
 			end
 		end
 	end
