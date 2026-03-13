@@ -3339,7 +3339,7 @@ G2L["130"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["130"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["130"]["LayoutOrder"] = 30;
 G2L["130"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["130"]["Text"] = [[6767]];
+G2L["130"]["Text"] = [[68]];
 G2L["130"]["Name"] = [[VersionNumber]];
 G2L["130"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -11205,47 +11205,51 @@ local function C_132()
 local script = G2L["132"];
 	local workspace = game:GetService("Workspace")
 	
-	print("Advanced Brick Owner Detector Running")
+	print("Brick Owner Detector Running")
 	
 	local bricksFolder = workspace:WaitForChild("Bricks")
 	
-	-- store brick -> owner mapping
+	-- Store brick -> owner
 	local brickOwners = {}
 	
-	-- function to register bricks inside a folder
-	local function monitorFolder(folder)
-	
-		-- register existing bricks
-		for _, brick in ipairs(folder:GetChildren()) do
-			if brick:IsA("BasePart") and brick.Name == "Brick" then
-				brickOwners[brick] = folder.Name
+	-- Register bricks inside a username folder
+	local function registerBrick(brick)
+		if brick:IsA("BasePart") and brick.Name == "Brick" then
+			if brick.Parent and brick.Parent.Parent == bricksFolder then
+				brickOwners[brick] = brick.Parent.Name
 			end
 		end
-	
-		-- register new bricks
-		folder.ChildAdded:Connect(function(brick)
-			if brick:IsA("BasePart") and brick.Name == "Brick" then
-				brickOwners[brick] = folder.Name
-			end
-		end)
-	
 	end
 	
-	-- monitor existing owner folders
+	-- Monitor each username folder
+	local function monitorFolder(folder)
+	
+		-- Save existing bricks
+		for _, brick in ipairs(folder:GetChildren()) do
+			registerBrick(brick)
+		end
+	
+		-- Save future bricks
+		folder.ChildAdded:Connect(function(brick)
+			registerBrick(brick)
+		end)
+	end
+	
+	-- Monitor existing folders
 	for _, folder in ipairs(bricksFolder:GetChildren()) do
 		if folder:IsA("Folder") then
 			monitorFolder(folder)
 		end
 	end
 	
-	-- monitor new owner folders
+	-- Monitor new player folders
 	bricksFolder.ChildAdded:Connect(function(folder)
 		if folder:IsA("Folder") then
 			monitorFolder(folder)
 		end
 	end)
 	
-	-- detect brick removal
+	-- Detect brick removal
 	workspace.DescendantRemoving:Connect(function(obj)
 	
 		if obj:IsA("BasePart") and obj.Name == "Brick" then
@@ -11253,13 +11257,11 @@ local script = G2L["132"];
 			local ownerName = brickOwners[obj]
 	
 			if ownerName then
-				print("Brick Broken | Owner:", ownerName)
+				print(ownerName .. "'s brick was broken")
 				brickOwners[obj] = nil
-			else
-				print("Brick Broken | Owner: Unknown")
 			end
-		end
 	
+		end
 	end)
 end;
 task.spawn(C_132);
