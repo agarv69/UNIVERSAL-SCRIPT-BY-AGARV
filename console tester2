@@ -1,11 +1,15 @@
-local VERSION = 170
+local VERSION = 140
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local DELETE_RADIUS = 24
+
 local monitoring = true
+local DELETE_RADIUS = 24
 
 print("Delete Detector Running [ID "..VERSION.."]")
+
+local bricksFolder = workspace:WaitForChild("Bricks")
+local brickOwners = {}
 
 local function holdingDelete(player)
 	local char = player.Character
@@ -18,18 +22,41 @@ local function holdingDelete(player)
 	return false
 end
 
-local function monitorFolder(folder)
-	folder.ChildRemoved:Connect(function(obj)
-		if not monitoring then return end
-		if not obj:IsA("BasePart") then return end
-		if obj.Name ~= "Brick" then return end
+local function registerBrick(brick)
+	if brick:IsA("BasePart") and brick.Name == "Brick" then
+		local parent = brick.Parent
+		if parent and parent:IsA("Folder") then
+			brickOwners[brick] = parent.Name
+		end
+	end
+end
+
+local function unregisterBrick(brick)
+	local owner = brickOwners[brick]
+	brickOwners[brick] = nil
+	return owner
+end
+
+for _, obj in pairs(bricksFolder:GetDescendants()) do
+	registerBrick(obj)
+end
+
+bricksFolder.DescendantAdded:Connect(function(obj)
+	if not monitoring then return end
+	registerBrick(obj)
+end)
+
+workspace.DescendantRemoving:Connect(function(obj)
+	if not monitoring then return end
+	if obj:IsA("BasePart") and obj.Name == "Brick" then
 		
-		local ownerName = folder.Name
+		local ownerName = unregisterBrick(obj)
+		if not ownerName then return end
+		
 		local pos = obj.Position
-		
 		local closest = nil
 		local closestDist = DELETE_RADIUS
-		
+
 		for _, player in pairs(Players:GetPlayers()) do
 			local char = player.Character
 			if char and char:FindFirstChild("HumanoidRootPart") then
@@ -40,30 +67,16 @@ local function monitorFolder(folder)
 				end
 			end
 		end
-		
+
 		if closest and closest.Name ~= ownerName then
-			print(closest.Name .. " griefed " .. ownerName)
+			print(closest.Name.." griefed "..ownerName)
 		end
-	end)
-end
-
-local bricksFolder = workspace:WaitForChild("Bricks")
-
-for _, folder in pairs(bricksFolder:GetChildren()) do
-	if folder:IsA("Folder") then
-		monitorFolder(folder)
-	end
-end
-
-bricksFolder.ChildAdded:Connect(function(folder)
-	if folder:IsA("Folder") then
-		monitorFolder(folder)
 	end
 end)
 
 LocalPlayer.Chatted:Connect(function(msg)
 	if msg == ";stop" then
 		monitoring = false
-		print("Stopped [ID "..VERSION.."]")
+		print("Delete Detector Stopped [ID "..VERSION.."]")
 	end
 end)
