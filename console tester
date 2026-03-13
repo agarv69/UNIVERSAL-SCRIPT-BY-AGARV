@@ -1,16 +1,18 @@
+local VERSION = 105
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local bricksFolder = workspace:WaitForChild("Bricks")
 
 local monitoring = true
-local DETECTION_DISTANCE = 30
+local DETECTION_DISTANCE = 40
 
-print("Delete Detector Running")
+print("Delete Detector Running | ID:", VERSION)
 
 LocalPlayer.Chatted:Connect(function(msg)
 	if msg:lower() == ";stop" then
 		monitoring = false
-		print("Stopped")
+		print("Stopped | ID:", VERSION)
 	end
 end)
 
@@ -18,9 +20,10 @@ local function holdingDelete(player)
 	local char = player.Character
 	if not char then return false end
 	
-	local tool = char:FindFirstChild("Delete")
-	if tool and tool:IsA("Tool") then
-		return true
+	for _, v in pairs(char:GetChildren()) do
+		if v:IsA("Tool") and v.Name:lower():find("delete") then
+			return true
+		end
 	end
 	
 	return false
@@ -31,15 +34,13 @@ local function closestDeleteHolder(position)
 	local closestDist = math.huge
 	
 	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			local char = player.Character
-			if char and char:FindFirstChild("HumanoidRootPart") then
-				if holdingDelete(player) then
-					local dist = (char.HumanoidRootPart.Position - position).Magnitude
-					if dist < closestDist then
-						closestDist = dist
-						closest = player
-					end
+		local char = player.Character
+		if char and char:FindFirstChild("HumanoidRootPart") then
+			if holdingDelete(player) then
+				local dist = (char.HumanoidRootPart.Position - position).Magnitude
+				if dist < closestDist then
+					closestDist = dist
+					closest = player
 				end
 			end
 		end
@@ -51,7 +52,7 @@ end
 workspace.DescendantRemoving:Connect(function(obj)
 	if not monitoring then return end
 	
-	if obj:IsA("BasePart") and obj.Name == "Brick" and obj:IsDescendantOf(bricksFolder) then
+	if obj:IsA("BasePart") and obj:IsDescendantOf(bricksFolder) then
 		
 		local lastPosition = obj.Position
 		
@@ -60,7 +61,7 @@ workspace.DescendantRemoving:Connect(function(obj)
 		local player, distance = closestDeleteHolder(lastPosition)
 		
 		if player and distance <= DETECTION_DISTANCE then
-			print(player.Name .. " detected")
+			print(player.Name .. " detected | ID:", VERSION)
 		end
 		
 	end
