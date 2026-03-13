@@ -3214,7 +3214,7 @@ G2L["125"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["125"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["125"]["LayoutOrder"] = 30;
 G2L["125"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["125"]["Text"] = [[9]];
+G2L["125"]["Text"] = [[11]];
 G2L["125"]["Name"] = [[VersionNumber]];
 G2L["125"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10263,6 +10263,10 @@ local script = G2L["115"];
 	local TIME_WINDOW = 60
 	local DELETE_RADIUS = 24
 	
+	-- NEW: announcement cooldown
+	local ANNOUNCE_COOLDOWN = 120
+	local lastAnnounce = {}
+	
 	GriefTickBox.BackgroundColor3 = Color3.new(0,0,0)
 	
 	local function getScreenGui()
@@ -10323,6 +10327,7 @@ local script = G2L["115"];
 	-- ============================================================
 	-- UTILITY
 	-- ============================================================
+	
 	local function holdingDelete(player)
 		local char = player.Character
 		if not char then return false end
@@ -10346,8 +10351,9 @@ local script = G2L["115"];
 	end
 	
 	-- ============================================================
-	-- DETECTION (Heartbeat snapshot method from your working script)
+	-- DETECTION
 	-- ============================================================
+	
 	local bricksFolder = nil
 	local previousBricks = {}
 	
@@ -10405,31 +10411,34 @@ local script = G2L["115"];
 				end
 	
 				if closest and closest.Name ~= ownerName then
-					-- print every single delete to console
+	
 					print(closest.Name .. " deleted " .. ownerName .. "'s brick")
 	
-					-- track for chat announce
 					deleteLog[closest.Name] = deleteLog[closest.Name] or {}
 					table.insert(deleteLog[closest.Name], tick())
 	
 					local now = tick()
 					local valid = {}
+	
 					for _, t in ipairs(deleteLog[closest.Name]) do
 						if now - t <= TIME_WINDOW then
 							table.insert(valid, t)
 						end
 					end
+	
 					deleteLog[closest.Name] = valid
 	
 					if #valid >= DELETE_LIMIT then
-						if closest and closest.Parent then
-							local now2 = tick()
-							if not announceCooldown[closest.Name] or now2 - announceCooldown[closest.Name] >= 120 then
-								sendChat("DETECTED GRIEF: " .. closest.DisplayName)
-								announceCooldown[closest.Name] = now2
-							end
-							deleteLog[closest.Name] = {}
+	
+						local last = lastAnnounce[closest.Name]
+	
+						-- ONLY announce if cooldown finished
+						if not last or (now - last) >= ANNOUNCE_COOLDOWN then
+							sendChat("DETECTED GRIEF: " .. closest.Name)
+							lastAnnounce[closest.Name] = now
 						end
+	
+						deleteLog[closest.Name] = {}
 					end
 				end
 			end
@@ -10441,12 +10450,14 @@ local script = G2L["115"];
 	-- ============================================================
 	-- ENABLE / DISABLE
 	-- ============================================================
+	
 	local function enable()
 		isEnabled = true
 		bricksFolder = workspace:FindFirstChild("Bricks")
 		if bricksFolder then
 			previousBricks = snapshot()
 		end
+	
 		if ProtectionAccentColor then
 			GriefTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
 		else
@@ -10462,8 +10473,9 @@ local script = G2L["115"];
 	end
 	
 	-- ============================================================
-	-- TICKBOX TOGGLE
+	-- TOGGLE
 	-- ============================================================
+	
 	GriefTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then
 			disable()
@@ -10475,6 +10487,7 @@ local script = G2L["115"];
 	-- ============================================================
 	-- CLEANUP
 	-- ============================================================
+	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			tooltipFrame:Destroy()
