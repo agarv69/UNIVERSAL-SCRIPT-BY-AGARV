@@ -3309,7 +3309,7 @@ G2L["12d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["12d"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["12d"]["LayoutOrder"] = 30;
 G2L["12d"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["12d"]["Text"] = [[7]];
+G2L["12d"]["Text"] = [[8]];
 G2L["12d"]["Name"] = [[VersionNumber]];
 G2L["12d"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10340,9 +10340,7 @@ task.spawn(C_10f);
 local function C_114()
 local script = G2L["114"];
 	-- ============================================================
-	-- GRIEF PRO (Protection Group - FIXED)
-	-- Detects if a player breaks 3 blocks in 60 seconds
-	-- Prints: "username detected"
+	-- ADVANCED GRIEF PRO (ProtectionGroup - TCOPage RightSide)
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -10350,105 +10348,127 @@ local script = G2L["114"];
 	
 	local GriefRow = script.Parent
 	local GriefTickBox = GriefRow:WaitForChild("GriefProTickBox")
-	
 	local ProtectionGroup = GriefRow.Parent
 	local ProtectionAccentColor = ProtectionGroup:FindFirstChild("ProtectionAccentColor")
 	
 	-- ============================================================
-	-- SETTINGS
+	-- LABEL SETUP
 	-- ============================================================
 	
-	local DELETE_LIMIT = 3      -- change to 1 for instant detect
-	local TIME_WINDOW = 60
-	local DETECTION_DISTANCE = 20
+	-- ============================================================
+	-- SETTINGS
+	-- ============================================================
+	local DETECTION_DISTANCE = 18
+	local DELETE_SOUND_ID = "rbxassetid://9117183621"
 	
 	-- ============================================================
 	-- STATE
 	-- ============================================================
-	
 	local isEnabled = false
-	local deleteLog = {}
 	local folderConnections = {}
 	
 	-- ============================================================
-	-- DETECTION
+	-- UTILITY
 	-- ============================================================
+	local function getClosestPlayerToPosition(pos, ignoredPlayers)
+		local closestPlayer = nil
+		local closestDistance = math.huge
 	
+		for _, player in pairs(Players:GetPlayers()) do
+			if ignoredPlayers[player] then continue end
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local dist = (char.HumanoidRootPart.Position - pos).Magnitude
+				if dist < closestDistance then
+					closestDistance = dist
+					closestPlayer = player
+				end
+			end
+		end
+	
+		return closestPlayer, closestDistance
+	end
+	
+	local function playerHoldingDeleteTool(player)
+		local char = player.Character
+		if not char then return false end
+		for _, tool in pairs(char:GetChildren()) do
+			if tool:IsA("Tool") and tool.Name:lower():find("delete") then
+				return true
+			end
+		end
+		return false
+	end
+	
+	local function playerPlayedDeleteSound(player)
+		local char = player.Character
+		if not char then return false end
+		for _, sound in pairs(char:GetDescendants()) do
+			if sound:IsA("Sound") then
+				if sound.SoundId == DELETE_SOUND_ID and sound.IsPlaying then
+					return true
+				end
+			end
+		end
+		return false
+	end
+	
+	-- ============================================================
+	-- DETECTION CORE
+	-- ============================================================
 	local function monitorFolder(ownerFolder)
-	
 		if folderConnections[ownerFolder] then return end
 	
-		folderConnections[ownerFolder] =
-			ownerFolder.ChildRemoved:Connect(function(block)
+		folderConnections[ownerFolder] = ownerFolder.ChildRemoved:Connect(function(block)
+			if not isEnabled then return end
+			if not block:IsA("BasePart") then return end
 	
-				if not isEnabled then return end
-				if not block:IsA("BasePart") then return end
+			local lastPosition = block.Position
+			task.wait(0.05)
 	
-				local ownerName = ownerFolder.Name
-				local blockPosition = block.Position
+			local ignored = {}
 	
-				for _, player in ipairs(Players:GetPlayers()) do
+			while true do
+				local closestPlayer, distance = getClosestPlayerToPosition(lastPosition, ignored)
+				if not closestPlayer then break end
+				if distance > DETECTION_DISTANCE then break end
 	
-					if player.Name ~= ownerName then
-	
-						local char = player.Character
-						if char and char:FindFirstChild("HumanoidRootPart") then
-	
-							local distance =
-							(char.HumanoidRootPart.Position - blockPosition).Magnitude
-	
-							if distance <= DETECTION_DISTANCE then
-	
-								deleteLog[player.Name] =
-								deleteLog[player.Name] or {}
-	
-								table.insert(deleteLog[player.Name], tick())
-	
-								local now = tick()
-								local valid = {}
-	
-								for _, t in ipairs(deleteLog[player.Name]) do
-									if now - t <= TIME_WINDOW then
-										table.insert(valid, t)
-									end
-								end
-	
-								deleteLog[player.Name] = valid
-	
-								if #valid >= DELETE_LIMIT then
-									print(player.Name .. " detected")
-									deleteLog[player.Name] = {}
-								end
-							end
-						end
-					end
+				if closestPlayer.Name == ownerFolder.Name then
+					ignored[closestPlayer] = true
+					continue
 				end
 	
-			end)
+				if not playerHoldingDeleteTool(closestPlayer) then
+					ignored[closestPlayer] = true
+					continue
+				end
+	
+				if playerPlayedDeleteSound(closestPlayer) then
+					print(closestPlayer.Name .. " detected")
+					break
+				else
+					ignored[closestPlayer] = true
+					continue
+				end
+			end
+		end)
 	end
 	
 	-- ============================================================
 	-- ENABLE / DISABLE
 	-- ============================================================
-	
 	local function enable()
-	
 		isEnabled = true
-	
 		if ProtectionAccentColor then
-			GriefTickBox.BackgroundColor3 =
-				ProtectionAccentColor.BackgroundColor3
+			GriefTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
 		else
-			GriefTickBox.BackgroundColor3 = Color3.fromRGB(0,170,255)
+			GriefTickBox.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 		end
 	
 		local bricksFolder = workspace:FindFirstChild("Bricks")
-		if not bricksFolder then
-			warn("Bricks folder not found")
-			return
-		end
+		if not bricksFolder then return end
 	
-		for _, folder in ipairs(bricksFolder:GetChildren()) do
+		for _, folder in pairs(bricksFolder:GetChildren()) do
 			if folder:IsA("Folder") then
 				monitorFolder(folder)
 			end
@@ -10459,20 +10479,34 @@ local script = G2L["114"];
 				monitorFolder(folder)
 			end
 		end)
-	
 	end
 	
 	local function disable()
 		isEnabled = false
-		GriefTickBox.BackgroundColor3 = Color3.new(0,0,0)
-		deleteLog = {}
+		GriefTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	end
 	
+	-- ============================================================
+	-- TICKBOX TOGGLE
+	-- ============================================================
 	GriefTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then
 			disable()
 		else
 			enable()
+		end
+	end)
+	
+	-- ============================================================
+	-- CLEANUP ON REMOVE
+	-- ============================================================
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			isEnabled = false
+			for _, conn in pairs(folderConnections) do
+				conn:Disconnect()
+			end
+			folderConnections = {}
 		end
 	end)
 end;
