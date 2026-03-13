@@ -3214,7 +3214,7 @@ G2L["125"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["125"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["125"]["LayoutOrder"] = 30;
 G2L["125"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["125"]["Text"] = [[6]];
+G2L["125"]["Text"] = [[9]];
 G2L["125"]["Name"] = [[VersionNumber]];
 G2L["125"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10246,6 +10246,7 @@ local function C_115()
 local script = G2L["115"];
 	local Players = game:GetService("Players")
 	local TextChatService = game:GetService("TextChatService")
+	local RunService = game:GetService("RunService")
 	
 	local LocalPlayer = Players.LocalPlayer
 	
@@ -10267,9 +10268,7 @@ local script = G2L["115"];
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
-			if p:IsA("ScreenGui") then
-				return p
-			end
+			if p:IsA("ScreenGui") then return p end
 			p = p.Parent
 		end
 	end
@@ -10298,7 +10297,7 @@ local script = G2L["115"];
 	
 	local tooltipText = Instance.new("TextLabel")
 	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Auto clears inventory (;clearinv) if someone deletes 10+ OTHER players' bricks within 60 seconds. You must be admin to use this"
+	tooltipText.Text = "Auto clears inventory if someone deletes 10+ OTHER players' bricks within 60 seconds"
 	tooltipText.TextColor3 = Color3.new(1,1,1)
 	tooltipText.TextSize = 14
 	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
@@ -10321,6 +10320,9 @@ local script = G2L["115"];
 		tooltipFrame.Visible = false
 	end)
 	
+	-- ============================================================
+	-- UTILITY
+	-- ============================================================
 	local function holdingDelete(player)
 		local char = player.Character
 		if not char then return false end
@@ -10332,85 +10334,151 @@ local script = G2L["115"];
 		return false
 	end
 	
-	local function clearInventory(playerName)
-		local message = ";clearinv "..playerName
-	
+	local function sendChat(message)
 		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
 		else
 			game:GetService("ReplicatedStorage")
 				.DefaultChatSystemChatEvents
 				.SayMessageRequest
-				:FireServer(message,"All")
+				:FireServer(message, "All")
 		end
 	end
 	
-	workspace.DescendantRemoving:Connect(function(obj)
+	-- ============================================================
+	-- DETECTION (Heartbeat snapshot method from your working script)
+	-- ============================================================
+	local bricksFolder = nil
+	local previousBricks = {}
+	
+	local function getOwner(brick)
+		if not bricksFolder then return "Server" end
+		if brick:IsDescendantOf(bricksFolder) then
+			local parent = brick.Parent
+			if parent then
+				if Players:FindFirstChild(parent.Name) then
+					return parent.Name
+				end
+			end
+		end
+		return "Server"
+	end
+	
+	local function snapshot()
+		local current = {}
+		if not bricksFolder then return current end
+		for _, obj in pairs(bricksFolder:GetDescendants()) do
+			if obj:IsA("BasePart") and obj.Name == "Brick" then
+				current[obj] = {
+					position = obj.Position,
+					owner = getOwner(obj)
+				}
+			end
+		end
+		return current
+	end
+	
+	RunService.Heartbeat:Connect(function()
 		if not isEnabled then return end
-		if not obj:IsA("BasePart") then return end
-		if obj.Name ~= "Brick" then return end
+		if not bricksFolder then return end
 	
-		local parent = obj.Parent
-		if not parent then return end
+		local currentBricks = snapshot()
 	
-		local ownerPlayer = Players:FindFirstChild(parent.Name)
-		if not ownerPlayer then return end
+		for oldBrick, data in pairs(previousBricks) do
+			if not currentBricks[oldBrick] then
 	
-		local pos = obj.Position
-		local closest = nil
-		local closestDist = DELETE_RADIUS
+				local oldPos = data.position
+				local ownerName = data.owner
 	
-		for _, player in pairs(Players:GetPlayers()) do
-			if player ~= ownerPlayer then
-				local char = player.Character
-				if char and char:FindFirstChild("HumanoidRootPart") then
-					local dist = (char.HumanoidRootPart.Position - pos).Magnitude
-					if dist <= closestDist and holdingDelete(player) then
-						closestDist = dist
-						closest = player
+				local closest = nil
+				local closestDist = DELETE_RADIUS
+	
+				for _, player in pairs(Players:GetPlayers()) do
+					local char = player.Character
+					if char and char:FindFirstChild("HumanoidRootPart") then
+						local dist = (char.HumanoidRootPart.Position - oldPos).Magnitude
+						if dist <= closestDist and holdingDelete(player) then
+							closestDist = dist
+							closest = player
+						end
+					end
+				end
+	
+				if closest and closest.Name ~= ownerName then
+					-- print every single delete to console
+					print(closest.Name .. " deleted " .. ownerName .. "'s brick")
+	
+					-- track for chat announce
+					deleteLog[closest.Name] = deleteLog[closest.Name] or {}
+					table.insert(deleteLog[closest.Name], tick())
+	
+					local now = tick()
+					local valid = {}
+					for _, t in ipairs(deleteLog[closest.Name]) do
+						if now - t <= TIME_WINDOW then
+							table.insert(valid, t)
+						end
+					end
+					deleteLog[closest.Name] = valid
+	
+					if #valid >= DELETE_LIMIT then
+						if closest and closest.Parent then
+							local now2 = tick()
+							if not announceCooldown[closest.Name] or now2 - announceCooldown[closest.Name] >= 120 then
+								sendChat("DETECTED GRIEF: " .. closest.DisplayName)
+								announceCooldown[closest.Name] = now2
+							end
+							deleteLog[closest.Name] = {}
+						end
 					end
 				end
 			end
 		end
 	
-		if closest then
-			deleteLog[closest.Name] = deleteLog[closest.Name] or {}
-			table.insert(deleteLog[closest.Name], tick())
-	
-			local now = tick()
-			local valid = {}
-	
-			for _, t in ipairs(deleteLog[closest.Name]) do
-				if now - t <= TIME_WINDOW then
-					table.insert(valid, t)
-				end
-			end
-	
-			deleteLog[closest.Name] = valid
-	
-			if #valid >= DELETE_LIMIT then
-				clearInventory(closest.Name)
-				deleteLog[closest.Name] = {}
-			end
-		end
+		previousBricks = currentBricks
 	end)
 	
-	local function setTickboxState(state)
-		if state then
+	-- ============================================================
+	-- ENABLE / DISABLE
+	-- ============================================================
+	local function enable()
+		isEnabled = true
+		bricksFolder = workspace:FindFirstChild("Bricks")
+		if bricksFolder then
+			previousBricks = snapshot()
+		end
+		if ProtectionAccentColor then
 			GriefTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
 		else
-			GriefTickBox.BackgroundColor3 = Color3.new(0,0,0)
+			GriefTickBox.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 		end
 	end
 	
+	local function disable()
+		isEnabled = false
+		deleteLog = {}
+		previousBricks = {}
+		GriefTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	end
+	
+	-- ============================================================
+	-- TICKBOX TOGGLE
+	-- ============================================================
 	GriefTickBox.MouseButton1Click:Connect(function()
-		isEnabled = not isEnabled
-		setTickboxState(isEnabled)
+		if isEnabled then
+			disable()
+		else
+			enable()
+		end
 	end)
 	
+	-- ============================================================
+	-- CLEANUP
+	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			tooltipFrame:Destroy()
+			isEnabled = false
 		end
 	end)
 end;
