@@ -1,0 +1,23 @@
+local VERSION = 110
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local monitoring = true
+
+print("Delete Debug Running | ID:", VERSION)
+
+LocalPlayer.Chatted:Connect(function(msg)
+	if msg:lower() == ";stop" then
+		monitoring = false
+		print("Stopped | ID:", VERSION)
+	end
+end)
+
+workspace.DescendantRemoving:Connect(function(obj)
+	if not monitoring then return end
+	
+	if string.find(string.lower(obj.Name), "delete") then
+		print("DELETE REMOVED:", obj:GetFullName(), "| ID:", VERSION)
+	end
+end)
