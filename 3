@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 305 | Scripts: 65 | Modules: 0 | Tags: 0
+-- Instances: 306 | Scripts: 66 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -3339,7 +3339,7 @@ G2L["130"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["130"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["130"]["LayoutOrder"] = 30;
 G2L["130"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["130"]["Text"] = [[8]];
+G2L["130"]["Text"] = [[9]];
 G2L["130"]["Name"] = [[VersionNumber]];
 G2L["130"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -3355,6 +3355,11 @@ G2L["131"]["LayoutOrder"] = 3;
 G2L["131"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["131"]["Text"] = [[DRAG]];
 G2L["131"]["Name"] = [[DragGUI]];
+
+
+-- StarterGui.ScreenGui.LocalScript
+G2L["132"] = Instance.new("LocalScript", G2L["1"]);
+
 
 
 -- StarterGui.ScreenGui.MoveToCorGui
@@ -11195,5 +11200,17 @@ local script = G2L["12b"];
 	
 end;
 task.spawn(C_12b);
+-- StarterGui.ScreenGui.LocalScript
+local function C_132()
+local script = G2L["132"];
+	local workspace = game:GetService("Workspace")
+	
+	print("ConsoleDelete Test Running")
+	
+	workspace.DescendantRemoving:Connect(function(obj)
+		print("REMOVING:", obj:GetFullName())
+	end)
+end;
+task.spawn(C_132);
 
 return G2L["1"], require;
