@@ -1,31 +1,22 @@
-local VERSION = 115
+local VERSION = 125
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local monitoring = true
 local DELETE_RADIUS = 24
-local recentDeleteUsers = {}
 
 print("Delete Detector Running [ID "..VERSION.."]")
 
-local function markDeleteUse(player)
-	recentDeleteUsers[player] = tick()
-end
-
-local function playerRecentlyUsedDelete(player)
-	if not recentDeleteUsers[player] then return false end
-	return tick() - recentDeleteUsers[player] <= 0.6
-end
-
-for _, player in pairs(Players:GetPlayers()) do
-	player.CharacterAdded:Connect(function(char)
-		char.ChildAdded:Connect(function(child)
-			if child.Name == "Delete" then
-				markDeleteUse(player)
-			end
-		end)
-	end)
+local function holdingDelete(player)
+	local char = player.Character
+	if not char then return false end
+	for _, obj in pairs(char:GetChildren()) do
+		if obj:IsA("Tool") and obj.Name:lower():find("delete") then
+			return true
+		end
+	end
+	return false
 end
 
 workspace.DescendantRemoving:Connect(function(obj)
@@ -40,11 +31,9 @@ workspace.DescendantRemoving:Connect(function(obj)
 			local char = player.Character
 			if char and char:FindFirstChild("HumanoidRootPart") then
 				local dist = (char.HumanoidRootPart.Position - pos).Magnitude
-				if dist <= closestDist then
-					if playerRecentlyUsedDelete(player) then
-						closestDist = dist
-						closest = player
-					end
+				if dist <= closestDist and holdingDelete(player) then
+					closestDist = dist
+					closest = player
 				end
 			end
 		end
