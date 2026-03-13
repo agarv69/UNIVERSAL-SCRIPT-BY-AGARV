@@ -3309,7 +3309,7 @@ G2L["12d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["12d"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["12d"]["LayoutOrder"] = 30;
 G2L["12d"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["12d"]["Text"] = [[6]];
+G2L["12d"]["Text"] = [[7]];
 G2L["12d"]["Name"] = [[VersionNumber]];
 G2L["12d"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10340,8 +10340,9 @@ task.spawn(C_10f);
 local function C_114()
 local script = G2L["114"];
 	-- ============================================================
-	-- GRIEF PRO (SIMPLE DETECTION)
-	-- Prints username when 1 of their bricks is deleted
+	-- GRIEF PRO (Protection Group - FIXED)
+	-- Detects if a player breaks 3 blocks in 60 seconds
+	-- Prints: "username detected"
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -10349,127 +10350,122 @@ local script = G2L["114"];
 	
 	local GriefRow = script.Parent
 	local GriefTickBox = GriefRow:WaitForChild("GriefProTickBox")
-	local GriefText = GriefRow:WaitForChild("GriefProText")
 	
 	local ProtectionGroup = GriefRow.Parent
-	local ProtectionAccentColor = ProtectionGroup:WaitForChild("ProtectionAccentColor")
+	local ProtectionAccentColor = ProtectionGroup:FindFirstChild("ProtectionAccentColor")
+	
+	-- ============================================================
+	-- SETTINGS
+	-- ============================================================
+	
+	local DELETE_LIMIT = 3      -- change to 1 for instant detect
+	local TIME_WINDOW = 60
+	local DETECTION_DISTANCE = 20
 	
 	-- ============================================================
 	-- STATE
 	-- ============================================================
 	
 	local isEnabled = false
-	local connections = {}
+	local deleteLog = {}
+	local folderConnections = {}
 	
 	-- ============================================================
-	-- SCREENGUI HELPER
+	-- DETECTION
 	-- ============================================================
 	
-	local function getScreenGui()
-		local p = script.Parent
-		while p do
-			if p:IsA("ScreenGui") then
-				return p
-			end
-			p = p.Parent
-		end
+	local function monitorFolder(ownerFolder)
+	
+		if folderConnections[ownerFolder] then return end
+	
+		folderConnections[ownerFolder] =
+			ownerFolder.ChildRemoved:Connect(function(block)
+	
+				if not isEnabled then return end
+				if not block:IsA("BasePart") then return end
+	
+				local ownerName = ownerFolder.Name
+				local blockPosition = block.Position
+	
+				for _, player in ipairs(Players:GetPlayers()) do
+	
+					if player.Name ~= ownerName then
+	
+						local char = player.Character
+						if char and char:FindFirstChild("HumanoidRootPart") then
+	
+							local distance =
+							(char.HumanoidRootPart.Position - blockPosition).Magnitude
+	
+							if distance <= DETECTION_DISTANCE then
+	
+								deleteLog[player.Name] =
+								deleteLog[player.Name] or {}
+	
+								table.insert(deleteLog[player.Name], tick())
+	
+								local now = tick()
+								local valid = {}
+	
+								for _, t in ipairs(deleteLog[player.Name]) do
+									if now - t <= TIME_WINDOW then
+										table.insert(valid, t)
+									end
+								end
+	
+								deleteLog[player.Name] = valid
+	
+								if #valid >= DELETE_LIMIT then
+									print(player.Name .. " detected")
+									deleteLog[player.Name] = {}
+								end
+							end
+						end
+					end
+				end
+	
+			end)
 	end
 	
 	-- ============================================================
-	-- TOOLTIP
-	-- ============================================================
-	
-	local tooltipFrame = Instance.new("Frame")
-	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16,16,16)
-	tooltipFrame.BorderSizePixel = 0
-	tooltipFrame.ZIndex = 100
-	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipFrame.Size = UDim2.new(0, 220, 0, 0)
-	tooltipFrame.Visible = false
-	tooltipFrame.Parent = getScreenGui()
-	
-	local tooltipStroke = Instance.new("UIStroke", tooltipFrame)
-	tooltipStroke.Color = Color3.fromRGB(57,57,57)
-	
-	local tooltipPadding = Instance.new("UIPadding", tooltipFrame)
-	tooltipPadding.PaddingTop = UDim.new(0,6)
-	tooltipPadding.PaddingBottom = UDim.new(0,6)
-	tooltipPadding.PaddingLeft = UDim.new(0,6)
-	tooltipPadding.PaddingRight = UDim.new(0,6)
-	
-	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
-	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Prints the username when one of their bricks is deleted."
-	tooltipLabel.TextColor3 = Color3.new(1,1,1)
-	tooltipLabel.TextSize = 14
-	tooltipLabel.TextWrapped = true
-	tooltipLabel.Font = Enum.Font.GothamSemibold
-	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
-	tooltipLabel.TextYAlignment = Enum.TextYAlignment.Top
-	tooltipLabel.Size = UDim2.new(0, 200, 0, 0)
-	tooltipLabel.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipLabel.ZIndex = 101
-	
-	GriefTickBox.MouseEnter:Connect(function()
-		local abs = GriefTickBox.AbsolutePosition
-		local size = GriefTickBox.AbsoluteSize
-		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
-		tooltipFrame.Visible = true
-	end)
-	
-	GriefTickBox.MouseLeave:Connect(function()
-		tooltipFrame.Visible = false
-	end)
-	
-	-- ============================================================
-	-- DELETE DETECTION
-	-- ============================================================
-	
-	local function connectDeleteDetection()
-	
-		local bricksFolder = workspace:FindFirstChild("Bricks")
-		if not bricksFolder then return end
-	
-		for _, folder in ipairs(bricksFolder:GetChildren()) do
-	
-			if folder:IsA("Folder") then
-	
-				local ownerName = folder.Name
-	
-				local connection = folder.ChildRemoved:Connect(function(child)
-	
-					if not isEnabled then return end
-					if child.Name ~= "Brick" then return end
-					if ownerName == LocalPlayer.Name then return end
-	
-					print(ownerName)
-	
-				end)
-	
-				table.insert(connections, connection)
-			end
-		end
-	end
-	
-	-- ============================================================
-	-- TOGGLE
+	-- ENABLE / DISABLE
 	-- ============================================================
 	
 	local function enable()
+	
 		isEnabled = true
-		GriefTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
-		connectDeleteDetection()
+	
+		if ProtectionAccentColor then
+			GriefTickBox.BackgroundColor3 =
+				ProtectionAccentColor.BackgroundColor3
+		else
+			GriefTickBox.BackgroundColor3 = Color3.fromRGB(0,170,255)
+		end
+	
+		local bricksFolder = workspace:FindFirstChild("Bricks")
+		if not bricksFolder then
+			warn("Bricks folder not found")
+			return
+		end
+	
+		for _, folder in ipairs(bricksFolder:GetChildren()) do
+			if folder:IsA("Folder") then
+				monitorFolder(folder)
+			end
+		end
+	
+		bricksFolder.ChildAdded:Connect(function(folder)
+			if folder:IsA("Folder") then
+				monitorFolder(folder)
+			end
+		end)
+	
 	end
 	
 	local function disable()
 		isEnabled = false
 		GriefTickBox.BackgroundColor3 = Color3.new(0,0,0)
-	
-		for _, c in ipairs(connections) do
-			c:Disconnect()
-		end
-	
-		connections = {}
+		deleteLog = {}
 	end
 	
 	GriefTickBox.MouseButton1Click:Connect(function()
@@ -10477,19 +10473,6 @@ local script = G2L["114"];
 			disable()
 		else
 			enable()
-		end
-	end)
-	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
-	
-	script.AncestryChanged:Connect(function()
-		if not script:IsDescendantOf(game) then
-			for _, c in ipairs(connections) do
-				c:Disconnect()
-			end
-			tooltipFrame:Destroy()
 		end
 	end)
 end;
