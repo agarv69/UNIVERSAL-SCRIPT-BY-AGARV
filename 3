@@ -3339,7 +3339,7 @@ G2L["130"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["130"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["130"]["LayoutOrder"] = 30;
 G2L["130"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["130"]["Text"] = [[6767]];
+G2L["130"]["Text"] = [[68]];
 G2L["130"]["Name"] = [[VersionNumber]];
 G2L["130"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -11203,42 +11203,12 @@ task.spawn(C_12b);
 -- StarterGui.ScreenGui.LocalScript
 local function C_132()
 local script = G2L["132"];
-	-- ============================================================
-	-- SIMPLE BRICK OWNER DETECTOR
-	-- Prints which player's brick was destroyed
-	-- Put this under ScreenGui
-	-- ============================================================
-	
 	local workspace = game:GetService("Workspace")
 	
-	print("Owner Brick Detector Running")
+	print("GLOBAL REMOVAL SPY RUNNING")
 	
-	local bricksFolder = workspace:WaitForChild("Bricks")
-	
-	local function monitorFolder(folder)
-	
-		folder.ChildRemoved:Connect(function(child)
-	
-			if not child:IsA("BasePart") then return end
-	
-			print("Brick Broken | Owner:", folder.Name)
-	
-		end)
-	
-	end
-	
-	-- monitor existing folders
-	for _, folder in ipairs(bricksFolder:GetChildren()) do
-		if folder:IsA("Folder") then
-			monitorFolder(folder)
-		end
-	end
-	
-	-- monitor new folders
-	bricksFolder.ChildAdded:Connect(function(folder)
-		if folder:IsA("Folder") then
-			monitorFolder(folder)
-		end
+	workspace.DescendantRemoving:Connect(function(obj)
+		print("REMOVED:", obj:GetFullName(), obj.ClassName)
 	end)
 end;
 task.spawn(C_132);
