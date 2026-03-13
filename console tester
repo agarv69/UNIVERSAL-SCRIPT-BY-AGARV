@@ -1,48 +1,56 @@
+local VERSION = 115
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+
 local monitoring = true
-
-print("Delete Detector Running [ID 110]")
-
 local DELETE_RADIUS = 24
+local recentDeleteUsers = {}
 
-local function isHoldingDelete(player)
-	local char = workspace:FindFirstChild(player.Name)
-	if not char then return false end
-	return char:FindFirstChild("Delete") ~= nil
+print("Delete Detector Running [ID "..VERSION.."]")
+
+local function markDeleteUse(player)
+	recentDeleteUsers[player] = tick()
 end
 
-local function getClosestDeleteHolder(position)
-	local closestPlayer = nil
-	local closestDistance = DELETE_RADIUS
+local function playerRecentlyUsedDelete(player)
+	if not recentDeleteUsers[player] then return false end
+	return tick() - recentDeleteUsers[player] <= 0.6
+end
 
-	for _, player in pairs(Players:GetPlayers()) do
-		local char = player.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			if isHoldingDelete(player) then
-				local dist = (char.HumanoidRootPart.Position - position).Magnitude
-				if dist <= closestDistance then
-					closestDistance = dist
-					closestPlayer = player
-				end
+for _, player in pairs(Players:GetPlayers()) do
+	player.CharacterAdded:Connect(function(char)
+		char.ChildAdded:Connect(function(child)
+			if child.Name == "Delete" then
+				markDeleteUse(player)
 			end
-		end
-	end
-
-	return closestPlayer
+		end)
+	end)
 end
 
 workspace.DescendantRemoving:Connect(function(obj)
 	if not monitoring then return end
 	if obj:IsA("BasePart") and obj.Name == "Brick" then
-		local lastPosition = obj.Position
+		
+		local pos = obj.Position
+		local closest = nil
+		local closestDist = DELETE_RADIUS
 
-		task.wait(0.03)
+		for _, player in pairs(Players:GetPlayers()) do
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local dist = (char.HumanoidRootPart.Position - pos).Magnitude
+				if dist <= closestDist then
+					if playerRecentlyUsedDelete(player) then
+						closestDist = dist
+						closest = player
+					end
+				end
+			end
+		end
 
-		local suspect = getClosestDeleteHolder(lastPosition)
-
-		if suspect then
-			print(suspect.Name .. " deleted a brick")
+		if closest then
+			print(closest.Name .. " deleted a brick")
 		end
 	end
 end)
@@ -50,6 +58,6 @@ end)
 LocalPlayer.Chatted:Connect(function(msg)
 	if msg == ";stop" then
 		monitoring = false
-		print("Delete Detector Stopped [ID 110]")
+		print("Delete Detector Stopped [ID "..VERSION.."]")
 	end
 end)
