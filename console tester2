@@ -1,23 +1,68 @@
-local VERSION = 110
+local VERSION = 115
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local monitoring = true
+local DELETE_RADIUS = 24
+local recentDeleteUsers = {}
 
-print("Delete Debug Running | ID:", VERSION)
+print("Delete Detector Running [ID "..VERSION.."]")
 
-LocalPlayer.Chatted:Connect(function(msg)
-	if msg:lower() == ";stop" then
-		monitoring = false
-		print("Stopped | ID:", VERSION)
+local function markDeleteUse(player)
+	recentDeleteUsers[player] = tick()
+end
+
+local function playerRecentlyUsedDelete(player)
+	if not recentDeleteUsers[player] then return false end
+	return tick() - recentDeleteUsers[player] <= 0.6
+end
+
+local function hookCharacter(player, char)
+	char.ChildAdded:Connect(function(child)
+		if child.Name == "Delete" then
+			markDeleteUse(player)
+		end
+	end)
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+	if player.Character then
+		hookCharacter(player, player.Character)
 	end
-end)
+	player.CharacterAdded:Connect(function(char)
+		hookCharacter(player, char)
+	end)
+end
 
 workspace.DescendantRemoving:Connect(function(obj)
 	if not monitoring then return end
-	
-	if string.find(string.lower(obj.Name), "delete") then
-		print("DELETE REMOVED:", obj:GetFullName(), "| ID:", VERSION)
+	if obj:IsA("BasePart") and obj.Name == "Brick" then
+		
+		local pos = obj.Position
+		local closest = nil
+		local closestDist = DELETE_RADIUS
+
+		for _, player in pairs(Players:GetPlayers()) do
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local dist = (char.HumanoidRootPart.Position - pos).Magnitude
+				if dist <= closestDist and playerRecentlyUsedDelete(player) then
+					closestDist = dist
+					closest = player
+				end
+			end
+		end
+
+		if closest then
+			print(closest.Name .. " deleted a brick")
+		end
+	end
+end)
+
+LocalPlayer.Chatted:Connect(function(msg)
+	if msg == ";stop" then
+		monitoring = false
+		print("Delete Detector Stopped [ID "..VERSION.."]")
 	end
 end)
