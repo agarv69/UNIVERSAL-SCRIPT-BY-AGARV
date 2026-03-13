@@ -3339,7 +3339,7 @@ G2L["130"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["130"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["130"]["LayoutOrder"] = 30;
 G2L["130"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["130"]["Text"] = [[5]];
+G2L["130"]["Text"] = [[6767]];
 G2L["130"]["Name"] = [[VersionNumber]];
 G2L["130"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -11203,77 +11203,23 @@ task.spawn(C_12b);
 -- StarterGui.ScreenGui.LocalScript
 local function C_132()
 local script = G2L["132"];
-	-- ============================================================
-	-- CONSOLE DELETE DETECTOR (ScreenGui LocalScript)
-	-- Prints:
-	--  Brick Broken (Owner: USERNAME)
-	--  Possible Breaker: PLAYERNAME
-	-- ============================================================
-	
-	local Players = game:GetService("Players")
 	local workspace = game:GetService("Workspace")
 	
-	print("ConsoleDelete Running")
+	print("Brick Console Detector Running")
 	
-	local DETECTION_DISTANCE = 20
+	workspace.DescendantRemoving:Connect(function(obj)
 	
-	local bricksFolder = workspace:WaitForChild("Bricks")
+		if obj:IsA("BasePart") and obj.Name == "Brick" then
 	
-	local function getClosestPlayer(pos, ownerName)
-		local closestPlayer = nil
-		local closestDistance = math.huge
+			local ownerName = "Unknown"
 	
-		for _, player in ipairs(Players:GetPlayers()) do
-			if player.Name ~= ownerName then
-				local char = player.Character
-				if char and char:FindFirstChild("HumanoidRootPart") then
-					local dist = (char.HumanoidRootPart.Position - pos).Magnitude
-					if dist < closestDistance then
-						closestDistance = dist
-						closestPlayer = player
-					end
-				end
-			end
-		end
-	
-		return closestPlayer, closestDistance
-	end
-	
-	local function monitorFolder(folder)
-	
-		folder.ChildRemoved:Connect(function(brick)
-	
-			if not brick:IsA("BasePart") then return end
-	
-			local ownerName = folder.Name
-			local position = brick.Position
-	
-			print("Brick Broken (Owner: " .. ownerName .. ")")
-	
-			local player, distance = getClosestPlayer(position, ownerName)
-	
-			if player and distance <= DETECTION_DISTANCE then
-				print("Possible Breaker: " .. player.Name)
-			else
-				print("Possible Breaker: Unknown")
+			if obj.Parent and obj.Parent:IsA("Folder") then
+				ownerName = obj.Parent.Name
 			end
 	
-		end)
-	
-	end
-	
-	-- Monitor existing player folders
-	for _, folder in ipairs(bricksFolder:GetChildren()) do
-		if folder:IsA("Folder") then
-			monitorFolder(folder)
+			print("Brick Broken | Owner:", ownerName)
 		end
-	end
 	
-	-- Monitor new folders
-	bricksFolder.ChildAdded:Connect(function(folder)
-		if folder:IsA("Folder") then
-			monitorFolder(folder)
-		end
 	end)
 end;
 task.spawn(C_132);
