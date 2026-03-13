@@ -1,13 +1,11 @@
-local VERSION = 105
+local VERSION = 110
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local bricksFolder = workspace:WaitForChild("Bricks")
 
 local monitoring = true
-local DETECTION_DISTANCE = 40
 
-print("Delete Detector Running | ID:", VERSION)
+print("Delete Debug Running | ID:", VERSION)
 
 LocalPlayer.Chatted:Connect(function(msg)
 	if msg:lower() == ";stop" then
@@ -16,53 +14,10 @@ LocalPlayer.Chatted:Connect(function(msg)
 	end
 end)
 
-local function holdingDelete(player)
-	local char = player.Character
-	if not char then return false end
-	
-	for _, v in pairs(char:GetChildren()) do
-		if v:IsA("Tool") and v.Name:lower():find("delete") then
-			return true
-		end
-	end
-	
-	return false
-end
-
-local function closestDeleteHolder(position)
-	local closest = nil
-	local closestDist = math.huge
-	
-	for _, player in pairs(Players:GetPlayers()) do
-		local char = player.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			if holdingDelete(player) then
-				local dist = (char.HumanoidRootPart.Position - position).Magnitude
-				if dist < closestDist then
-					closestDist = dist
-					closest = player
-				end
-			end
-		end
-	end
-	
-	return closest, closestDist
-end
-
 workspace.DescendantRemoving:Connect(function(obj)
 	if not monitoring then return end
 	
-	if obj:IsA("BasePart") and obj:IsDescendantOf(bricksFolder) then
-		
-		local lastPosition = obj.Position
-		
-		task.wait(0.03)
-		
-		local player, distance = closestDeleteHolder(lastPosition)
-		
-		if player and distance <= DETECTION_DISTANCE then
-			print(player.Name .. " detected | ID:", VERSION)
-		end
-		
+	if string.find(string.lower(obj.Name), "delete") then
+		print("DELETE REMOVED:", obj:GetFullName(), "| ID:", VERSION)
 	end
 end)
