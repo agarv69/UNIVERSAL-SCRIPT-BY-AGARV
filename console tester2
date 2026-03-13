@@ -1,32 +1,11 @@
-local VERSION = 140
+local VERSION = 170
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-
 local DELETE_RADIUS = 24
 local monitoring = true
 
-local brickOwners = {}
-
-print("Grief Detector Running [ID "..VERSION.."]")
-
-local bricksFolder = workspace:WaitForChild("Bricks")
-
-local function registerBrick(brick, ownerName)
-	brickOwners[brick] = ownerName
-end
-
-local function scanExistingBricks()
-	for _, folder in pairs(bricksFolder:GetChildren()) do
-		if folder:IsA("Folder") then
-			for _, brick in pairs(folder:GetChildren()) do
-				if brick:IsA("BasePart") and brick.Name == "Brick" then
-					registerBrick(brick, folder.Name)
-				end
-			end
-		end
-	end
-end
+print("Delete Detector Running [ID "..VERSION.."]")
 
 local function holdingDelete(player)
 	local char = player.Character
@@ -39,47 +18,46 @@ local function holdingDelete(player)
 	return false
 end
 
-scanExistingBricks()
-
-bricksFolder.ChildAdded:Connect(function(folder)
-	if folder:IsA("Folder") then
-		folder.ChildAdded:Connect(function(brick)
-			if brick:IsA("BasePart") and brick.Name == "Brick" then
-				registerBrick(brick, folder.Name)
-			end
-		end)
-	end
-end)
-
-workspace.DescendantRemoving:Connect(function(obj)
-	if not monitoring then return end
-	if obj:IsA("BasePart") and obj.Name == "Brick" then
+local function monitorFolder(folder)
+	folder.ChildRemoved:Connect(function(obj)
+		if not monitoring then return end
+		if not obj:IsA("BasePart") then return end
+		if obj.Name ~= "Brick" then return end
 		
-		local ownerName = brickOwners[obj]
-		brickOwners[obj] = nil
-		
-		if not ownerName then return end
-		
+		local ownerName = folder.Name
 		local pos = obj.Position
+		
 		local closest = nil
 		local closestDist = DELETE_RADIUS
-
+		
 		for _, player in pairs(Players:GetPlayers()) do
 			local char = player.Character
 			if char and char:FindFirstChild("HumanoidRootPart") then
 				local dist = (char.HumanoidRootPart.Position - pos).Magnitude
 				if dist <= closestDist and holdingDelete(player) then
-					if player.Name ~= ownerName then
-						closestDist = dist
-						closest = player
-					end
+					closestDist = dist
+					closest = player
 				end
 			end
 		end
-
-		if closest then
+		
+		if closest and closest.Name ~= ownerName then
 			print(closest.Name .. " griefed " .. ownerName)
 		end
+	end)
+end
+
+local bricksFolder = workspace:WaitForChild("Bricks")
+
+for _, folder in pairs(bricksFolder:GetChildren()) do
+	if folder:IsA("Folder") then
+		monitorFolder(folder)
+	end
+end
+
+bricksFolder.ChildAdded:Connect(function(folder)
+	if folder:IsA("Folder") then
+		monitorFolder(folder)
 	end
 end)
 
