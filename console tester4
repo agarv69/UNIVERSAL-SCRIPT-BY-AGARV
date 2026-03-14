@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TextChatService = game:GetService("TextChatService")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -24,12 +25,12 @@ local function getPlayer(name)
 end
 
 local function flingPlayer(target)
+
 	local myChar = LocalPlayer.Character
 	if not myChar then return end
 
 	local myHRP = myChar:FindFirstChild("HumanoidRootPart")
 	local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
-
 	if not myHRP or not myHum then return end
 
 	local tChar = target.Character
@@ -82,17 +83,48 @@ local function flingPlayer(target)
 	print("flinged "..target.Name)
 end
 
-LocalPlayer.Chatted:Connect(function(msg)
 
-	if msg:sub(1,7):lower() == ";fling " then
-		local name = msg:sub(8)
-		local target = getPlayer(name)
+-- CHAT COMMAND DETECTION
+if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 
-		if target then
-			flingPlayer(target)
-		else
-			print("player not found")
+	TextChatService.OnIncomingMessage = function(message)
+
+		if message.TextSource then
+			local sender = Players:GetPlayerByUserId(message.TextSource.UserId)
+
+			if sender == LocalPlayer then
+				local msg = message.Text
+
+				if msg:sub(1,7):lower() == ";fling " then
+					local name = msg:sub(8)
+					local target = getPlayer(name)
+
+					if target then
+						flingPlayer(target)
+					else
+						print("player not found")
+					end
+				end
+			end
 		end
+
 	end
 
-end)
+else
+
+	LocalPlayer.Chatted:Connect(function(msg)
+
+		if msg:sub(1,7):lower() == ";fling " then
+			local name = msg:sub(8)
+			local target = getPlayer(name)
+
+			if target then
+				flingPlayer(target)
+			else
+				print("player not found")
+			end
+		end
+
+	end)
+
+end
