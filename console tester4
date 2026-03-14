@@ -1,0 +1,98 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+print("loaded")
+
+local rotations = {
+	CFrame.Angles(0,0,0),
+	CFrame.Angles(0,math.pi,0),
+	CFrame.Angles(math.pi,math.pi,0),
+	CFrame.Angles(math.pi,0,0),
+	CFrame.Angles(0,0,0),
+	CFrame.Angles(0,math.pi,0)
+}
+
+local function getPlayer(name)
+	name = name:lower()
+	for _,p in pairs(Players:GetPlayers()) do
+		if p.Name:lower():sub(1,#name) == name then
+			return p
+		end
+	end
+end
+
+local function flingPlayer(target)
+	local myChar = LocalPlayer.Character
+	if not myChar then return end
+
+	local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+	local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
+
+	if not myHRP or not myHum then return end
+
+	local tChar = target.Character
+	if not tChar then return end
+
+	local tHRP = tChar:FindFirstChild("HumanoidRootPart")
+	if not tHRP then return end
+
+	local savedPos = myHRP.CFrame
+
+	local BV = Instance.new("BodyVelocity")
+	BV.Velocity = Vector3.new(900000000,900000000,900000000)
+	BV.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+	BV.Parent = tHRP
+
+	local rotIndex = 1
+	local startTime = tick()
+
+	local flingConn
+	flingConn = RunService.Heartbeat:Connect(function()
+
+		if not tHRP or not tHRP.Parent then
+			flingConn:Disconnect()
+			return
+		end
+
+		if tick() - startTime > 6 then
+			flingConn:Disconnect()
+			return
+		end
+
+		local rot = rotations[rotIndex]
+
+		myHRP.CFrame = tHRP.CFrame * rot
+		myChar:SetPrimaryPartCFrame(tHRP.CFrame * rot)
+
+		rotIndex += 1
+		if rotIndex > #rotations then
+			rotIndex = 1
+		end
+	end)
+
+	repeat RunService.Heartbeat:Wait() until not flingConn.Connected
+
+	if BV then BV:Destroy() end
+
+	myHRP.CFrame = savedPos
+	myChar:SetPrimaryPartCFrame(savedPos)
+
+	print("flinged "..target.Name)
+end
+
+LocalPlayer.Chatted:Connect(function(msg)
+
+	if msg:sub(1,7):lower() == ";fling " then
+		local name = msg:sub(8)
+		local target = getPlayer(name)
+
+		if target then
+			flingPlayer(target)
+		else
+			print("player not found")
+		end
+	end
+
+end)
