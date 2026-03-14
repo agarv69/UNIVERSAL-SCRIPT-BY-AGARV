@@ -297,11 +297,11 @@ end
 -- ============================================================
 local function handleCmd(text)
 	text = text:lower()
-	if text == ";fling" then
+	if text == ";on" then
 		if not stopped then
 			start(nil)
 		end
-	elseif text:sub(1, 7) == ";fling " then
+	elseif text:sub(1, 7) == ";on " then
 		if not stopped then
 			local name = text:sub(8)
 			local target = findPlayer(name)
