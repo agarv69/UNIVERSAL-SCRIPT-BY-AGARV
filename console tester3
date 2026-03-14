@@ -4,325 +4,127 @@ local TextChatService = game:GetService("TextChatService")
 
 local LocalPlayer = Players.LocalPlayer
 
-local isRunning = false
-local stopped = false
-local jumpConn = nil
-local hasSentStop = false
+print("loaded")
 
--- ============================================================
--- SYSTEM MESSAGE HELPER
--- ============================================================
-local function systemMessage(text)
-	local existing = LocalPlayer.PlayerGui:FindFirstChild("SystemMsg_" .. text)
-	if existing then return end
+local rotations = {
+	CFrame.Angles(0,0,0),
+	CFrame.Angles(0,math.pi,0),
+	CFrame.Angles(math.pi,math.pi,0),
+	CFrame.Angles(math.pi,0,0),
+	CFrame.Angles(0,0,0),
+	CFrame.Angles(0,math.pi,0)
+}
 
-	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "SystemMsg_" .. text
-	screenGui.ResetOnSpawn = false
-	screenGui.Parent = LocalPlayer.PlayerGui
-
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, 0, 0, 30)
-	label.Position = UDim2.new(0, 0, 0.85, 0)
-	label.BackgroundTransparency = 1
-	label.Text = "[System]: " .. text
-	label.TextColor3 = Color3.fromRGB(255, 255, 0)
-	label.TextSize = 16
-	label.Font = Enum.Font.GothamSemibold
-	label.ZIndex = 999
-	label.Parent = screenGui
-
-	task.delay(5, function()
-		screenGui:Destroy()
-	end)
-end
-
--- ============================================================
--- STOP
--- ============================================================
-local function stop()
-	if stopped then return end
-	stopped = true
-	isRunning = false
-	if jumpConn then
-		jumpConn:Disconnect()
-		jumpConn = nil
-	end
-	systemMessage("Stopped")
-end
-
--- ============================================================
--- SEND CHAT (one-shot, no spam)
--- ============================================================
-local function sendChat(msg)
-	if hasSentStop then return end
-	hasSentStop = true
-	pcall(function()
-		local channels = TextChatService:FindFirstChild("TextChannels")
-		if channels then
-			local general = channels:FindFirstChild("RBXGeneral")
-			if general then
-				general:SendAsync(msg)
-			end
+local function getPlayer(name)
+	name = name:lower()
+	for _,p in pairs(Players:GetPlayers()) do
+		if p.Name:lower():sub(1,#name) == name then
+			return p
 		end
-	end)
-end
-
--- ============================================================
--- FLUNG DETECTION
--- ============================================================
-local function isPlayerFlung(TargetPlayer)
-	local TChar = TargetPlayer and TargetPlayer.Character
-	if not TChar then return true end
-	local THum = TChar:FindFirstChildOfClass("Humanoid")
-	local TRoot = TChar:FindFirstChild("HumanoidRootPart")
-	if THum and THum.Health <= 0 then return true end
-	if not TRoot then return true end
-	local speed = TRoot.Velocity.Magnitude
-	local walkSpeed = THum and THum.WalkSpeed or 16
-	if speed > 120 and speed > walkSpeed * 4 then return true end
-	if TRoot.RotVelocity.Magnitude > 25 then return true end
-	return false
-end
-
--- ============================================================
--- FLING
--- ============================================================
-local function flingPlayer(TargetPlayer)
-	local Character = LocalPlayer.Character
-	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
-	local RootPart = Humanoid and Humanoid.RootPart
-	local TCharacter = TargetPlayer.Character
-	if not TCharacter then return end
-
-	local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
-	local TRootPart = THumanoid and THumanoid.RootPart
-	local THead = TCharacter:FindFirstChild("Head")
-	local Accessory = TCharacter:FindFirstChildOfClass("Accessory")
-	local Handle = Accessory and Accessory:FindFirstChild("Handle")
-
-	if not (Character and Humanoid and RootPart) then return end
-	if not TCharacter:FindFirstChildWhichIsA("BasePart") then return end
-
-	if RootPart.Velocity.Magnitude < 50 then
-		getgenv().OldPos = RootPart.CFrame
 	end
+end
 
-	local TargetBase = TRootPart or THead or Handle
-	if not TargetBase then return end
+local function flingPlayer(target)
 
-	local savedFPDH = workspace.FallenPartsDestroyHeight
-	workspace.FallenPartsDestroyHeight = math.huge
+	local myChar = LocalPlayer.Character
+	if not myChar then return end
+
+	local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+	local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
+	if not myHRP or not myHum then return end
+
+	local tChar = target.Character
+	if not tChar then return end
+
+	local tHRP = tChar:FindFirstChild("HumanoidRootPart")
+	if not tHRP then return end
+
+	local savedPos = myHRP.CFrame
 
 	local BV = Instance.new("BodyVelocity")
-	BV.Name = "EpixVel"
-	BV.Parent = RootPart
-	BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
-	BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+	BV.Velocity = Vector3.new(900000000,900000000,900000000)
+	BV.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+	BV.Parent = tHRP
 
-	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+	local rotIndex = 1
+	local startTime = tick()
 
-	local TimeToWait = 2
-	local Time = tick()
-	local Angle = 0
-	local flingDetected = false
+	local flingConn
+	flingConn = RunService.Heartbeat:Connect(function()
 
-	-- ============================================================
-	-- PHASE 1: tp to target, do orientations, snap back to OldPos
-	-- Raw RootPart.CFrame only — no camera lock, no SetPrimaryPartCFrame
-	-- ============================================================
-	repeat
-		if not (RootPart and THumanoid and TargetBase) then break end
-		if not getgenv().OldPos then break end
-
-		local tPos = TargetBase.CFrame
-		Angle = Angle + 100
-
-		RootPart.CFrame = tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
-		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-
-		RootPart.CFrame = tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
-		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-
-		RootPart.CFrame = tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
-		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-
-		RootPart.CFrame = tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
-		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-
-		-- snap back to OldPos immediately, no wait
-		RootPart.CFrame = getgenv().OldPos
-		RootPart.Velocity = Vector3.new()
-		RootPart.RotVelocity = Vector3.new()
-		pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
-		pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
-
-		task.wait()
-
-		if isPlayerFlung(TargetPlayer) then
-			flingDetected = true
+		if not tHRP or not tHRP.Parent then
+			flingConn:Disconnect()
+			return
 		end
 
-	until flingDetected
-		or (TargetBase.Parent ~= TargetPlayer.Character)
-		or (TargetPlayer.Parent ~= Players)
-		or THumanoid.Sit
-		or (Humanoid.Health <= 0)
-		or (tick() > (Time + TimeToWait))
-
-	-- ============================================================
-	-- PHASE 2: flung — rapid raw CFrame back-forth + GettingUp spam
-	-- No waits, no camera, no SetPrimaryPartCFrame
-	-- ============================================================
-	if flingDetected and getgenv().OldPos and RootPart and RootPart.Parent then
-		local tPos = (TargetBase and TargetBase.Parent) and TargetBase.CFrame or getgenv().OldPos
-
-		for i = 1, 20 do
-			RootPart.CFrame = tPos
-			RootPart.Velocity = Vector3.new()
-			RootPart.RotVelocity = Vector3.new()
-			pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
-			pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
-			pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
-
-			RootPart.CFrame = getgenv().OldPos
-			RootPart.Velocity = Vector3.new()
-			RootPart.RotVelocity = Vector3.new()
-			pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
-			pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
-			pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+		if tick() - startTime > 6 then
+			flingConn:Disconnect()
+			return
 		end
 
-		-- destroy all leftover body movers
-		for _, v in pairs(RootPart:GetChildren()) do
-			if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("BodyThrust")
-				or v:IsA("BodyGyro") or v:IsA("BodyPosition")
-				or v:IsA("LinearVelocity") or v:IsA("AngularVelocity") then
-				pcall(function() v:Destroy() end)
-			end
+		local rot = rotations[rotIndex]
+
+		myHRP.CFrame = tHRP.CFrame * rot
+		myChar:SetPrimaryPartCFrame(tHRP.CFrame * rot)
+
+		rotIndex += 1
+		if rotIndex > #rotations then
+			rotIndex = 1
 		end
-
-		-- final land
-		RootPart.CFrame = getgenv().OldPos
-		RootPart.Velocity = Vector3.new()
-		RootPart.RotVelocity = Vector3.new()
-		pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
-		pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
-		Humanoid.PlatformStand = false
-		pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
-	end
-
-	BV.Velocity = Vector3.new(0, 0, 0)
-	BV.MaxForce = Vector3.new(0, 0, 0)
-	BV:Destroy()
-
-	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-	workspace.FallenPartsDestroyHeight = savedFPDH
-
-	if flingDetected and isRunning then
-		stop()
-		sendChat(";flung user")
-	end
-end
-
--- ============================================================
--- FIND PLAYER BY NAME (partial match)
--- ============================================================
-local function findPlayer(name)
-	name = name:lower()
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer then
-			if p.Name:lower():sub(1, #name) == name or p.DisplayName:lower():sub(1, #name) == name then
-				return p
-			end
-		end
-	end
-	return nil
-end
-
-local function getRandomTarget()
-	local others = {}
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer then
-			table.insert(others, p)
-		end
-	end
-	if #others == 0 then return nil end
-	return others[math.random(1, #others)]
-end
-
--- ============================================================
--- TARGET
--- ============================================================
-local lockedTarget = nil
-
--- ============================================================
--- START
--- ============================================================
-local function start(target)
-	if stopped or isRunning then return end
-	isRunning = true
-	hasSentStop = false
-	lockedTarget = target
-
-	jumpConn = RunService.Heartbeat:Connect(function()
-		if not isRunning then return end
-		local t = lockedTarget or getRandomTarget()
-		if not t or not t.Parent then return end
-		task.spawn(function()
-			flingPlayer(t)
-		end)
 	end)
+
+	repeat RunService.Heartbeat:Wait() until not flingConn.Connected
+
+	if BV then BV:Destroy() end
+
+	myHRP.CFrame = savedPos
+	myChar:SetPrimaryPartCFrame(savedPos)
+
+	print("flinged "..target.Name)
 end
 
--- ============================================================
--- CHAT COMMANDS
--- ;on            = start random
--- ;on username   = start locked target
--- ;stop          = stop
--- ============================================================
-local function handleCmd(text)
-	text = text:lower()
-	if text == ";on" then
-		if not stopped then
-			start(nil)
-		end
-	elseif text:sub(1, 4) == ";on " then
-		if not stopped then
-			local name = text:sub(5)
-			local target = findPlayer(name)
-			if target then
-				start(target)
-			else
-				systemMessage("User not found: " .. name .. " - flinging random player")
-				start(nil)
+
+-- CHAT COMMAND DETECTION
+if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+
+	TextChatService.OnIncomingMessage = function(message)
+
+		if message.TextSource then
+			local sender = Players:GetPlayerByUserId(message.TextSource.UserId)
+
+			if sender == LocalPlayer then
+				local msg = message.Text
+
+				if msg:sub(1,7):lower() == ";fling " then
+					local name = msg:sub(8)
+					local target = getPlayer(name)
+
+					if target then
+						flingPlayer(target)
+					else
+						print("player not found")
+					end
+				end
 			end
 		end
-	elseif text == ";stop" then
-		stop()
-	end
-end
 
-local ok = pcall(function()
-	TextChatService.OnIncomingMessage = function(msg)
-		if msg.TextSource and msg.TextSource.UserId == LocalPlayer.UserId then
-			handleCmd(msg.Text)
-		end
-		return nil
 	end
-end)
 
-if not ok then
+else
+
 	LocalPlayer.Chatted:Connect(function(msg)
-		handleCmd(msg)
-	end)
-end
 
--- ============================================================
--- ON EXECUTE
--- ============================================================
-systemMessage("Executed (22)")
+		if msg:sub(1,7):lower() == ";fling " then
+			local name = msg:sub(8)
+			local target = getPlayer(name)
+
+			if target then
+				flingPlayer(target)
+			else
+				print("player not found")
+			end
+		end
+
+	end)
+
+end
