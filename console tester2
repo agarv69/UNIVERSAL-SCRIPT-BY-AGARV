@@ -30,8 +30,7 @@ local function flingPlayer(target)
 	if not myChar then return end
 
 	local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-	local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
-	if not myHRP or not myHum then return end
+	if not myHRP then return end
 
 	local tChar = target.Character
 	if not tChar then return end
@@ -39,17 +38,17 @@ local function flingPlayer(target)
 	local tHRP = tChar:FindFirstChild("HumanoidRootPart")
 	if not tHRP then return end
 
-	-- SAVE POSITION
 	local savedPos = myChar:GetPivot()
+	local targetStartPos = tHRP.Position
 
-	-- Create fling velocity
 	local BV = Instance.new("BodyVelocity")
-	BV.Velocity = Vector3.new(900000000,900000000,900000000)
+	BV.Velocity = Vector3.new(9e8,9e8,9e8)
 	BV.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
 	BV.Parent = tHRP
 
 	local rotIndex = 1
 	local startTime = tick()
+	local flinged = false
 
 	local flingConn
 	flingConn = RunService.Heartbeat:Connect(function()
@@ -59,13 +58,20 @@ local function flingPlayer(target)
 			return
 		end
 
-		if tick() - startTime > 6 then
+		-- ✅ STOP IF ACTUALLY FLUNG (moved far enough)
+		if (tHRP.Position - targetStartPos).Magnitude > 120 then
+			flinged = true
+			flingConn:Disconnect()
+			return
+		end
+
+		-- ✅ GIVE UP AFTER 10 SECONDS
+		if tick() - startTime > 10 then
 			flingConn:Disconnect()
 			return
 		end
 
 		local rot = rotations[rotIndex]
-
 		myChar:PivotTo(tHRP.CFrame * rot)
 
 		rotIndex += 1
@@ -80,21 +86,22 @@ local function flingPlayer(target)
 		BV:Destroy()
 	end
 
-	-- let physics settle
-	task.wait(0.1)
+	task.wait(0.25)
 
-	-- stop movement
 	myHRP.AssemblyLinearVelocity = Vector3.zero
 	myHRP.AssemblyAngularVelocity = Vector3.zero
 
-	-- RETURN TO SAVED POSITION
 	myChar:PivotTo(savedPos)
 
-	print("flinged "..target.Name)
+	if flinged then
+		print("flinged "..target.Name)
+	else
+		print("fling failed, returned to saved position")
+	end
 end
 
 
--- CHAT COMMAND DETECTION
+-- CHAT COMMAND (;username)
 if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 
 	TextChatService.OnIncomingMessage = function(message)
@@ -105,33 +112,34 @@ if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 			if sender == LocalPlayer then
 				local msg = message.Text
 
-				if msg:sub(1,7):lower() == ";fling " then
-					local name = msg:sub(8)
-					local target = getPlayer(name)
-
-					if target then
-						flingPlayer(target)
-					else
-						print("player not found")
+				if msg:sub(1,1) == ";" then
+					local name = msg:sub(2)
+					if name ~= "" then
+						local target = getPlayer(name)
+						if target then
+							flingPlayer(target)
+						else
+							print("player not found")
+						end
 					end
 				end
 			end
 		end
-
 	end
 
 else
 
 	LocalPlayer.Chatted:Connect(function(msg)
 
-		if msg:sub(1,7):lower() == ";fling " then
-			local name = msg:sub(8)
-			local target = getPlayer(name)
-
-			if target then
-				flingPlayer(target)
-			else
-				print("player not found")
+		if msg:sub(1,1) == ";" then
+			local name = msg:sub(2)
+			if name ~= "" then
+				local target = getPlayer(name)
+				if target then
+					flingPlayer(target)
+				else
+					print("player not found")
+				end
 			end
 		end
 
