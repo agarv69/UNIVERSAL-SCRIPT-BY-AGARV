@@ -86,72 +86,28 @@ local function isPlayerFlung(TargetPlayer)
 end
 
 -- ============================================================
--- ZERO VELOCITY on all parts
+-- FLING
+-- Each cycle:
+--   1. Tp into target torso with an orientation
+--   2. Apply velocity burst
+--   3. Spam GettingUp to reset our physics state
+--   4. Tp back to OldPos
+--   5. Spam GettingUp again
+--   6. Repeat with next orientation
+-- This matches the described script behavior and fixes both
+-- the residual fling and the movement latency.
 -- ============================================================
-local function zeroVelocity(Character)
-	if not Character then return end
-	for _, x in pairs(Character:GetChildren()) do
-		if x:IsA("BasePart") then
-			x.Velocity = Vector3.new()
-			x.RotVelocity = Vector3.new()
-			pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
-			pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
-		end
-	end
-end
+local orientations = {
+	-- upright facing backward (first thing seen in recording)
+	CFrame.new(0, 0.5, 0) * CFrame.Angles(0, math.rad(180), 0),
+	-- upside down facing forward
+	CFrame.new(0, 0.5, 0) * CFrame.Angles(math.rad(180), 0, 0),
+	-- upside down facing backward
+	CFrame.new(0, 0.5, 0) * CFrame.Angles(math.rad(180), math.rad(180), 0),
+	-- upright facing forward
+	CFrame.new(0, 0.5, 0) * CFrame.Angles(0, 0, 0),
+}
 
--- ============================================================
--- POST-FLING SAFETY MONITOR
--- After returning to OldPos, watches for up to 1.5 seconds.
--- If we detect we're being launched (speed > 80), it:
---   1. Zeros all velocity immediately
---   2. Teleports back to OldPos again
---   3. Keeps retrying until speed stays low or timeout
--- ============================================================
-local function safetyMonitor(savedPos)
-	local Character = LocalPlayer.Character
-	if not Character then return end
-	local root = Character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	-- Only watch for 0.3 seconds — just long enough to catch the residual launch
-	-- that happens in the first few frames after unfreeze
-	local deadline = tick() + 0.3
-	-- Threshold high enough that normal movement (walk/jump) never triggers it
-	-- A residual fling launches at thousands of studs/s so 500 is safe
-	local LAUNCH_THRESHOLD = 500
-
-	while tick() < deadline do
-		RunService.Heartbeat:Wait()
-
-		Character = LocalPlayer.Character
-		if not Character then break end
-		root = Character:FindFirstChild("HumanoidRootPart")
-		if not root then break end
-
-		local speed = root.AssemblyLinearVelocity.Magnitude
-
-		if speed > LAUNCH_THRESHOLD then
-			-- Destroy any stray BodyMovers
-			for _, d in pairs(Character:GetDescendants()) do
-				if d:IsA("BodyVelocity") or d:IsA("BodyForce")
-					or d:IsA("BodyThrust") or d:IsA("BodyGyro")
-					or d:IsA("BodyAngularVelocity") or d:IsA("BodyPosition") then
-					pcall(function() d:Destroy() end)
-				end
-			end
-
-			zeroVelocity(Character)
-			root.CFrame = savedPos
-			Character:SetPrimaryPartCFrame(savedPos)
-			zeroVelocity(Character)
-		end
-	end
-end
-
--- ============================================================
--- FLING — v13 loop exactly
--- ============================================================
 local function flingPlayer(TargetPlayer)
 	local Character = LocalPlayer.Character
 	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
@@ -168,6 +124,7 @@ local function flingPlayer(TargetPlayer)
 	if not (Character and Humanoid and RootPart) then return end
 	if not TCharacter:FindFirstChildWhichIsA("BasePart") then return end
 
+	-- Save position only when standing still
 	if RootPart.Velocity.Magnitude < 50 then
 		getgenv().OldPos = RootPart.CFrame
 	end
@@ -196,37 +153,40 @@ local function flingPlayer(TargetPlayer)
 
 	local TimeToWait = 2
 	local Time = tick()
-	local Angle = 0
+	local orientIndex = 0
 	local flingDetected = false
 
 	repeat
 		if not (RootPart and THumanoid and TargetBase) then break end
+		if not getgenv().OldPos then break end
 
+		orientIndex = (orientIndex % #orientations) + 1
 		local tPos = TargetBase.CFrame
-		Angle = Angle + 100
 
-		RootPart.CFrame = tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
-		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
+		-- Step 1: tp into target torso
+		RootPart.CFrame = tPos * orientations[orientIndex]
+		Character:SetPrimaryPartCFrame(tPos * orientations[orientIndex])
+
+		-- Step 2: blast velocity
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+
+		-- Step 3: GettingUp resets our physics state while at target
+		pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+
 		task.wait()
 
-		RootPart.CFrame = tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
-		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
-		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-		task.wait()
+		-- Step 4: tp back to OldPos immediately
+		RootPart.CFrame = getgenv().OldPos
+		Character:SetPrimaryPartCFrame(getgenv().OldPos)
 
-		RootPart.CFrame = tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
-		Character:SetPrimaryPartCFrame(tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
-		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-		task.wait()
+		-- Step 5: zero velocity at OldPos + GettingUp again to clean physics
+		RootPart.Velocity = Vector3.new()
+		RootPart.RotVelocity = Vector3.new()
+		pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
+		pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
+		pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
 
-		RootPart.CFrame = tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
-		Character:SetPrimaryPartCFrame(tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
-		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
 		task.wait()
 
 		if isPlayerFlung(TargetPlayer) then
@@ -241,26 +201,42 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
-	-- Zero BV before destroying
+	-- Zero and destroy BV
 	BV.Velocity = Vector3.new(0, 0, 0)
 	BV.MaxForce = Vector3.new(0, 0, 0)
-	zeroVelocity(Character)
 	BV:Destroy()
 
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 	workspace.CurrentCamera.CameraSubject = Humanoid
 	workspace.FallenPartsDestroyHeight = savedFPDH
 
-	-- Teleport back to saved position
+	-- Final tp back to OldPos + full cleanup
 	if getgenv().OldPos and RootPart and RootPart.Parent then
-		zeroVelocity(Character)
 		RootPart.CFrame = getgenv().OldPos
 		Character:SetPrimaryPartCFrame(getgenv().OldPos)
-		zeroVelocity(Character)
 
-		-- Start the safety monitor in background — keeps snapping us back
-		-- if residual physics tries to launch us after unfreeze
-		task.spawn(safetyMonitor, getgenv().OldPos)
+		-- Zero all velocity
+		for _, x in pairs(Character:GetChildren()) do
+			if x:IsA("BasePart") then
+				x.Velocity = Vector3.new()
+				x.RotVelocity = Vector3.new()
+				pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
+				pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
+			end
+		end
+
+		-- Destroy any leftover body movers in HumanoidRootPart
+		for _, v in pairs(RootPart:GetChildren()) do
+			if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("BodyThrust")
+				or v:IsA("BodyGyro") or v:IsA("BodyPosition")
+				or v:IsA("LinearVelocity") or v:IsA("AngularVelocity") then
+				pcall(function() v:Destroy() end)
+			end
+		end
+
+		-- Reset humanoid state fully
+		Humanoid.PlatformStand = false
+		pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
 	end
 
 	if flingDetected and isRunning then
@@ -365,4 +341,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (18)")
+systemMessage("Executed (20)")
