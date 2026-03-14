@@ -86,26 +86,10 @@ local function isPlayerFlung(TargetPlayer)
 end
 
 -- ============================================================
--- FULL MOMENTUM CANCEL
--- Destroys any BodyMovers, zeroes all velocity, then anchors
--- the root briefly so the physics engine fully flushes the
--- built-up momentum before we unanchor. This is what prevents
--- the character from being launched after the fling ends.
+-- ZERO VELOCITY on all parts
 -- ============================================================
-local function cancelMomentum(Character)
+local function zeroVelocity(Character)
 	if not Character then return end
-	local root = Character:FindFirstChild("HumanoidRootPart")
-
-	-- Step 1: destroy any leftover BodyMovers (BV may already be gone but be safe)
-	for _, d in pairs(Character:GetDescendants()) do
-		if d:IsA("BodyVelocity") or d:IsA("BodyForce")
-			or d:IsA("BodyGyro") or d:IsA("BodyPosition")
-			or d:IsA("BodyAngularVelocity") then
-			pcall(function() d:Destroy() end)
-		end
-	end
-
-	-- Step 2: zero out velocity on all parts
 	for _, x in pairs(Character:GetChildren()) do
 		if x:IsA("BasePart") then
 			x.Velocity = Vector3.new()
@@ -113,34 +97,64 @@ local function cancelMomentum(Character)
 			pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
 			pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
 		end
-	end
-
-	-- Step 3: anchor root so physics engine registers zero momentum state
-	if root then
-		root.Anchored = true
-	end
-
-	-- Step 4: one frame for the engine to flush, then unanchor
-	-- This is the minimum needed — shorter than task.wait() which is ~1/60s
-	RunService.Heartbeat:Wait()
-
-	-- Step 5: zero again right before unanchor so nothing carries over
-	for _, x in pairs(Character:GetChildren()) do
-		if x:IsA("BasePart") then
-			x.Velocity = Vector3.new()
-			x.RotVelocity = Vector3.new()
-			pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
-			pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
-		end
-	end
-
-	if root then
-		root.Anchored = false
 	end
 end
 
 -- ============================================================
--- FLING — v13 base, cancelMomentum added after OldPos return
+-- POST-FLING SAFETY MONITOR
+-- After returning to OldPos, watches for up to 1.5 seconds.
+-- If we detect we're being launched (speed > 80), it:
+--   1. Zeros all velocity immediately
+--   2. Teleports back to OldPos again
+--   3. Keeps retrying until speed stays low or timeout
+-- ============================================================
+local function safetyMonitor(savedPos)
+	local Character = LocalPlayer.Character
+	if not Character then return end
+	local root = Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local deadline = tick() + 1.5
+	local LAUNCH_THRESHOLD = 80 -- anything above this after returning = residual fling
+
+	while tick() < deadline do
+		RunService.Heartbeat:Wait()
+
+		Character = LocalPlayer.Character
+		if not Character then break end
+		root = Character:FindFirstChild("HumanoidRootPart")
+		if not root then break end
+
+		local speed = root.AssemblyLinearVelocity.Magnitude
+
+		if speed > LAUNCH_THRESHOLD then
+			-- Being launched — zero everything and snap back
+			zeroVelocity(Character)
+
+			-- Destroy any stray BodyMovers that may still exist
+			for _, d in pairs(Character:GetDescendants()) do
+				if d:IsA("BodyVelocity") or d:IsA("BodyForce")
+					or d:IsA("BodyThrust") or d:IsA("BodyGyro")
+					or d:IsA("BodyAngularVelocity") or d:IsA("BodyPosition") then
+					pcall(function() d:Destroy() end)
+				end
+			end
+
+			-- Snap back to saved position
+			root.CFrame = savedPos
+			Character:SetPrimaryPartCFrame(savedPos)
+
+			-- Zero again immediately after snap
+			zeroVelocity(Character)
+
+			-- Extend deadline slightly so we keep checking after each correction
+			deadline = tick() + 0.5
+		end
+	end
+end
+
+-- ============================================================
+-- FLING — v13 loop exactly
 -- ============================================================
 local function flingPlayer(TargetPlayer)
 	local Character = LocalPlayer.Character
@@ -231,30 +245,27 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
-	-- Destroy BV immediately so it stops pushing us
+	-- Zero BV before destroying
+	BV.Velocity = Vector3.new(0, 0, 0)
+	BV.MaxForce = Vector3.new(0, 0, 0)
+	zeroVelocity(Character)
 	BV:Destroy()
+
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 	workspace.CurrentCamera.CameraSubject = Humanoid
+	workspace.FallenPartsDestroyHeight = savedFPDH
 
-	-- Return to saved position THEN cancel all momentum
-	-- Order matters: tp first so anchor happens at OldPos not at target
-	if getgenv().OldPos then
-		-- Zero velocity before tp so we arrive clean
-		for _, x in pairs(Character:GetChildren()) do
-			if x:IsA("BasePart") then
-				x.Velocity = Vector3.new()
-				x.RotVelocity = Vector3.new()
-				x.AssemblyLinearVelocity = Vector3.new()
-				x.AssemblyAngularVelocity = Vector3.new()
-			end
-		end
+	-- Teleport back to saved position
+	if getgenv().OldPos and RootPart and RootPart.Parent then
+		zeroVelocity(Character)
 		RootPart.CFrame = getgenv().OldPos
 		Character:SetPrimaryPartCFrame(getgenv().OldPos)
-		-- Now flush all built-up momentum via anchor/unanchor
-		cancelMomentum(Character)
-	end
+		zeroVelocity(Character)
 
-	workspace.FallenPartsDestroyHeight = savedFPDH
+		-- Start the safety monitor in background — keeps snapping us back
+		-- if residual physics tries to launch us after unfreeze
+		task.spawn(safetyMonitor, getgenv().OldPos)
+	end
 
 	if flingDetected and isRunning then
 		stop()
@@ -358,4 +369,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (14)")
+systemMessage("Executed (17)")
