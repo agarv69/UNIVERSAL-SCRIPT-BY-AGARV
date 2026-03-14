@@ -2980,7 +2980,7 @@ G2L["10e"]["Name"] = [[AntiAccentColor]];
 G2L["10f"] = Instance.new("Frame", G2L["103"]);
 G2L["10f"]["BackgroundColor3"] = Color3.fromRGB(17, 17, 17);
 G2L["10f"]["BorderMode"] = Enum.BorderMode.Middle;
-G2L["10f"]["Size"] = UDim2.new(0, 170, 0, 123);
+G2L["10f"]["Size"] = UDim2.new(0, 170, 0, 101);
 G2L["10f"]["Position"] = UDim2.new(0, 0, 0.13056, 0);
 G2L["10f"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["10f"]["Name"] = [[ProtectionGroup]];
@@ -3009,7 +3009,7 @@ G2L["112"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["112"]["BackgroundTransparency"] = 0.95;
 G2L["112"]["Size"] = UDim2.new(0, 169, 0, 15);
 G2L["112"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["112"]["Text"] = [[Protection (not skid)]];
+G2L["112"]["Text"] = [[Protection]];
 G2L["112"]["LayoutOrder"] = 1;
 G2L["112"]["Name"] = [[ProtectionTitle]];
 G2L["112"]["Position"] = UDim2.new(0.00294, 0, 0.03289, 0);
@@ -10871,7 +10871,7 @@ local script = G2L["116"];
 	local DELETE_RADIUS = 24
 	
 	-- NEW: announcement cooldown
-	local ANNOUNCE_COOLDOWN = 120
+	local ANNOUNCE_COOLDOWN = 60
 	local lastAnnounce = {}
 	
 	GriefTickBox.BackgroundColor3 = Color3.new(0,0,0)
@@ -11139,6 +11139,8 @@ local script = G2L["11a"];
 	local DELETE_RADIUS = 24
 	local FLING_TIMEOUT = 7       -- seconds before giving up
 	local FLING_SUCCESS_DIST = 120 -- studs moved = successful fling
+	local FLING_COOLDOWN = 60     -- seconds before same player can be flung again
+	local lastFlung = {}
 	
 	-- ============================================================
 	-- TOOLTIP
@@ -11178,7 +11180,7 @@ local script = G2L["11a"];
 	
 	local tooltipText = Instance.new("TextLabel")
 	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Automatically flings a player when they grief 10 times in under one minute. Multiple griefers are queued and flung in order."
+	tooltipText.Text = "Automatically flings a player when they grief 10 times in under one minute. You can pair this with grief alert to alert a grief and then fling them"
 	tooltipText.TextColor3 = Color3.new(1, 1, 1)
 	tooltipText.TextSize = 14
 	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
@@ -11231,16 +11233,6 @@ local script = G2L["11a"];
 	-- FLING LOGIC
 	-- ============================================================
 	
-	local rotations = {
-		CFrame.Angles(0, 0, 0),
-		CFrame.Angles(0, math.pi, 0),
-		CFrame.Angles(math.pi, math.pi, 0),
-		CFrame.Angles(math.pi, 0, 0),
-		CFrame.Angles(0, 0, 0),
-		CFrame.Angles(0, math.pi, 0),
-	}
-	
-	-- Returns true if fling succeeded, false if failed/timeout
 	local function flingPlayer(target)
 		local myChar = LocalPlayer.Character
 		if not myChar then return false end
@@ -11252,67 +11244,71 @@ local script = G2L["11a"];
 		local tHRP = tChar:FindFirstChild("HumanoidRootPart")
 		if not tHRP then return false end
 	
-		-- Save our position to return to after fling
-		local savedCFrame = myChar:GetPivot()
+		-- Save position to return to
+		local savedCFrame = myHRP.CFrame
 		local targetStartPos = tHRP.Position
 	
-		-- Teleport our character right on top of the target
-		myChar:PivotTo(tHRP.CFrame)
-	
-		-- Apply massive BodyVelocity to the TARGET
+		-- Apply massive BodyVelocity to OURSELVES (we own our own character)
 		local BV = Instance.new("BodyVelocity")
-		BV.Velocity = Vector3.new(0, 9e8, 0) -- spike upward first for reliable launch
+		BV.Name = "GriefFlingBV"
+		BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
 		BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-		BV.Parent = tHRP
+		BV.Parent = myHRP
 	
-		-- Spin ourselves around the target for the "fling" effect
-		local rotIndex = 1
+		local Thrust = Instance.new("BodyThrust")
+		Thrust.Name = "GriefFlingThrust"
+		Thrust.Force = Vector3.new(20000, 20000, 20000)
+		Thrust.Parent = myHRP
+	
+		-- Ram ourselves into the target every heartbeat
 		local startTime = tick()
 		local flinged = false
-		local flingConn
 	
-		flingConn = RunService.Heartbeat:Connect(function()
-			if not tHRP or not tHRP.Parent then
-				flinged = false
-				flingConn:Disconnect()
-				return
-			end
+		repeat
+			if not tHRP or not tHRP.Parent then break end
+			if not myHRP or not myHRP.Parent then break end
 	
-			-- Success: target has been launched far enough
+			-- Teleport our HRP onto theirs every frame = collision force transfers to them
+			myHRP.CFrame = tHRP.CFrame
+			Thrust.Location = tHRP.Position
+	
+			-- Check if they've been launched far enough
 			if (tHRP.Position - targetStartPos).Magnitude > FLING_SUCCESS_DIST then
 				flinged = true
-				flingConn:Disconnect()
-				return
+				break
 			end
 	
-			-- Timeout: give up after FLING_TIMEOUT seconds
-			if tick() - startTime > FLING_TIMEOUT then
-				flingConn:Disconnect()
-				return
+			RunService.Heartbeat:Wait()
+		until (tick() - startTime) >= FLING_TIMEOUT
+	
+		-- Zero out forces before destroying so they don't carry over to us
+		BV.Velocity = Vector3.new(0, 0, 0)
+		BV.MaxForce = Vector3.new(0, 0, 0)
+		Thrust.Force = Vector3.new(0, 0, 0)
+		BV:Destroy()
+		Thrust:Destroy()
+	
+		-- Zero out our own velocity so we don't go flying when we tp back
+		for _, part in pairs(myChar:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.AssemblyLinearVelocity = Vector3.zero
+				part.AssemblyAngularVelocity = Vector3.zero
 			end
-	
-			-- Keep our char pivoting around the target HRP each frame
-			local rot = rotations[rotIndex]
-			myChar:PivotTo(tHRP.CFrame * rot)
-			rotIndex = (rotIndex % #rotations) + 1
-		end)
-	
-		-- Wait until the heartbeat connection ends (flung, timeout, or error)
-		repeat RunService.Heartbeat:Wait() until not flingConn.Connected
-	
-		-- Clean up BodyVelocity
-		if BV and BV.Parent then
-			BV:Destroy()
 		end
 	
-		-- Small settle wait
-		task.wait(0.3)
+		-- Wait a frame for physics to settle then snap back
+		task.wait()
 	
-		-- Return ourselves to where we were standing
 		if myHRP and myHRP.Parent then
-			myHRP.AssemblyLinearVelocity = Vector3.zero
-			myHRP.AssemblyAngularVelocity = Vector3.zero
-			myChar:PivotTo(savedCFrame)
+			myHRP.CFrame = savedCFrame
+			task.wait()
+			-- Zero out again after tp so we dont drift from saved pos
+			for _, part in pairs(myChar:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.AssemblyLinearVelocity = Vector3.zero
+					part.AssemblyAngularVelocity = Vector3.zero
+				end
+			end
 		end
 	
 		return flinged
@@ -11341,9 +11337,11 @@ local script = G2L["11a"];
 		if target and target.Character then
 			local success = flingPlayer(target)
 			if success then
+				lastFlung[targetName] = tick()
+				sendChat("✅Successfully Flung: " .. target.DisplayName)
 				print("Successfully flung " .. targetName)
 			else
-				sendChat("🚫Failed to Fling")
+				sendChat("🚫Failed to Fling: " .. target.DisplayName)
 				print("Failed to fling " .. targetName)
 			end
 		else
@@ -11362,6 +11360,8 @@ local script = G2L["11a"];
 	local function queueFling(player)
 		local name = player.Name
 		if queuedSet[name] then return end -- already in queue
+		local now = tick()
+		if lastFlung[name] and (now - lastFlung[name]) < FLING_COOLDOWN then return end
 		queuedSet[name] = true
 		table.insert(flingQueue, name)
 		task.spawn(processQueue)
