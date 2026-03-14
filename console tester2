@@ -1,94 +1,87 @@
-local VERSION = 170
-
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
-local monitoring = true
-local DELETE_RADIUS = 24
+local LocalPlayer = Players.LocalPlayer
 
-print("Delete Detector Running [ID "..VERSION.."]")
+local isRunning = false
+local stopped = false
+local jumpConn = nil
 
-local bricksFolder = workspace:WaitForChild("Bricks")
+-- ============================================================
+-- SYSTEM MESSAGE HELPER
+-- ============================================================
+local function systemMessage(text)
+	local existing = LocalPlayer.PlayerGui:FindFirstChild("SystemMsg_" .. text)
+	if existing then return end
 
-local function holdingDelete(player)
-	local char = player.Character
-	if not char then return false end
-	for _, obj in pairs(char:GetChildren()) do
-		if obj:IsA("Tool") and obj.Name:lower():find("delete") then
-			return true
-		end
-	end
-	return false
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "SystemMsg_" .. text
+	screenGui.ResetOnSpawn = false
+	screenGui.Parent = LocalPlayer.PlayerGui
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, 0, 0, 30)
+	label.Position = UDim2.new(0, 0, 0.85, 0)
+	label.BackgroundTransparency = 1
+	label.Text = "[System]: " .. text
+	label.TextColor3 = Color3.fromRGB(255, 255, 0)
+	label.TextSize = 16
+	label.Font = Enum.Font.GothamSemibold
+	label.ZIndex = 999
+	label.Parent = screenGui
+
+	task.delay(5, function()
+		screenGui:Destroy()
+	end)
 end
 
-local previousBricks = {}
-
-local function getOwner(brick)
-	if brick:IsDescendantOf(bricksFolder) then
-		local parent = brick.Parent
-		if parent then
-			local possiblePlayer = Players:FindFirstChild(parent.Name)
-			if possiblePlayer then
-				return parent.Name
-			end
-		end
+-- ============================================================
+-- STOP
+-- ============================================================
+local function stop()
+	if stopped then return end
+	stopped = true
+	isRunning = false
+	if jumpConn then
+		jumpConn:Disconnect()
+		jumpConn = nil
 	end
-	return "Server"
+	systemMessage("Stopped")
 end
 
-local function snapshot()
-	local current = {}
-	for _, obj in pairs(bricksFolder:GetDescendants()) do
-		if obj:IsA("BasePart") and obj.Name == "Brick" then
-			current[obj] = {
-				position = obj.Position,
-				owner = getOwner(obj)
-			}
+-- ============================================================
+-- START JUMP SPAM
+-- ============================================================
+local function start()
+	if stopped or isRunning then return end
+	isRunning = true
+
+	jumpConn = RunService.Heartbeat:Connect(function()
+		if not isRunning then return end
+		local char = LocalPlayer.Character
+		if not char then return end
+		local hum = char:FindFirstChildWhichIsA("Humanoid")
+		if hum then
+			hum.Jump = true
 		end
-	end
-	return current
+	end)
 end
 
-previousBricks = snapshot()
-
-RunService.Heartbeat:Connect(function()
-	if not monitoring then return end
-	
-	local currentBricks = snapshot()
-	
-	for oldBrick, data in pairs(previousBricks) do
-		if not currentBricks[oldBrick] then
-			
-			local oldPos = data.position
-			local ownerName = data.owner
-			
-			local closest = nil
-			local closestDist = DELETE_RADIUS
-			
-			for _, player in pairs(Players:GetPlayers()) do
-				local char = player.Character
-				if char and char:FindFirstChild("HumanoidRootPart") then
-					local dist = (char.HumanoidRootPart.Position - oldPos).Magnitude
-					if dist <= closestDist and holdingDelete(player) then
-						closestDist = dist
-						closest = player
-					end
-				end
-			end
-			
-			if closest and closest.Name ~= ownerName then
-				print(closest.Name.." deleted "..ownerName.."'s brick")
-			end
-		end
-	end
-	
-	previousBricks = currentBricks
-end)
-
+-- ============================================================
+-- CHAT COMMANDS
+-- ============================================================
 LocalPlayer.Chatted:Connect(function(msg)
-	if msg == ";stop" then
-		monitoring = false
-		print("Delete Detector Stopped [ID "..VERSION.."]")
+	local cmd = msg:lower()
+	if cmd == ";fling" then
+		if not stopped then
+			start()
+		end
+	elseif cmd == ";stop" then
+		stop()
 	end
 end)
+
+-- ============================================================
+-- ON EXECUTE
+-- ============================================================
+systemMessage("Executed (1)")
