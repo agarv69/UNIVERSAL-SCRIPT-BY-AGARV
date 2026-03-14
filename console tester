@@ -86,7 +86,71 @@ local function isPlayerFlung(TargetPlayer)
 end
 
 -- ============================================================
--- FLING — v13 method exactly, cleanup fixed
+-- ZERO VELOCITY on all parts
+-- ============================================================
+local function zeroVelocity(Character)
+	if not Character then return end
+	for _, x in pairs(Character:GetChildren()) do
+		if x:IsA("BasePart") then
+			x.Velocity = Vector3.new()
+			x.RotVelocity = Vector3.new()
+			pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
+			pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
+		end
+	end
+end
+
+-- ============================================================
+-- POST-FLING SAFETY MONITOR
+-- After returning to OldPos, watches for up to 1.5 seconds.
+-- If we detect we're being launched (speed > 80), it:
+--   1. Zeros all velocity immediately
+--   2. Teleports back to OldPos again
+--   3. Keeps retrying until speed stays low or timeout
+-- ============================================================
+local function safetyMonitor(savedPos)
+	local Character = LocalPlayer.Character
+	if not Character then return end
+	local root = Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	-- Only watch for 0.3 seconds — just long enough to catch the residual launch
+	-- that happens in the first few frames after unfreeze
+	local deadline = tick() + 0.3
+	-- Threshold high enough that normal movement (walk/jump) never triggers it
+	-- A residual fling launches at thousands of studs/s so 500 is safe
+	local LAUNCH_THRESHOLD = 500
+
+	while tick() < deadline do
+		RunService.Heartbeat:Wait()
+
+		Character = LocalPlayer.Character
+		if not Character then break end
+		root = Character:FindFirstChild("HumanoidRootPart")
+		if not root then break end
+
+		local speed = root.AssemblyLinearVelocity.Magnitude
+
+		if speed > LAUNCH_THRESHOLD then
+			-- Destroy any stray BodyMovers
+			for _, d in pairs(Character:GetDescendants()) do
+				if d:IsA("BodyVelocity") or d:IsA("BodyForce")
+					or d:IsA("BodyThrust") or d:IsA("BodyGyro")
+					or d:IsA("BodyAngularVelocity") or d:IsA("BodyPosition") then
+					pcall(function() d:Destroy() end)
+				end
+			end
+
+			zeroVelocity(Character)
+			root.CFrame = savedPos
+			Character:SetPrimaryPartCFrame(savedPos)
+			zeroVelocity(Character)
+		end
+	end
+end
+
+-- ============================================================
+-- FLING — v13 loop exactly
 -- ============================================================
 local function flingPlayer(TargetPlayer)
 	local Character = LocalPlayer.Character
@@ -127,12 +191,6 @@ local function flingPlayer(TargetPlayer)
 	BV.Parent = RootPart
 	BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
 	BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
-
-	-- BodyThrust keeps force local and helps cancel residual push on cleanup
-	local Thrust = Instance.new("BodyThrust")
-	Thrust.Name = "EpixThrust"
-	Thrust.Force = Vector3.new(20000, 20000, 20000)
-	Thrust.Parent = RootPart
 
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
@@ -183,48 +241,26 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
-	-- Zero out forces BEFORE destroying — this is the key step.
-	-- Destroying while still at max force leaves momentum in the engine.
+	-- Zero BV before destroying
 	BV.Velocity = Vector3.new(0, 0, 0)
 	BV.MaxForce = Vector3.new(0, 0, 0)
-	Thrust.Force = Vector3.new(0, 0, 0)
-
-	-- Zero all parts while movers are still zeroed but not yet gone
-	for _, x in pairs(Character:GetChildren()) do
-		if x:IsA("BasePart") then
-			x.Velocity = Vector3.new()
-			x.RotVelocity = Vector3.new()
-			x.AssemblyLinearVelocity = Vector3.new()
-			x.AssemblyAngularVelocity = Vector3.new()
-		end
-	end
-
-	-- Now destroy
+	zeroVelocity(Character)
 	BV:Destroy()
-	Thrust:Destroy()
 
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 	workspace.CurrentCamera.CameraSubject = Humanoid
 	workspace.FallenPartsDestroyHeight = savedFPDH
 
-	-- Wait one frame for physics to settle after zeroing
-	task.wait()
-
-	-- Teleport back
-	if getgenv().OldPos and Character and RootPart and RootPart.Parent then
+	-- Teleport back to saved position
+	if getgenv().OldPos and RootPart and RootPart.Parent then
+		zeroVelocity(Character)
 		RootPart.CFrame = getgenv().OldPos
 		Character:SetPrimaryPartCFrame(getgenv().OldPos)
+		zeroVelocity(Character)
 
-		-- Zero again after teleport
-		task.wait()
-		for _, x in pairs(Character:GetChildren()) do
-			if x:IsA("BasePart") then
-				x.Velocity = Vector3.new()
-				x.RotVelocity = Vector3.new()
-				x.AssemblyLinearVelocity = Vector3.new()
-				x.AssemblyAngularVelocity = Vector3.new()
-			end
-		end
+		-- Start the safety monitor in background — keeps snapping us back
+		-- if residual physics tries to launch us after unfreeze
+		task.spawn(safetyMonitor, getgenv().OldPos)
 	end
 
 	if flingDetected and isRunning then
@@ -329,4 +365,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (15)")
+systemMessage("Executed (18)")
