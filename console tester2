@@ -86,7 +86,48 @@ local function isPlayerFlung(TargetPlayer)
 end
 
 -- ============================================================
--- FLING — v7 script copied exactly, flung detection added only
+-- ZERO PHYSICS on all parts of a character
+-- Sets CustomPhysicalProperties to zero which kills the stored
+-- physics state in the engine — same method as the ref script
+-- ============================================================
+local ZERO_PROPS = PhysicalProperties.new(0, 0, 0)
+
+local function zeroPhysics(Character)
+	if not Character then return end
+	for _, x in pairs(Character:GetChildren()) do
+		if x:IsA("BasePart") then
+			x.Velocity = Vector3.new()
+			x.RotVelocity = Vector3.new()
+			x.AssemblyLinearVelocity = Vector3.new()
+			x.AssemblyAngularVelocity = Vector3.new()
+			x.CanCollide = false
+			x.CustomPhysicalProperties = ZERO_PROPS
+		end
+	end
+end
+
+local function restorePhysics(Character)
+	if not Character then return end
+	for _, x in pairs(Character:GetChildren()) do
+		if x:IsA("BasePart") then
+			x.Velocity = Vector3.new()
+			x.RotVelocity = Vector3.new()
+			x.AssemblyLinearVelocity = Vector3.new()
+			x.AssemblyAngularVelocity = Vector3.new()
+			x.CanCollide = true
+			x.CustomPhysicalProperties = PhysicalProperties.new(
+				0.7,  -- density  (Roblox default)
+				0.3,  -- friction
+				0.5,  -- elasticity
+				0,    -- frictionWeight
+				0     -- elasticityWeight
+			)
+		end
+	end
+end
+
+-- ============================================================
+-- FLING — v13 loop exactly, zeroPhysics cleanup added
 -- ============================================================
 local function flingPlayer(TargetPlayer)
 	local Character = LocalPlayer.Character
@@ -128,6 +169,11 @@ local function flingPlayer(TargetPlayer)
 	BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
 	BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
 
+	local Thrust = Instance.new("BodyThrust")
+	Thrust.Name = "EpixThrust"
+	Thrust.Force = Vector3.new(20000, 20000, 20000)
+	Thrust.Parent = RootPart
+
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
 	local TimeToWait = 2
@@ -165,7 +211,6 @@ local function flingPlayer(TargetPlayer)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
 		task.wait()
 
-		-- ADDED: check if flung after each set of 4 positions
 		if isPlayerFlung(TargetPlayer) then
 			flingDetected = true
 			break
@@ -178,35 +223,35 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
+	-- Zero movers before destroying so engine sees zero, not max force
+	BV.Velocity = Vector3.new(0, 0, 0)
+	BV.MaxForce = Vector3.new(0, 0, 0)
+	Thrust.Force = Vector3.new(0, 0, 0)
+
+	-- Kill physics state on all parts using CustomPhysicalProperties = zero
+	-- This is what actually stops the engine from carrying momentum forward
+	zeroPhysics(Character)
+
 	BV:Destroy()
+	Thrust:Destroy()
+
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 	workspace.CurrentCamera.CameraSubject = Humanoid
-
-	if getgenv().OldPos then
-		for _, x in pairs(Character:GetChildren()) do
-			if x:IsA("BasePart") then
-				x.Velocity = Vector3.new()
-				x.RotVelocity = Vector3.new()
-				x.AssemblyLinearVelocity = Vector3.new()
-				x.AssemblyAngularVelocity = Vector3.new()
-			end
-		end
-		RootPart.CFrame = getgenv().OldPos
-		Character:SetPrimaryPartCFrame(getgenv().OldPos)
-		task.wait()
-		for _, x in pairs(Character:GetChildren()) do
-			if x:IsA("BasePart") then
-				x.Velocity = Vector3.new()
-				x.RotVelocity = Vector3.new()
-				x.AssemblyLinearVelocity = Vector3.new()
-				x.AssemblyAngularVelocity = Vector3.new()
-			end
-		end
-	end
-
 	workspace.FallenPartsDestroyHeight = savedFPDH
 
-	-- ADDED: auto stop + chat the moment fling is confirmed
+	-- One frame for physics flush
+	task.wait()
+
+	-- Teleport back
+	if getgenv().OldPos and Character and RootPart and RootPart.Parent then
+		RootPart.CFrame = getgenv().OldPos
+		Character:SetPrimaryPartCFrame(getgenv().OldPos)
+
+		-- One more frame then restore physics and zero again
+		task.wait()
+		restorePhysics(Character)
+	end
+
 	if flingDetected and isRunning then
 		stop()
 		sendChat(";flung user")
@@ -309,4 +354,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (13)")
+systemMessage("Executed (16)")
