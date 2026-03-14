@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TextChatService = game:GetService("TextChatService")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -50,37 +51,225 @@ local function stop()
 end
 
 -- ============================================================
--- START JUMP SPAM
+-- FLING
 -- ============================================================
-local function start()
+local function flingPlayer(TargetPlayer)
+	local Character = LocalPlayer.Character
+	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+	local RootPart = Humanoid and Humanoid.RootPart
+	local TCharacter = TargetPlayer.Character
+	if not TCharacter then return end
+
+	local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+	local TRootPart = THumanoid and THumanoid.RootPart
+	local THead = TCharacter:FindFirstChild("Head")
+	local Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+	local Handle = Accessory and Accessory:FindFirstChild("Handle")
+
+	if not (Character and Humanoid and RootPart) then return end
+	if not TCharacter:FindFirstChildWhichIsA("BasePart") then return end
+
+	-- Save old position before we move
+	if RootPart.Velocity.Magnitude < 50 then
+		getgenv().OldPos = RootPart.CFrame
+	end
+
+	-- Update camera to track target
+	if THead then
+		workspace.CurrentCamera.CameraSubject = THead
+	elseif Handle then
+		workspace.CurrentCamera.CameraSubject = Handle
+	elseif THumanoid and TRootPart then
+		workspace.CurrentCamera.CameraSubject = THumanoid
+	end
+
+	-- Pick the best base part to teleport onto
+	local TargetBase = TRootPart or THead or Handle
+	if not TargetBase then return end
+
+	local savedFPDH = workspace.FallenPartsDestroyHeight
+	workspace.FallenPartsDestroyHeight = math.huge
+
+	local BV = Instance.new("BodyVelocity")
+	BV.Name = "EpixVel"
+	BV.Parent = RootPart
+	BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
+	BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+
+	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+	-- --------------------------------------------------------
+	-- TELEPORT-BASED FLING (replaces the old lock-on loop)
+	-- Instead of slowly anchoring CFrame to the target each
+	-- frame (which servers see as tweening), we hard-teleport
+	-- directly onto the target part, then immediately apply
+	-- the extreme velocity burst. Much faster and the server
+	-- sees you as already being there.
+	-- --------------------------------------------------------
+	local TimeToWait = 2
+	local Time = tick()
+	local Angle = 0
+
+	repeat
+		if not (RootPart and THumanoid and TargetBase) then break end
+
+		-- Hard teleport: snap directly onto the target position
+		local tPos = TargetBase.CFrame
+
+		Angle = Angle + 100
+
+		-- Teleport to target with slight vertical offsets and apply burst
+		RootPart.CFrame = tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
+		RootPart.CFrame = tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
+		RootPart.CFrame = tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
+		RootPart.CFrame = tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
+	until (TargetBase.Velocity.Magnitude > 500)
+		or (TargetBase.Parent ~= TargetPlayer.Character)
+		or (TargetPlayer.Parent ~= Players)
+		or THumanoid.Sit
+		or (Humanoid.Health <= 0)
+		or (tick() > (Time + TimeToWait))
+
+	BV:Destroy()
+	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+	workspace.CurrentCamera.CameraSubject = Humanoid
+
+	-- Return to saved position
+	if getgenv().OldPos then
+		for _, x in pairs(Character:GetChildren()) do
+			if x:IsA("BasePart") then
+				x.Velocity = Vector3.new()
+				x.RotVelocity = Vector3.new()
+				x.AssemblyLinearVelocity = Vector3.new()
+				x.AssemblyAngularVelocity = Vector3.new()
+			end
+		end
+		RootPart.CFrame = getgenv().OldPos
+		Character:SetPrimaryPartCFrame(getgenv().OldPos)
+		task.wait()
+		for _, x in pairs(Character:GetChildren()) do
+			if x:IsA("BasePart") then
+				x.Velocity = Vector3.new()
+				x.RotVelocity = Vector3.new()
+				x.AssemblyLinearVelocity = Vector3.new()
+				x.AssemblyAngularVelocity = Vector3.new()
+			end
+		end
+	end
+
+	workspace.FallenPartsDestroyHeight = savedFPDH
+end
+
+-- ============================================================
+-- FIND PLAYER BY NAME (partial match)
+-- ============================================================
+local function findPlayer(name)
+	name = name:lower()
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer then
+			if p.Name:lower():sub(1, #name) == name or p.DisplayName:lower():sub(1, #name) == name then
+				return p
+			end
+		end
+	end
+	return nil
+end
+
+local function getRandomTarget()
+	local others = {}
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer then
+			table.insert(others, p)
+		end
+	end
+	if #others == 0 then return nil end
+	return others[math.random(1, #others)]
+end
+
+-- ============================================================
+-- TARGET (set when ;fling username used)
+-- ============================================================
+local lockedTarget = nil
+
+-- ============================================================
+-- START FLING LOOP
+-- ============================================================
+local function start(target)
 	if stopped or isRunning then return end
 	isRunning = true
+	lockedTarget = target -- nil means random each time
 
 	jumpConn = RunService.Heartbeat:Connect(function()
 		if not isRunning then return end
-		local char = LocalPlayer.Character
-		if not char then return end
-		local hum = char:FindFirstChildWhichIsA("Humanoid")
-		if not hum then return end
-		hum:ChangeState(Enum.HumanoidStateType.Jumping)
+		local t = lockedTarget or getRandomTarget()
+		if not t or not t.Parent then return end
+		task.spawn(function()
+			flingPlayer(t)
+		end)
 	end)
 end
 
 -- ============================================================
 -- CHAT COMMANDS
 -- ============================================================
-LocalPlayer.Chatted:Connect(function(msg)
-	local cmd = msg:lower()
-	if cmd == ";fling" then
+local function handleCmd(text)
+	text = text:lower()
+	if text == ";fling" then
 		if not stopped then
-			start()
+			start(nil) -- random
 		end
-	elseif cmd == ";stop" then
+	elseif text:sub(1, 7) == ";fling " then
+		if not stopped then
+			local name = text:sub(8)
+			local target = findPlayer(name)
+			if target then
+				start(target)
+			else
+				systemMessage("User not found: " .. name .. " - flinging random player")
+				start(nil)
+			end
+		end
+	elseif text == ";stop" then
 		stop()
 	end
+end
+
+local ok = pcall(function()
+	TextChatService.OnIncomingMessage = function(msg)
+		if msg.TextSource and msg.TextSource.UserId == LocalPlayer.UserId then
+			handleCmd(msg.Text)
+		end
+		return nil
+	end
 end)
+
+if not ok then
+	LocalPlayer.Chatted:Connect(function(msg)
+		handleCmd(msg)
+	end)
+end
 
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (2)")
+systemMessage("Executed (6)")
