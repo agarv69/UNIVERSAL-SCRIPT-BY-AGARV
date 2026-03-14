@@ -7,7 +7,7 @@ local LocalPlayer = Players.LocalPlayer
 local isRunning = false
 local stopped = false
 local jumpConn = nil
-local hasSentStop = false -- prevents spam/double firing
+local hasSentStop = false
 
 -- ============================================================
 -- SYSTEM MESSAGE HELPER
@@ -52,72 +52,95 @@ local function stop()
 end
 
 -- ============================================================
--- SEND STOP COMMAND IN CHAT (safe, no spam)
+-- SEND CHAT (one-shot, no spam)
 -- ============================================================
-local function sendStopChat()
+local function sendChat(msg)
 	if hasSentStop then return end
 	hasSentStop = true
-
-	-- Try modern TextChatService channel first
-	local sent = false
 	pcall(function()
 		local channels = TextChatService:FindFirstChild("TextChannels")
 		if channels then
 			local general = channels:FindFirstChild("RBXGeneral")
 			if general then
-				general:SendAsync(";stop")
-				sent = true
+				general:SendAsync(msg)
 			end
 		end
 	end)
+end
 
-	-- Fallback: legacy chat
-	if not sent then
-		pcall(function()
-			local channel = LocalPlayer.PlayerGui:FindFirstChild("Chat")
-				or game:GetService("StarterGui")
-			-- Use the chat bar's remote if available
-			local ChatService = game:GetService("Chat")
-			ChatService:Chat(LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head"), ";stop")
-		end)
+-- ============================================================
+-- FLUNG DETECTION
+-- ============================================================
+local function isPlayerFlung(TargetPlayer)
+	local TChar = TargetPlayer and TargetPlayer.Character
+	if not TChar then return true end
+	local THum = TChar:FindFirstChildOfClass("Humanoid")
+	local TRoot = TChar:FindFirstChild("HumanoidRootPart")
+	if THum and THum.Health <= 0 then return true end
+	if not TRoot then return true end
+	local speed = TRoot.Velocity.Magnitude
+	local walkSpeed = THum and THum.WalkSpeed or 16
+	if speed > 120 and speed > walkSpeed * 4 then return true end
+	if TRoot.RotVelocity.Magnitude > 25 then return true end
+	return false
+end
+
+-- ============================================================
+-- FULL MOMENTUM CANCEL
+-- Destroys any BodyMovers, zeroes all velocity, then anchors
+-- the root briefly so the physics engine fully flushes the
+-- built-up momentum before we unanchor. This is what prevents
+-- the character from being launched after the fling ends.
+-- ============================================================
+local function cancelMomentum(Character)
+	if not Character then return end
+	local root = Character:FindFirstChild("HumanoidRootPart")
+
+	-- Step 1: destroy any leftover BodyMovers (BV may already be gone but be safe)
+	for _, d in pairs(Character:GetDescendants()) do
+		if d:IsA("BodyVelocity") or d:IsA("BodyForce")
+			or d:IsA("BodyGyro") or d:IsA("BodyPosition")
+			or d:IsA("BodyAngularVelocity") then
+			pcall(function() d:Destroy() end)
+		end
+	end
+
+	-- Step 2: zero out velocity on all parts
+	for _, x in pairs(Character:GetChildren()) do
+		if x:IsA("BasePart") then
+			x.Velocity = Vector3.new()
+			x.RotVelocity = Vector3.new()
+			pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
+			pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
+		end
+	end
+
+	-- Step 3: anchor root so physics engine registers zero momentum state
+	if root then
+		root.Anchored = true
+	end
+
+	-- Step 4: one frame for the engine to flush, then unanchor
+	-- This is the minimum needed — shorter than task.wait() which is ~1/60s
+	RunService.Heartbeat:Wait()
+
+	-- Step 5: zero again right before unanchor so nothing carries over
+	for _, x in pairs(Character:GetChildren()) do
+		if x:IsA("BasePart") then
+			x.Velocity = Vector3.new()
+			x.RotVelocity = Vector3.new()
+			pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
+			pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
+		end
+	end
+
+	if root then
+		root.Anchored = false
 	end
 end
 
 -- ============================================================
--- AUTO STOP DETECTION
--- Called after each fling attempt; checks if target was flung
--- ============================================================
-local FLUNG_VELOCITY_THRESHOLD = 500 -- studs/s, same as the exit condition in fling loop
-
-local function checkAndAutoStop(TargetPlayer)
-	if not isRunning then return end
-	local TCharacter = TargetPlayer and TargetPlayer.Character
-	if not TCharacter then
-		-- Target character gone = likely flung/died
-		stop()
-		sendStopChat()
-		return
-	end
-
-	local TRootPart = TCharacter:FindFirstChild("HumanoidRootPart")
-	local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
-
-	if TRootPart and TRootPart.Velocity.Magnitude > FLUNG_VELOCITY_THRESHOLD then
-		stop()
-		sendStopChat()
-		return
-	end
-
-	-- Detect ragdoll / fallen state
-	if THumanoid and THumanoid.Health <= 0 then
-		stop()
-		sendStopChat()
-		return
-	end
-end
-
--- ============================================================
--- FLING
+-- FLING — v13 base, cancelMomentum added after OldPos return
 -- ============================================================
 local function flingPlayer(TargetPlayer)
 	local Character = LocalPlayer.Character
@@ -196,9 +219,9 @@ local function flingPlayer(TargetPlayer)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
 		task.wait()
 
-		-- Check mid-loop if target velocity spiked (flung successfully)
-		if TargetBase.Velocity.Magnitude > FLUNG_VELOCITY_THRESHOLD then
+		if isPlayerFlung(TargetPlayer) then
 			flingDetected = true
+			break
 		end
 
 	until flingDetected
@@ -208,11 +231,15 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
+	-- Destroy BV immediately so it stops pushing us
 	BV:Destroy()
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 	workspace.CurrentCamera.CameraSubject = Humanoid
 
+	-- Return to saved position THEN cancel all momentum
+	-- Order matters: tp first so anchor happens at OldPos not at target
 	if getgenv().OldPos then
+		-- Zero velocity before tp so we arrive clean
 		for _, x in pairs(Character:GetChildren()) do
 			if x:IsA("BasePart") then
 				x.Velocity = Vector3.new()
@@ -223,22 +250,15 @@ local function flingPlayer(TargetPlayer)
 		end
 		RootPart.CFrame = getgenv().OldPos
 		Character:SetPrimaryPartCFrame(getgenv().OldPos)
-		task.wait()
-		for _, x in pairs(Character:GetChildren()) do
-			if x:IsA("BasePart") then
-				x.Velocity = Vector3.new()
-				x.RotVelocity = Vector3.new()
-				x.AssemblyLinearVelocity = Vector3.new()
-				x.AssemblyAngularVelocity = Vector3.new()
-			end
-		end
+		-- Now flush all built-up momentum via anchor/unanchor
+		cancelMomentum(Character)
 	end
 
 	workspace.FallenPartsDestroyHeight = savedFPDH
 
-	-- After fling attempt completes, check if player was actually flung
-	if flingDetected then
-		checkAndAutoStop(TargetPlayer)
+	if flingDetected and isRunning then
+		stop()
+		sendChat(";flung user")
 	end
 end
 
@@ -274,12 +294,12 @@ end
 local lockedTarget = nil
 
 -- ============================================================
--- START FLING LOOP
+-- START
 -- ============================================================
 local function start(target)
 	if stopped or isRunning then return end
 	isRunning = true
-	hasSentStop = false -- reset stop-chat guard for new session
+	hasSentStop = false
 	lockedTarget = target
 
 	jumpConn = RunService.Heartbeat:Connect(function()
@@ -294,6 +314,9 @@ end
 
 -- ============================================================
 -- CHAT COMMANDS
+-- ;on            = start random
+-- ;on username   = start locked target
+-- ;stop          = stop
 -- ============================================================
 local function handleCmd(text)
 	text = text:lower()
@@ -301,9 +324,9 @@ local function handleCmd(text)
 		if not stopped then
 			start(nil)
 		end
-	elseif text:sub(1, 7) == ";on " then
+	elseif text:sub(1, 4) == ";on " then
 		if not stopped then
-			local name = text:sub(8)
+			local name = text:sub(5)
 			local target = findPlayer(name)
 			if target then
 				start(target)
@@ -335,4 +358,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (7)")
+systemMessage("Executed (14)")
