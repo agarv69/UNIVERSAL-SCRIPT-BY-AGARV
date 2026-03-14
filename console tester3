@@ -86,55 +86,7 @@ local function isPlayerFlung(TargetPlayer)
 end
 
 -- ============================================================
--- FULL CHARACTER CLEANUP
--- Destroys all body movers left inside HumanoidRootPart,
--- zeroes all velocity, resets PlatformStand and GettingUp
--- state so movement input works again immediately
--- ============================================================
-local function cleanupCharacter(Character)
-	if not Character then return end
-
-	local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-	local RootPart = Character:FindFirstChild("HumanoidRootPart")
-
-	-- Destroy every body mover left inside HumanoidRootPart
-	-- This is the main cause of movement delay after fling
-	if RootPart then
-		for _, v in pairs(RootPart:GetChildren()) do
-			if v:IsA("BodyVelocity") or v:IsA("BodyForce")
-				or v:IsA("BodyThrust") or v:IsA("BodyGyro")
-				or v:IsA("BodyPosition") or v:IsA("BodyAngularVelocity")
-				or v:IsA("LinearVelocity") or v:IsA("AngularVelocity")
-				or v:IsA("VectorForce") or v:IsA("AlignPosition")
-				or v:IsA("AlignOrientation") then
-				pcall(function() v:Destroy() end)
-			end
-		end
-	end
-
-	-- Zero velocity on all parts
-	for _, x in pairs(Character:GetChildren()) do
-		if x:IsA("BasePart") then
-			x.Velocity = Vector3.new()
-			x.RotVelocity = Vector3.new()
-			pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
-			pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
-		end
-	end
-
-	if Humanoid then
-		-- PlatformStand being left true locks movement
-		Humanoid.PlatformStand = false
-		-- GettingUp state resets the ragdoll/physics state
-		-- and plays the unragdoll so physics is clean again
-		pcall(function()
-			Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-		end)
-	end
-end
-
--- ============================================================
--- FLING — v13 loop exactly
+-- FLING
 -- ============================================================
 local function flingPlayer(TargetPlayer)
 	local Character = LocalPlayer.Character
@@ -156,14 +108,6 @@ local function flingPlayer(TargetPlayer)
 		getgenv().OldPos = RootPart.CFrame
 	end
 
-	if THead then
-		workspace.CurrentCamera.CameraSubject = THead
-	elseif Handle then
-		workspace.CurrentCamera.CameraSubject = Handle
-	elseif THumanoid and TRootPart then
-		workspace.CurrentCamera.CameraSubject = THumanoid
-	end
-
 	local TargetBase = TRootPart or THead or Handle
 	if not TargetBase then return end
 
@@ -183,39 +127,44 @@ local function flingPlayer(TargetPlayer)
 	local Angle = 0
 	local flingDetected = false
 
+	-- ============================================================
+	-- PHASE 1: tp to target, do orientations, snap back to OldPos
+	-- Raw RootPart.CFrame only — no camera lock, no SetPrimaryPartCFrame
+	-- ============================================================
 	repeat
 		if not (RootPart and THumanoid and TargetBase) then break end
+		if not getgenv().OldPos then break end
 
 		local tPos = TargetBase.CFrame
 		Angle = Angle + 100
 
 		RootPart.CFrame = tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
-		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-		task.wait()
 
 		RootPart.CFrame = tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
-		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-		task.wait()
 
 		RootPart.CFrame = tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
-		Character:SetPrimaryPartCFrame(tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-		task.wait()
 
 		RootPart.CFrame = tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
-		Character:SetPrimaryPartCFrame(tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+
+		-- snap back to OldPos immediately, no wait
+		RootPart.CFrame = getgenv().OldPos
+		RootPart.Velocity = Vector3.new()
+		RootPart.RotVelocity = Vector3.new()
+		pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
+		pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
+
 		task.wait()
 
 		if isPlayerFlung(TargetPlayer) then
 			flingDetected = true
-			break
 		end
 
 	until flingDetected
@@ -225,33 +174,54 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
-	-- Zero BV before destroying so engine sees zero not max force
+	-- ============================================================
+	-- PHASE 2: flung — rapid raw CFrame back-forth + GettingUp spam
+	-- No waits, no camera, no SetPrimaryPartCFrame
+	-- ============================================================
+	if flingDetected and getgenv().OldPos and RootPart and RootPart.Parent then
+		local tPos = (TargetBase and TargetBase.Parent) and TargetBase.CFrame or getgenv().OldPos
+
+		for i = 1, 20 do
+			RootPart.CFrame = tPos
+			RootPart.Velocity = Vector3.new()
+			RootPart.RotVelocity = Vector3.new()
+			pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
+			pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
+			pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+
+			RootPart.CFrame = getgenv().OldPos
+			RootPart.Velocity = Vector3.new()
+			RootPart.RotVelocity = Vector3.new()
+			pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
+			pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
+			pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+		end
+
+		-- destroy all leftover body movers
+		for _, v in pairs(RootPart:GetChildren()) do
+			if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("BodyThrust")
+				or v:IsA("BodyGyro") or v:IsA("BodyPosition")
+				or v:IsA("LinearVelocity") or v:IsA("AngularVelocity") then
+				pcall(function() v:Destroy() end)
+			end
+		end
+
+		-- final land
+		RootPart.CFrame = getgenv().OldPos
+		RootPart.Velocity = Vector3.new()
+		RootPart.RotVelocity = Vector3.new()
+		pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
+		pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
+		Humanoid.PlatformStand = false
+		pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+	end
+
 	BV.Velocity = Vector3.new(0, 0, 0)
 	BV.MaxForce = Vector3.new(0, 0, 0)
 	BV:Destroy()
 
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-	workspace.CurrentCamera.CameraSubject = Humanoid
 	workspace.FallenPartsDestroyHeight = savedFPDH
-
-	-- Full cleanup: destroys all body movers, zeroes velocity,
-	-- resets PlatformStand and GettingUp state
-	cleanupCharacter(Character)
-
-	-- Teleport back
-	if getgenv().OldPos and RootPart and RootPart.Parent then
-		RootPart.CFrame = getgenv().OldPos
-		Character:SetPrimaryPartCFrame(getgenv().OldPos)
-		-- Zero one more time after teleport
-		for _, x in pairs(Character:GetChildren()) do
-			if x:IsA("BasePart") then
-				x.Velocity = Vector3.new()
-				x.RotVelocity = Vector3.new()
-				pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
-				pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
-			end
-		end
-	end
 
 	if flingDetected and isRunning then
 		stop()
@@ -355,4 +325,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (19)")
+systemMessage("Executed (22)")
