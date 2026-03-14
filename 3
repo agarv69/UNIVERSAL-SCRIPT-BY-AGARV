@@ -3382,7 +3382,7 @@ G2L["134"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["134"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["134"]["LayoutOrder"] = 30;
 G2L["134"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["134"]["Text"] = [[10]];
+G2L["134"]["Text"] = [[9]];
 G2L["134"]["Name"] = [[VersionNumber]];
 G2L["134"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -11910,31 +11910,21 @@ local script = G2L["124"];
 			or not Target.Character:FindFirstChild("Head")
 			or (tick() - flingStart) >= 2
 	
-		-- zero out before destroying so forces dont carry over
-		BV.Velocity = Vector3.new(0, 0, 0)
-		BV.MaxForce = Vector3.new(0, 0, 0)
-		Thrust.Force = Vector3.new(0, 0, 0)
-	
-		for _, x in pairs(myChar:GetChildren()) do
-			if x:IsA("BasePart") then
-				x.Velocity = Vector3.new()
-				x.RotVelocity = Vector3.new()
-				x.AssemblyLinearVelocity = Vector3.new()
-				x.AssemblyAngularVelocity = Vector3.new()
-			end
-		end
-	
 		BV:Destroy()
 		Thrust:Destroy()
 	
-		-- wait a frame for physics to settle then teleport back
-		task.wait()
-	
-		if myChar and myHRP and myHRP.Parent then
+		-- teleport back cleanly
+		if myChar and myHRP then
+			for _, x in pairs(myChar:GetChildren()) do
+				if x:IsA("BasePart") then
+					x.Velocity = Vector3.new()
+					x.RotVelocity = Vector3.new()
+					x.AssemblyLinearVelocity = Vector3.new()
+					x.AssemblyAngularVelocity = Vector3.new()
+				end
+			end
 			myHRP.CFrame = savedPos
 			myChar:SetPrimaryPartCFrame(savedPos)
-	
-			-- zero out again after teleport
 			task.wait()
 			for _, x in pairs(myChar:GetChildren()) do
 				if x:IsA("BasePart") then
@@ -11945,6 +11935,7 @@ local script = G2L["124"];
 				end
 			end
 		end
+	end
 	
 	-- ============================================================
 	-- UTILITY
