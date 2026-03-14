@@ -86,48 +86,7 @@ local function isPlayerFlung(TargetPlayer)
 end
 
 -- ============================================================
--- ZERO PHYSICS on all parts of a character
--- Sets CustomPhysicalProperties to zero which kills the stored
--- physics state in the engine — same method as the ref script
--- ============================================================
-local ZERO_PROPS = PhysicalProperties.new(0, 0, 0)
-
-local function zeroPhysics(Character)
-	if not Character then return end
-	for _, x in pairs(Character:GetChildren()) do
-		if x:IsA("BasePart") then
-			x.Velocity = Vector3.new()
-			x.RotVelocity = Vector3.new()
-			x.AssemblyLinearVelocity = Vector3.new()
-			x.AssemblyAngularVelocity = Vector3.new()
-			x.CanCollide = false
-			x.CustomPhysicalProperties = ZERO_PROPS
-		end
-	end
-end
-
-local function restorePhysics(Character)
-	if not Character then return end
-	for _, x in pairs(Character:GetChildren()) do
-		if x:IsA("BasePart") then
-			x.Velocity = Vector3.new()
-			x.RotVelocity = Vector3.new()
-			x.AssemblyLinearVelocity = Vector3.new()
-			x.AssemblyAngularVelocity = Vector3.new()
-			x.CanCollide = true
-			x.CustomPhysicalProperties = PhysicalProperties.new(
-				0.7,  -- density  (Roblox default)
-				0.3,  -- friction
-				0.5,  -- elasticity
-				0,    -- frictionWeight
-				0     -- elasticityWeight
-			)
-		end
-	end
-end
-
--- ============================================================
--- FLING — v13 loop exactly, zeroPhysics cleanup added
+-- FLING
 -- ============================================================
 local function flingPlayer(TargetPlayer)
 	local Character = LocalPlayer.Character
@@ -169,11 +128,6 @@ local function flingPlayer(TargetPlayer)
 	BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
 	BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
 
-	local Thrust = Instance.new("BodyThrust")
-	Thrust.Name = "EpixThrust"
-	Thrust.Force = Vector3.new(20000, 20000, 20000)
-	Thrust.Parent = RootPart
-
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
 	local TimeToWait = 2
@@ -181,39 +135,50 @@ local function flingPlayer(TargetPlayer)
 	local Angle = 0
 	local flingDetected = false
 
+	-- ============================================================
+	-- PHASE 1: not yet flung
+	-- tp to torso, cycle orientations, tp back to OldPos, repeat
+	-- ============================================================
 	repeat
 		if not (RootPart and THumanoid and TargetBase) then break end
+		if not getgenv().OldPos then break end
 
 		local tPos = TargetBase.CFrame
 		Angle = Angle + 100
 
+		-- tp into torso — 4 orientations in a row, no wait between them
 		RootPart.CFrame = tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
 		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-		task.wait()
 
 		RootPart.CFrame = tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
 		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-		task.wait()
 
 		RootPart.CFrame = tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
 		Character:SetPrimaryPartCFrame(tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-		task.wait()
 
 		RootPart.CFrame = tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
 		Character:SetPrimaryPartCFrame(tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+
+		-- tp back to OldPos immediately after orientations
+		RootPart.CFrame = getgenv().OldPos
+		Character:SetPrimaryPartCFrame(getgenv().OldPos)
+		RootPart.Velocity = Vector3.new()
+		RootPart.RotVelocity = Vector3.new()
+		pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
+		pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
+
 		task.wait()
 
 		if isPlayerFlung(TargetPlayer) then
 			flingDetected = true
-			break
 		end
 
 	until flingDetected
@@ -223,34 +188,63 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
-	-- Zero movers before destroying so engine sees zero, not max force
+	-- ============================================================
+	-- PHASE 2: flung detected — rapid back-forth tp to clean physics
+	-- tp to torso → OldPos → torso → OldPos extremely fast
+	-- GettingUp spam throughout to reset physics state
+	-- This is what fixes residual fling and movement latency
+	-- ============================================================
+	if flingDetected and getgenv().OldPos and RootPart and RootPart.Parent then
+		local tPos = TargetBase and TargetBase.Parent and TargetBase.CFrame or getgenv().OldPos
+
+		for i = 1, 20 do
+			-- tp to torso position
+			RootPart.CFrame = tPos
+			Character:SetPrimaryPartCFrame(tPos)
+			RootPart.Velocity = Vector3.new()
+			RootPart.RotVelocity = Vector3.new()
+			pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
+			pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
+			pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+
+			-- tp to OldPos
+			RootPart.CFrame = getgenv().OldPos
+			Character:SetPrimaryPartCFrame(getgenv().OldPos)
+			RootPart.Velocity = Vector3.new()
+			RootPart.RotVelocity = Vector3.new()
+			pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
+			pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
+			pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+		end
+
+		-- Final land at OldPos
+		RootPart.CFrame = getgenv().OldPos
+		Character:SetPrimaryPartCFrame(getgenv().OldPos)
+		RootPart.Velocity = Vector3.new()
+		RootPart.RotVelocity = Vector3.new()
+		pcall(function() RootPart.AssemblyLinearVelocity = Vector3.new() end)
+		pcall(function() RootPart.AssemblyAngularVelocity = Vector3.new() end)
+
+		-- Destroy all leftover body movers
+		for _, v in pairs(RootPart:GetChildren()) do
+			if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("BodyThrust")
+				or v:IsA("BodyGyro") or v:IsA("BodyPosition")
+				or v:IsA("LinearVelocity") or v:IsA("AngularVelocity") then
+				pcall(function() v:Destroy() end)
+			end
+		end
+
+		Humanoid.PlatformStand = false
+		pcall(function() Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+	end
+
 	BV.Velocity = Vector3.new(0, 0, 0)
 	BV.MaxForce = Vector3.new(0, 0, 0)
-	Thrust.Force = Vector3.new(0, 0, 0)
-
-	-- Kill physics state on all parts using CustomPhysicalProperties = zero
-	-- This is what actually stops the engine from carrying momentum forward
-	zeroPhysics(Character)
-
 	BV:Destroy()
-	Thrust:Destroy()
 
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 	workspace.CurrentCamera.CameraSubject = Humanoid
 	workspace.FallenPartsDestroyHeight = savedFPDH
-
-	-- One frame for physics flush
-	task.wait()
-
-	-- Teleport back
-	if getgenv().OldPos and Character and RootPart and RootPart.Parent then
-		RootPart.CFrame = getgenv().OldPos
-		Character:SetPrimaryPartCFrame(getgenv().OldPos)
-
-		-- One more frame then restore physics and zero again
-		task.wait()
-		restorePhysics(Character)
-	end
 
 	if flingDetected and isRunning then
 		stop()
@@ -354,4 +348,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (16)")
+systemMessage("Executed (21)")
