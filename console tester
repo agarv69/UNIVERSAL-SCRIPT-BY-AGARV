@@ -12,8 +12,11 @@ local jumpConn = nil
 -- SYSTEM MESSAGE HELPER
 -- ============================================================
 local function systemMessage(text)
+	local existing = LocalPlayer.PlayerGui:FindFirstChild("SystemMsg_" .. text)
+	if existing then return end
+
 	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "SystemMsg"
+	screenGui.Name = "SystemMsg_" .. text
 	screenGui.ResetOnSpawn = false
 	screenGui.Parent = LocalPlayer.PlayerGui
 
@@ -28,7 +31,6 @@ local function systemMessage(text)
 	label.ZIndex = 999
 	label.Parent = screenGui
 
-	-- auto remove after 5 seconds
 	task.delay(5, function()
 		screenGui:Destroy()
 	end)
@@ -46,7 +48,6 @@ local function stop()
 		jumpConn = nil
 	end
 	systemMessage("Stopped")
-	script:Destroy()
 end
 
 -- ============================================================
@@ -61,22 +62,42 @@ local function start()
 		local char = LocalPlayer.Character
 		if not char then return end
 		local hum = char:FindFirstChildWhichIsA("Humanoid")
-		if hum then
-			hum.Jump = true
-		end
+		if not hum then return end
+		hum:ChangeState(Enum.HumanoidStateType.Jumping)
 	end)
 end
 
 -- ============================================================
 -- CHAT COMMANDS
 -- ============================================================
-LocalPlayer.Chatted:Connect(function(msg)
-	local cmd = msg:lower()
-	if cmd == ";fling" then
-		if not stopped then
-			start()
+-- try new chat system first
+local ok = pcall(function()
+	TextChatService.OnIncomingMessage = function(msg)
+		if msg.TextSource and msg.TextSource.UserId == LocalPlayer.UserId then
+			local text = msg.Text:lower()
+			if text == ";fling" then
+				if not stopped then start() end
+			elseif text == ";stop" then
+				stop()
+			end
 		end
-	elseif cmd == ";stop" then
-		stop()
+		return nil
 	end
 end)
+
+-- fallback to old chat system
+if not ok then
+	LocalPlayer.Chatted:Connect(function(msg)
+		local cmd = msg:lower()
+		if cmd == ";fling" then
+			if not stopped then start() end
+		elseif cmd == ";stop" then
+			stop()
+		end
+	end)
+end
+
+-- ============================================================
+-- ON EXECUTE
+-- ============================================================
+systemMessage("Executed (3)")
