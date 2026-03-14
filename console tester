@@ -4,288 +4,138 @@ local TextChatService = game:GetService("TextChatService")
 
 local LocalPlayer = Players.LocalPlayer
 
-local isRunning = false
-local stopped = false
-local mainConn = nil
+print("loaded")
 
--- ============================================================
--- SYSTEM MESSAGE HELPER
--- ============================================================
-local function systemMessage(text)
-	local existing = LocalPlayer.PlayerGui:FindFirstChild("SystemMsg_" .. text)
-	if existing then return end
+local rotations = {
+	CFrame.Angles(0,0,0),
+	CFrame.Angles(0,math.pi,0),
+	CFrame.Angles(math.pi,math.pi,0),
+	CFrame.Angles(math.pi,0,0),
+	CFrame.Angles(0,0,0),
+	CFrame.Angles(0,math.pi,0)
+}
 
-	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "SystemMsg_" .. text
-	screenGui.ResetOnSpawn = false
-	screenGui.Parent = LocalPlayer.PlayerGui
-
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, 0, 0, 30)
-	label.Position = UDim2.new(0, 0, 0.85, 0)
-	label.BackgroundTransparency = 1
-	label.Text = "[System]: " .. text
-	label.TextColor3 = Color3.fromRGB(255, 255, 0)
-	label.TextSize = 16
-	label.Font = Enum.Font.GothamSemibold
-	label.ZIndex = 999
-	label.Parent = screenGui
-
-	task.delay(5, function()
-		screenGui:Destroy()
-	end)
-end
-
--- ============================================================
--- STOP
--- ============================================================
-local function stop()
-	if stopped then return end
-	stopped = true
-	isRunning = false
-	if mainConn then
-		mainConn:Disconnect()
-		mainConn = nil
-	end
-	systemMessage("Stopped")
-end
-
--- ============================================================
--- FREEZE / UNFREEZE ANIMATIONS
--- ============================================================
-local frozenTracks = {}
-
-local function freezeAnimations(character)
-	frozenTracks = {}
-	local hum = character:FindFirstChildWhichIsA("Humanoid")
-	if not hum then return end
-	local animator = hum:FindFirstChildWhichIsA("Animator")
-	if not animator then return end
-	for _, track in pairs(animator:GetPlayingAnimationTracks()) do
-		track:Stop(0)
-		table.insert(frozenTracks, track)
+local function getPlayer(name)
+	name = name:lower()
+	for _,p in pairs(Players:GetPlayers()) do
+		if p.Name:lower():sub(1,#name) == name then
+			return p
+		end
 	end
 end
 
-local function unfreezeAnimations(character)
-	local hum = character:FindFirstChildWhichIsA("Humanoid")
-	if not hum then return end
-	local animator = hum:FindFirstChildWhichIsA("Animator")
-	if not animator then return end
-	for _, track in pairs(frozenTracks) do
-		track:Play(0)
-	end
-	frozenTracks = {}
-end
+local function flingPlayer(target)
 
--- ============================================================
--- FLING
--- ============================================================
-local function doFling(target)
 	local myChar = LocalPlayer.Character
 	if not myChar then return end
+
 	local myHRP = myChar:FindFirstChild("HumanoidRootPart")
 	local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
 	if not myHRP or not myHum then return end
 
 	local tChar = target.Character
 	if not tChar then return end
+
 	local tHRP = tChar:FindFirstChild("HumanoidRootPart")
 	if not tHRP then return end
 
-	-- save position
-	local savedPos = myHRP.CFrame
+	-- SAVE POSITION
+	local savedPos = myChar:GetPivot()
 
-	-- keep camera on my humanoid always
-	workspace.CurrentCamera.CameraSubject = myHum
-
-	-- freeze my animations
-	freezeAnimations(myChar)
-
-	-- rotation offsets applied on top of target HRP
-	local rotations = {
-		CFrame.Angles(0, 0, 0),                          -- forward upright
-		CFrame.Angles(0, math.pi, 0),                    -- backward upright
-		CFrame.Angles(math.pi, math.pi, 0),              -- upside down backward
-		CFrame.Angles(math.pi, 0, 0),                    -- upside down forward
-		CFrame.Angles(0, 0, 0),                          -- forward upright again
-		CFrame.Angles(0, math.pi, 0),                    -- backward
-	}
-
-	local flung = false
-	local rotIndex = 1
-
-	-- add BV to target to assist fling
+	-- Create fling velocity
 	local BV = Instance.new("BodyVelocity")
-	BV.Name = "FlingBV"
-	BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
-	BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+	BV.Velocity = Vector3.new(900000000,900000000,900000000)
+	BV.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
 	BV.Parent = tHRP
 
-	-- fling loop
-	mainConn = RunService.Heartbeat:Connect(function()
-		if not isRunning then return end
+	local rotIndex = 1
+	local startTime = tick()
 
-		-- check if target got flung
-		if tHRP and tHRP.Parent then
-			if tHRP.AssemblyLinearVelocity.Magnitude > 500 then
-				flung = true
-			end
-		end
+	local flingConn
+	flingConn = RunService.Heartbeat:Connect(function()
 
-		if flung then
-			-- stop the loop
-			mainConn:Disconnect()
-			mainConn = nil
-
-			-- cleanup BV
-			if BV and BV.Parent then BV:Destroy() end
-
-			-- tp back to saved position
-			myHRP.CFrame = savedPos
-			myChar:SetPrimaryPartCFrame(savedPos)
-
-			-- zero out my velocity so i dont get launched
-			for _, x in pairs(myChar:GetChildren()) do
-				if x:IsA("BasePart") then
-					x.AssemblyLinearVelocity = Vector3.new()
-					x.AssemblyAngularVelocity = Vector3.new()
-					x.Velocity = Vector3.new()
-					x.RotVelocity = Vector3.new()
-				end
-			end
-
-			-- 1 second fling protection using BV on myself
-			local protBV = Instance.new("BodyVelocity")
-			protBV.Velocity = Vector3.new(0, 0, 0)
-			protBV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
-			protBV.Parent = myHRP
-
-			task.wait(1)
-
-			if protBV and protBV.Parent then
-				protBV:Destroy()
-			end
-
-			-- unfreeze animations
-			unfreezeAnimations(myChar)
-
-			-- restore camera
-			workspace.CurrentCamera.CameraSubject = myHum
-
-			isRunning = false
+		if not tHRP or not tHRP.Parent then
+			flingConn:Disconnect()
 			return
 		end
 
-		-- cycle through rotations on top of target
-		if tHRP and tHRP.Parent then
-			local rot = rotations[rotIndex]
-			myHRP.CFrame = tHRP.CFrame * rot
-			myChar:SetPrimaryPartCFrame(tHRP.CFrame * rot)
-			rotIndex = rotIndex + 1
-			if rotIndex > #rotations then
-				-- end of one full cycle, tp back briefly then start again
-				myHRP.CFrame = savedPos
-				myChar:SetPrimaryPartCFrame(savedPos)
-				rotIndex = 1
-			end
-		else
-			-- target left or died
-			if BV and BV.Parent then BV:Destroy() end
-			myHRP.CFrame = savedPos
-			myChar:SetPrimaryPartCFrame(savedPos)
-			unfreezeAnimations(myChar)
-			isRunning = false
-			mainConn:Disconnect()
-			mainConn = nil
+		if tick() - startTime > 6 then
+			flingConn:Disconnect()
+			return
+		end
+
+		local rot = rotations[rotIndex]
+
+		myChar:PivotTo(tHRP.CFrame * rot)
+
+		rotIndex += 1
+		if rotIndex > #rotations then
+			rotIndex = 1
 		end
 	end)
+
+	repeat RunService.Heartbeat:Wait() until not flingConn.Connected
+
+	-- Remove fling force
+	if BV then
+		BV:Destroy()
+	end
+
+	-- ✅ WAIT 0.5 SECONDS BEFORE RETURNING
+	task.wait(0.5)
+
+	-- Stop leftover physics
+	myHRP.AssemblyLinearVelocity = Vector3.zero
+	myHRP.AssemblyAngularVelocity = Vector3.zero
+
+	-- Teleport back safely
+	myChar:PivotTo(savedPos)
+
+	print("flinged "..target.Name)
 end
 
--- ============================================================
--- FIND PLAYER
--- ============================================================
-local function findPlayer(name)
-	name = name:lower()
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer then
-			if p.Name:lower():sub(1, #name) == name or p.DisplayName:lower():sub(1, #name) == name then
-				return p
+
+-- CHAT COMMAND DETECTION
+if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+
+	TextChatService.OnIncomingMessage = function(message)
+
+		if message.TextSource then
+			local sender = Players:GetPlayerByUserId(message.TextSource.UserId)
+
+			if sender == LocalPlayer then
+				local msg = message.Text
+
+				if msg:sub(1,7):lower() == ";fling " then
+					local name = msg:sub(8)
+					local target = getPlayer(name)
+
+					if target then
+						flingPlayer(target)
+					else
+						print("player not found")
+					end
+				end
 			end
 		end
+
 	end
-	return nil
-end
 
-local function getRandomTarget()
-	local others = {}
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer then
-			table.insert(others, p)
-		end
-	end
-	if #others == 0 then return nil end
-	return others[math.random(1, #others)]
-end
+else
 
--- ============================================================
--- START
--- ============================================================
-local function start(target)
-	if stopped or isRunning then return end
-	isRunning = true
-	task.spawn(function()
-		doFling(target)
-	end)
-end
-
--- ============================================================
--- CHAT COMMANDS
--- ============================================================
-local function handleCmd(text)
-	text = text:lower()
-	if text == ";fling" then
-		if not stopped then
-			local t = getRandomTarget()
-			if t then
-				start(t)
-			else
-				systemMessage("No players found")
-			end
-		end
-	elseif text:sub(1, 7) == ";fling " then
-		if not stopped then
-			local name = text:sub(8)
-			local target = findPlayer(name)
-			if target then
-				start(target)
-			else
-				systemMessage("User not found - flinging random player")
-				local t = getRandomTarget()
-				if t then start(t) end
-			end
-		end
-	elseif text == ";stop" then
-		stop()
-	end
-end
-
-local ok = pcall(function()
-	TextChatService.OnIncomingMessage = function(msg)
-		if msg.TextSource and msg.TextSource.UserId == LocalPlayer.UserId then
-			handleCmd(msg.Text)
-		end
-		return nil
-	end
-end)
-
-if not ok then
 	LocalPlayer.Chatted:Connect(function(msg)
-		handleCmd(msg)
-	end)
-end
 
--- ============================================================
--- ON EXECUTE
--- ============================================================
-systemMessage("Executed (6)")
+		if msg:sub(1,7):lower() == ";fling " then
+			local name = msg:sub(8)
+			local target = getPlayer(name)
+
+			if target then
+				flingPlayer(target)
+			else
+				print("player not found")
+			end
+		end
+
+	end)
+
+end
