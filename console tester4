@@ -39,8 +39,10 @@ local function flingPlayer(target)
 	local tHRP = tChar:FindFirstChild("HumanoidRootPart")
 	if not tHRP then return end
 
-	local savedPos = myHRP.CFrame
+	-- Save position
+	local savedPos = myChar:GetPivot()
 
+	-- Create fling force
 	local BV = Instance.new("BodyVelocity")
 	BV.Velocity = Vector3.new(900000000,900000000,900000000)
 	BV.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
@@ -63,9 +65,7 @@ local function flingPlayer(target)
 		end
 
 		local rot = rotations[rotIndex]
-
-		myHRP.CFrame = tHRP.CFrame * rot
-		myChar:SetPrimaryPartCFrame(tHRP.CFrame * rot)
+		myChar:PivotTo(tHRP.CFrame * rot)
 
 		rotIndex += 1
 		if rotIndex > #rotations then
@@ -75,10 +75,17 @@ local function flingPlayer(target)
 
 	repeat RunService.Heartbeat:Wait() until not flingConn.Connected
 
-	if BV then BV:Destroy() end
+	if BV then
+		BV:Destroy()
+	end
 
-	myHRP.CFrame = savedPos
-	myChar:SetPrimaryPartCFrame(savedPos)
+	-- wait before teleporting back
+	task.wait(0.5)
+
+	myHRP.AssemblyLinearVelocity = Vector3.zero
+	myHRP.AssemblyAngularVelocity = Vector3.zero
+
+	myChar:PivotTo(savedPos)
 
 	print("flinged "..target.Name)
 end
@@ -95,14 +102,16 @@ if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 			if sender == LocalPlayer then
 				local msg = message.Text
 
-				if msg:sub(1,7):lower() == ";fling " then
-					local name = msg:sub(8)
-					local target = getPlayer(name)
-
-					if target then
-						flingPlayer(target)
-					else
-						print("player not found")
+				-- 🔥 NEW COMMAND: ;username
+				if msg:sub(1,1) == ";" then
+					local name = msg:sub(2)
+					if name ~= "" then
+						local target = getPlayer(name)
+						if target then
+							flingPlayer(target)
+						else
+							print("player not found")
+						end
 					end
 				end
 			end
@@ -114,14 +123,15 @@ else
 
 	LocalPlayer.Chatted:Connect(function(msg)
 
-		if msg:sub(1,7):lower() == ";fling " then
-			local name = msg:sub(8)
-			local target = getPlayer(name)
-
-			if target then
-				flingPlayer(target)
-			else
-				print("player not found")
+		if msg:sub(1,1) == ";" then
+			local name = msg:sub(2)
+			if name ~= "" then
+				local target = getPlayer(name)
+				if target then
+					flingPlayer(target)
+				else
+					print("player not found")
+				end
 			end
 		end
 
