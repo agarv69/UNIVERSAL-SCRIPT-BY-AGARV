@@ -15,6 +15,8 @@ local rotations = {
 	CFrame.Angles(0,math.pi,0)
 }
 
+local isFlinging = false -- 🔒 anti double-run lock
+
 local function getPlayer(name)
 	name = name:lower()
 	for _,p in pairs(Players:GetPlayers()) do
@@ -26,30 +28,32 @@ end
 
 local function flingPlayer(target)
 
+	if isFlinging then return end
+	isFlinging = true
+
 	local myChar = LocalPlayer.Character
-	if not myChar then return end
+	if not myChar then isFlinging = false return end
 
 	local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-	local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
-	if not myHRP or not myHum then return end
+	if not myHRP then isFlinging = false return end
 
 	local tChar = target.Character
-	if not tChar then return end
+	if not tChar then isFlinging = false return end
 
 	local tHRP = tChar:FindFirstChild("HumanoidRootPart")
-	if not tHRP then return end
+	if not tHRP then isFlinging = false return end
 
-	-- SAVE POSITION
 	local savedPos = myChar:GetPivot()
+	local targetStartPos = tHRP.Position
 
-	-- Create fling velocity
 	local BV = Instance.new("BodyVelocity")
-	BV.Velocity = Vector3.new(900000000,900000000,900000000)
+	BV.Velocity = Vector3.new(9e8,9e8,9e8)
 	BV.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
 	BV.Parent = tHRP
 
 	local rotIndex = 1
 	local startTime = tick()
+	local flinged = false
 
 	local flingConn
 	flingConn = RunService.Heartbeat:Connect(function()
@@ -59,13 +63,18 @@ local function flingPlayer(target)
 			return
 		end
 
-		if tick() - startTime > 6 then
+		if (tHRP.Position - targetStartPos).Magnitude > 120 then
+			flinged = true
+			flingConn:Disconnect()
+			return
+		end
+
+		if tick() - startTime > 10 then
 			flingConn:Disconnect()
 			return
 		end
 
 		local rot = rotations[rotIndex]
-
 		myChar:PivotTo(tHRP.CFrame * rot)
 
 		rotIndex += 1
@@ -76,26 +85,28 @@ local function flingPlayer(target)
 
 	repeat RunService.Heartbeat:Wait() until not flingConn.Connected
 
-	-- Remove fling force
 	if BV then
 		BV:Destroy()
 	end
 
-	-- ✅ WAIT 0.5 SECONDS BEFORE RETURNING
-	task.wait(0.5)
+	task.wait(0.25)
 
-	-- Stop leftover physics
 	myHRP.AssemblyLinearVelocity = Vector3.zero
 	myHRP.AssemblyAngularVelocity = Vector3.zero
 
-	-- Teleport back safely
 	myChar:PivotTo(savedPos)
 
-	print("flinged "..target.Name)
+	if flinged then
+		print("flinged "..target.Name)
+	else
+		print("failed to fling "..target.Name)
+	end
+
+	isFlinging = false -- 🔓 unlock
 end
 
 
--- CHAT COMMAND DETECTION
+-- CHAT COMMAND (;username)
 if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 
 	TextChatService.OnIncomingMessage = function(message)
@@ -106,33 +117,30 @@ if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 			if sender == LocalPlayer then
 				local msg = message.Text
 
-				if msg:sub(1,7):lower() == ";fling " then
-					local name = msg:sub(8)
-					local target = getPlayer(name)
-
-					if target then
-						flingPlayer(target)
-					else
-						print("player not found")
+				if msg:sub(1,1) == ";" then
+					local name = msg:sub(2)
+					if name ~= "" then
+						local target = getPlayer(name)
+						if target then
+							flingPlayer(target)
+						end
 					end
 				end
 			end
 		end
-
 	end
 
 else
 
 	LocalPlayer.Chatted:Connect(function(msg)
 
-		if msg:sub(1,7):lower() == ";fling " then
-			local name = msg:sub(8)
-			local target = getPlayer(name)
-
-			if target then
-				flingPlayer(target)
-			else
-				print("player not found")
+		if msg:sub(1,1) == ";" then
+			local name = msg:sub(2)
+			if name ~= "" then
+				local target = getPlayer(name)
+				if target then
+					flingPlayer(target)
+				end
 			end
 		end
 
