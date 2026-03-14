@@ -70,10 +70,7 @@ end
 
 -- ============================================================
 -- FLUNG DETECTION
--- Checks velocity spike, ragdoll spin, or death
 -- ============================================================
-local FLUNG_SPEED = 120
-
 local function isPlayerFlung(TargetPlayer)
 	local TChar = TargetPlayer and TargetPlayer.Character
 	if not TChar then return true end
@@ -83,13 +80,13 @@ local function isPlayerFlung(TargetPlayer)
 	if not TRoot then return true end
 	local speed = TRoot.Velocity.Magnitude
 	local walkSpeed = THum and THum.WalkSpeed or 16
-	if speed > FLUNG_SPEED and speed > walkSpeed * 4 then return true end
+	if speed > 120 and speed > walkSpeed * 4 then return true end
 	if TRoot.RotVelocity.Magnitude > 25 then return true end
 	return false
 end
 
 -- ============================================================
--- FLING — v7 base, upright standing in torso, instant detection
+-- FLING — v13 method exactly, cleanup fixed
 -- ============================================================
 local function flingPlayer(TargetPlayer)
 	local Character = LocalPlayer.Character
@@ -131,37 +128,49 @@ local function flingPlayer(TargetPlayer)
 	BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
 	BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
 
+	-- BodyThrust keeps force local and helps cancel residual push on cleanup
+	local Thrust = Instance.new("BodyThrust")
+	Thrust.Name = "EpixThrust"
+	Thrust.Force = Vector3.new(20000, 20000, 20000)
+	Thrust.Parent = RootPart
+
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
 	local TimeToWait = 2
 	local Time = tick()
-	-- Fixed set of 4 absolute orientations — no increment so no gradual spin/tween look.
-	-- Character stands upright inside the torso, facing alternating directions.
-	-- Y = -0.5 offset so we sit halfway in their torso not on top of their head.
-	local step = 0
-	local steps = {
-		CFrame.new(0, -0.5, 0),
-		CFrame.new(0, -0.5, 0) * CFrame.Angles(0, math.rad(180), 0),
-		CFrame.new(0, -0.5, 0) * CFrame.Angles(math.rad(180), 0, 0),
-		CFrame.new(0, -0.5, 0) * CFrame.Angles(math.rad(180), math.rad(180), 0),
-	}
-
+	local Angle = 0
 	local flingDetected = false
 
 	repeat
 		if not (RootPart and THumanoid and TargetBase) then break end
 
-		step = (step % #steps) + 1
 		local tPos = TargetBase.CFrame
+		Angle = Angle + 100
 
-		-- Hard snap teleport — no angle increment, no lerp, pure CFrame set
-		RootPart.CFrame = tPos * steps[step]
-		Character:SetPrimaryPartCFrame(tPos * steps[step])
+		RootPart.CFrame = tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
 		task.wait()
 
-		-- Check instantly each frame
+		RootPart.CFrame = tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
+		RootPart.CFrame = tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
+		RootPart.CFrame = tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
 		if isPlayerFlung(TargetPlayer) then
 			flingDetected = true
 			break
@@ -174,22 +183,40 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
+	-- Zero out forces BEFORE destroying — this is the key step.
+	-- Destroying while still at max force leaves momentum in the engine.
+	BV.Velocity = Vector3.new(0, 0, 0)
+	BV.MaxForce = Vector3.new(0, 0, 0)
+	Thrust.Force = Vector3.new(0, 0, 0)
+
+	-- Zero all parts while movers are still zeroed but not yet gone
+	for _, x in pairs(Character:GetChildren()) do
+		if x:IsA("BasePart") then
+			x.Velocity = Vector3.new()
+			x.RotVelocity = Vector3.new()
+			x.AssemblyLinearVelocity = Vector3.new()
+			x.AssemblyAngularVelocity = Vector3.new()
+		end
+	end
+
+	-- Now destroy
 	BV:Destroy()
+	Thrust:Destroy()
+
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 	workspace.CurrentCamera.CameraSubject = Humanoid
+	workspace.FallenPartsDestroyHeight = savedFPDH
 
-	-- Return to saved position, wipe velocity immediately (no task.wait before wipe)
-	if getgenv().OldPos then
-		for _, x in pairs(Character:GetChildren()) do
-			if x:IsA("BasePart") then
-				x.Velocity = Vector3.new()
-				x.RotVelocity = Vector3.new()
-				x.AssemblyLinearVelocity = Vector3.new()
-				x.AssemblyAngularVelocity = Vector3.new()
-			end
-		end
+	-- Wait one frame for physics to settle after zeroing
+	task.wait()
+
+	-- Teleport back
+	if getgenv().OldPos and Character and RootPart and RootPart.Parent then
 		RootPart.CFrame = getgenv().OldPos
 		Character:SetPrimaryPartCFrame(getgenv().OldPos)
+
+		-- Zero again after teleport
+		task.wait()
 		for _, x in pairs(Character:GetChildren()) do
 			if x:IsA("BasePart") then
 				x.Velocity = Vector3.new()
@@ -200,9 +227,6 @@ local function flingPlayer(TargetPlayer)
 		end
 	end
 
-	workspace.FallenPartsDestroyHeight = savedFPDH
-
-	-- Instant auto stop + chat when flung confirmed
 	if flingDetected and isRunning then
 		stop()
 		sendChat(";flung user")
@@ -305,4 +329,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (12)")
+systemMessage("Executed (15)")
