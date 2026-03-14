@@ -13,12 +13,11 @@ local hasSentStop = false
 -- SYSTEM MESSAGE HELPER
 -- ============================================================
 local function systemMessage(text)
-	local key = "SystemMsg_" .. tostring(text):sub(1, 50)
-	local existing = LocalPlayer.PlayerGui:FindFirstChild(key)
+	local existing = LocalPlayer.PlayerGui:FindFirstChild("SystemMsg_" .. text)
 	if existing then return end
 
 	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = key
+	screenGui.Name = "SystemMsg_" .. text
 	screenGui.ResetOnSpawn = false
 	screenGui.Parent = LocalPlayer.PlayerGui
 
@@ -36,22 +35,6 @@ local function systemMessage(text)
 	task.delay(5, function()
 		screenGui:Destroy()
 	end)
-end
-
--- ============================================================
--- WIPE VELOCITY — no anchor, no delay, just zeroes
--- Fast so it doesn't cause input lag
--- ============================================================
-local function wipeVelocity(Character)
-	if not Character then return end
-	for _, x in pairs(Character:GetChildren()) do
-		if x:IsA("BasePart") then
-			x.Velocity = Vector3.new()
-			x.RotVelocity = Vector3.new()
-			pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
-			pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
-		end
-	end
 end
 
 -- ============================================================
@@ -88,8 +71,6 @@ end
 -- ============================================================
 -- FLUNG DETECTION
 -- ============================================================
-local FLUNG_SPEED = 120
-
 local function isPlayerFlung(TargetPlayer)
 	local TChar = TargetPlayer and TargetPlayer.Character
 	if not TChar then return true end
@@ -99,25 +80,18 @@ local function isPlayerFlung(TargetPlayer)
 	if not TRoot then return true end
 	local speed = TRoot.Velocity.Magnitude
 	local walkSpeed = THum and THum.WalkSpeed or 16
-	if speed > FLUNG_SPEED and speed > walkSpeed * 4 then return true end
+	if speed > 120 and speed > walkSpeed * 4 then return true end
 	if TRoot.RotVelocity.Magnitude > 25 then return true end
 	return false
 end
 
 -- ============================================================
--- FLING
--- v7 base — hard teleport each frame directly into target torso,
--- standing upright (no spin angle), halfway into their torso.
--- Returns instantly to OldPos with velocity wipe — no lag.
+-- FLING — v7 script copied exactly, flung detection added only
 -- ============================================================
 local function flingPlayer(TargetPlayer)
-	if not isRunning then return end
-
 	local Character = LocalPlayer.Character
 	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
 	local RootPart = Humanoid and Humanoid.RootPart
-	if not (Character and Humanoid and RootPart) then return end
-
 	local TCharacter = TargetPlayer.Character
 	if not TCharacter then return end
 
@@ -127,24 +101,23 @@ local function flingPlayer(TargetPlayer)
 	local Accessory = TCharacter:FindFirstChildOfClass("Accessory")
 	local Handle = Accessory and Accessory:FindFirstChild("Handle")
 
+	if not (Character and Humanoid and RootPart) then return end
 	if not TCharacter:FindFirstChildWhichIsA("BasePart") then return end
 
-	-- Save position before moving (only when we're not already flying)
 	if RootPart.Velocity.Magnitude < 50 then
 		getgenv().OldPos = RootPart.CFrame
 	end
 
-	local TargetBase = TRootPart or THead or Handle
-	if not TargetBase then return end
-
-	-- Camera
 	if THead then
 		workspace.CurrentCamera.CameraSubject = THead
 	elseif Handle then
 		workspace.CurrentCamera.CameraSubject = Handle
-	elseif THumanoid then
+	elseif THumanoid and TRootPart then
 		workspace.CurrentCamera.CameraSubject = THumanoid
 	end
+
+	local TargetBase = TRootPart or THead or Handle
+	if not TargetBase then return end
 
 	local savedFPDH = workspace.FallenPartsDestroyHeight
 	workspace.FallenPartsDestroyHeight = math.huge
@@ -159,39 +132,43 @@ local function flingPlayer(TargetPlayer)
 
 	local TimeToWait = 2
 	local Time = tick()
+	local Angle = 0
 	local flingDetected = false
 
-	-- Upright orientations — standing straight, no angle increment.
-	-- Cycles through: forward, backward, upside-down fwd, upside-down bwd.
-	-- All keep character vertical like a default standing pose.
-	-- Offset Y=-0.5 so our torso sits halfway inside theirs, not on their head.
-	local orientIndex = 0
-	local orientList = {
-		CFrame.new(0, -0.5, 0),                                            -- upright, forward
-		CFrame.new(0, -0.5, 0) * CFrame.Angles(0, math.rad(180), 0),      -- upright, backward
-		CFrame.new(0, -0.5, 0) * CFrame.Angles(math.rad(180), 0, 0),      -- upside-down, forward
-		CFrame.new(0, -0.5, 0) * CFrame.Angles(math.rad(180), math.rad(180), 0), -- upside-down, backward
-	}
-
 	repeat
-		if not isRunning then break end
 		if not (RootPart and THumanoid and TargetBase) then break end
 
-		orientIndex = (orientIndex % #orientList) + 1
+		local tPos = TargetBase.CFrame
+		Angle = Angle + 100
 
-		-- Pure hard teleport: grab fresh target CFrame every frame, snap to it
-		local destCF = TargetBase.CFrame * orientList[orientIndex]
-		RootPart.CFrame = destCF
-		Character:SetPrimaryPartCFrame(destCF)
-
-		-- Blast fling velocity
+		RootPart.CFrame = tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, 1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
 		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
 		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-
 		task.wait()
 
+		RootPart.CFrame = tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(0, -1.5, 0) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
+		RootPart.CFrame = tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(2.25, 1.5, -2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
+		RootPart.CFrame = tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0)
+		Character:SetPrimaryPartCFrame(tPos * CFrame.new(-2.25, -1.5, 2.25) * CFrame.Angles(math.rad(Angle), 0, 0))
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		task.wait()
+
+		-- ADDED: check if flung after each set of 4 positions
 		if isPlayerFlung(TargetPlayer) then
 			flingDetected = true
+			break
 		end
 
 	until flingDetected
@@ -201,22 +178,35 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
-	-- Clean up immediately
 	BV:Destroy()
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 	workspace.CurrentCamera.CameraSubject = Humanoid
-	workspace.FallenPartsDestroyHeight = savedFPDH
 
-	-- Return to saved position INSTANTLY with velocity wipe
-	-- No anchoring delay so movement input responds right away
 	if getgenv().OldPos then
-		wipeVelocity(Character)
+		for _, x in pairs(Character:GetChildren()) do
+			if x:IsA("BasePart") then
+				x.Velocity = Vector3.new()
+				x.RotVelocity = Vector3.new()
+				x.AssemblyLinearVelocity = Vector3.new()
+				x.AssemblyAngularVelocity = Vector3.new()
+			end
+		end
 		RootPart.CFrame = getgenv().OldPos
 		Character:SetPrimaryPartCFrame(getgenv().OldPos)
-		wipeVelocity(Character)
+		task.wait()
+		for _, x in pairs(Character:GetChildren()) do
+			if x:IsA("BasePart") then
+				x.Velocity = Vector3.new()
+				x.RotVelocity = Vector3.new()
+				x.AssemblyLinearVelocity = Vector3.new()
+				x.AssemblyAngularVelocity = Vector3.new()
+			end
+		end
 	end
 
-	-- Auto stop + chat if flung confirmed
+	workspace.FallenPartsDestroyHeight = savedFPDH
+
+	-- ADDED: auto stop + chat the moment fling is confirmed
 	if flingDetected and isRunning then
 		stop()
 		sendChat(";flung user")
@@ -224,25 +214,7 @@ local function flingPlayer(TargetPlayer)
 end
 
 -- ============================================================
--- RESPAWN WATCHER
--- ============================================================
-local respawnConn = nil
-
-local function watchForRespawn(target)
-	if respawnConn then respawnConn:Disconnect(); respawnConn = nil end
-	if not target then return end
-	respawnConn = target.CharacterAdded:Connect(function()
-		if not isRunning then return end
-		task.wait(1.5)
-		if isRunning then
-			hasSentStop = false
-			systemMessage("Target respawned - flinging again")
-		end
-	end)
-end
-
--- ============================================================
--- FIND PLAYER
+-- FIND PLAYER BY NAME (partial match)
 -- ============================================================
 local function findPlayer(name)
 	name = name:lower()
@@ -259,25 +231,27 @@ end
 local function getRandomTarget()
 	local others = {}
 	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer then table.insert(others, p) end
+		if p ~= LocalPlayer then
+			table.insert(others, p)
+		end
 	end
 	if #others == 0 then return nil end
 	return others[math.random(1, #others)]
 end
 
+-- ============================================================
+-- TARGET
+-- ============================================================
 local lockedTarget = nil
 
 -- ============================================================
 -- START
 -- ============================================================
 local function start(target)
-	if isRunning then return end
-	stopped = false
+	if stopped or isRunning then return end
 	isRunning = true
 	hasSentStop = false
 	lockedTarget = target
-
-	watchForRespawn(target)
 
 	jumpConn = RunService.Heartbeat:Connect(function()
 		if not isRunning then return end
@@ -291,16 +265,18 @@ end
 
 -- ============================================================
 -- CHAT COMMANDS
--- ;on            = start, random target
--- ;on username   = start, specific target
+-- ;on            = start random
+-- ;on username   = start locked target
 -- ;stop          = stop
 -- ============================================================
 local function handleCmd(text)
 	text = text:lower()
 	if text == ";on" then
-		if not isRunning then start(nil) end
+		if not stopped then
+			start(nil)
+		end
 	elseif text:sub(1, 4) == ";on " then
-		if not isRunning then
+		if not stopped then
 			local name = text:sub(5)
 			local target = findPlayer(name)
 			if target then
@@ -333,4 +309,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (11)")
+systemMessage("Executed (13)")
