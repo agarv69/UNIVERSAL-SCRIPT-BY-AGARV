@@ -3382,7 +3382,7 @@ G2L["134"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["134"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["134"]["LayoutOrder"] = 30;
 G2L["134"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["134"]["Text"] = [[8]];
+G2L["134"]["Text"] = [[10]];
 G2L["134"]["Name"] = [[VersionNumber]];
 G2L["134"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -11210,6 +11210,7 @@ local script = G2L["121"];
 	end
 	
 	local BOTTOM_BAR_HEIGHT = ROW_HEIGHT + 2
+	local TOTAL_BOTTOM_HEIGHT = (BOTTOM_BAR_HEIGHT * 2) + 1
 	
 	-- ============================================================
 	-- PANEL
@@ -11289,8 +11290,9 @@ local script = G2L["121"];
 	bottomStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	bottomStroke.Parent = bottomBar
 	
+	-- row 1: Select All / Unselect All
 	local selectAllBtn = Instance.new("TextButton")
-	selectAllBtn.Size = UDim2.new(0.5, -1, 1, 0)
+	selectAllBtn.Size = UDim2.new(0.5, -1, 0, BOTTOM_BAR_HEIGHT)
 	selectAllBtn.Position = UDim2.new(0, 0, 0, 0)
 	selectAllBtn.BackgroundColor3 = BTN_BG
 	selectAllBtn.BorderSizePixel = 0
@@ -11301,16 +11303,16 @@ local script = G2L["121"];
 	selectAllBtn.ZIndex = 1001
 	selectAllBtn.Parent = bottomBar
 	
-	local divider = Instance.new("Frame")
-	divider.Size = UDim2.new(0, 1, 1, 0)
-	divider.Position = UDim2.new(0.5, -1, 0, 0)
-	divider.BackgroundColor3 = BORDER
-	divider.BorderSizePixel = 0
-	divider.ZIndex = 1001
-	divider.Parent = bottomBar
+	local divider1 = Instance.new("Frame")
+	divider1.Size = UDim2.new(0, 1, 0, BOTTOM_BAR_HEIGHT)
+	divider1.Position = UDim2.new(0.5, -1, 0, 0)
+	divider1.BackgroundColor3 = BORDER
+	divider1.BorderSizePixel = 0
+	divider1.ZIndex = 1001
+	divider1.Parent = bottomBar
 	
 	local unselectAllBtn = Instance.new("TextButton")
-	unselectAllBtn.Size = UDim2.new(0.5, 0, 1, 0)
+	unselectAllBtn.Size = UDim2.new(0.5, 0, 0, BOTTOM_BAR_HEIGHT)
 	unselectAllBtn.Position = UDim2.new(0.5, 1, 0, 0)
 	unselectAllBtn.BackgroundColor3 = BTN_BG
 	unselectAllBtn.BorderSizePixel = 0
@@ -11320,6 +11322,48 @@ local script = G2L["121"];
 	unselectAllBtn.Font = Enum.Font.Code
 	unselectAllBtn.ZIndex = 1001
 	unselectAllBtn.Parent = bottomBar
+	
+	-- divider between rows
+	local rowDivider = Instance.new("Frame")
+	rowDivider.Size = UDim2.new(1, 0, 0, 1)
+	rowDivider.Position = UDim2.new(0, 0, 0, BOTTOM_BAR_HEIGHT)
+	rowDivider.BackgroundColor3 = BORDER
+	rowDivider.BorderSizePixel = 0
+	rowDivider.ZIndex = 1001
+	rowDivider.Parent = bottomBar
+	
+	-- row 2: Show Display / Select Admin
+	local displayBtn = Instance.new("TextButton")
+	displayBtn.Size = UDim2.new(0.5, -1, 0, BOTTOM_BAR_HEIGHT)
+	displayBtn.Position = UDim2.new(0, 0, 0, BOTTOM_BAR_HEIGHT + 1)
+	displayBtn.BackgroundColor3 = BTN_BG
+	displayBtn.BorderSizePixel = 0
+	displayBtn.Text = "Show Display"
+	displayBtn.TextColor3 = WHITE
+	displayBtn.TextSize = 11
+	displayBtn.Font = Enum.Font.Code
+	displayBtn.ZIndex = 1001
+	displayBtn.Parent = bottomBar
+	
+	local divider2 = Instance.new("Frame")
+	divider2.Size = UDim2.new(0, 1, 0, BOTTOM_BAR_HEIGHT)
+	divider2.Position = UDim2.new(0.5, -1, 0, BOTTOM_BAR_HEIGHT + 1)
+	divider2.BackgroundColor3 = BORDER
+	divider2.BorderSizePixel = 0
+	divider2.ZIndex = 1001
+	divider2.Parent = bottomBar
+	
+	local adminBtn = Instance.new("TextButton")
+	adminBtn.Size = UDim2.new(0.5, 0, 0, BOTTOM_BAR_HEIGHT)
+	adminBtn.Position = UDim2.new(0.5, 1, 0, BOTTOM_BAR_HEIGHT + 1)
+	adminBtn.BackgroundColor3 = BTN_BG
+	adminBtn.BorderSizePixel = 0
+	adminBtn.Text = "Select Admin"
+	adminBtn.TextColor3 = WHITE
+	adminBtn.TextSize = 11
+	adminBtn.Font = Enum.Font.Code
+	adminBtn.ZIndex = 1001
+	adminBtn.Parent = bottomBar
 	
 	-- ============================================================
 	-- THUMBNAILS
@@ -11393,8 +11437,9 @@ local script = G2L["121"];
 		local visibleRows = math.min(rowCount, MAX_ROWS)
 		local scrollH = visibleRows * ROW_HEIGHT
 		scrollFrame.Size = UDim2.new(1, 0, 0, scrollH)
-		panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT + scrollH + BOTTOM_BAR_HEIGHT)
+		panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT + scrollH + TOTAL_BOTTOM_HEIGHT)
 		scrollFrame.CanvasSize = UDim2.new(0, 0, 0, rowCount * ROW_HEIGHT)
+		bottomBar.Size = UDim2.new(1, 0, 0, TOTAL_BOTTOM_HEIGHT)
 		bottomBar.Position = UDim2.new(0, 0, 0, ROW_HEIGHT + scrollH)
 	end
 	
@@ -11514,6 +11559,78 @@ local script = G2L["121"];
 		updateMainLabel()
 		updateWhitelist()
 		buildList(searchBox.Text)
+	end)
+	
+	-- ============================================================
+	-- SHOW DISPLAY / SHOW USERNAME
+	-- ============================================================
+	displayBtn.MouseButton1Click:Connect(function()
+		showDisplay = not showDisplay
+		displayBtn.Text = showDisplay and "Show Username" or "Show Display"
+		updateMainLabel()
+		if isOpen then buildList(searchBox.Text) end
+	end)
+	
+	-- ============================================================
+	-- SELECT ADMIN / UNSELECT ADMIN
+	-- ============================================================
+	local adminSelected = false
+	local lastAdminName = nil
+	
+	local function getAdminPlayer()
+		local chosenTeam = game:GetService("Teams"):FindFirstChild("Chosen")
+		if not chosenTeam then return nil end
+		for _, p in pairs(Players:GetPlayers()) do
+			if p.Team == chosenTeam then
+				return p
+			end
+		end
+		return nil
+	end
+	
+	adminBtn.MouseButton1Click:Connect(function()
+		local admin = getAdminPlayer()
+	
+		if not adminSelected then
+			-- select admin
+			if admin then
+				if lastAdminName and lastAdminName ~= admin.Name then
+					selectedPlayers[lastAdminName] = nil
+				end
+				selectedPlayers[admin.Name] = true
+				lastAdminName = admin.Name
+				adminSelected = true
+				adminBtn.Text = "Unselect Admin"
+			end
+		else
+			-- unselect admin
+			if lastAdminName then
+				selectedPlayers[lastAdminName] = nil
+				lastAdminName = nil
+			end
+			adminSelected = false
+			adminBtn.Text = "Select Admin"
+		end
+	
+		updateMainLabel()
+		updateWhitelist()
+		if isOpen then buildList(searchBox.Text) end
+	end)
+	
+	-- update admin selection if team changes
+	Players.PlayerAdded:Connect(function(p)
+		task.wait(1)
+		if adminSelected then
+			local admin = getAdminPlayer()
+			if admin and admin.Name ~= lastAdminName then
+				if lastAdminName then selectedPlayers[lastAdminName] = nil end
+				selectedPlayers[admin.Name] = true
+				lastAdminName = admin.Name
+				updateMainLabel()
+				updateWhitelist()
+				if isOpen then buildList(searchBox.Text) end
+			end
+		end
 	end)
 	
 	-- ============================================================
@@ -11779,6 +11896,7 @@ local script = G2L["124"];
 		Thrust.Force = Vector3.new(20000, 20000, 20000)
 		Thrust.Name = "YeetForce"
 	
+		local flingStart = tick()
 		repeat
 			if not isEnabled then break end
 			if not Target or not Target.Parent then break end
@@ -11788,23 +11906,35 @@ local script = G2L["124"];
 			myHRP.CFrame = tHRP.CFrame
 			Thrust.Location = tHRP.Position
 			RunService.Heartbeat:Wait()
-		until not Target.Character or not Target.Character:FindFirstChild("Head")
+		until not Target.Character
+			or not Target.Character:FindFirstChild("Head")
+			or (tick() - flingStart) >= 2
+	
+		-- zero out before destroying so forces dont carry over
+		BV.Velocity = Vector3.new(0, 0, 0)
+		BV.MaxForce = Vector3.new(0, 0, 0)
+		Thrust.Force = Vector3.new(0, 0, 0)
+	
+		for _, x in pairs(myChar:GetChildren()) do
+			if x:IsA("BasePart") then
+				x.Velocity = Vector3.new()
+				x.RotVelocity = Vector3.new()
+				x.AssemblyLinearVelocity = Vector3.new()
+				x.AssemblyAngularVelocity = Vector3.new()
+			end
+		end
 	
 		BV:Destroy()
 		Thrust:Destroy()
 	
-		-- teleport back cleanly
-		if myChar and myHRP then
-			for _, x in pairs(myChar:GetChildren()) do
-				if x:IsA("BasePart") then
-					x.Velocity = Vector3.new()
-					x.RotVelocity = Vector3.new()
-					x.AssemblyLinearVelocity = Vector3.new()
-					x.AssemblyAngularVelocity = Vector3.new()
-				end
-			end
+		-- wait a frame for physics to settle then teleport back
+		task.wait()
+	
+		if myChar and myHRP and myHRP.Parent then
 			myHRP.CFrame = savedPos
 			myChar:SetPrimaryPartCFrame(savedPos)
+	
+			-- zero out again after teleport
 			task.wait()
 			for _, x in pairs(myChar:GetChildren()) do
 				if x:IsA("BasePart") then
@@ -11815,7 +11945,6 @@ local script = G2L["124"];
 				end
 			end
 		end
-	end
 	
 	-- ============================================================
 	-- UTILITY
