@@ -86,10 +86,33 @@ local function isPlayerFlung(TargetPlayer)
 end
 
 -- ============================================================
--- ZERO VELOCITY on all parts
+-- FULL CHARACTER CLEANUP
+-- Destroys all body movers left inside HumanoidRootPart,
+-- zeroes all velocity, resets PlatformStand and GettingUp
+-- state so movement input works again immediately
 -- ============================================================
-local function zeroVelocity(Character)
+local function cleanupCharacter(Character)
 	if not Character then return end
+
+	local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+	local RootPart = Character:FindFirstChild("HumanoidRootPart")
+
+	-- Destroy every body mover left inside HumanoidRootPart
+	-- This is the main cause of movement delay after fling
+	if RootPart then
+		for _, v in pairs(RootPart:GetChildren()) do
+			if v:IsA("BodyVelocity") or v:IsA("BodyForce")
+				or v:IsA("BodyThrust") or v:IsA("BodyGyro")
+				or v:IsA("BodyPosition") or v:IsA("BodyAngularVelocity")
+				or v:IsA("LinearVelocity") or v:IsA("AngularVelocity")
+				or v:IsA("VectorForce") or v:IsA("AlignPosition")
+				or v:IsA("AlignOrientation") then
+				pcall(function() v:Destroy() end)
+			end
+		end
+	end
+
+	-- Zero velocity on all parts
 	for _, x in pairs(Character:GetChildren()) do
 		if x:IsA("BasePart") then
 			x.Velocity = Vector3.new()
@@ -98,58 +121,15 @@ local function zeroVelocity(Character)
 			pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
 		end
 	end
-end
 
--- ============================================================
--- POST-FLING SAFETY MONITOR
--- After returning to OldPos, watches for up to 1.5 seconds.
--- If we detect we're being launched (speed > 80), it:
---   1. Zeros all velocity immediately
---   2. Teleports back to OldPos again
---   3. Keeps retrying until speed stays low or timeout
--- ============================================================
-local function safetyMonitor(savedPos)
-	local Character = LocalPlayer.Character
-	if not Character then return end
-	local root = Character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	local deadline = tick() + 1.5
-	local LAUNCH_THRESHOLD = 80 -- anything above this after returning = residual fling
-
-	while tick() < deadline do
-		RunService.Heartbeat:Wait()
-
-		Character = LocalPlayer.Character
-		if not Character then break end
-		root = Character:FindFirstChild("HumanoidRootPart")
-		if not root then break end
-
-		local speed = root.AssemblyLinearVelocity.Magnitude
-
-		if speed > LAUNCH_THRESHOLD then
-			-- Being launched — zero everything and snap back
-			zeroVelocity(Character)
-
-			-- Destroy any stray BodyMovers that may still exist
-			for _, d in pairs(Character:GetDescendants()) do
-				if d:IsA("BodyVelocity") or d:IsA("BodyForce")
-					or d:IsA("BodyThrust") or d:IsA("BodyGyro")
-					or d:IsA("BodyAngularVelocity") or d:IsA("BodyPosition") then
-					pcall(function() d:Destroy() end)
-				end
-			end
-
-			-- Snap back to saved position
-			root.CFrame = savedPos
-			Character:SetPrimaryPartCFrame(savedPos)
-
-			-- Zero again immediately after snap
-			zeroVelocity(Character)
-
-			-- Extend deadline slightly so we keep checking after each correction
-			deadline = tick() + 0.5
-		end
+	if Humanoid then
+		-- PlatformStand being left true locks movement
+		Humanoid.PlatformStand = false
+		-- GettingUp state resets the ragdoll/physics state
+		-- and plays the unragdoll so physics is clean again
+		pcall(function()
+			Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+		end)
 	end
 end
 
@@ -245,26 +225,32 @@ local function flingPlayer(TargetPlayer)
 		or (Humanoid.Health <= 0)
 		or (tick() > (Time + TimeToWait))
 
-	-- Zero BV before destroying
+	-- Zero BV before destroying so engine sees zero not max force
 	BV.Velocity = Vector3.new(0, 0, 0)
 	BV.MaxForce = Vector3.new(0, 0, 0)
-	zeroVelocity(Character)
 	BV:Destroy()
 
 	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 	workspace.CurrentCamera.CameraSubject = Humanoid
 	workspace.FallenPartsDestroyHeight = savedFPDH
 
-	-- Teleport back to saved position
+	-- Full cleanup: destroys all body movers, zeroes velocity,
+	-- resets PlatformStand and GettingUp state
+	cleanupCharacter(Character)
+
+	-- Teleport back
 	if getgenv().OldPos and RootPart and RootPart.Parent then
-		zeroVelocity(Character)
 		RootPart.CFrame = getgenv().OldPos
 		Character:SetPrimaryPartCFrame(getgenv().OldPos)
-		zeroVelocity(Character)
-
-		-- Start the safety monitor in background — keeps snapping us back
-		-- if residual physics tries to launch us after unfreeze
-		task.spawn(safetyMonitor, getgenv().OldPos)
+		-- Zero one more time after teleport
+		for _, x in pairs(Character:GetChildren()) do
+			if x:IsA("BasePart") then
+				x.Velocity = Vector3.new()
+				x.RotVelocity = Vector3.new()
+				pcall(function() x.AssemblyLinearVelocity = Vector3.new() end)
+				pcall(function() x.AssemblyAngularVelocity = Vector3.new() end)
+			end
+		end
 	end
 
 	if flingDetected and isRunning then
@@ -369,4 +355,4 @@ end
 -- ============================================================
 -- ON EXECUTE
 -- ============================================================
-systemMessage("Executed (17)")
+systemMessage("Executed (19)")
