@@ -62,8 +62,8 @@ local function freezeAnimations(character)
 	local animator = hum:FindFirstChildWhichIsA("Animator")
 	if not animator then return end
 	for _, track in pairs(animator:GetPlayingAnimationTracks()) do
-		track:Stop(0)
-		table.insert(frozenTracks, track)
+		table.insert(frozenTracks, {track = track, speed = track.Speed})
+		track:AdjustSpeed(0)
 	end
 end
 
@@ -72,8 +72,10 @@ local function unfreezeAnimations(character)
 	if not hum then return end
 	local animator = hum:FindFirstChildWhichIsA("Animator")
 	if not animator then return end
-	for _, track in pairs(frozenTracks) do
-		pcall(function() track:Play(0) end)
+	for _, data in pairs(frozenTracks) do
+		pcall(function()
+			data.track:AdjustSpeed(data.speed)
+		end)
 	end
 	frozenTracks = {}
 end
@@ -107,7 +109,7 @@ local function cleanupAfterFling(myChar, myHRP, myHum, savedPos)
 	protBV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
 	protBV.Parent = myHRP
 
-	task.wait(1)
+	task.wait(0.2)
 
 	if protBV and protBV.Parent then
 		protBV:Destroy()
