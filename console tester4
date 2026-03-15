@@ -6,25 +6,19 @@ local bricksFolder = workspace:WaitForChild("Bricks")
 
 print("BlockAge test started - will run for 2 minutes")
 
-local brickFirstSeen = {}
+local brickAge = {}
 
-local function trackExisting()
-	for _, obj in pairs(bricksFolder:GetDescendants()) do
-		if obj:IsA("BasePart") and obj.Name == "Brick" then
-			if not brickFirstSeen[obj] then
-				brickFirstSeen[obj] = tick()
-			end
-		end
+-- Flag all existing bricks as old (over 60 seconds)
+for _, obj in pairs(bricksFolder:GetDescendants()) do
+	if obj:IsA("BasePart") and obj.Name == "Brick" then
+		brickAge[obj] = tick() - 61
 	end
 end
 
-trackExisting()
-
+-- Track new bricks as they get placed with accurate time
 bricksFolder.DescendantAdded:Connect(function(obj)
 	if obj:IsA("BasePart") and obj.Name == "Brick" then
-		if not brickFirstSeen[obj] then
-			brickFirstSeen[obj] = tick()
-		end
+		brickAge[obj] = tick()
 	end
 end)
 
@@ -57,7 +51,6 @@ local startTime = tick()
 local conn
 
 conn = RunService.Heartbeat:Connect(function()
-	-- stop after 2 minutes
 	if tick() - startTime >= 120 then
 		conn:Disconnect()
 		print("BlockAge test stopped")
@@ -69,22 +62,21 @@ conn = RunService.Heartbeat:Connect(function()
 	for oldBrick in pairs(previousBricks) do
 		if not currentBricks[oldBrick] then
 			if holdingDelete(LocalPlayer) then
-	local char = LocalPlayer.Character
-	local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	if hrp then
-		local brickPos = brickFirstSeen[oldBrick] and oldBrick.Position or nil
-		local dist = brickPos and (hrp.Position - oldBrick.Position).Magnitude or 999
-		if dist <= 24 then
-			local age = brickFirstSeen[oldBrick]
-			if age then
-				local seconds = math.floor(tick() - age)
-				print("Your block age: " .. seconds .. " seconds")
-			else
-				print("Your block age: unknown (existed before script ran)")
+				local char = LocalPlayer.Character
+				local hrp = char and char:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					local dist = (hrp.Position - oldBrick.Position).Magnitude
+					if dist <= 24 then
+						local age = brickAge[oldBrick]
+						if age then
+							local seconds = math.floor(tick() - age)
+							print("Your block age: " .. seconds .. " seconds")
+						else
+							print("Your block age: unknown")
+						end
+					end
+				end
 			end
-		end
-	end
-end
 		end
 	end
 
