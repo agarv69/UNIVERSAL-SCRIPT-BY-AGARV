@@ -3606,7 +3606,7 @@ G2L["146"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["146"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["146"]["LayoutOrder"] = 30;
 G2L["146"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["146"]["Text"] = [[9]];
+G2L["146"]["Text"] = [[5]];
 G2L["146"]["Name"] = [[VersionNumber]];
 G2L["146"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -3657,7 +3657,7 @@ local script = G2L["3"];
 	-- Flag all existing bricks as old (over 60 seconds)
 	for _, obj in pairs(bricksFolder:GetDescendants()) do
 		if obj:IsA("BasePart") and obj.Name == "Brick" then
-			brickAge[obj] = tick() - 121
+			brickAge[obj] = tick() - 71
 		end
 	end
 	
@@ -3730,7 +3730,7 @@ local script = G2L["3"];
 					end
 				end
 				if closest and closest.Name ~= ownerName then
-					local age = brickAge[oldBrick] and (tick() - brickAge[oldBrick]) or 121
+					local age = brickAge[oldBrick] and (tick() - brickAge[oldBrick]) or 71
 					print("[GRIEFLOG] "..closest.Name.." deleted "..ownerName.."'s brick (age: "..math.floor(age).."s)")
 					shared.GriefLog = closest.Name .. "|" .. ownerName .. "|" .. tostring(tick()) .. "|" .. tostring(age)
 				end
@@ -11716,8 +11716,8 @@ local script = G2L["120"];
 	local isEnabled = false
 	local deleteLog = {}
 	local DELETE_LIMIT = 10
-	local TIME_WINDOW = 60
-	local ANNOUNCE_COOLDOWN = 60
+	local TIME_WINDOW = 30
+	local ANNOUNCE_COOLDOWN = 30
 	local lastAnnounce = {}
 	
 	GriefTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
@@ -11821,7 +11821,7 @@ local script = G2L["120"];
 		if #valid >= DELETE_LIMIT then
 			local last = lastAnnounce[deleterName]
 			if not last or (now - last) >= ANNOUNCE_COOLDOWN then
-				sendChat("🚨GRIEF ALERT: " .. closest.DisplayName)
+				sendChat("🚨" .. closest.DisplayName .. " triggered the grief detection")
 				lastAnnounce[deleterName] = now
 			end
 			deleteLog[deleterName] = {}
@@ -11890,10 +11890,10 @@ local script = G2L["124"];
 	local isEnabled = false
 	local deleteLog = {}
 	local DELETE_LIMIT = 10
-	local TIME_WINDOW = 60
+	local TIME_WINDOW = 30
 	local FLING_TIMEOUT = 7
 	local FLING_SUCCESS_DIST = 120
-	local FLING_COOLDOWN = 60
+	local FLING_COOLDOWN = 30
 	local lastFlung = {}
 	
 	GriefFlingTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
@@ -13097,7 +13097,7 @@ local script = G2L["136"];
 		if isWhitelisted(deleterName) then return end
 		if player == LocalPlayer then return end
 		if getPlayerTime(player) >= TIME_THRESHOLD then return end
-		if brickAge < 120 then return end
+		if brickAge < 70 then return end
 	
 		breakLog[deleterName] = breakLog[deleterName] or {}
 		local now = tick()
