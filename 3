@@ -3606,7 +3606,7 @@ G2L["146"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["146"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["146"]["LayoutOrder"] = 30;
 G2L["146"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["146"]["Text"] = [[7]];
+G2L["146"]["Text"] = [[5]];
 G2L["146"]["Name"] = [[VersionNumber]];
 G2L["146"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -3657,7 +3657,7 @@ local script = G2L["3"];
 	-- Flag all existing bricks as old (over 60 seconds)
 	for _, obj in pairs(bricksFolder:GetDescendants()) do
 		if obj:IsA("BasePart") and obj.Name == "Brick" then
-			brickAge[obj] = tick() - 121
+			brickAge[obj] = tick() - 71
 		end
 	end
 	
@@ -3730,7 +3730,7 @@ local script = G2L["3"];
 					end
 				end
 				if closest and closest.Name ~= ownerName then
-					local age = brickAge[oldBrick] and (tick() - brickAge[oldBrick]) or 121
+					local age = brickAge[oldBrick] and (tick() - brickAge[oldBrick]) or 71
 					print("[GRIEFLOG] "..closest.Name.." deleted "..ownerName.."'s brick (age: "..math.floor(age).."s)")
 					shared.GriefLog = closest.Name .. "|" .. ownerName .. "|" .. tostring(tick()) .. "|" .. tostring(age)
 				end
@@ -11202,9 +11202,6 @@ local script = G2L["10a"];
 	
 	local isEnabled = false
 	
-	-- ============================================================
-	-- SCREENGUI HELPER
-	-- ============================================================
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -11294,18 +11291,24 @@ local script = G2L["10a"];
 		return count
 	end
 	
+	local function playerHasEnlighten(player)
+		local backpack = player:FindFirstChild("Backpack")
+		local char = workspace:FindFirstChild(player.Name)
+		local inBackpack = backpack and backpack:FindFirstChild("The Arkenstone")
+		local inChar = char and char:FindFirstChild("The Arkenstone")
+		return inBackpack ~= nil or inChar ~= nil
+	end
+	
 	-- ============================================================
 	-- WINDOW STATE
 	-- ============================================================
-	local pendingPlayers = {}  -- display names of players enlightened in window
+	local pendingPlayers = {}
 	local windowTimer = nil
 	local WINDOW = 1
 	
 	local function sendEnlightenMessage()
 		if #pendingPlayers == 0 then return end
-	
 		local nonAdminCount = getNonAdminCount()
-	
 		if #pendingPlayers >= nonAdminCount then
 			sendChat("🌟Everyone has received enlighten")
 		elseif #pendingPlayers == 1 then
@@ -11313,7 +11316,6 @@ local script = G2L["10a"];
 		else
 			sendChat("🌟" .. #pendingPlayers .. " Players have received enlighten")
 		end
-	
 		pendingPlayers = {}
 		windowTimer = nil
 	end
@@ -11325,7 +11327,6 @@ local script = G2L["10a"];
 	
 		print("[ENLIGHTENLOG] " .. player.Name .. " (" .. player.DisplayName .. ") received The Arkenstone")
 	
-		-- add to pending if not already in there
 		local alreadyPending = false
 		for _, name in ipairs(pendingPlayers) do
 			if name == player.DisplayName then
@@ -11337,7 +11338,6 @@ local script = G2L["10a"];
 			table.insert(pendingPlayers, player.DisplayName)
 		end
 	
-		-- cancel existing timer and restart 2 second window
 		if windowTimer then
 			task.cancel(windowTimer)
 		end
@@ -11345,57 +11345,38 @@ local script = G2L["10a"];
 	end
 	
 	-- ============================================================
-	-- WATCH BACKPACKS
+	-- WATCH PLAYERS
 	-- ============================================================
 	local watchedPlayers = {}
-	
-	local alreadyDetected = {}
+	local knownEnlightened = {}
 	
 	local function watchPlayer(player)
 		if watchedPlayers[player] then return end
 		watchedPlayers[player] = true
 	
-		local function checkAndFire()
-			if alreadyDetected[player] then return end
-			local backpack = player:FindFirstChild("Backpack")
-			local char = workspace:FindFirstChild(player.Name)
-			local inBackpack = backpack and backpack:FindFirstChild("The Arkenstone")
-			local inChar = char and char:FindFirstChild("The Arkenstone")
-			if inBackpack or inChar then
-				alreadyDetected[player] = true
-				onPlayerEnlightened(player)
-			end
-		end
-	
-		-- check immediately
-		checkAndFire()
-	
-		-- watch backpack
-		local backpack = player:WaitForChild("Backpack", 10)
-		if backpack then
-			backpack.ChildAdded:Connect(function(item)
-				if item.Name == "The Arkenstone" then
-					checkAndFire()
-				end
-			end)
-			backpack.ChildRemoved:Connect(function(item)
-				if item.Name == "The Arkenstone" then
-					alreadyDetected[player] = nil
-				end
-			end)
-		end
-	
-		-- watch character for when they equip it
 		local function watchChar(char)
 			if not char then return end
 			char.ChildAdded:Connect(function(item)
-				if item.Name == "The Arkenstone" then
-					checkAndFire()
-				end
+				if item.Name ~= "The Arkenstone" then return end
+				-- only announce if it wasnt already in their backpack
+				local backpack = player:FindFirstChild("Backpack")
+				local wasInBackpack = backpack and backpack:FindFirstChild("The Arkenstone")
+				if wasInBackpack then return end
+				-- only announce if not already known to have enlighten
+				if knownEnlightened[player] then return end
+				knownEnlightened[player] = true
+				onPlayerEnlightened(player)
 			end)
+	
 			char.ChildRemoved:Connect(function(item)
 				if item.Name == "The Arkenstone" then
-					alreadyDetected[player] = nil
+					-- check if it went to backpack or truly lost
+					task.wait()
+					local backpack = player:FindFirstChild("Backpack")
+					local stillHas = backpack and backpack:FindFirstChild("The Arkenstone")
+					if not stillHas then
+						knownEnlightened[player] = nil
+					end
 				end
 			end)
 		end
@@ -11403,12 +11384,17 @@ local script = G2L["10a"];
 		if player.Character then
 			watchChar(player.Character)
 		end
+	
 		player.CharacterAdded:Connect(function(char)
-			-- reset detected on respawn so it can be detected again if re-enlightened
-			alreadyDetected[player] = nil
+			knownEnlightened[player] = nil
 			watchChar(char)
 		end)
 	end
+	
+	-- ============================================================
+	-- ENABLE / DISABLE
+	-- ============================================================
+	local playerAddedConn = nil
 	
 	local function enable()
 		isEnabled = true
@@ -11416,13 +11402,19 @@ local script = G2L["10a"];
 		watchedPlayers = {}
 		windowTimer = nil
 	
-		-- watch all current players
+		-- snapshot who already has enlighten so we dont announce them on enable
+		knownEnlightened = {}
+		for _, player in pairs(Players:GetPlayers()) do
+			if playerHasEnlighten(player) then
+				knownEnlightened[player] = true
+			end
+		end
+	
 		for _, player in pairs(Players:GetPlayers()) do
 			task.spawn(watchPlayer, player)
 		end
 	
-		-- watch future players
-		Players.PlayerAdded:Connect(function(player)
+		playerAddedConn = Players.PlayerAdded:Connect(function(player)
 			task.spawn(watchPlayer, player)
 		end)
 	
@@ -11433,23 +11425,22 @@ local script = G2L["10a"];
 		isEnabled = false
 		pendingPlayers = {}
 		watchedPlayers = {}
+		knownEnlightened = {}
 		if windowTimer then
 			task.cancel(windowTimer)
 			windowTimer = nil
 		end
+		if playerAddedConn then
+			playerAddedConn:Disconnect()
+			playerAddedConn = nil
+		end
 		EnlightenLogTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	end
 	
-	-- ============================================================
-	-- TOGGLE
-	-- ============================================================
 	EnlightenLogTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then disable() else enable() end
 	end)
 	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			isEnabled = false
@@ -11725,8 +11716,8 @@ local script = G2L["120"];
 	local isEnabled = false
 	local deleteLog = {}
 	local DELETE_LIMIT = 10
-	local TIME_WINDOW = 60
-	local ANNOUNCE_COOLDOWN = 60
+	local TIME_WINDOW = 30
+	local ANNOUNCE_COOLDOWN = 30
 	local lastAnnounce = {}
 	
 	GriefTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
@@ -11830,7 +11821,7 @@ local script = G2L["120"];
 		if #valid >= DELETE_LIMIT then
 			local last = lastAnnounce[deleterName]
 			if not last or (now - last) >= ANNOUNCE_COOLDOWN then
-				sendChat("🚨GRIEF ALERT: " .. closest.DisplayName)
+				sendChat("🚨" .. closest.DisplayName .. " triggered the grief detection")
 				lastAnnounce[deleterName] = now
 			end
 			deleteLog[deleterName] = {}
@@ -11899,10 +11890,10 @@ local script = G2L["124"];
 	local isEnabled = false
 	local deleteLog = {}
 	local DELETE_LIMIT = 10
-	local TIME_WINDOW = 60
+	local TIME_WINDOW = 30
 	local FLING_TIMEOUT = 7
 	local FLING_SUCCESS_DIST = 120
-	local FLING_COOLDOWN = 60
+	local FLING_COOLDOWN = 30
 	local lastFlung = {}
 	
 	GriefFlingTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
@@ -12898,7 +12889,7 @@ local script = G2L["136"];
 	local isEnabled = false
 	local DELETE_LIMIT = 10
 	local BLOCK_COOLDOWN = 10
-	local TIME_THRESHOLD = 700
+	local TIME_THRESHOLD = 600
 	local FLING_TIMEOUT = 10
 	local FLING_SUCCESS_DIST = 120
 	
@@ -13106,7 +13097,7 @@ local script = G2L["136"];
 		if isWhitelisted(deleterName) then return end
 		if player == LocalPlayer then return end
 		if getPlayerTime(player) >= TIME_THRESHOLD then return end
-		if brickAge < 120 then return end
+		if brickAge < 70 then return end
 	
 		breakLog[deleterName] = breakLog[deleterName] or {}
 		local now = tick()
