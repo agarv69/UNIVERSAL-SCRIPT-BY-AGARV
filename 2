@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 319 | Scripts: 67 | Modules: 0 | Tags: 0
+-- Instances: 323 | Scripts: 68 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -22,9 +22,9 @@ G2L["2"] = Instance.new("LocalScript", G2L["1"]);
 G2L["2"]["Name"] = [[MoveToCorGui]];
 
 
--- StarterGui.ScreenGui.LocalScript
+-- StarterGui.ScreenGui.GriefDetectorConsole
 G2L["3"] = Instance.new("LocalScript", G2L["1"]);
-
+G2L["3"]["Name"] = [[GriefDetectorConsole]];
 
 
 -- StarterGui.ScreenGui.MainFrame
@@ -3064,7 +3064,7 @@ G2L["114"]["Name"] = [[AntiAccentColor]];
 G2L["115"] = Instance.new("Frame", G2L["109"]);
 G2L["115"]["BackgroundColor3"] = Color3.fromRGB(17, 17, 17);
 G2L["115"]["BorderMode"] = Enum.BorderMode.Middle;
-G2L["115"]["Size"] = UDim2.new(0, 170, 0, 141);
+G2L["115"]["Size"] = UDim2.new(0, 170, 0, 160);
 G2L["115"]["Position"] = UDim2.new(0, 0, 0.13056, 0);
 G2L["115"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["115"]["Name"] = [[ProtectionGroup]];
@@ -3380,155 +3380,201 @@ G2L["130"]["Name"] = [[ArkSpyText]];
 G2L["130"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 
--- StarterGui.ScreenGui.MainFrame.TopBar
-G2L["131"] = Instance.new("Frame", G2L["4"]);
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefDetectRow
+G2L["131"] = Instance.new("Frame", G2L["115"]);
 G2L["131"]["BorderSizePixel"] = 0;
-G2L["131"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
-G2L["131"]["Size"] = UDim2.new(0, 442, 0, 25);
+G2L["131"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["131"]["Size"] = UDim2.new(0, 169, 0, 20);
+G2L["131"]["Position"] = UDim2.new(0.00294, 0, 0.175, 0);
 G2L["131"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["131"]["Name"] = [[TopBar]];
+G2L["131"]["Name"] = [[GriefDetectRow]];
+G2L["131"]["LayoutOrder"] = 3;
+G2L["131"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefDetectRow.GriefDetectScript
+G2L["132"] = Instance.new("LocalScript", G2L["131"]);
+G2L["132"]["Name"] = [[GriefDetectScript]];
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefDetectRow.GriefDetectTickBox
+G2L["133"] = Instance.new("TextButton", G2L["131"]);
+G2L["133"]["TextSize"] = 14;
+G2L["133"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["133"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["133"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["133"]["Size"] = UDim2.new(0, 16, 0, 16);
+G2L["133"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
+G2L["133"]["Text"] = [[]];
+G2L["133"]["Name"] = [[GriefDetectTickBox]];
+G2L["133"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefDetectRow.GriefDetectText
+G2L["134"] = Instance.new("TextLabel", G2L["131"]);
+G2L["134"]["BorderSizePixel"] = 0;
+G2L["134"]["TextSize"] = 14;
+G2L["134"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["134"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["134"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["134"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["134"]["BackgroundTransparency"] = 1;
+G2L["134"]["Size"] = UDim2.new(0, 88, 0, 20);
+G2L["134"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["134"]["Text"] = [[Grief Protection]];
+G2L["134"]["Name"] = [[GriefDetectText]];
+G2L["134"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
+
+
+-- StarterGui.ScreenGui.MainFrame.TopBar
+G2L["135"] = Instance.new("Frame", G2L["4"]);
+G2L["135"]["BorderSizePixel"] = 0;
+G2L["135"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
+G2L["135"]["Size"] = UDim2.new(0, 442, 0, 25);
+G2L["135"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["135"]["Name"] = [[TopBar]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
-G2L["132"] = Instance.new("LocalScript", G2L["131"]);
-G2L["132"]["Name"] = [[MinimizeDragScript]];
+G2L["136"] = Instance.new("LocalScript", G2L["135"]);
+G2L["136"]["Name"] = [[MinimizeDragScript]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLEScript
-G2L["133"] = Instance.new("LocalScript", G2L["131"]);
-G2L["133"]["Name"] = [[TITLEScript]];
+G2L["137"] = Instance.new("LocalScript", G2L["135"]);
+G2L["137"]["Name"] = [[TITLEScript]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeGUI
-G2L["134"] = Instance.new("TextButton", G2L["131"]);
-G2L["134"]["BorderSizePixel"] = 0;
-G2L["134"]["TextSize"] = 14;
-G2L["134"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["134"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["134"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["134"]["BackgroundTransparency"] = 1;
-G2L["134"]["Size"] = UDim2.new(0, 25, 0, 25);
-G2L["134"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["134"]["Text"] = [[-]];
-G2L["134"]["Name"] = [[MinimizeGUI]];
-G2L["134"]["Position"] = UDim2.new(0.99919, -25, 0, 0);
+G2L["138"] = Instance.new("TextButton", G2L["135"]);
+G2L["138"]["BorderSizePixel"] = 0;
+G2L["138"]["TextSize"] = 14;
+G2L["138"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["138"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["138"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["138"]["BackgroundTransparency"] = 1;
+G2L["138"]["Size"] = UDim2.new(0, 25, 0, 25);
+G2L["138"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["138"]["Text"] = [[-]];
+G2L["138"]["Name"] = [[MinimizeGUI]];
+G2L["138"]["Position"] = UDim2.new(0.99919, -25, 0, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLE
-G2L["135"] = Instance.new("TextLabel", G2L["131"]);
-G2L["135"]["BorderSizePixel"] = 0;
-G2L["135"]["TextSize"] = 12;
-G2L["135"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["135"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["135"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["135"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["135"]["BackgroundTransparency"] = 1;
-G2L["135"]["Size"] = UDim2.new(0, 200, 0, 25);
-G2L["135"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["135"]["Text"] = [[Universal Script GUI  |  by agarv  |  60 fps]];
-G2L["135"]["Name"] = [[TITLE]];
+G2L["139"] = Instance.new("TextLabel", G2L["135"]);
+G2L["139"]["BorderSizePixel"] = 0;
+G2L["139"]["TextSize"] = 12;
+G2L["139"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["139"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["139"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["139"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["139"]["BackgroundTransparency"] = 1;
+G2L["139"]["Size"] = UDim2.new(0, 200, 0, 25);
+G2L["139"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["139"]["Text"] = [[Universal Script GUI  |  by agarv  |  60 fps]];
+G2L["139"]["Name"] = [[TITLE]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame
-G2L["136"] = Instance.new("Frame", G2L["1"]);
-G2L["136"]["BorderSizePixel"] = 0;
-G2L["136"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["136"]["Size"] = UDim2.new(0, 80, 0, 88);
-G2L["136"]["Position"] = UDim2.new(0.92489, 0, 0.04342, 0);
-G2L["136"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["136"]["Name"] = [[KeybindFrame]];
-G2L["136"]["BackgroundTransparency"] = 1;
+G2L["13a"] = Instance.new("Frame", G2L["1"]);
+G2L["13a"]["BorderSizePixel"] = 0;
+G2L["13a"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["13a"]["Size"] = UDim2.new(0, 80, 0, 88);
+G2L["13a"]["Position"] = UDim2.new(0.92489, 0, 0.04342, 0);
+G2L["13a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["13a"]["Name"] = [[KeybindFrame]];
+G2L["13a"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.ScreenGui.KeybindFrame.KeybindHideScript
-G2L["137"] = Instance.new("LocalScript", G2L["136"]);
-G2L["137"]["Name"] = [[KeybindHideScript]];
+G2L["13b"] = Instance.new("LocalScript", G2L["13a"]);
+G2L["13b"]["Name"] = [[KeybindHideScript]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.KeybindLockScript
-G2L["138"] = Instance.new("LocalScript", G2L["136"]);
-G2L["138"]["Name"] = [[KeybindLockScript]];
+G2L["13c"] = Instance.new("LocalScript", G2L["13a"]);
+G2L["13c"]["Name"] = [[KeybindLockScript]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.KeybindDragScript
-G2L["139"] = Instance.new("LocalScript", G2L["136"]);
-G2L["139"]["Name"] = [[KeybindDragScript]];
+G2L["13d"] = Instance.new("LocalScript", G2L["13a"]);
+G2L["13d"]["Name"] = [[KeybindDragScript]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.HideGUI
-G2L["13a"] = Instance.new("TextButton", G2L["136"]);
-G2L["13a"]["TextSize"] = 14;
-G2L["13a"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["13a"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["13a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["13a"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["13a"]["LayoutOrder"] = 1;
-G2L["13a"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["13a"]["Text"] = [[Hide GUI]];
-G2L["13a"]["Name"] = [[HideGUI]];
-
-
--- StarterGui.ScreenGui.KeybindFrame.UIListLayout
-G2L["13b"] = Instance.new("UIListLayout", G2L["136"]);
-G2L["13b"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
-
-
--- StarterGui.ScreenGui.KeybindFrame.LockGUI
-G2L["13c"] = Instance.new("TextButton", G2L["136"]);
-G2L["13c"]["TextSize"] = 14;
-G2L["13c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["13c"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["13c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["13c"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["13c"]["LayoutOrder"] = 2;
-G2L["13c"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["13c"]["Text"] = [[Lock GUI]];
-G2L["13c"]["Name"] = [[LockGUI]];
-
-
--- StarterGui.ScreenGui.KeybindFrame.Version
-G2L["13d"] = Instance.new("TextButton", G2L["136"]);
-G2L["13d"]["TextWrapped"] = true;
-G2L["13d"]["TextSize"] = 14;
-G2L["13d"]["TextScaled"] = true;
-G2L["13d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["13d"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["13d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["13d"]["Size"] = UDim2.new(0, 80, 0, 10);
-G2L["13d"]["LayoutOrder"] = 20;
-G2L["13d"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["13d"]["Text"] = [[GUI Version:]];
-G2L["13d"]["Name"] = [[Version]];
-G2L["13d"]["Position"] = UDim2.new(0, 0, 0.79545, 0);
-
-
--- StarterGui.ScreenGui.KeybindFrame.VersionNumber
-G2L["13e"] = Instance.new("TextButton", G2L["136"]);
-G2L["13e"]["TextWrapped"] = true;
+G2L["13e"] = Instance.new("TextButton", G2L["13a"]);
 G2L["13e"]["TextSize"] = 14;
-G2L["13e"]["TextScaled"] = true;
 G2L["13e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["13e"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["13e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["13e"]["Size"] = UDim2.new(0, 80, 0, 15);
-G2L["13e"]["LayoutOrder"] = 30;
+G2L["13e"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["13e"]["LayoutOrder"] = 1;
 G2L["13e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["13e"]["Text"] = [[6]];
-G2L["13e"]["Name"] = [[VersionNumber]];
-G2L["13e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
+G2L["13e"]["Text"] = [[Hide GUI]];
+G2L["13e"]["Name"] = [[HideGUI]];
+
+
+-- StarterGui.ScreenGui.KeybindFrame.UIListLayout
+G2L["13f"] = Instance.new("UIListLayout", G2L["13a"]);
+G2L["13f"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.ScreenGui.KeybindFrame.LockGUI
+G2L["140"] = Instance.new("TextButton", G2L["13a"]);
+G2L["140"]["TextSize"] = 14;
+G2L["140"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["140"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["140"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["140"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["140"]["LayoutOrder"] = 2;
+G2L["140"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["140"]["Text"] = [[Lock GUI]];
+G2L["140"]["Name"] = [[LockGUI]];
+
+
+-- StarterGui.ScreenGui.KeybindFrame.Version
+G2L["141"] = Instance.new("TextButton", G2L["13a"]);
+G2L["141"]["TextWrapped"] = true;
+G2L["141"]["TextSize"] = 14;
+G2L["141"]["TextScaled"] = true;
+G2L["141"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["141"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["141"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["141"]["Size"] = UDim2.new(0, 80, 0, 10);
+G2L["141"]["LayoutOrder"] = 20;
+G2L["141"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["141"]["Text"] = [[GUI Version:]];
+G2L["141"]["Name"] = [[Version]];
+G2L["141"]["Position"] = UDim2.new(0, 0, 0.79545, 0);
+
+
+-- StarterGui.ScreenGui.KeybindFrame.VersionNumber
+G2L["142"] = Instance.new("TextButton", G2L["13a"]);
+G2L["142"]["TextWrapped"] = true;
+G2L["142"]["TextSize"] = 14;
+G2L["142"]["TextScaled"] = true;
+G2L["142"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["142"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["142"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["142"]["Size"] = UDim2.new(0, 80, 0, 15);
+G2L["142"]["LayoutOrder"] = 30;
+G2L["142"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["142"]["Text"] = [[5]];
+G2L["142"]["Name"] = [[VersionNumber]];
+G2L["142"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
 
 -- StarterGui.ScreenGui.KeybindFrame.DragGUI
-G2L["13f"] = Instance.new("TextButton", G2L["136"]);
-G2L["13f"]["TextSize"] = 14;
-G2L["13f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["13f"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["13f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["13f"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["13f"]["LayoutOrder"] = 3;
-G2L["13f"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["13f"]["Text"] = [[DRAG]];
-G2L["13f"]["Name"] = [[DragGUI]];
+G2L["143"] = Instance.new("TextButton", G2L["13a"]);
+G2L["143"]["TextSize"] = 14;
+G2L["143"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["143"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["143"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["143"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["143"]["LayoutOrder"] = 3;
+G2L["143"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["143"]["Text"] = [[DRAG]];
+G2L["143"]["Name"] = [[DragGUI]];
 
 
 -- StarterGui.ScreenGui.MoveToCorGui
@@ -3545,16 +3591,13 @@ local script = G2L["2"];
 	end
 end;
 task.spawn(C_2);
--- StarterGui.ScreenGui.LocalScript
+-- StarterGui.ScreenGui.GriefDetectorConsole
 local function C_3()
 local script = G2L["3"];
 	local VERSION = 170
-	
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local RunService = game:GetService("RunService")
-	
-	local monitoring = true
 	local DELETE_RADIUS = 24
 	
 	print("Delete Detector Running [ID "..VERSION.."]")
@@ -3602,20 +3645,17 @@ local script = G2L["3"];
 	
 	previousBricks = snapshot()
 	
+	-- Use shared table so all scripts can read detections
+	shared.GriefLog = ""
+	
 	RunService.Heartbeat:Connect(function()
-		if not monitoring then return end
-	
 		local currentBricks = snapshot()
-	
 		for oldBrick, data in pairs(previousBricks) do
 			if not currentBricks[oldBrick] then
-	
 				local oldPos = data.position
 				local ownerName = data.owner
-	
 				local closest = nil
 				local closestDist = DELETE_RADIUS
-	
 				for _, player in pairs(Players:GetPlayers()) do
 					local char = player.Character
 					if char and char:FindFirstChild("HumanoidRootPart") then
@@ -3626,21 +3666,13 @@ local script = G2L["3"];
 						end
 					end
 				end
-	
 				if closest and closest.Name ~= ownerName then
-					print(closest.Name.." deleted "..ownerName.."'s brick")
+					print("[GRIEFLOG] "..closest.Name.." deleted "..ownerName.."'s brick")
+					shared.GriefLog = closest.Name .. "|" .. ownerName .. "|" .. tostring(tick())
 				end
 			end
 		end
-	
 		previousBricks = currentBricks
-	end)
-	
-	LocalPlayer.Chatted:Connect(function(msg)
-		if msg == ";stop" then
-			monitoring = false
-			print("Delete Detector Stopped [ID "..VERSION.."]")
-		end
 	end)
 end;
 task.spawn(C_3);
@@ -11354,13 +11386,10 @@ local script = G2L["11c"];
 	local deleteLog = {}
 	local DELETE_LIMIT = 10
 	local TIME_WINDOW = 60
-	local DELETE_RADIUS = 24
-	
-	-- NEW: announcement cooldown
 	local ANNOUNCE_COOLDOWN = 60
 	local lastAnnounce = {}
 	
-	GriefTickBox.BackgroundColor3 = Color3.new(0,0,0)
+	GriefTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
 	local function getScreenGui()
 		local p = script.Parent
@@ -11372,36 +11401,36 @@ local script = G2L["11c"];
 	
 	local tooltipFrame = Instance.new("Frame")
 	tooltipFrame.Name = "GriefProTooltip"
-	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16,16,16)
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 	tooltipFrame.BorderSizePixel = 0
 	tooltipFrame.ZIndex = 100
 	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipFrame.Size = UDim2.new(0,212,0,0)
+	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
 	tooltipFrame.Visible = false
 	tooltipFrame.Parent = getScreenGui()
 	
 	local tooltipStroke = Instance.new("UIStroke")
-	tooltipStroke.Color = Color3.fromRGB(57,57,57)
+	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
 	tooltipStroke.Thickness = 1
 	tooltipStroke.Parent = tooltipFrame
 	
 	local tooltipPadding = Instance.new("UIPadding")
-	tooltipPadding.PaddingTop = UDim.new(0,6)
-	tooltipPadding.PaddingBottom = UDim.new(0,6)
-	tooltipPadding.PaddingLeft = UDim.new(0,6)
-	tooltipPadding.PaddingRight = UDim.new(0,6)
+	tooltipPadding.PaddingTop = UDim.new(0, 6)
+	tooltipPadding.PaddingBottom = UDim.new(0, 6)
+	tooltipPadding.PaddingLeft = UDim.new(0, 6)
+	tooltipPadding.PaddingRight = UDim.new(0, 6)
 	tooltipPadding.Parent = tooltipFrame
 	
 	local tooltipText = Instance.new("TextLabel")
 	tooltipText.BackgroundTransparency = 1
 	tooltipText.Text = "Alerts in chat when a player griefs. It detects when a player breaks another persons block 10 times in under one minute"
-	tooltipText.TextColor3 = Color3.new(1,1,1)
+	tooltipText.TextColor3 = Color3.new(1, 1, 1)
 	tooltipText.TextSize = 14
 	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
 	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
 	tooltipText.Font = Enum.Font.GothamSemibold
 	tooltipText.TextWrapped = true
-	tooltipText.Size = UDim2.new(0,200,0,0)
+	tooltipText.Size = UDim2.new(0, 200, 0, 0)
 	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
 	tooltipText.ZIndex = 101
 	tooltipText.Parent = tooltipFrame
@@ -11412,25 +11441,9 @@ local script = G2L["11c"];
 		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
 		tooltipFrame.Visible = true
 	end)
-	
 	GriefTickBox.MouseLeave:Connect(function()
 		tooltipFrame.Visible = false
 	end)
-	
-	-- ============================================================
-	-- UTILITY
-	-- ============================================================
-	
-	local function holdingDelete(player)
-		local char = player.Character
-		if not char then return false end
-		for _, obj in pairs(char:GetChildren()) do
-			if obj:IsA("Tool") and obj.Name:lower():find("delete") then
-				return true
-			end
-		end
-		return false
-	end
 	
 	local function sendChat(message)
 		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
@@ -11444,107 +11457,53 @@ local script = G2L["11c"];
 	end
 	
 	-- ============================================================
-	-- DETECTION
+	-- READ FROM SHARED GRIEFLOG
 	-- ============================================================
-	
-	local bricksFolder = nil
-	local previousBricks = {}
-	
-	local function getOwner(brick)
-		if not bricksFolder then return "Server" end
-		if brick:IsDescendantOf(bricksFolder) then
-			local parent = brick.Parent
-			if parent then
-				if Players:FindFirstChild(parent.Name) then
-					return parent.Name
-				end
-			end
-		end
-		return "Server"
-	end
-	
-	local function snapshot()
-		local current = {}
-		if not bricksFolder then return current end
-		for _, obj in pairs(bricksFolder:GetDescendants()) do
-			if obj:IsA("BasePart") and obj.Name == "Brick" then
-				current[obj] = {
-					position = obj.Position,
-					owner = getOwner(obj)
-				}
-			end
-		end
-		return current
-	end
+	local lastSeenLog = ""
 	
 	RunService.Heartbeat:Connect(function()
 		if not isEnabled then return end
-		if not bricksFolder then return end
+		local val = shared.GriefLog
+		if not val or val == "" or val == lastSeenLog then return end
+		lastSeenLog = val
 	
-		local currentBricks = snapshot()
+		local deleterName, ownerName = val:match("^(.+)|(.+)|.+$")
+		if not deleterName then return end
 	
-		for oldBrick, data in pairs(previousBricks) do
-			if not currentBricks[oldBrick] then
+		local closest = Players:FindFirstChild(deleterName)
+		if not closest then return end
+		if isWhitelisted(deleterName) then return end
+		if shared.GriefDetectHandling and shared.GriefDetectHandling[deleterName] then return end
 	
-				local oldPos = data.position
-				local ownerName = data.owner
+		deleteLog[deleterName] = deleteLog[deleterName] or {}
+		table.insert(deleteLog[deleterName], tick())
 	
-				local closest = nil
-				local closestDist = DELETE_RADIUS
-	
-				for _, player in pairs(Players:GetPlayers()) do
-					local char = player.Character
-					if char and char:FindFirstChild("HumanoidRootPart") then
-						local dist = (char.HumanoidRootPart.Position - oldPos).Magnitude
-						if dist <= closestDist and holdingDelete(player) then
-							closestDist = dist
-							closest = player
-						end
-					end
-				end
-	
-				if closest and closest.Name ~= ownerName and not isWhitelisted(closest.Name) then
-	
-					deleteLog[closest.Name] = deleteLog[closest.Name] or {}
-					table.insert(deleteLog[closest.Name], tick())
-	
-					local now = tick()
-					local valid = {}
-	
-					for _, t in ipairs(deleteLog[closest.Name]) do
-						if now - t <= TIME_WINDOW then
-							table.insert(valid, t)
-						end
-					end
-	
-					deleteLog[closest.Name] = valid
-	
-					if #valid >= DELETE_LIMIT then
-						local last = lastAnnounce[closest.Name]
-						if not last or (now - last) >= ANNOUNCE_COOLDOWN then
-							sendChat("🚨GRIEF ALERT: " .. closest.DisplayName)
-							lastAnnounce[closest.Name] = now
-						end
-						deleteLog[closest.Name] = {}
-					end
-				end
+		local now = tick()
+		local valid = {}
+		for _, t in ipairs(deleteLog[deleterName]) do
+			if now - t <= TIME_WINDOW then
+				table.insert(valid, t)
 			end
 		end
+		deleteLog[deleterName] = valid
 	
-		previousBricks = currentBricks
+		if #valid >= DELETE_LIMIT then
+			local last = lastAnnounce[deleterName]
+			if not last or (now - last) >= ANNOUNCE_COOLDOWN then
+				sendChat("🚨GRIEF ALERT: " .. closest.DisplayName)
+				lastAnnounce[deleterName] = now
+			end
+			deleteLog[deleterName] = {}
+		end
 	end)
 	
 	-- ============================================================
 	-- ENABLE / DISABLE
 	-- ============================================================
-	
 	local function enable()
 		isEnabled = true
-		bricksFolder = workspace:FindFirstChild("Bricks")
-		if bricksFolder then
-			previousBricks = snapshot()
-		end
-	
+		deleteLog = {}
+		lastSeenLog = shared.GriefLog or ""
 		if ProtectionAccentColor then
 			GriefTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
 		else
@@ -11555,25 +11514,12 @@ local script = G2L["11c"];
 	local function disable()
 		isEnabled = false
 		deleteLog = {}
-		previousBricks = {}
 		GriefTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	end
 	
-	-- ============================================================
-	-- TOGGLE
-	-- ============================================================
-	
 	GriefTickBox.MouseButton1Click:Connect(function()
-		if isEnabled then
-			disable()
-		else
-			enable()
-		end
+		if isEnabled then disable() else enable() end
 	end)
-	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
 	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
@@ -11591,10 +11537,6 @@ local script = G2L["120"];
 	local RunService = game:GetService("RunService")
 	
 	local LocalPlayer = Players.LocalPlayer
-	
-	-- ============================================================
-	-- UI REFERENCES (mirror GriefPro structure)
-	-- ============================================================
 	
 	local GriefFlingRow = script.Parent
 	local GriefFlingTickBox = GriefFlingRow.GriefFlingTickBox
@@ -11614,23 +11556,14 @@ local script = G2L["120"];
 		return false
 	end
 	
-	-- ============================================================
-	-- CONFIG
-	-- ============================================================
-	
 	local isEnabled = false
 	local deleteLog = {}
 	local DELETE_LIMIT = 10
 	local TIME_WINDOW = 60
-	local DELETE_RADIUS = 24
-	local FLING_TIMEOUT = 7       -- seconds before giving up
-	local FLING_SUCCESS_DIST = 120 -- studs moved = successful fling
-	local FLING_COOLDOWN = 60     -- seconds before same player can be flung again
+	local FLING_TIMEOUT = 7
+	local FLING_SUCCESS_DIST = 120
+	local FLING_COOLDOWN = 60
 	local lastFlung = {}
-	
-	-- ============================================================
-	-- TOOLTIP
-	-- ============================================================
 	
 	GriefFlingTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
@@ -11684,41 +11617,13 @@ local script = G2L["120"];
 		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
 		tooltipFrame.Visible = true
 	end)
-	
 	GriefFlingTickBox.MouseLeave:Connect(function()
 		tooltipFrame.Visible = false
 	end)
 	
 	-- ============================================================
-	-- UTILITY
-	-- ============================================================
-	
-	local function holdingDelete(player)
-		local char = player.Character
-		if not char then return false end
-		for _, obj in pairs(char:GetChildren()) do
-			if obj:IsA("Tool") and obj.Name:lower():find("delete") then
-				return true
-			end
-		end
-		return false
-	end
-	
-	local function sendChat(message)
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
-		else
-			game:GetService("ReplicatedStorage")
-				.DefaultChatSystemChatEvents
-				.SayMessageRequest
-				:FireServer(message, "All")
-		end
-	end
-	
-	-- ============================================================
 	-- FLING LOGIC
 	-- ============================================================
-	
 	local function flingPlayer(target)
 		local myChar = LocalPlayer.Character
 		if not myChar then return false end
@@ -11730,11 +11635,9 @@ local script = G2L["120"];
 		local tHRP = tChar:FindFirstChild("HumanoidRootPart")
 		if not tHRP then return false end
 	
-		-- Save position to return to
 		local savedCFrame = myHRP.CFrame
 		local targetStartPos = tHRP.Position
 	
-		-- Apply massive BodyVelocity to OURSELVES (we own our own character)
 		local BV = Instance.new("BodyVelocity")
 		BV.Name = "GriefFlingBV"
 		BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
@@ -11746,35 +11649,27 @@ local script = G2L["120"];
 		Thrust.Force = Vector3.new(20000, 20000, 20000)
 		Thrust.Parent = myHRP
 	
-		-- Ram ourselves into the target every heartbeat
 		local startTime = tick()
 		local flinged = false
 	
 		repeat
 			if not tHRP or not tHRP.Parent then break end
 			if not myHRP or not myHRP.Parent then break end
-	
-			-- Teleport our HRP onto theirs every frame = collision force transfers to them
 			myHRP.CFrame = tHRP.CFrame
 			Thrust.Location = tHRP.Position
-	
-			-- Check if they've been launched far enough
 			if (tHRP.Position - targetStartPos).Magnitude > FLING_SUCCESS_DIST then
 				flinged = true
 				break
 			end
-	
 			RunService.Heartbeat:Wait()
 		until (tick() - startTime) >= FLING_TIMEOUT
 	
-		-- Zero out forces before destroying so they don't carry over to us
 		BV.Velocity = Vector3.new(0, 0, 0)
 		BV.MaxForce = Vector3.new(0, 0, 0)
 		Thrust.Force = Vector3.new(0, 0, 0)
 		BV:Destroy()
 		Thrust:Destroy()
 	
-		-- Zero out our own velocity so we don't go flying when we tp back
 		for _, part in pairs(myChar:GetChildren()) do
 			if part:IsA("BasePart") then
 				part.AssemblyLinearVelocity = Vector3.zero
@@ -11782,13 +11677,11 @@ local script = G2L["120"];
 			end
 		end
 	
-		-- Wait a frame for physics to settle then snap back
 		task.wait()
 	
 		if myHRP and myHRP.Parent then
 			myHRP.CFrame = savedCFrame
 			task.wait()
-			-- Zero out again after tp so we dont drift from saved pos
 			for _, part in pairs(myChar:GetChildren()) do
 				if part:IsA("BasePart") then
 					part.AssemblyLinearVelocity = Vector3.zero
@@ -11797,47 +11690,41 @@ local script = G2L["120"];
 			end
 		end
 	
+		if flinged then
+			print("Successfully flung " .. target.Name)
+		else
+			print("Failed to fling " .. target.Name)
+		end
+	
 		return flinged
 	end
 	
 	-- ============================================================
 	-- FLING QUEUE
 	-- ============================================================
-	
-	local flingQueue = {}    -- ordered list of player names to fling
-	local queuedSet = {}     -- set for fast duplicate checking
+	local flingQueue = {}
+	local queuedSet = {}
 	local isFlingActive = false
 	
 	local function processQueue()
 		if isFlingActive then return end
 		if #flingQueue == 0 then return end
-	
 		isFlingActive = true
 	
-		-- Pull next target off the front of the queue
 		local targetName = table.remove(flingQueue, 1)
 		queuedSet[targetName] = nil
 	
 		local target = Players:FindFirstChild(targetName)
-	
 		if target and target.Character then
 			local success = flingPlayer(target)
 			if success then
 				lastFlung[targetName] = tick()
-				sendChat("✅Successfully Flung: " .. target.DisplayName)
-				print("Successfully flung " .. targetName)
-			else
-				sendChat("🚫Failed to Fling: " .. target.DisplayName)
-				print("Failed to fling " .. targetName)
 			end
 		else
-			-- Player left or has no character, skip
 			print("Skipped fling for " .. targetName .. " (not in game)")
 		end
 	
 		isFlingActive = false
-	
-		-- Process next in queue
 		if #flingQueue > 0 then
 			task.spawn(processQueue)
 		end
@@ -11845,7 +11732,7 @@ local script = G2L["120"];
 	
 	local function queueFling(player)
 		local name = player.Name
-		if queuedSet[name] then return end -- already in queue
+		if queuedSet[name] then return end
 		local now = tick()
 		if lastFlung[name] and (now - lastFlung[name]) < FLING_COOLDOWN then return end
 		queuedSet[name] = true
@@ -11854,96 +11741,49 @@ local script = G2L["120"];
 	end
 	
 	-- ============================================================
-	-- DETECTION (mirrors GriefPro)
+	-- READ FROM SHARED GRIEFLOG
 	-- ============================================================
-	
-	local bricksFolder = nil
-	local previousBricks = {}
-	
-	local function getOwner(brick)
-		if not bricksFolder then return "Server" end
-		if brick:IsDescendantOf(bricksFolder) then
-			local parent = brick.Parent
-			if parent and Players:FindFirstChild(parent.Name) then
-				return parent.Name
-			end
-		end
-		return "Server"
-	end
-	
-	local function snapshot()
-		local current = {}
-		if not bricksFolder then return current end
-		for _, obj in pairs(bricksFolder:GetDescendants()) do
-			if obj:IsA("BasePart") and obj.Name == "Brick" then
-				current[obj] = {
-					position = obj.Position,
-					owner = getOwner(obj)
-				}
-			end
-		end
-		return current
-	end
+	local lastSeenLog = ""
 	
 	RunService.Heartbeat:Connect(function()
 		if not isEnabled then return end
-		if not bricksFolder then return end
+		local val = shared.GriefLog
+		if not val or val == "" or val == lastSeenLog then return end
+		lastSeenLog = val
 	
-		local currentBricks = snapshot()
+		local deleterName, ownerName = val:match("^(.+)|(.+)|.+$")
+		if not deleterName then return end
 	
-		for oldBrick, data in pairs(previousBricks) do
-			if not currentBricks[oldBrick] then
-				local oldPos = data.position
-				local ownerName = data.owner
+		local closest = Players:FindFirstChild(deleterName)
+		if not closest then return end
+		if isWhitelisted(deleterName) then return end
+		if shared.GriefDetectHandling and shared.GriefDetectHandling[deleterName] then return end
 	
-				local closest = nil
-				local closestDist = DELETE_RADIUS
+		deleteLog[deleterName] = deleteLog[deleterName] or {}
+		table.insert(deleteLog[deleterName], tick())
 	
-				for _, player in pairs(Players:GetPlayers()) do
-					local char = player.Character
-					if char and char:FindFirstChild("HumanoidRootPart") then
-						local dist = (char.HumanoidRootPart.Position - oldPos).Magnitude
-						if dist <= closestDist and holdingDelete(player) then
-							closestDist = dist
-							closest = player
-						end
-					end
-				end
-	
-				if closest and closest.Name ~= ownerName and not isWhitelisted(closest.Name) then
-					deleteLog[closest.Name] = deleteLog[closest.Name] or {}
-					table.insert(deleteLog[closest.Name], tick())
-	
-					local now = tick()
-					local valid = {}
-					for _, t in ipairs(deleteLog[closest.Name]) do
-						if now - t <= TIME_WINDOW then
-							table.insert(valid, t)
-						end
-					end
-					deleteLog[closest.Name] = valid
-	
-					if #valid >= DELETE_LIMIT then
-						queueFling(closest)
-						deleteLog[closest.Name] = {}
-					end
-				end
+		local now = tick()
+		local valid = {}
+		for _, t in ipairs(deleteLog[deleterName]) do
+			if now - t <= TIME_WINDOW then
+				table.insert(valid, t)
 			end
 		end
+		deleteLog[deleterName] = valid
 	
-		previousBricks = currentBricks
+		if #valid >= DELETE_LIMIT then
+			queueFling(closest)
+			deleteLog[deleterName] = {}
+		end
 	end)
 	
 	-- ============================================================
 	-- ENABLE / DISABLE
 	-- ============================================================
-	
 	local function enable()
 		isEnabled = true
-		bricksFolder = workspace:FindFirstChild("Bricks")
-		if bricksFolder then
-			previousBricks = snapshot()
-		end
+		deleteLog = {}
+		lastSeenLog = shared.GriefLog or ""
 		if ProtectionAccentColor then
 			GriefFlingTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
 		else
@@ -11954,27 +11794,14 @@ local script = G2L["120"];
 	local function disable()
 		isEnabled = false
 		deleteLog = {}
-		previousBricks = {}
 		flingQueue = {}
 		queuedSet = {}
 		GriefFlingTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	end
 	
-	-- ============================================================
-	-- TOGGLE
-	-- ============================================================
-	
 	GriefFlingTickBox.MouseButton1Click:Connect(function()
-		if isEnabled then
-			disable()
-		else
-			enable()
-		end
+		if isEnabled then disable() else enable() end
 	end)
-	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
 	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
@@ -12698,9 +12525,311 @@ local script = G2L["12b"];
 	end)
 end;
 task.spawn(C_12b);
--- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefDetectRow.GriefDetectScript
 local function C_132()
 local script = G2L["132"];
+	local Players = game:GetService("Players")
+	local TextChatService = game:GetService("TextChatService")
+	local RunService = game:GetService("RunService")
+	
+	local LocalPlayer = Players.LocalPlayer
+	
+	local GriefDetectRow = script.Parent
+	local GriefDetectTickBox = GriefDetectRow.GriefDetectTickBox
+	local GriefDetectText = GriefDetectRow.GriefDetectText
+	
+	local ProtectionGroup = GriefDetectRow.Parent
+	local ProtectionAccentColor = ProtectionGroup.ProtectionAccentColor
+	
+	local WListRow = ProtectionGroup:FindFirstChild("WListRow")
+	
+	local function isWhitelisted(playerName)
+		if not WListRow then return false end
+		local wl = WListRow:GetAttribute("Whitelist") or ""
+		for _, name in ipairs(wl:split(",")) do
+			if name == playerName then return true end
+		end
+		return false
+	end
+	
+	-- ============================================================
+	-- CONFIG
+	-- ============================================================
+	local isEnabled = false
+	local DELETE_LIMIT = 10
+	local BLOCK_COOLDOWN = 10
+	local TIME_THRESHOLD = 700
+	local FLING_TIMEOUT = 12
+	local FLING_SUCCESS_DIST = 120
+	
+	-- ============================================================
+	-- STATE
+	-- ============================================================
+	local breakLog = {}
+	local detectedPlayers = {}
+	
+	-- shared priority set so GriefPro and GriefFling know to back off
+	shared.GriefDetectHandling = shared.GriefDetectHandling or {}
+	
+	-- ============================================================
+	-- TOOLTIP
+	-- ============================================================
+	GriefDetectTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then return p end
+			p = p.Parent
+		end
+	end
+	
+	local tooltipFrame = Instance.new("Frame")
+	tooltipFrame.Name = "GriefDetectTooltip"
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	tooltipFrame.BorderSizePixel = 0
+	tooltipFrame.ZIndex = 100
+	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
+	tooltipFrame.Visible = false
+	tooltipFrame.Parent = getScreenGui()
+	
+	local tooltipStroke = Instance.new("UIStroke")
+	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
+	tooltipStroke.Thickness = 1
+	tooltipStroke.Parent = tooltipFrame
+	
+	local tooltipPadding = Instance.new("UIPadding")
+	tooltipPadding.PaddingTop = UDim.new(0, 6)
+	tooltipPadding.PaddingBottom = UDim.new(0, 6)
+	tooltipPadding.PaddingLeft = UDim.new(0, 6)
+	tooltipPadding.PaddingRight = UDim.new(0, 6)
+	tooltipPadding.Parent = tooltipFrame
+	
+	local tooltipText = Instance.new("TextLabel")
+	tooltipText.BackgroundTransparency = 1
+	tooltipText.Text = "Detects likely griefers under 700 seconds in server who break other players blocks too quickly and attempts to fling them"
+	tooltipText.TextColor3 = Color3.new(1, 1, 1)
+	tooltipText.TextSize = 14
+	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
+	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
+	tooltipText.Font = Enum.Font.GothamSemibold
+	tooltipText.TextWrapped = true
+	tooltipText.Size = UDim2.new(0, 200, 0, 0)
+	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipText.ZIndex = 101
+	tooltipText.Parent = tooltipFrame
+	
+	GriefDetectTickBox.MouseEnter:Connect(function()
+		local abs = GriefDetectTickBox.AbsolutePosition
+		local size = GriefDetectTickBox.AbsoluteSize
+		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+		tooltipFrame.Visible = true
+	end)
+	GriefDetectTickBox.MouseLeave:Connect(function()
+		tooltipFrame.Visible = false
+	end)
+	
+	-- ============================================================
+	-- HELPERS
+	-- ============================================================
+	local function sendChat(message)
+		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
+		else
+			game:GetService("ReplicatedStorage")
+				.DefaultChatSystemChatEvents
+				.SayMessageRequest
+				:FireServer(message, "All")
+		end
+	end
+	
+	local function getPlayerTime(player)
+		local ls = player:FindFirstChild("leaderstats")
+		if not ls then return 9999 end
+		local t = ls:FindFirstChild("Time")
+		if not t then return 9999 end
+		return t.Value
+	end
+	
+	-- ============================================================
+	-- FLING LOGIC
+	-- ============================================================
+	local function flingPlayer(target)
+		local myChar = LocalPlayer.Character
+		if not myChar then return false end
+		local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+		if not myHRP then return false end
+	
+		local tChar = target and target.Character
+		if not tChar then return false end
+		local tHRP = tChar:FindFirstChild("HumanoidRootPart")
+		if not tHRP then return false end
+	
+		local savedCFrame = myHRP.CFrame
+		local targetStartPos = tHRP.Position
+	
+		local BV = Instance.new("BodyVelocity")
+		BV.Name = "GriefDetectFlingBV"
+		BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
+		BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		BV.Parent = myHRP
+	
+		local Thrust = Instance.new("BodyThrust")
+		Thrust.Name = "GriefDetectFlingThrust"
+		Thrust.Force = Vector3.new(20000, 20000, 20000)
+		Thrust.Parent = myHRP
+	
+		local startTime = tick()
+		local flinged = false
+	
+		repeat
+			if not tHRP or not tHRP.Parent then break end
+			if not myHRP or not myHRP.Parent then break end
+			myHRP.CFrame = tHRP.CFrame
+			Thrust.Location = tHRP.Position
+			if (tHRP.Position - targetStartPos).Magnitude > FLING_SUCCESS_DIST then
+				flinged = true
+				break
+			end
+			RunService.Heartbeat:Wait()
+		until (tick() - startTime) >= FLING_TIMEOUT
+	
+		BV.Velocity = Vector3.new(0, 0, 0)
+		BV.MaxForce = Vector3.new(0, 0, 0)
+		Thrust.Force = Vector3.new(0, 0, 0)
+		BV:Destroy()
+		Thrust:Destroy()
+	
+		for _, part in pairs(myChar:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.AssemblyLinearVelocity = Vector3.zero
+				part.AssemblyAngularVelocity = Vector3.zero
+			end
+		end
+	
+		task.wait()
+	
+		if myHRP and myHRP.Parent then
+			myHRP.CFrame = savedCFrame
+			task.wait()
+			for _, part in pairs(myChar:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.AssemblyLinearVelocity = Vector3.zero
+					part.AssemblyAngularVelocity = Vector3.zero
+				end
+			end
+		end
+	
+		return flinged
+	end
+	
+	-- ============================================================
+	-- DETECTION HANDLER
+	-- ============================================================
+	local function handleDetection(player)
+		if detectedPlayers[player.Name] then return end
+		detectedPlayers[player.Name] = true
+		shared.GriefDetectHandling[player.Name] = true
+	
+		sendChat("⚠️POSITIVE GRIEF ALERT: " .. player.DisplayName)
+	
+		task.spawn(function()
+			local success = flingPlayer(player)
+			if success then
+				sendChat("✅Successfully Flung: " .. player.DisplayName)
+			else
+				sendChat("❌Failed To Fling: " .. player.DisplayName)
+			end
+			-- release priority after fling attempt
+			shared.GriefDetectHandling[player.Name] = nil
+			-- cooldown before can be detected again
+			task.wait(60)
+			detectedPlayers[player.Name] = nil
+		end)
+	end
+	
+	-- ============================================================
+	-- READ FROM SHARED GRIEFLOG
+	-- ============================================================
+	local lastSeenLog = ""
+	
+	RunService.Heartbeat:Connect(function()
+		if not isEnabled then return end
+		local val = shared.GriefLog
+		if not val or val == "" or val == lastSeenLog then return end
+		lastSeenLog = val
+	
+		local deleterName, ownerName = val:match("^(.+)|(.+)|.+$")
+		if not deleterName then return end
+	
+		local player = Players:FindFirstChild(deleterName)
+		if not player then return end
+		if isWhitelisted(deleterName) then return end
+		if player == LocalPlayer then return end
+	
+		-- check time threshold
+		if getPlayerTime(player) >= TIME_THRESHOLD then return end
+	
+		-- log this break
+		breakLog[deleterName] = breakLog[deleterName] or {}
+		local now = tick()
+		table.insert(breakLog[deleterName], now)
+	
+		-- clean entries older than BLOCK_COOLDOWN
+		local valid = {}
+		for _, t in ipairs(breakLog[deleterName]) do
+			if now - t <= BLOCK_COOLDOWN then
+				table.insert(valid, t)
+			end
+		end
+		breakLog[deleterName] = valid
+	
+		if #valid >= DELETE_LIMIT then
+			handleDetection(player)
+			breakLog[deleterName] = {}
+		end
+	end)
+	
+	-- ============================================================
+	-- ENABLE / DISABLE
+	-- ============================================================
+	local function enable()
+		isEnabled = true
+		breakLog = {}
+		detectedPlayers = {}
+		lastSeenLog = shared.GriefLog or ""
+		if ProtectionAccentColor then
+			GriefDetectTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
+		else
+			GriefDetectTickBox.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+		end
+	end
+	
+	local function disable()
+		isEnabled = false
+		breakLog = {}
+		detectedPlayers = {}
+		shared.GriefDetectHandling = {}
+		GriefDetectTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	end
+	
+	GriefDetectTickBox.MouseButton1Click:Connect(function()
+		if isEnabled then disable() else enable() end
+	end)
+	
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			tooltipFrame:Destroy()
+			isEnabled = false
+			shared.GriefDetectHandling = {}
+		end
+	end)
+end;
+task.spawn(C_132);
+-- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
+local function C_136()
+local script = G2L["136"];
 	-- DragHandler
 	-- Handles dragging the GUI and minimize/maximize functionality
 	
@@ -12744,10 +12873,10 @@ local script = G2L["132"];
 	-- Connect minimize button
 	MinimizeButton.MouseButton1Click:Connect(toggleMinimize)
 end;
-task.spawn(C_132);
+task.spawn(C_136);
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLEScript
-local function C_133()
-local script = G2L["133"];
+local function C_137()
+local script = G2L["137"];
 	local RunService = game:GetService("RunService")
 	
 	local TopRow = script.Parent
@@ -12769,10 +12898,10 @@ local script = G2L["133"];
 		Title.Text = "Universal Script GUI | by agarv | " .. fps .. " fps"
 	end)
 end;
-task.spawn(C_133);
+task.spawn(C_137);
 -- StarterGui.ScreenGui.KeybindFrame.KeybindHideScript
-local function C_137()
-local script = G2L["137"];
+local function C_13b()
+local script = G2L["13b"];
 	-- KeybindHideScript
 	-- Handles Hide/Show GUI functionality
 	
@@ -12847,10 +12976,10 @@ local script = G2L["137"];
 	HideGUIButton.MouseButton1Click:Connect(toggleHideGUI)
 	
 end;
-task.spawn(C_137);
+task.spawn(C_13b);
 -- StarterGui.ScreenGui.KeybindFrame.KeybindLockScript
-local function C_138()
-local script = G2L["138"];
+local function C_13c()
+local script = G2L["13c"];
 	-- KeybindLockScript
 	-- Handles Lock/Unlock GUI functionality
 	
@@ -12883,10 +13012,10 @@ local script = G2L["138"];
 	LockGUIButton.MouseButton1Click:Connect(toggleLockGUI)
 	
 end;
-task.spawn(C_138);
+task.spawn(C_13c);
 -- StarterGui.ScreenGui.KeybindFrame.KeybindDragScript
-local function C_139()
-local script = G2L["139"];
+local function C_13d()
+local script = G2L["13d"];
 	-- KeybindDragScript
 	-- Handles dragging the KeybindFrame with mobile touch support
 	
@@ -12942,6 +13071,6 @@ local script = G2L["139"];
 	end)
 	
 end;
-task.spawn(C_139);
+task.spawn(C_13d);
 
 return G2L["1"], require;
