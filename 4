@@ -3606,7 +3606,7 @@ G2L["146"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["146"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["146"]["LayoutOrder"] = 30;
 G2L["146"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["146"]["Text"] = [[6]];
+G2L["146"]["Text"] = [[8]];
 G2L["146"]["Name"] = [[VersionNumber]];
 G2L["146"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -11299,7 +11299,7 @@ local script = G2L["10a"];
 	-- ============================================================
 	local pendingPlayers = {}  -- display names of players enlightened in window
 	local windowTimer = nil
-	local WINDOW = 2
+	local WINDOW = 1
 	
 	local function sendEnlightenMessage()
 		if #pendingPlayers == 0 then return end
@@ -11324,24 +11324,6 @@ local script = G2L["10a"];
 		if player == LocalPlayer then return end
 	
 		print("[ENLIGHTENLOG] " .. player.Name .. " (" .. player.DisplayName .. ") received The Arkenstone")
-	
-		-- add to pending if not already in there
-		local alreadyPending = false
-		for _, name in ipairs(pendingPlayers) do
-			if name == player.DisplayName then
-				alreadyPending = true
-				break
-			end
-		end
-		if not alreadyPending then
-			table.insert(pendingPlayers, player.DisplayName)
-		end
-	
-		-- cancel existing timer and restart 2 second window
-		if windowTimer then
-			task.cancel(windowTimer)
-		end
-		windowTimer = task.delay(WINDOW, sendEnlightenMessage)
 	end
 	
 	-- ============================================================
@@ -11349,23 +11331,64 @@ local script = G2L["10a"];
 	-- ============================================================
 	local watchedPlayers = {}
 	
+	local alreadyDetected = {}
+	
 	local function watchPlayer(player)
 		if watchedPlayers[player] then return end
 		watchedPlayers[player] = true
 	
-		local backpack = player:WaitForChild("Backpack", 10)
-		if not backpack then return end
-	
-		-- check if they already have it
-		if backpack:FindFirstChild("The Arkenstone") then
-			onPlayerEnlightened(player)
-		end
-	
-		-- watch for it being added
-		backpack.ChildAdded:Connect(function(item)
-			if item.Name == "The Arkenstone" then
+		local function checkAndFire()
+			if alreadyDetected[player] then return end
+			local backpack = player:FindFirstChild("Backpack")
+			local char = workspace:FindFirstChild(player.Name)
+			local inBackpack = backpack and backpack:FindFirstChild("The Arkenstone")
+			local inChar = char and char:FindFirstChild("The Arkenstone")
+			if inBackpack or inChar then
+				alreadyDetected[player] = true
 				onPlayerEnlightened(player)
 			end
+		end
+	
+		-- check immediately
+		checkAndFire()
+	
+		-- watch backpack
+		local backpack = player:WaitForChild("Backpack", 10)
+		if backpack then
+			backpack.ChildAdded:Connect(function(item)
+				if item.Name == "The Arkenstone" then
+					checkAndFire()
+				end
+			end)
+			backpack.ChildRemoved:Connect(function(item)
+				if item.Name == "The Arkenstone" then
+					alreadyDetected[player] = nil
+				end
+			end)
+		end
+	
+		-- watch character for when they equip it
+		local function watchChar(char)
+			if not char then return end
+			char.ChildAdded:Connect(function(item)
+				if item.Name == "The Arkenstone" then
+					checkAndFire()
+				end
+			end)
+			char.ChildRemoved:Connect(function(item)
+				if item.Name == "The Arkenstone" then
+					alreadyDetected[player] = nil
+				end
+			end)
+		end
+	
+		if player.Character then
+			watchChar(player.Character)
+		end
+		player.CharacterAdded:Connect(function(char)
+			-- reset detected on respawn so it can be detected again if re-enlightened
+			alreadyDetected[player] = nil
+			watchChar(char)
 		end)
 	end
 	
