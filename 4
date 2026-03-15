@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 327 | Scripts: 69 | Modules: 0 | Tags: 0
+-- Instances: 328 | Scripts: 70 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -2976,7 +2976,7 @@ G2L["10c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["10c"]["BackgroundTransparency"] = 1;
 G2L["10c"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["10c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["10c"]["Text"] = [[enlighten]];
+G2L["10c"]["Text"] = [[Enlighten Log]];
 G2L["10c"]["Name"] = [[EnlightenLogText]];
 G2L["10c"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -3606,7 +3606,7 @@ G2L["146"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["146"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["146"]["LayoutOrder"] = 30;
 G2L["146"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["146"]["Text"] = [[5]];
+G2L["146"]["Text"] = [[6]];
 G2L["146"]["Name"] = [[VersionNumber]];
 G2L["146"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -3622,6 +3622,11 @@ G2L["147"]["LayoutOrder"] = 3;
 G2L["147"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["147"]["Text"] = [[DRAG]];
 G2L["147"]["Name"] = [[DragGUI]];
+
+
+-- StarterGui.ScreenGui.ChatQueue
+G2L["148"] = Instance.new("LocalScript", G2L["1"]);
+G2L["148"]["Name"] = [[ChatQueue]];
 
 
 -- StarterGui.ScreenGui.MoveToCorGui
@@ -9953,13 +9958,8 @@ local script = G2L["e8"];
 	-- SHARED HELPERS
 	-- ============================================================
 	local function sendChat(message)
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
-		else
-			game:GetService("ReplicatedStorage")
-				.DefaultChatSystemChatEvents
-				.SayMessageRequest
-				:FireServer(message, "All")
+		if shared.sendChat then
+			shared.sendChat(message)
 		end
 	end
 	
@@ -11265,13 +11265,8 @@ local script = G2L["10a"];
 	-- HELPERS
 	-- ============================================================
 	local function sendChat(message)
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
-		else
-			game:GetService("ReplicatedStorage")
-				.DefaultChatSystemChatEvents
-				.SayMessageRequest
-				:FireServer(message, "All")
+		if shared.sendChat then
+			shared.sendChat(message)
 		end
 	end
 	
@@ -11777,13 +11772,8 @@ local script = G2L["120"];
 	end)
 	
 	local function sendChat(message)
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
-		else
-			game:GetService("ReplicatedStorage")
-				.DefaultChatSystemChatEvents
-				.SayMessageRequest
-				:FireServer(message, "All")
+		if shared.sendChat then
+			shared.sendChat(message)
 		end
 	end
 	
@@ -11798,7 +11788,7 @@ local script = G2L["120"];
 		if not val or val == "" or val == lastSeenLog then return end
 		lastSeenLog = val
 	
-		local deleterName, ownerName = val:match("^(.+)|(.+)|.+$")
+		local deleterName, ownerName = val:match("^([^|]+)|([^|]+)|")
 		if not deleterName then return end
 	
 		local closest = Players:FindFirstChild(deleterName)
@@ -11892,7 +11882,8 @@ local script = G2L["124"];
 	local DELETE_LIMIT = 10
 	local TIME_WINDOW = 30
 	local FLING_TIMEOUT = 7
-	local FLING_SUCCESS_DIST = 120
+	local FLING_SUCCESS_DIST = 150
+	local FLING_SUCCESS_SPEED = 1000
 	local FLING_COOLDOWN = 30
 	local lastFlung = {}
 	
@@ -11992,8 +11983,12 @@ local script = G2L["124"];
 				flinged = true
 				break
 			end
+			if tHRP.AssemblyLinearVelocity.Magnitude > FLING_SUCCESS_SPEED then
+				flinged = true
+				break
+			end
 			RunService.Heartbeat:Wait()
-		until (tick() - startTime) >= FLING_TIMEOUT
+		until flinged or (tick() - startTime) >= FLING_TIMEOUT
 	
 		BV.Velocity = Vector3.new(0, 0, 0)
 		BV.MaxForce = Vector3.new(0, 0, 0)
@@ -12082,7 +12077,7 @@ local script = G2L["124"];
 		if not val or val == "" or val == lastSeenLog then return end
 		lastSeenLog = val
 	
-		local deleterName, ownerName = val:match("^(.+)|(.+)|.+$")
+		local deleterName, ownerName = val:match("^([^|]+)|([^|]+)|")
 		if not deleterName then return end
 	
 		local closest = Players:FindFirstChild(deleterName)
@@ -12891,7 +12886,8 @@ local script = G2L["136"];
 	local BLOCK_COOLDOWN = 10
 	local TIME_THRESHOLD = 600
 	local FLING_TIMEOUT = 10
-	local FLING_SUCCESS_DIST = 120
+	local FLING_SUCCESS_DIST = 150
+	local FLING_SUCCESS_SPEED = 1000
 	
 	-- ============================================================
 	-- STATE
@@ -12938,7 +12934,7 @@ local script = G2L["136"];
 	
 	local tooltipText = Instance.new("TextLabel")
 	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Detects likely griefers under 700 seconds in server who break other players blocks too quickly and attempts to fling them"
+	tooltipText.Text = "Detects likely griefers under 600 seconds in server who break other players blocks too quickly and attempts to fling them"
 	tooltipText.TextColor3 = Color3.new(1, 1, 1)
 	tooltipText.TextSize = 14
 	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
@@ -12964,13 +12960,8 @@ local script = G2L["136"];
 	-- HELPERS
 	-- ============================================================
 	local function sendChat(message)
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
-		else
-			game:GetService("ReplicatedStorage")
-				.DefaultChatSystemChatEvents
-				.SayMessageRequest
-				:FireServer(message, "All")
+		if shared.sendChat then
+			shared.sendChat(message)
 		end
 	end
 	
@@ -13022,8 +13013,12 @@ local script = G2L["136"];
 				flinged = true
 				break
 			end
+			if tHRP.AssemblyLinearVelocity.Magnitude > FLING_SUCCESS_SPEED then
+				flinged = true
+				break
+			end
 			RunService.Heartbeat:Wait()
-		until (tick() - startTime) >= FLING_TIMEOUT
+		until flinged or (tick() - startTime) >= FLING_TIMEOUT
 	
 		BV.Velocity = Vector3.new(0, 0, 0)
 		BV.MaxForce = Vector3.new(0, 0, 0)
@@ -13398,5 +13393,44 @@ local script = G2L["141"];
 	
 end;
 task.spawn(C_141);
+-- StarterGui.ScreenGui.ChatQueue
+local function C_148()
+local script = G2L["148"];
+	-- ChatQueue
+	-- All scripts use shared.sendChat(message) instead of sending directly
+	-- This queues messages and sends them one at a time with a small gap
+	
+	local TextChatService = game:GetService("TextChatService")
+	
+	local queue = {}
+	local isProcessing = false
+	
+	local function processQueue()
+		if isProcessing then return end
+		if #queue == 0 then return end
+		isProcessing = true
+	
+		while #queue > 0 do
+			local message = table.remove(queue, 1)
+			if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+				TextChatService.TextChannels.RBXGeneral:SendAsync(message)
+			else
+				game:GetService("ReplicatedStorage")
+					.DefaultChatSystemChatEvents
+					.SayMessageRequest
+					:FireServer(message, "All")
+			end
+			task.wait(0.3)
+		end
+	
+		isProcessing = false
+	end
+	
+	shared.sendChat = function(message)
+		table.insert(queue, message)
+		task.spawn(processQueue)
+	end
+end;
+task.spawn(C_148);
 
 return G2L["1"], require;
