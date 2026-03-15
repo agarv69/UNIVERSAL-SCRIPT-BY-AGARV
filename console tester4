@@ -1,140 +1,87 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local TextChatService = game:GetService("TextChatService")
 
 local LocalPlayer = Players.LocalPlayer
+local bricksFolder = workspace:WaitForChild("Bricks")
 
-print("loaded")
+print("BlockAge test started - will run for 2 minutes")
 
-local rotations = {
-	CFrame.Angles(0,0,0),
-	CFrame.Angles(0,math.pi,0),
-	CFrame.Angles(math.pi,math.pi,0),
-	CFrame.Angles(math.pi,0,0),
-	CFrame.Angles(0,0,0),
-	CFrame.Angles(0,math.pi,0)
-}
+local brickFirstSeen = {}
 
-local function getPlayer(name)
-	name = name:lower()
-	for _,p in pairs(Players:GetPlayers()) do
-		if p.Name:lower():sub(1,#name) == name then
-			return p
+local function trackExisting()
+	for _, obj in pairs(bricksFolder:GetDescendants()) do
+		if obj:IsA("BasePart") and obj.Name == "Brick" then
+			if not brickFirstSeen[obj] then
+				brickFirstSeen[obj] = tick()
+			end
 		end
 	end
 end
 
-local function flingPlayer(target)
+trackExisting()
 
-	local myChar = LocalPlayer.Character
-	if not myChar then return end
-
-	local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-	local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
-	if not myHRP or not myHum then return end
-
-	local tChar = target.Character
-	if not tChar then return end
-
-	local tHRP = tChar:FindFirstChild("HumanoidRootPart")
-	if not tHRP then return end
-
-	-- Save position
-	local savedPos = myChar:GetPivot()
-
-	-- Create fling force
-	local BV = Instance.new("BodyVelocity")
-	BV.Velocity = Vector3.new(900000000,900000000,900000000)
-	BV.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
-	BV.Parent = tHRP
-
-	local rotIndex = 1
-	local startTime = tick()
-
-	local flingConn
-	flingConn = RunService.Heartbeat:Connect(function()
-
-		if not tHRP or not tHRP.Parent then
-			flingConn:Disconnect()
-			return
+bricksFolder.DescendantAdded:Connect(function(obj)
+	if obj:IsA("BasePart") and obj.Name == "Brick" then
+		if not brickFirstSeen[obj] then
+			brickFirstSeen[obj] = tick()
 		end
-
-		if tick() - startTime > 6 then
-			flingConn:Disconnect()
-			return
-		end
-
-		local rot = rotations[rotIndex]
-		myChar:PivotTo(tHRP.CFrame * rot)
-
-		rotIndex += 1
-		if rotIndex > #rotations then
-			rotIndex = 1
-		end
-	end)
-
-	repeat RunService.Heartbeat:Wait() until not flingConn.Connected
-
-	if BV then
-		BV:Destroy()
 	end
+end)
 
-	-- wait before teleporting back
-	task.wait(0.5)
-
-	myHRP.AssemblyLinearVelocity = Vector3.zero
-	myHRP.AssemblyAngularVelocity = Vector3.zero
-
-	myChar:PivotTo(savedPos)
-
-	print("flinged "..target.Name)
+local function holdingDelete(player)
+	local char = player.Character
+	if not char then return false end
+	for _, obj in pairs(char:GetChildren()) do
+		if obj:IsA("Tool") and obj.Name:lower():find("delete") then
+			return true
+		end
+	end
+	return false
 end
 
+local previousBricks = {}
 
--- CHAT COMMAND DETECTION
-if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+local function snapshotBricks()
+	local current = {}
+	for _, obj in pairs(bricksFolder:GetDescendants()) do
+		if obj:IsA("BasePart") and obj.Name == "Brick" then
+			current[obj] = true
+		end
+	end
+	return current
+end
 
-	TextChatService.OnIncomingMessage = function(message)
+previousBricks = snapshotBricks()
 
-		if message.TextSource then
-			local sender = Players:GetPlayerByUserId(message.TextSource.UserId)
+local startTime = tick()
+local conn
 
-			if sender == LocalPlayer then
-				local msg = message.Text
+conn = RunService.Heartbeat:Connect(function()
+	-- stop after 2 minutes
+	if tick() - startTime >= 120 then
+		conn:Disconnect()
+		print("BlockAge test stopped")
+		return
+	end
 
-				-- 🔥 NEW COMMAND: ;username
-				if msg:sub(1,1) == ";" then
-					local name = msg:sub(2)
-					if name ~= "" then
-						local target = getPlayer(name)
-						if target then
-							flingPlayer(target)
-						else
-							print("player not found")
-						end
+	local currentBricks = snapshotBricks()
+
+	for oldBrick in pairs(previousBricks) do
+		if not currentBricks[oldBrick] then
+			if holdingDelete(LocalPlayer) then
+				local char = LocalPlayer.Character
+				if char and char:FindFirstChild("HumanoidRootPart") then
+					local age = brickFirstSeen[oldBrick]
+					if age then
+						local seconds = math.floor(tick() - age)
+						print("Your block age: " .. seconds .. " seconds")
+					else
+						print("Your block age: unknown (existed before script ran)")
 					end
 				end
 			end
 		end
-
 	end
 
-else
-
-	LocalPlayer.Chatted:Connect(function(msg)
-
-		if msg:sub(1,1) == ";" then
-			local name = msg:sub(2)
-			if name ~= "" then
-				local target = getPlayer(name)
-				if target then
-					flingPlayer(target)
-				else
-					print("player not found")
-				end
-			end
-		end
-
-	end)
-
-end
+	previousBricks = currentBricks
+end)
