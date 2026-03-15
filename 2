@@ -3606,7 +3606,7 @@ G2L["146"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["146"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["146"]["LayoutOrder"] = 30;
 G2L["146"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["146"]["Text"] = [[6]];
+G2L["146"]["Text"] = [[8]];
 G2L["146"]["Name"] = [[VersionNumber]];
 G2L["146"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -11798,7 +11798,7 @@ local script = G2L["120"];
 		if not val or val == "" or val == lastSeenLog then return end
 		lastSeenLog = val
 	
-		local deleterName, ownerName = val:match("^(.+)|(.+)|.+$")
+		local deleterName, ownerName = val:match("^([^|]+)|([^|]+)|")
 		if not deleterName then return end
 	
 		local closest = Players:FindFirstChild(deleterName)
@@ -11892,7 +11892,8 @@ local script = G2L["124"];
 	local DELETE_LIMIT = 10
 	local TIME_WINDOW = 30
 	local FLING_TIMEOUT = 7
-	local FLING_SUCCESS_DIST = 120
+	local FLING_SUCCESS_DIST = 150
+	local FLING_SUCCESS_SPEED = 1000
 	local FLING_COOLDOWN = 30
 	local lastFlung = {}
 	
@@ -11992,8 +11993,12 @@ local script = G2L["124"];
 				flinged = true
 				break
 			end
+			if tHRP.AssemblyLinearVelocity.Magnitude > FLING_SUCCESS_SPEED then
+				flinged = true
+				break
+			end
 			RunService.Heartbeat:Wait()
-		until (tick() - startTime) >= FLING_TIMEOUT
+		until flinged or (tick() - startTime) >= FLING_TIMEOUT
 	
 		BV.Velocity = Vector3.new(0, 0, 0)
 		BV.MaxForce = Vector3.new(0, 0, 0)
@@ -12082,7 +12087,7 @@ local script = G2L["124"];
 		if not val or val == "" or val == lastSeenLog then return end
 		lastSeenLog = val
 	
-		local deleterName, ownerName = val:match("^(.+)|(.+)|.+$")
+		local deleterName, ownerName = val:match("^([^|]+)|([^|]+)|")
 		if not deleterName then return end
 	
 		local closest = Players:FindFirstChild(deleterName)
@@ -12891,7 +12896,8 @@ local script = G2L["136"];
 	local BLOCK_COOLDOWN = 10
 	local TIME_THRESHOLD = 600
 	local FLING_TIMEOUT = 10
-	local FLING_SUCCESS_DIST = 120
+	local FLING_SUCCESS_DIST = 150
+	local FLING_SUCCESS_SPEED = 1000
 	
 	-- ============================================================
 	-- STATE
@@ -13019,6 +13025,10 @@ local script = G2L["136"];
 			myHRP.CFrame = tHRP.CFrame
 			Thrust.Location = tHRP.Position
 			if (tHRP.Position - targetStartPos).Magnitude > FLING_SUCCESS_DIST then
+				flinged = true
+				break
+			end
+			if tHRP.AssemblyLinearVelocity.Magnitude > FLING_SUCCESS_SPEED then
 				flinged = true
 				break
 			end
