@@ -69,17 +69,22 @@ conn = RunService.Heartbeat:Connect(function()
 	for oldBrick in pairs(previousBricks) do
 		if not currentBricks[oldBrick] then
 			if holdingDelete(LocalPlayer) then
-				local char = LocalPlayer.Character
-				if char and char:FindFirstChild("HumanoidRootPart") then
-					local age = brickFirstSeen[oldBrick]
-					if age then
-						local seconds = math.floor(tick() - age)
-						print("Your block age: " .. seconds .. " seconds")
-					else
-						print("Your block age: unknown (existed before script ran)")
-					end
-				end
+	local char = LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		local brickPos = brickFirstSeen[oldBrick] and oldBrick.Position or nil
+		local dist = brickPos and (hrp.Position - oldBrick.Position).Magnitude or 999
+		if dist <= 24 then
+			local age = brickFirstSeen[oldBrick]
+			if age then
+				local seconds = math.floor(tick() - age)
+				print("Your block age: " .. seconds .. " seconds")
+			else
+				print("Your block age: unknown (existed before script ran)")
 			end
+		end
+	end
+end
 		end
 	end
 
