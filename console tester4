@@ -1,26 +1,28 @@
+local VERSION = 170
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
 local LocalPlayer = Players.LocalPlayer
-local bricksFolder = workspace:WaitForChild("Bricks")
+local RunService = game:GetService("RunService")
+local DELETE_RADIUS = 24
 
-print("BlockAge test started - will run for 2 minutes")
+print("Delete Detector Running [ID "..VERSION.."]")
+
+local bricksFolder = workspace:WaitForChild("Bricks")
 
 local brickAge = {}
 
--- Flag all existing bricks as old (over 60 seconds)
 for _, obj in pairs(bricksFolder:GetDescendants()) do
 	if obj:IsA("BasePart") and obj.Name == "Brick" then
-		brickAge[obj] = tick() - 61
+		brickAge[obj] = tick() - 121
 	end
 end
 
--- Track new bricks as they get placed with accurate time
 bricksFolder.DescendantAdded:Connect(function(obj)
 	if obj:IsA("BasePart") and obj.Name == "Brick" then
 		brickAge[obj] = tick()
 	end
 end)
+
+shared.GriefLog = ""
 
 local function holdingDelete(player)
 	local char = player.Character
@@ -33,52 +35,150 @@ local function holdingDelete(player)
 	return false
 end
 
+local function holdingPaint(player)
+	local char = player.Character
+	if not char then return false end
+	for _, obj in pairs(char:GetChildren()) do
+		if obj:IsA("Tool") and obj.Name:lower():find("paint") then
+			return true
+		end
+	end
+	return false
+end
+
 local previousBricks = {}
 
-local function snapshotBricks()
+local function getOwner(brick)
+	if brick:IsDescendantOf(bricksFolder) then
+		local parent = brick.Parent
+		if parent then
+			local possiblePlayer = Players:FindFirstChild(parent.Name)
+			if possiblePlayer then
+				return parent.Name
+			end
+		end
+	end
+	return "Server"
+end
+
+local function snapshot()
 	local current = {}
 	for _, obj in pairs(bricksFolder:GetDescendants()) do
 		if obj:IsA("BasePart") and obj.Name == "Brick" then
-			current[obj] = true
+			current[obj] = {
+				position = obj.Position,
+				owner = getOwner(obj)
+			}
 		end
 	end
 	return current
 end
 
-previousBricks = snapshotBricks()
+previousBricks = snapshot()
 
-local startTime = tick()
-local conn
+-- ============================================================
+-- PAINT/NEON/UNANCHOR DETECTION
+-- ============================================================
+local watchedBricks = {}
 
-conn = RunService.Heartbeat:Connect(function()
-	if tick() - startTime >= 120 then
-		conn:Disconnect()
-		print("BlockAge test stopped")
-		return
-	end
+local function watchBrick(brick)
+	if watchedBricks[brick] then return end
+	watchedBricks[brick] = true
 
-	local currentBricks = snapshotBricks()
+	local ownerName = getOwner(brick)
 
-	for oldBrick in pairs(previousBricks) do
-		if not currentBricks[oldBrick] then
-			if holdingDelete(LocalPlayer) then
-				local char = LocalPlayer.Character
-				local hrp = char and char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					local dist = (hrp.Position - oldBrick.Position).Magnitude
-					if dist <= 24 then
-						local age = brickAge[oldBrick]
-						if age then
-							local seconds = math.floor(tick() - age)
-							print("Your block age: " .. seconds .. " seconds")
-						else
-							print("Your block age: unknown")
-						end
-					end
+	-- watch Material change (neon/toxify detection)
+	brick:GetPropertyChangedSignal("Material"):Connect(function()
+		if not brick or not brick.Parent then return end
+		if brick.Material ~= Enum.Material.Neon then return end
+		local currentOwner = getOwner(brick)
+
+		local closest = nil
+		local closestDist = DELETE_RADIUS
+		for _, player in pairs(Players:GetPlayers()) do
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local dist = (char.HumanoidRootPart.Position - brick.Position).Magnitude
+				if dist <= closestDist and holdingPaint(player) then
+					closestDist = dist
+					closest = player
 				end
 			end
 		end
-	end
 
+		if closest and closest.Name ~= currentOwner then
+			print("[PAINTLOG] "..closest.Name.." neon painted "..currentOwner.."'s brick")
+			shared.PaintLog = closest.Name .. "|" .. currentOwner .. "|neon|" .. tostring(tick())
+		end
+	end)
+
+	-- watch Anchored change (unanchor detection)
+	brick:GetPropertyChangedSignal("Anchored"):Connect(function()
+		if not brick or not brick.Parent then return end
+		if brick.Anchored then return end -- only detect when unanchored
+		local currentOwner = getOwner(brick)
+
+		local closest = nil
+		local closestDist = DELETE_RADIUS
+		for _, player in pairs(Players:GetPlayers()) do
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local dist = (char.HumanoidRootPart.Position - brick.Position).Magnitude
+				if dist <= closestDist and holdingPaint(player) then
+					closestDist = dist
+					closest = player
+				end
+			end
+		end
+
+		if closest and closest.Name ~= currentOwner then
+			print("[PAINTLOG] "..closest.Name.." unanchored "..currentOwner.."'s brick")
+			shared.PaintLog = closest.Name .. "|" .. currentOwner .. "|unanchor|" .. tostring(tick())
+		end
+	end)
+end
+
+-- watch all existing bricks
+for _, obj in pairs(bricksFolder:GetDescendants()) do
+	if obj:IsA("BasePart") and obj.Name == "Brick" then
+		watchBrick(obj)
+	end
+end
+
+-- watch new bricks as they get placed
+bricksFolder.DescendantAdded:Connect(function(obj)
+	if obj:IsA("BasePart") and obj.Name == "Brick" then
+		watchBrick(obj)
+	end
+end)
+
+-- ============================================================
+-- DELETE DETECTION
+-- ============================================================
+RunService.Heartbeat:Connect(function()
+	local currentBricks = snapshot()
+	for oldBrick, data in pairs(previousBricks) do
+		if not currentBricks[oldBrick] then
+			local oldPos = data.position
+			local ownerName = data.owner
+			local closest = nil
+			local closestDist = DELETE_RADIUS
+			for _, player in pairs(Players:GetPlayers()) do
+				local char = player.Character
+				if char and char:FindFirstChild("HumanoidRootPart") then
+					local dist = (char.HumanoidRootPart.Position - oldPos).Magnitude
+					if dist <= closestDist and holdingDelete(player) then
+						closestDist = dist
+						closest = player
+					end
+				end
+			end
+			if closest and closest.Name ~= ownerName then
+				local age = brickAge[oldBrick] and (tick() - brickAge[oldBrick]) or 121
+				print("[GRIEFLOG] "..closest.Name.." deleted "..ownerName.."'s brick (age: "..math.floor(age).."s)")
+				shared.GriefLog = closest.Name .. "|" .. ownerName .. "|" .. tostring(tick()) .. "|" .. tostring(age)
+			end
+		end
+	end
 	previousBricks = currentBricks
 end)
