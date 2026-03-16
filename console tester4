@@ -16,13 +16,8 @@ for _, obj in pairs(bricksFolder:GetDescendants()) do
 	end
 end
 
-bricksFolder.DescendantAdded:Connect(function(obj)
-	if obj:IsA("BasePart") and obj.Name == "Brick" then
-		brickAge[obj] = tick()
-	end
-end)
-
 shared.GriefLog = ""
+shared.PaintLog = ""
 
 local function holdingDelete(player)
 	local char = player.Character
@@ -87,7 +82,6 @@ local function watchBrick(brick)
 
 	local ownerName = getOwner(brick)
 
-	-- watch Material change (neon/toxify detection)
 	brick:GetPropertyChangedSignal("Material"):Connect(function()
 		if not brick or not brick.Parent then return end
 		if brick.Material ~= Enum.Material.Neon then return end
@@ -112,10 +106,9 @@ local function watchBrick(brick)
 		end
 	end)
 
-	-- watch Anchored change (unanchor detection)
 	brick:GetPropertyChangedSignal("Anchored"):Connect(function()
 		if not brick or not brick.Parent then return end
-		if brick.Anchored then return end -- only detect when unanchored
+		if brick.Anchored then return end
 		local currentOwner = getOwner(brick)
 
 		local closest = nil
@@ -138,17 +131,43 @@ local function watchBrick(brick)
 	end)
 end
 
--- watch all existing bricks
 for _, obj in pairs(bricksFolder:GetDescendants()) do
 	if obj:IsA("BasePart") and obj.Name == "Brick" then
 		watchBrick(obj)
 	end
 end
 
--- watch new bricks as they get placed
+-- ============================================================
+-- BUILDLOG TRACKING
+-- ============================================================
+local buildLog = {}
+local BUILD_LIMIT = 15
+local BUILD_WINDOW = 5.5
+
 bricksFolder.DescendantAdded:Connect(function(obj)
 	if obj:IsA("BasePart") and obj.Name == "Brick" then
 		watchBrick(obj)
+		brickAge[obj] = tick()
+
+		local ownerName = getOwner(obj)
+		if ownerName == "Server" then return end
+
+		local now = tick()
+		buildLog[ownerName] = buildLog[ownerName] or {}
+		table.insert(buildLog[ownerName], now)
+
+		local valid = {}
+		for _, t in ipairs(buildLog[ownerName]) do
+			if now - t <= BUILD_WINDOW then
+				table.insert(valid, t)
+			end
+		end
+		buildLog[ownerName] = valid
+
+		if #valid >= BUILD_LIMIT then
+			print("[BUILDLOG] " .. ownerName .. " is placing bricks too fast (" .. #valid .. " blocks in " .. BUILD_WINDOW .. " seconds)")
+			buildLog[ownerName] = {}
+		end
 	end
 end)
 
