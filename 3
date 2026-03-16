@@ -3611,7 +3611,7 @@ G2L["147"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["147"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["147"]["LayoutOrder"] = 30;
 G2L["147"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["147"]["Text"] = [[9]];
+G2L["147"]["Text"] = [[7]];
 G2L["147"]["Name"] = [[VersionNumber]];
 G2L["147"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -13215,14 +13215,14 @@ local script = G2L["137"];
 	-- ============================================================
 	local isEnabled = false
 	local DELETE_LIMIT = 10
-	local BLOCK_COOLDOWN = 10
-	local TIME_THRESHOLD = 600
+	local BLOCK_COOLDOWN = 7
+	local TIME_THRESHOLD = 700
 	local FLING_TIMEOUT = 10
 	local FLING_SUCCESS_SPEED = 1000
 	local PAINT_LIMIT = 10
-	local PAINT_COOLDOWN = 10
+	local PAINT_COOLDOWN = 7
 	local UNANCHOR_LIMIT = 10
-	local UNANCHOR_COOLDOWN = 10
+	local UNANCHOR_COOLDOWN = 7
 	local CHAT_COOLDOWN = 10
 	local BUILD_SPAM_COOLDOWN = 60
 	
@@ -13275,7 +13275,7 @@ local script = G2L["137"];
 	
 	local tooltipText = Instance.new("TextLabel")
 	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Detects likely griefers under 600 seconds in server who break, toxify paint, unanchor, or spam blocks too quickly and attempts to fling them. False detection is most unlikely"
+	tooltipText.Text = "Detects likely griefers under 700 time who break, toxify paint, unanchor, or spam blocks too quickly and attempts to fling them. It will not detect if the player is friends with the other player. False detection is most unlikely"
 	tooltipText.TextColor3 = Color3.new(1, 1, 1)
 	tooltipText.TextSize = 14
 	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
@@ -13314,11 +13314,9 @@ local script = G2L["137"];
 		return t.Value
 	end
 	
-	local function isFriendsWith(griefer, ownerName)
-		local owner = Players:FindFirstChild(ownerName)
-		if not owner then return false end
+	local function isFriendsWith(griefer)
 		local ok, result = pcall(function()
-			return griefer:IsFriendsWith(owner.UserId)
+			return LocalPlayer:IsFriendsWith(griefer.UserId)
 		end)
 		if ok then return result end
 		return false
@@ -13334,14 +13332,14 @@ local script = G2L["137"];
 		return false
 	end
 	
-	local function canDetect(player, ownerName)
+	local function canDetect(player)
 		if not player then return false end
 		if isWhitelisted(player.Name) then return false end
 		if player == LocalPlayer then return false end
 		if getPlayerTime(player) >= TIME_THRESHOLD then return false end
 		if detectedPlayers[player.Name] then return false end
 		if buildSpamCooldown[player.Name] and (tick() - buildSpamCooldown[player.Name]) < BUILD_SPAM_COOLDOWN then return false end
-		if ownerName and isFriendsWith(player, ownerName) then return false end
+		if isFriendsWith(player) then return false end
 		return true
 	end
 	
@@ -13457,7 +13455,7 @@ local script = G2L["137"];
 		local brickAge = tonumber(ageStr) or 0
 	
 		local player = Players:FindFirstChild(deleterName)
-		if not canDetect(player, ownerName) then return end
+		if not canDetect(player) then return end
 		if brickAge < 70 then return end
 	
 		breakLog[deleterName] = breakLog[deleterName] or {}
