@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 331 | Scripts: 70 | Modules: 0 | Tags: 0
+-- Instances: 335 | Scripts: 71 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -3116,7 +3116,7 @@ G2L["119"]["Name"] = [[AntiAccentColor]];
 G2L["11a"] = Instance.new("Frame", G2L["10e"]);
 G2L["11a"]["BackgroundColor3"] = Color3.fromRGB(17, 17, 17);
 G2L["11a"]["BorderMode"] = Enum.BorderMode.Middle;
-G2L["11a"]["Size"] = UDim2.new(0, 170, 0, 185);
+G2L["11a"]["Size"] = UDim2.new(0, 170, 0, 202);
 G2L["11a"]["Position"] = UDim2.new(0, 0, 0.13056, 0);
 G2L["11a"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["11a"]["Name"] = [[ProtectionGroup]];
@@ -3519,155 +3519,202 @@ G2L["13c"]["Name"] = [[ActivateLogsText]];
 G2L["13c"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 
--- StarterGui.ScreenGui.MainFrame.TopBar
-G2L["13d"] = Instance.new("Frame", G2L["5"]);
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.BKitBreakAnnounceRow
+G2L["13d"] = Instance.new("Frame", G2L["11a"]);
 G2L["13d"]["BorderSizePixel"] = 0;
-G2L["13d"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
-G2L["13d"]["Size"] = UDim2.new(0, 442, 0, 25);
+G2L["13d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["13d"]["Size"] = UDim2.new(0, 169, 0, 20);
+G2L["13d"]["Position"] = UDim2.new(0.00294, 0, 0.175, 0);
 G2L["13d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["13d"]["Name"] = [[TopBar]];
+G2L["13d"]["Name"] = [[BKitBreakAnnounceRow]];
+G2L["13d"]["LayoutOrder"] = 20;
+G2L["13d"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.BKitBreakAnnounceRow.BKitBreakAnnounceTickBox
+G2L["13e"] = Instance.new("TextButton", G2L["13d"]);
+G2L["13e"]["TextSize"] = 14;
+G2L["13e"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["13e"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["13e"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["13e"]["ZIndex"] = 5;
+G2L["13e"]["Size"] = UDim2.new(0, 16, 0, 16);
+G2L["13e"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
+G2L["13e"]["Text"] = [[]];
+G2L["13e"]["Name"] = [[BKitBreakAnnounceTickBox]];
+G2L["13e"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.BKitBreakAnnounceRow.BKitBreakAnnounceText
+G2L["13f"] = Instance.new("TextLabel", G2L["13d"]);
+G2L["13f"]["BorderSizePixel"] = 0;
+G2L["13f"]["TextSize"] = 14;
+G2L["13f"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["13f"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["13f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["13f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["13f"]["BackgroundTransparency"] = 1;
+G2L["13f"]["Size"] = UDim2.new(0, 88, 0, 20);
+G2L["13f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["13f"]["Text"] = [[Annouce Broken BKit]];
+G2L["13f"]["Name"] = [[BKitBreakAnnounceText]];
+G2L["13f"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.BKitBreakAnnounceRow.BKitBreakAnnounceScript
+G2L["140"] = Instance.new("LocalScript", G2L["13d"]);
+G2L["140"]["Name"] = [[BKitBreakAnnounceScript]];
+
+
+-- StarterGui.ScreenGui.MainFrame.TopBar
+G2L["141"] = Instance.new("Frame", G2L["5"]);
+G2L["141"]["BorderSizePixel"] = 0;
+G2L["141"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
+G2L["141"]["Size"] = UDim2.new(0, 442, 0, 25);
+G2L["141"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["141"]["Name"] = [[TopBar]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
-G2L["13e"] = Instance.new("LocalScript", G2L["13d"]);
-G2L["13e"]["Name"] = [[MinimizeDragScript]];
+G2L["142"] = Instance.new("LocalScript", G2L["141"]);
+G2L["142"]["Name"] = [[MinimizeDragScript]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLEScript
-G2L["13f"] = Instance.new("LocalScript", G2L["13d"]);
-G2L["13f"]["Name"] = [[TITLEScript]];
+G2L["143"] = Instance.new("LocalScript", G2L["141"]);
+G2L["143"]["Name"] = [[TITLEScript]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeGUI
-G2L["140"] = Instance.new("TextButton", G2L["13d"]);
-G2L["140"]["BorderSizePixel"] = 0;
-G2L["140"]["TextSize"] = 14;
-G2L["140"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["140"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["140"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["140"]["BackgroundTransparency"] = 1;
-G2L["140"]["Size"] = UDim2.new(0, 25, 0, 25);
-G2L["140"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["140"]["Text"] = [[-]];
-G2L["140"]["Name"] = [[MinimizeGUI]];
-G2L["140"]["Position"] = UDim2.new(0.99919, -25, 0, 0);
+G2L["144"] = Instance.new("TextButton", G2L["141"]);
+G2L["144"]["BorderSizePixel"] = 0;
+G2L["144"]["TextSize"] = 14;
+G2L["144"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["144"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["144"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["144"]["BackgroundTransparency"] = 1;
+G2L["144"]["Size"] = UDim2.new(0, 25, 0, 25);
+G2L["144"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["144"]["Text"] = [[-]];
+G2L["144"]["Name"] = [[MinimizeGUI]];
+G2L["144"]["Position"] = UDim2.new(0.99919, -25, 0, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLE
-G2L["141"] = Instance.new("TextLabel", G2L["13d"]);
-G2L["141"]["BorderSizePixel"] = 0;
-G2L["141"]["TextSize"] = 12;
-G2L["141"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["141"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["141"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["141"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["141"]["BackgroundTransparency"] = 1;
-G2L["141"]["Size"] = UDim2.new(0, 200, 0, 25);
-G2L["141"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["141"]["Text"] = [[Universal Script GUI | by agarv | 60 fps | players: 1]];
-G2L["141"]["Name"] = [[TITLE]];
+G2L["145"] = Instance.new("TextLabel", G2L["141"]);
+G2L["145"]["BorderSizePixel"] = 0;
+G2L["145"]["TextSize"] = 12;
+G2L["145"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["145"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["145"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["145"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["145"]["BackgroundTransparency"] = 1;
+G2L["145"]["Size"] = UDim2.new(0, 200, 0, 25);
+G2L["145"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["145"]["Text"] = [[Universal Script GUI | by agarv | 60 fps | players: 1]];
+G2L["145"]["Name"] = [[TITLE]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame
-G2L["142"] = Instance.new("Frame", G2L["1"]);
-G2L["142"]["BorderSizePixel"] = 0;
-G2L["142"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["142"]["Size"] = UDim2.new(0, 80, 0, 88);
-G2L["142"]["Position"] = UDim2.new(0.92489, 0, 0.04342, 0);
-G2L["142"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["142"]["Name"] = [[KeybindFrame]];
-G2L["142"]["BackgroundTransparency"] = 1;
+G2L["146"] = Instance.new("Frame", G2L["1"]);
+G2L["146"]["BorderSizePixel"] = 0;
+G2L["146"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["146"]["Size"] = UDim2.new(0, 80, 0, 88);
+G2L["146"]["Position"] = UDim2.new(0.92489, 0, 0.04342, 0);
+G2L["146"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["146"]["Name"] = [[KeybindFrame]];
+G2L["146"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.ScreenGui.KeybindFrame.KeybindHideScript
-G2L["143"] = Instance.new("LocalScript", G2L["142"]);
-G2L["143"]["Name"] = [[KeybindHideScript]];
+G2L["147"] = Instance.new("LocalScript", G2L["146"]);
+G2L["147"]["Name"] = [[KeybindHideScript]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.KeybindLockScript
-G2L["144"] = Instance.new("LocalScript", G2L["142"]);
-G2L["144"]["Name"] = [[KeybindLockScript]];
+G2L["148"] = Instance.new("LocalScript", G2L["146"]);
+G2L["148"]["Name"] = [[KeybindLockScript]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.KeybindDragScript
-G2L["145"] = Instance.new("LocalScript", G2L["142"]);
-G2L["145"]["Name"] = [[KeybindDragScript]];
+G2L["149"] = Instance.new("LocalScript", G2L["146"]);
+G2L["149"]["Name"] = [[KeybindDragScript]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.HideGUI
-G2L["146"] = Instance.new("TextButton", G2L["142"]);
-G2L["146"]["TextSize"] = 14;
-G2L["146"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["146"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["146"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["146"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["146"]["LayoutOrder"] = 1;
-G2L["146"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["146"]["Text"] = [[Hide GUI]];
-G2L["146"]["Name"] = [[HideGUI]];
-
-
--- StarterGui.ScreenGui.KeybindFrame.UIListLayout
-G2L["147"] = Instance.new("UIListLayout", G2L["142"]);
-G2L["147"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
-
-
--- StarterGui.ScreenGui.KeybindFrame.LockGUI
-G2L["148"] = Instance.new("TextButton", G2L["142"]);
-G2L["148"]["TextSize"] = 14;
-G2L["148"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["148"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["148"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["148"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["148"]["LayoutOrder"] = 2;
-G2L["148"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["148"]["Text"] = [[Lock GUI]];
-G2L["148"]["Name"] = [[LockGUI]];
-
-
--- StarterGui.ScreenGui.KeybindFrame.Version
-G2L["149"] = Instance.new("TextButton", G2L["142"]);
-G2L["149"]["TextWrapped"] = true;
-G2L["149"]["TextSize"] = 14;
-G2L["149"]["TextScaled"] = true;
-G2L["149"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["149"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["149"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["149"]["Size"] = UDim2.new(0, 80, 0, 10);
-G2L["149"]["LayoutOrder"] = 20;
-G2L["149"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["149"]["Text"] = [[GUI Version:]];
-G2L["149"]["Name"] = [[Version]];
-G2L["149"]["Position"] = UDim2.new(0, 0, 0.79545, 0);
-
-
--- StarterGui.ScreenGui.KeybindFrame.VersionNumber
-G2L["14a"] = Instance.new("TextButton", G2L["142"]);
-G2L["14a"]["TextWrapped"] = true;
+G2L["14a"] = Instance.new("TextButton", G2L["146"]);
 G2L["14a"]["TextSize"] = 14;
-G2L["14a"]["TextScaled"] = true;
 G2L["14a"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["14a"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["14a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["14a"]["Size"] = UDim2.new(0, 80, 0, 15);
-G2L["14a"]["LayoutOrder"] = 30;
+G2L["14a"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["14a"]["LayoutOrder"] = 1;
 G2L["14a"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["14a"]["Text"] = [[7]];
-G2L["14a"]["Name"] = [[VersionNumber]];
-G2L["14a"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
+G2L["14a"]["Text"] = [[Hide GUI]];
+G2L["14a"]["Name"] = [[HideGUI]];
+
+
+-- StarterGui.ScreenGui.KeybindFrame.UIListLayout
+G2L["14b"] = Instance.new("UIListLayout", G2L["146"]);
+G2L["14b"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.ScreenGui.KeybindFrame.LockGUI
+G2L["14c"] = Instance.new("TextButton", G2L["146"]);
+G2L["14c"]["TextSize"] = 14;
+G2L["14c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["14c"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["14c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["14c"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["14c"]["LayoutOrder"] = 2;
+G2L["14c"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["14c"]["Text"] = [[Lock GUI]];
+G2L["14c"]["Name"] = [[LockGUI]];
+
+
+-- StarterGui.ScreenGui.KeybindFrame.Version
+G2L["14d"] = Instance.new("TextButton", G2L["146"]);
+G2L["14d"]["TextWrapped"] = true;
+G2L["14d"]["TextSize"] = 14;
+G2L["14d"]["TextScaled"] = true;
+G2L["14d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["14d"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["14d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["14d"]["Size"] = UDim2.new(0, 80, 0, 10);
+G2L["14d"]["LayoutOrder"] = 20;
+G2L["14d"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["14d"]["Text"] = [[GUI Version:]];
+G2L["14d"]["Name"] = [[Version]];
+G2L["14d"]["Position"] = UDim2.new(0, 0, 0.79545, 0);
+
+
+-- StarterGui.ScreenGui.KeybindFrame.VersionNumber
+G2L["14e"] = Instance.new("TextButton", G2L["146"]);
+G2L["14e"]["TextWrapped"] = true;
+G2L["14e"]["TextSize"] = 14;
+G2L["14e"]["TextScaled"] = true;
+G2L["14e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["14e"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["14e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["14e"]["Size"] = UDim2.new(0, 80, 0, 15);
+G2L["14e"]["LayoutOrder"] = 30;
+G2L["14e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["14e"]["Text"] = [[7]];
+G2L["14e"]["Name"] = [[VersionNumber]];
+G2L["14e"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
 
 -- StarterGui.ScreenGui.KeybindFrame.DragGUI
-G2L["14b"] = Instance.new("TextButton", G2L["142"]);
-G2L["14b"]["TextSize"] = 14;
-G2L["14b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["14b"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["14b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["14b"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["14b"]["LayoutOrder"] = 3;
-G2L["14b"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["14b"]["Text"] = [[DRAG]];
-G2L["14b"]["Name"] = [[DragGUI]];
+G2L["14f"] = Instance.new("TextButton", G2L["146"]);
+G2L["14f"]["TextSize"] = 14;
+G2L["14f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["14f"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["14f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["14f"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["14f"]["LayoutOrder"] = 3;
+G2L["14f"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["14f"]["Text"] = [[DRAG]];
+G2L["14f"]["Name"] = [[DragGUI]];
 
 
 -- StarterGui.ScreenGui.MoveToCorGui
@@ -3748,6 +3795,19 @@ local script = G2L["3"];
 	shared.GriefLog = ""
 	shared.PaintLog = ""
 	shared.BuildLog = ""
+	shared.BKitLog = ""
+	
+	-- Watch ReplicatedStorage.Brick for deletion
+	local rs = game:GetService("ReplicatedStorage")
+	local rsBrick = rs:FindFirstChild("Brick")
+	if rsBrick then
+		rsBrick.AncestryChanged:Connect(function()
+			if not rsBrick:IsDescendantOf(game) then
+				print("[BKITLOG] Bkit has been broken")
+				shared.BKitLog = tostring(tick())
+			end
+		end)
+	end
 	
 	local function holdingDelete(player)
 		local char = player.Character
@@ -13687,9 +13747,139 @@ local script = G2L["137"];
 	end)
 end;
 task.spawn(C_137);
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.BKitBreakAnnounceRow.BKitBreakAnnounceScript
+local function C_140()
+local script = G2L["140"];
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local BKitBreakAnnounceRow = script.Parent
+	local BKitBreakAnnounceTickBox = BKitBreakAnnounceRow.BKitBreakAnnounceTickBox
+	local ProtectionGroup = BKitBreakAnnounceRow.Parent
+	local ProtectionAccentColor = ProtectionGroup.ProtectionAccentColor
+	
+	local isEnabled = false
+	local lastSeenBKitLog = ""
+	
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then return p end
+			p = p.Parent
+		end
+	end
+	
+	-- ============================================================
+	-- TOOLTIP
+	-- ============================================================
+	BKitBreakAnnounceTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	
+	local tooltipFrame = Instance.new("Frame")
+	tooltipFrame.Name = "BKitBreakAnnounceTooltip"
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	tooltipFrame.BorderSizePixel = 0
+	tooltipFrame.ZIndex = 100
+	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
+	tooltipFrame.Visible = false
+	tooltipFrame.Parent = getScreenGui()
+	
+	local tooltipStroke = Instance.new("UIStroke")
+	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
+	tooltipStroke.Thickness = 1
+	tooltipStroke.Parent = tooltipFrame
+	
+	local tooltipPadding = Instance.new("UIPadding")
+	tooltipPadding.PaddingTop = UDim.new(0, 6)
+	tooltipPadding.PaddingBottom = UDim.new(0, 6)
+	tooltipPadding.PaddingLeft = UDim.new(0, 6)
+	tooltipPadding.PaddingRight = UDim.new(0, 6)
+	tooltipPadding.Parent = tooltipFrame
+	
+	local tooltipText = Instance.new("TextLabel")
+	tooltipText.BackgroundTransparency = 1
+	tooltipText.Text = "Announces in chat 2x when a player breaks/disables bkit"
+	tooltipText.TextColor3 = Color3.new(1, 1, 1)
+	tooltipText.TextSize = 14
+	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
+	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
+	tooltipText.Font = Enum.Font.GothamSemibold
+	tooltipText.TextWrapped = true
+	tooltipText.Size = UDim2.new(0, 200, 0, 0)
+	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipText.ZIndex = 101
+	tooltipText.Parent = tooltipFrame
+	
+	BKitBreakAnnounceTickBox.MouseEnter:Connect(function()
+		local abs = BKitBreakAnnounceTickBox.AbsolutePosition
+		local size = BKitBreakAnnounceTickBox.AbsoluteSize
+		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+		tooltipFrame.Visible = true
+	end)
+	BKitBreakAnnounceTickBox.MouseLeave:Connect(function()
+		tooltipFrame.Visible = false
+	end)
+	
+	-- ============================================================
+	-- SEND CHAT
+	-- ============================================================
+	local function sendChat(message)
+		if shared.sendChat then
+			shared.sendChat(message)
+		end
+	end
+	
+	-- ============================================================
+	-- DETECTION
+	-- ============================================================
+	RunService.Heartbeat:Connect(function()
+		if not isEnabled then return end
+		local val = shared.BKitLog
+		if not val or val == "" or val == lastSeenBKitLog then return end
+		lastSeenBKitLog = val
+	
+		local msg = "🔊" .. LocalPlayer.DisplayName .. " HAS BROKEN BKIT"
+		task.spawn(function()
+			sendChat(msg)
+			task.wait(0.5)
+			sendChat(msg)
+		end)
+	end)
+	
+	-- ============================================================
+	-- ENABLE / DISABLE
+	-- ============================================================
+	local function enable()
+		isEnabled = true
+		lastSeenBKitLog = shared.BKitLog or ""
+		if ProtectionAccentColor then
+			BKitBreakAnnounceTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
+		else
+			BKitBreakAnnounceTickBox.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+		end
+	end
+	
+	local function disable()
+		isEnabled = false
+		BKitBreakAnnounceTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	end
+	
+	BKitBreakAnnounceTickBox.MouseButton1Click:Connect(function()
+		if isEnabled then disable() else enable() end
+	end)
+	
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			isEnabled = false
+			tooltipFrame:Destroy()
+		end
+	end)
+end;
+task.spawn(C_140);
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
-local function C_13e()
-local script = G2L["13e"];
+local function C_142()
+local script = G2L["142"];
 	-- DragHandler
 	-- Handles dragging the GUI and minimize/maximize functionality
 	
@@ -13733,10 +13923,10 @@ local script = G2L["13e"];
 	-- Connect minimize button
 	MinimizeButton.MouseButton1Click:Connect(toggleMinimize)
 end;
-task.spawn(C_13e);
+task.spawn(C_142);
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLEScript
-local function C_13f()
-local script = G2L["13f"];
+local function C_143()
+local script = G2L["143"];
 	local RunService = game:GetService("RunService")
 	
 	local TopRow = script.Parent
@@ -13758,10 +13948,10 @@ local script = G2L["13f"];
 		Title.Text = "Universal Script GUI | by agarv | " .. fps .. " fps | players: " .. #game:GetService("Players"):GetPlayers()
 	end)
 end;
-task.spawn(C_13f);
+task.spawn(C_143);
 -- StarterGui.ScreenGui.KeybindFrame.KeybindHideScript
-local function C_143()
-local script = G2L["143"];
+local function C_147()
+local script = G2L["147"];
 	-- KeybindHideScript
 	-- Handles Hide/Show GUI functionality
 	
@@ -13836,10 +14026,10 @@ local script = G2L["143"];
 	HideGUIButton.MouseButton1Click:Connect(toggleHideGUI)
 	
 end;
-task.spawn(C_143);
+task.spawn(C_147);
 -- StarterGui.ScreenGui.KeybindFrame.KeybindLockScript
-local function C_144()
-local script = G2L["144"];
+local function C_148()
+local script = G2L["148"];
 	-- KeybindLockScript
 	-- Handles Lock/Unlock GUI functionality
 	
@@ -13872,10 +14062,10 @@ local script = G2L["144"];
 	LockGUIButton.MouseButton1Click:Connect(toggleLockGUI)
 	
 end;
-task.spawn(C_144);
+task.spawn(C_148);
 -- StarterGui.ScreenGui.KeybindFrame.KeybindDragScript
-local function C_145()
-local script = G2L["145"];
+local function C_149()
+local script = G2L["149"];
 	-- KeybindDragScript
 	-- Handles dragging the KeybindFrame with mobile touch support
 	
@@ -13931,6 +14121,6 @@ local script = G2L["145"];
 	end)
 	
 end;
-task.spawn(C_145);
+task.spawn(C_149);
 
 return G2L["1"], require;
