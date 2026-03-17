@@ -4107,7 +4107,7 @@ G2L["171"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["171"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["171"]["LayoutOrder"] = 30;
 G2L["171"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["171"]["Text"] = [[7]];
+G2L["171"]["Text"] = [[8]];
 G2L["171"]["Name"] = [[VersionNumber]];
 G2L["171"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10605,6 +10605,7 @@ local script = G2L["e9"];
 	local BotAccentColor = nil
 	local ChatTriggerBox = nil
 	local ChatReplyBox = nil
+	local BotReplyArkTickBox = nil
 	
 	for _, desc in pairs(ScreenGui:GetDescendants()) do
 		if desc.Name == "BotReplyRow" then
@@ -10625,6 +10626,9 @@ local script = G2L["e9"];
 		end
 		if desc.Name == "ChatReplyRow" then
 			ChatReplyBox = desc:FindFirstChild("ChatReplyBox")
+		end
+		if desc.Name == "BotReplyArkRow" then
+			BotReplyArkTickBox = desc:FindFirstChild("BotReplyArkTickBox")
 		end
 	end
 	-- ============================================================
@@ -11062,7 +11066,8 @@ local script = G2L["e9"];
 	
 						local messageToSend = finalReply
 						local usePrivate = botReplyTickOn(BotReplyPrivTickBox)
-						local useArk = shared.BotReplyArkSend ~= nil
+						local useArk = botReplyTickOn(BotReplyArkTickBox)
+							and shared.BotReplyArkSend ~= nil
 	
 						-- If Ark script exists, let it handle equip + restore
 						if useArk then
@@ -12542,7 +12547,7 @@ local script = G2L["117"];
 	)
 	
 	local replyHelpTooltip = makeTooltip(
-		"Type the message the bot will send a reply.\n\nUse [Username] or [Display] to insert the player's name when they say the trigger word."
+		"Type the message the bot will send a reply.\n\nUse [Username] or [Display] to insert the player's name when they say the trigger word.\nIf your reply is a command, if their username or display contains a _ it won't make commands work on them"
 	)
 	
 	-- ============================================================
@@ -12898,13 +12903,53 @@ local script = G2L["129"];
 	-- LISTEN FOR BOT REPLY REQUEST
 	-- ============================================================
 	
-	shared.BotReplyArkSend = function(message)
-		if not isEnabled then
-			sendChat(message)
+	shared.BotReplyArkSend = function(callback)
+	
+		local Players = game:GetService("Players")
+		local LocalPlayer = Players.LocalPlayer
+	
+		local char = LocalPlayer.Character
+		if not char then
+			callback()
 			return
 		end
 	
-		sendWithArkenstone(message)
+		local hum = char:FindFirstChildWhichIsA("Humanoid")
+		if not hum then
+			callback()
+			return
+		end
+	
+		-- Save currently equipped tool
+		local previousTool = char:FindFirstChildOfClass("Tool")
+	
+		-- Find Arkenstone
+		local arkenstone = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
+			or char:FindFirstChild("The Arkenstone")
+	
+		if not arkenstone then
+			-- No ark, just send normally
+			callback()
+			return
+		end
+	
+		-- Equip Arkenstone
+		hum:EquipTool(arkenstone)
+	
+		-- Slow it down so it doesn’t bug
+		task.wait(0.25)
+	
+		-- SEND CHAT
+		callback()
+	
+		task.wait(0.25)
+	
+		-- Restore previous tool
+		if previousTool and previousTool.Parent == char then
+			hum:EquipTool(previousTool)
+		else
+			hum:UnequipTools()
+		end
 	end
 	
 	-- ============================================================
