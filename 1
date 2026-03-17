@@ -2459,6 +2459,7 @@ G2L["de"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 G2L["df"] = Instance.new("ScrollingFrame", G2L["f"]);
 G2L["df"]["Active"] = true;
 G2L["df"]["BorderSizePixel"] = 0;
+G2L["df"]["CanvasPosition"] = Vector2.new(0, 224.16667);
 G2L["df"]["Name"] = [[TCOPage]];
 G2L["df"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["df"]["Size"] = UDim2.new(0, 349, 0, 250);
@@ -3276,10 +3277,10 @@ G2L["127"]["CursorPosition"] = -1;
 G2L["127"]["Name"] = [[ChatTriggerBox]];
 G2L["127"]["PlaceholderColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["127"]["TextSize"] = 14;
-G2L["127"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["127"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["127"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 25);
 G2L["127"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["127"]["PlaceholderText"] = [[Enter Chat]];
+G2L["127"]["PlaceholderText"] = [[Enter Trigger]];
 G2L["127"]["Size"] = UDim2.new(0, 135, 0, 16);
 G2L["127"]["Position"] = UDim2.new(0.17751, 0, 0.16, 0);
 G2L["127"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
@@ -3329,7 +3330,7 @@ G2L["12b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["12b"]["BackgroundTransparency"] = 1;
 G2L["12b"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["12b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["12b"]["Text"] = [[Case Sensitive]];
+G2L["12b"]["Text"] = [[Equip Enlighten]];
 G2L["12b"]["Name"] = [[BotReplyArkText]];
 G2L["12b"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -3370,7 +3371,7 @@ G2L["12f"]["CursorPosition"] = -1;
 G2L["12f"]["Name"] = [[ChatReplyBox]];
 G2L["12f"]["PlaceholderColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["12f"]["TextSize"] = 14;
-G2L["12f"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["12f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["12f"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 25);
 G2L["12f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["12f"]["PlaceholderText"] = [[Enter Reply]];
@@ -10726,7 +10727,7 @@ local script = G2L["e9"];
 	end
 	
 	local function botMessageMatches(msg, trigger)
-		local caseInsensitive = botReplyTickOn(BotReplyCaseTickBox)
+		local caseInsensitive = not botReplyTickOn(BotReplyCaseTickBox)
 		local contains = botReplyTickOn(BotReplyContainsTickBox)
 	
 		local m = caseInsensitive and msg:lower() or msg
@@ -12393,8 +12394,157 @@ task.spawn(C_10f);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.BotGroup.BotReplyRow.BotReplyToolTipScript
 local function C_117()
 local script = G2L["117"];
-	print("Hello world!")
+	-- ============================================================
+	-- BOT REPLY TOOLTIP SCRIPT
+	-- Controls ALL BotReply related tooltips
+	-- ============================================================
 	
+	local BotGroup = script.Parent
+	
+	-- ============================================================
+	-- SCREENGUI HELPER
+	-- ============================================================
+	
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
+		end
+	end
+	
+	local ScreenGui = getScreenGui()
+	if not ScreenGui then return end
+	
+	-- ============================================================
+	-- FIND UI REFERENCES
+	-- ============================================================
+	
+	local function findDescendant(name)
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then
+				return v
+			end
+		end
+	end
+	
+	local BotReplyTickBox = findDescendant("BotReplyTickBox")
+	local BotReplyPrivTickBox = findDescendant("BotReplyPrivTickBox")
+	local BotReplyCaseTickBox = findDescendant("BotReplyCaseTickBox")
+	local BotReplyContainsTickBox = findDescendant("BotReplyContainsTickBox")
+	
+	local ChatTriggerHelp = findDescendant("ChatTriggerHelp")
+	local ChatReplyHelp = findDescendant("ChatReplyHelp")
+	
+	-- ============================================================
+	-- TOOLTIP BUILDER
+	-- ============================================================
+	
+	local function makeTooltip(text)
+		local frame = Instance.new("Frame")
+		frame.BackgroundColor3 = Color3.fromRGB(16,16,16)
+		frame.BorderSizePixel = 0
+		frame.ZIndex = 100
+		frame.AutomaticSize = Enum.AutomaticSize.Y
+		frame.Size = UDim2.new(0, 212, 0, 0)
+		frame.Visible = false
+		frame.Parent = ScreenGui
+	
+		local stroke = Instance.new("UIStroke", frame)
+		stroke.Color = Color3.fromRGB(57,57,57)
+	
+		local padding = Instance.new("UIPadding", frame)
+		padding.PaddingTop = UDim.new(0,6)
+		padding.PaddingBottom = UDim.new(0,6)
+		padding.PaddingLeft = UDim.new(0,6)
+		padding.PaddingRight = UDim.new(0,6)
+	
+		local label = Instance.new("TextLabel", frame)
+		label.BackgroundTransparency = 1
+		label.Text = text
+		label.TextColor3 = Color3.new(1,1,1)
+		label.TextSize = 14
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.TextYAlignment = Enum.TextYAlignment.Top
+		label.Font = Enum.Font.GothamSemibold
+		label.TextWrapped = true
+		label.Size = UDim2.new(0,200,0,0)
+		label.AutomaticSize = Enum.AutomaticSize.Y
+		label.ZIndex = 101
+	
+		return frame
+	end
+	
+	local function hookTooltip(button, tooltipFrame)
+		if not button then return end
+	
+		button.MouseEnter:Connect(function()
+			local abs = button.AbsolutePosition
+			local size = button.AbsoluteSize
+			tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+			tooltipFrame.Visible = true
+		end)
+	
+		button.MouseLeave:Connect(function()
+			tooltipFrame.Visible = false
+		end)
+	end
+	
+	-- ============================================================
+	-- CREATE TOOLTIPS
+	-- ============================================================
+	
+	local botReplyTooltip = makeTooltip(
+		"Enables automatic bot replies when a player says the trigger word.\nScripts in grey do not currently work (adding it soon)\n\nExample Trigger: !verify\nExample Reply: ;bring [Username]"
+	)
+	
+	local privTooltip = makeTooltip(
+		"When enabled, replies are sent privately to the player who triggered it."
+	)
+	
+	local caseTooltip = makeTooltip(
+		"When enabled, trigger matching ignores uppercase/lowercase differences."
+	)
+	
+	local containsTooltip = makeTooltip(
+		"When enabled, the trigger word can appear anywhere in the message as a separate word."
+	)
+	
+	local triggerHelpTooltip = makeTooltip(
+		"Type the word players must say to activate the bot.\n\nExample: bkit"
+	)
+	
+	local replyHelpTooltip = makeTooltip(
+		"Type the message the bot will send a reply.\n\nUse [Username] or [Display] to insert the player's name when they say the trigger word."
+	)
+	
+	-- ============================================================
+	-- HOOK THEM
+	-- ============================================================
+	
+	hookTooltip(BotReplyTickBox, botReplyTooltip)
+	hookTooltip(BotReplyPrivTickBox, privTooltip)
+	hookTooltip(BotReplyCaseTickBox, caseTooltip)
+	hookTooltip(BotReplyContainsTickBox, containsTooltip)
+	hookTooltip(ChatTriggerHelp, triggerHelpTooltip)
+	hookTooltip(ChatReplyHelp, replyHelpTooltip)
+	
+	-- ============================================================
+	-- CLEANUP
+	-- ============================================================
+	
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			botReplyTooltip:Destroy()
+			privTooltip:Destroy()
+			caseTooltip:Destroy()
+			containsTooltip:Destroy()
+			triggerHelpTooltip:Destroy()
+			replyHelpTooltip:Destroy()
+		end
+	end)
 end;
 task.spawn(C_117);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.BotGroup.BotReplyPrivRow.BotReplyPrivScript
