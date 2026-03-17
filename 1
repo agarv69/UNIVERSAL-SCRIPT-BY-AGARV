@@ -11059,11 +11059,31 @@ local script = G2L["e9"];
 					local isPriv = botReplyTickOn(BotReplyPrivTickBox)
 	
 					task.spawn(function()
-						if isPriv then
-							sendChat("/w " .. plr.Name .. " " .. finalReply)
+	
+						local messageToSend = finalReply
+						local usePrivate = botReplyTickOn(BotReplyPrivTickBox)
+						local useArk = shared.BotReplyArkSend ~= nil
+	
+						-- If Ark script exists, let it handle equip + restore
+						if useArk then
+							shared.BotReplyArkSend(function()
+	
+								if usePrivate and shared.BotReplyPrivSend then
+									shared.BotReplyPrivSend(plr, messageToSend)
+								else
+									sendChat(messageToSend)
+								end
+	
+							end)
 						else
-							sendChat(finalReply)
+							-- No Ark, just send
+							if usePrivate and shared.BotReplyPrivSend then
+								shared.BotReplyPrivSend(plr, messageToSend)
+							else
+								sendChat(messageToSend)
+							end
 						end
+	
 					end)
 				end
 			end
@@ -12437,6 +12457,7 @@ local script = G2L["117"];
 	
 	local ChatTriggerHelp = findDescendant("ChatTriggerHelp")
 	local ChatReplyHelp = findDescendant("ChatReplyHelp")
+	local BotReplyArkTickBox = findDescendant("BotReplyArkTickBox")
 	
 	-- ============================================================
 	-- TOOLTIP BUILDER
@@ -12512,6 +12533,10 @@ local script = G2L["117"];
 		"When enabled, the trigger word can appear anywhere in the message as a separate word."
 	)
 	
+	local arkTooltip = makeTooltip(
+		"When enabled, if you have enlighten in your inventory it will automatically equip it to send the reply chat if the reply chat is a command.\n Example: bkit [Username]"
+	)
+	
 	local triggerHelpTooltip = makeTooltip(
 		"Type the word players must say to activate the bot.\n\nExample: bkit"
 	)
@@ -12530,6 +12555,7 @@ local script = G2L["117"];
 	hookTooltip(BotReplyContainsTickBox, containsTooltip)
 	hookTooltip(ChatTriggerHelp, triggerHelpTooltip)
 	hookTooltip(ChatReplyHelp, replyHelpTooltip)
+	hookTooltip(BotReplyArkTickBox, arkTooltip)
 	
 	-- ============================================================
 	-- CLEANUP
@@ -12543,6 +12569,7 @@ local script = G2L["117"];
 			containsTooltip:Destroy()
 			triggerHelpTooltip:Destroy()
 			replyHelpTooltip:Destroy()
+			arkTooltip:Destroy()
 		end
 	end)
 end;
@@ -12550,8 +12577,90 @@ task.spawn(C_117);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.BotGroup.BotReplyPrivRow.BotReplyPrivScript
 local function C_119()
 local script = G2L["119"];
-	print("Hello world!")
+	-- ============================================================
+	-- BOT REPLY PRIVATE SCRIPT
+	-- Handles private reply sending separately
+	-- ============================================================
 	
+	local Players = game:GetService("Players")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	
+	local PrivRow = script.Parent
+	local BotReplyPrivTickBox = PrivRow:FindFirstChild("BotReplyPrivTickBox")
+	local BotGroup = PrivRow.Parent
+	local BotAccentColor = BotGroup:FindFirstChild("BotAccentColor")
+	
+	local LocalPlayer = Players.LocalPlayer
+	
+	local isEnabled = false
+	
+	-- ============================================================
+	-- PRIVATE REMOTE
+	-- ============================================================
+	
+	local function sendPrivate(recipientName, message)
+		local ok, remote = pcall(function()
+			return ReplicatedStorage:WaitForChild("SendPrivateMessage", 3)
+		end)
+	
+		if ok and remote then
+			remote:FireServer(recipientName, message)
+		end
+	end
+	
+	-- ============================================================
+	-- SHARED BRIDGE
+	-- ============================================================
+	
+	shared.BotReplyPrivSend = function(targetPlayer, message)
+		if not isEnabled then
+			return false -- tell ChatSpy to send normally
+		end
+	
+		sendPrivate(targetPlayer.Name, message)
+		return true -- tells ChatSpy it handled it
+	end
+	
+	-- ============================================================
+	-- ENABLE / DISABLE
+	-- ============================================================
+	
+	local function enable()
+		isEnabled = true
+		if BotReplyPrivTickBox and BotAccentColor then
+			BotReplyPrivTickBox.BackgroundColor3 = BotAccentColor.BackgroundColor3
+		end
+	end
+	
+	local function disable()
+		isEnabled = false
+		if BotReplyPrivTickBox then
+			BotReplyPrivTickBox.BackgroundColor3 = Color3.new(0,0,0)
+		end
+	end
+	
+	if BotReplyPrivTickBox then
+		BotReplyPrivTickBox.BackgroundColor3 = Color3.new(0,0,0)
+	
+		BotReplyPrivTickBox.MouseButton1Click:Connect(function()
+			if isEnabled then
+				disable()
+			else
+				enable()
+			end
+		end)
+	end
+	
+	-- ============================================================
+	-- CLEANUP
+	-- ============================================================
+	
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			isEnabled = false
+			shared.BotReplyPrivSend = nil
+		end
+	end)
 end;
 task.spawn(C_119);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.BotGroup.BotReplyCaseRow.BotReplyCaseScript
@@ -12710,8 +12819,134 @@ task.spawn(C_125);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.BotGroup.BotReplyArkRow.BotReplyArkScript
 local function C_129()
 local script = G2L["129"];
-	print("Hello world!")
+	-- ============================================================
+	-- BOT REPLY ARK SCRIPT
+	-- Equips The Arkenstone before sending bot reply
+	-- ============================================================
 	
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local ArkRow = script.Parent
+	local BotReplyArkTickBox = ArkRow:FindFirstChild("BotReplyArkTickBox")
+	local BotGroup = ArkRow.Parent
+	local BotAccentColor = BotGroup:FindFirstChild("BotAccentColor")
+	
+	local isEnabled = false
+	
+	-- ============================================================
+	-- HELPER: SEND CHAT
+	-- ============================================================
+	
+	local function sendChat(message)
+		if shared.sendChat then
+			shared.sendChat(message)
+		end
+	end
+	
+	-- ============================================================
+	-- HELPER: SEND WITH ARKENSTONE
+	-- ============================================================
+	
+	local function sendWithArkenstone(message)
+		local char = LocalPlayer.Character
+		if not char then
+			sendChat(message)
+			return
+		end
+	
+		local hum = char:FindFirstChildWhichIsA("Humanoid")
+		if not hum then
+			sendChat(message)
+			return
+		end
+	
+		-- Find Arkenstone in Backpack
+		local arken = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
+		if not arken then
+			sendChat(message)
+			return
+		end
+	
+		-- Store currently equipped tool
+		local previousTool = nil
+		for _, tool in ipairs(char:GetChildren()) do
+			if tool:IsA("Tool") then
+				previousTool = tool
+				break
+			end
+		end
+	
+		-- Equip Arkenstone
+		hum:EquipTool(arken)
+		task.wait(0.05)
+	
+		-- Send chat
+		sendChat(message)
+	
+		task.wait(0.05)
+	
+		-- Re-equip previous tool
+		if previousTool and previousTool.Parent == char then
+			hum:EquipTool(previousTool)
+		else
+			hum:UnequipTools()
+		end
+	end
+	
+	-- ============================================================
+	-- LISTEN FOR BOT REPLY REQUEST
+	-- ============================================================
+	
+	shared.BotReplyArkSend = function(message)
+		if not isEnabled then
+			sendChat(message)
+			return
+		end
+	
+		sendWithArkenstone(message)
+	end
+	
+	-- ============================================================
+	-- ENABLE / DISABLE
+	-- ============================================================
+	
+	local function enable()
+		isEnabled = true
+		if BotReplyArkTickBox and BotAccentColor then
+			BotReplyArkTickBox.BackgroundColor3 = BotAccentColor.BackgroundColor3
+		end
+	end
+	
+	local function disable()
+		isEnabled = false
+		if BotReplyArkTickBox then
+			BotReplyArkTickBox.BackgroundColor3 = Color3.new(0,0,0)
+		end
+	end
+	
+	if BotReplyArkTickBox then
+		BotReplyArkTickBox.BackgroundColor3 = Color3.new(0,0,0)
+	
+		BotReplyArkTickBox.MouseButton1Click:Connect(function()
+			if isEnabled then
+				disable()
+			else
+				enable()
+			end
+		end)
+	end
+	
+	-- ============================================================
+	-- CLEANUP
+	-- ============================================================
+	
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			isEnabled = false
+			shared.BotReplyArkSend = nil
+		end
+	end)
 end;
 task.spawn(C_129);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCOLeftSide.BotGroup.ChatReplyRow.ChatReplyScript
