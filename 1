@@ -4497,7 +4497,7 @@ G2L["190"]["Text"] = [[CLEARINV PLAYER (must have enli)]];
 G2L["190"]["Name"] = [[ClearinvConfirm]];
 
 
--- StarterGui.ScreenGui.ConfirmGriefFrame.ClearinvConfirm
+-- StarterGui.ScreenGui.ConfirmGriefFrame.AlertConfirm
 G2L["191"] = Instance.new("TextButton", G2L["18d"]);
 G2L["191"]["TextWrapped"] = true;
 G2L["191"]["TextSize"] = 16;
@@ -4508,7 +4508,7 @@ G2L["191"]["Size"] = UDim2.new(0, 135, 0, 47);
 G2L["191"]["LayoutOrder"] = 3;
 G2L["191"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["191"]["Text"] = [[ALERT IN CHAT]];
-G2L["191"]["Name"] = [[ClearinvConfirm]];
+G2L["191"]["Name"] = [[AlertConfirm]];
 G2L["191"]["Position"] = UDim2.new(0, 0, 0.58065, 0);
 
 
@@ -16042,6 +16042,8 @@ local script = G2L["17b"];
 	
 	local GriefConfirmRow = script.Parent
 	local ProtectionGroup = GriefConfirmRow.Parent
+	local ProtectionAccentColor = ProtectionGroup:FindFirstChild("ProtectionAccentColor")
+	local GriefConfirmTickBox = GriefConfirmRow:FindFirstChild("GriefConfirmTickBox")
 	
 	-- ============================================================
 	-- SCREENGUI HELPER
@@ -16070,15 +16072,19 @@ local script = G2L["17b"];
 	end
 	
 	ConfirmGriefFrame.Visible = false
-	local GriefConfirmTickBox = GriefConfirmRow:FindFirstChild("GriefConfirmTickBox")
-	local ProtectionAccentColor = ProtectionGroup:FindFirstChild("ProtectionAccentColor")
+	
+	-- ============================================================
+	-- TICKBOX
+	-- ============================================================
 	local isEnabled = false
 	
 	if GriefConfirmTickBox then
 		GriefConfirmTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 		GriefConfirmTickBox.MouseButton1Click:Connect(function()
 			isEnabled = not isEnabled
-			GriefConfirmTickBox.BackgroundColor3 = isEnabled and (ProtectionAccentColor and ProtectionAccentColor.BackgroundColor3 or Color3.fromRGB(0, 170, 255)) or Color3.new(0, 0, 0)
+			GriefConfirmTickBox.BackgroundColor3 = isEnabled
+				and (ProtectionAccentColor and ProtectionAccentColor.BackgroundColor3 or Color3.fromRGB(0, 170, 255))
+				or Color3.new(0, 0, 0)
 		end)
 	end
 	
@@ -16089,6 +16095,11 @@ local script = G2L["17b"];
 	local currentGriefType = nil
 	local timerConn = nil
 	local isShowing = false
+	local isFlingActive = false
+	local flingConn = nil
+	
+	-- grief queue for overlap prevention
+	local griefQueue = {}
 	
 	-- ============================================================
 	-- CAMERA
@@ -16124,25 +16135,211 @@ local script = G2L["17b"];
 	end
 	
 	-- ============================================================
+	-- FLING LOGIC (same method as GriefFling)
+	-- ============================================================
+	local function flingPlayer(target)
+		local myChar = LocalPlayer.Character
+		if not myChar then return false end
+		local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+		if not myHRP then return false end
+	
+		local tChar = target and target.Character
+		if not tChar then return false end
+		local tHRP = tChar:FindFirstChild("HumanoidRootPart")
+		if not tHRP then return false end
+	
+		local savedCFrame = myHRP.CFrame
+		local targetStartPos = tHRP.Position
+	
+		local BV = Instance.new("BodyVelocity")
+		BV.Name = "ConfirmFlingBV"
+		BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
+		BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		BV.Parent = myHRP
+	
+		local Thrust = Instance.new("BodyThrust")
+		Thrust.Name = "ConfirmFlingThrust"
+		Thrust.Force = Vector3.new(20000, 20000, 20000)
+		Thrust.Parent = myHRP
+	
+		local startTime = tick()
+		local flinged = false
+		isFlingActive = true
+	
+		if FlingConfirm then
+			FlingConfirm.Text = "STOP FLING"
+		end
+	
+		repeat
+			if not isFlingActive then break end
+			if not tHRP or not tHRP.Parent then break end
+			if not myHRP or not myHRP.Parent then break end
+			myHRP.CFrame = tHRP.CFrame
+			Thrust.Location = tHRP.Position
+			if (tHRP.Position - targetStartPos).Magnitude > 150 then
+				flinged = true
+				break
+			end
+			if tHRP.AssemblyLinearVelocity.Magnitude > 1000 then
+				flinged = true
+				break
+			end
+			RunService.Heartbeat:Wait()
+		until flinged or (tick() - startTime) >= 7
+	
+		isFlingActive = false
+	
+		if FlingConfirm then
+			FlingConfirm.Text = "FLING PLAYER"
+		end
+	
+		BV.Velocity = Vector3.new(0, 0, 0)
+		BV.MaxForce = Vector3.new(0, 0, 0)
+		Thrust.Force = Vector3.new(0, 0, 0)
+		BV:Destroy()
+		Thrust:Destroy()
+	
+		for _, part in pairs(myChar:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.AssemblyLinearVelocity = Vector3.zero
+				part.AssemblyAngularVelocity = Vector3.zero
+			end
+		end
+	
+		task.wait()
+	
+		if myHRP and myHRP.Parent then
+			myHRP.CFrame = savedCFrame
+			task.wait()
+			for _, part in pairs(myChar:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.AssemblyLinearVelocity = Vector3.zero
+					part.AssemblyAngularVelocity = Vector3.zero
+				end
+			end
+		end
+	
+		return flinged
+	end
+	
+	-- ============================================================
+	-- ARK EQUIP FOR CLEARINV
+	-- ============================================================
+	local function equipArkAndSend(message)
+		local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+		if not humanoid then
+			sendChat(message)
+			return
+		end
+	
+		local char = LocalPlayer.Character
+		local ark = char:FindFirstChild("The Arkenstone")
+		local alreadyEquipped = ark ~= nil
+	
+		if not alreadyEquipped then
+			local backpack = LocalPlayer:FindFirstChild("Backpack")
+			if backpack then
+				ark = backpack:FindFirstChild("The Arkenstone")
+			end
+		end
+	
+		if not ark then
+			sendChat(message)
+			return
+		end
+	
+		local previousTool = nil
+		if not alreadyEquipped then
+			for _, obj in pairs(char:GetChildren()) do
+				if obj:IsA("Tool") then
+					previousTool = obj
+					break
+				end
+			end
+			humanoid:EquipTool(ark)
+			task.wait(0.5)
+		end
+	
+		sendChat(message)
+		task.wait(0.25)
+	
+		if not alreadyEquipped then
+			if previousTool and previousTool.Parent then
+				humanoid:EquipTool(previousTool)
+			else
+				humanoid:UnequipTools()
+			end
+		end
+	end
+	
+	-- ============================================================
+	-- PROCESS NEXT IN QUEUE
+	-- ============================================================
+	local function processNextInQueue()
+		if #griefQueue == 0 then return end
+		local next = table.remove(griefQueue, 1)
+		-- small delay before showing next
+		task.wait(0.5)
+		-- show confirm for next griefer
+		isShowing = true
+		currentTarget = next.player
+		currentGriefType = next.griefType
+	
+		ConfirmGriefFrame.Visible = true
+		spectatePlayer(next.player)
+	
+		local timeLeft = 10
+		if ConfirmTimer then
+			ConfirmTimer.Text = "(" .. timeLeft .. ")"
+		end
+	
+		if timerConn then timerConn:Disconnect() end
+		timerConn = RunService.Heartbeat:Connect(function()
+			if not isShowing then return end
+			timeLeft = timeLeft - (1/60)
+			local display = math.ceil(timeLeft)
+			if ConfirmTimer then
+				ConfirmTimer.Text = "(" .. display .. ")"
+			end
+			if timeLeft <= 0 then
+				hideConfirm()
+			end
+		end)
+	end
+	
+	-- ============================================================
 	-- HIDE FRAME
 	-- ============================================================
-	local function hideConfirm()
+	function hideConfirm()
 		isShowing = false
+		isFlingActive = false
 		ConfirmGriefFrame.Visible = false
 		currentTarget = nil
 		currentGriefType = nil
+		if FlingConfirm then
+			FlingConfirm.Text = "FLING PLAYER"
+		end
 		if timerConn then
 			timerConn:Disconnect()
 			timerConn = nil
 		end
 		spectateBack()
+		-- process next in queue if any
+		if #griefQueue > 0 then
+			processNextInQueue()
+		end
 	end
 	
 	-- ============================================================
 	-- SHOW FRAME
 	-- ============================================================
 	local function showConfirm(player, griefType)
-		if isShowing then return end
+		if isShowing then
+			-- add to queue
+			table.insert(griefQueue, {player = player, griefType = griefType})
+			return
+		end
+	
 		isShowing = true
 		currentTarget = player
 		currentGriefType = griefType
@@ -16175,64 +16372,31 @@ local script = G2L["17b"];
 	if FlingConfirm then
 		FlingConfirm.MouseButton1Click:Connect(function()
 			if not currentTarget then return end
+	
+			-- if already flinging, stop it
+			if isFlingActive then
+				isFlingActive = false
+				return
+			end
+	
 			local target = currentTarget
-			hideConfirm()
+			-- dont hide confirm yet, keep spectating while flinging
 			task.spawn(function()
-				-- use GriefFling queue if available
-				if shared.GriefLog then
-					local myChar = LocalPlayer.Character
-					if not myChar then return end
-					local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-					if not myHRP then return end
-					local tChar = target.Character
-					if not tChar then return end
-					local tHRP = tChar:FindFirstChild("HumanoidRootPart")
-					if not tHRP then return end
-	
-					local savedCFrame = myHRP.CFrame
-	
-					local BV = Instance.new("BodyVelocity")
-					BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
-					BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-					BV.Parent = myHRP
-	
-					local Thrust = Instance.new("BodyThrust")
-					Thrust.Force = Vector3.new(20000, 20000, 20000)
-					Thrust.Parent = myHRP
-	
-					local startTime = tick()
-					repeat
-						if not tHRP or not tHRP.Parent then break end
-						myHRP.CFrame = tHRP.CFrame
-						Thrust.Location = tHRP.Position
-						if tHRP.AssemblyLinearVelocity.Magnitude > 1000 then break end
-						RunService.Heartbeat:Wait()
-					until (tick() - startTime) >= 7
-	
-					BV.Velocity = Vector3.new(0,0,0)
-					BV.MaxForce = Vector3.new(0,0,0)
-					Thrust.Force = Vector3.new(0,0,0)
-					BV:Destroy()
-					Thrust:Destroy()
-	
-					for _, part in pairs(myChar:GetChildren()) do
-						if part:IsA("BasePart") then
-							part.AssemblyLinearVelocity = Vector3.zero
-							part.AssemblyAngularVelocity = Vector3.zero
-						end
+				local success = flingPlayer(target)
+				local griefType = currentGriefType
+				hideConfirm()
+				if success then
+					local alertMsg = ""
+					if griefType == "delete" then
+						alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED GRIEFING AND GOT FLUNG"
+					elseif griefType == "paint" then
+						alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED PAINT GRIEFING AND GOT FLUNG"
+					elseif griefType == "build" then
+						alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED SPAMMING BLOCKS AND GOT FLUNG"
+					else
+						alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED GRIEFING AND GOT FLUNG"
 					end
-	
-					task.wait()
-					if myHRP and myHRP.Parent then
-						myHRP.CFrame = savedCFrame
-						task.wait()
-						for _, part in pairs(myChar:GetChildren()) do
-							if part:IsA("BasePart") then
-								part.AssemblyLinearVelocity = Vector3.zero
-								part.AssemblyAngularVelocity = Vector3.zero
-							end
-						end
-					end
+					sendChat(alertMsg)
 				end
 			end)
 		end)
@@ -16242,8 +16406,23 @@ local script = G2L["17b"];
 		ClearinvConfirm.MouseButton1Click:Connect(function()
 			if not currentTarget then return end
 			local name = currentTarget.Name:gsub("_", ".")
+			local target = currentTarget
+			local griefType = currentGriefType
 			hideConfirm()
-			sendChat(";clearinv " .. name)
+			task.spawn(function()
+				equipArkAndSend(";clearinv " .. name)
+				local alertMsg = ""
+				if griefType == "delete" then
+					alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED GRIEFING AND GOT CLEARINV"
+				elseif griefType == "paint" then
+					alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED PAINT GRIEFING AND GOT CLEARINV"
+				elseif griefType == "build" then
+					alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED SPAMMING BLOCKS AND GOT CLEARINV"
+				else
+					alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED GRIEFING AND GOT CLEARINV"
+				end
+				sendChat(alertMsg)
+			end)
 		end)
 	end
 	
@@ -16269,12 +16448,14 @@ local script = G2L["17b"];
 	
 	if CancelConfirm then
 		CancelConfirm.MouseButton1Click:Connect(function()
+			-- clear queue too on cancel
+			griefQueue = {}
 			hideConfirm()
 		end)
 	end
 	
 	-- ============================================================
-	-- LISTEN TO GRIEFPRO VIA SHARED
+	-- LISTEN TO GRIEFPRO
 	-- ============================================================
 	shared.GriefConfirmTrigger = function(player, griefType)
 		if not isEnabled then return end
@@ -16287,6 +16468,7 @@ local script = G2L["17b"];
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			hideConfirm()
+			griefQueue = {}
 			shared.GriefConfirmTrigger = nil
 		end
 	end)
