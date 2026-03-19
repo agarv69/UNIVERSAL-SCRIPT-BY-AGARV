@@ -4389,7 +4389,7 @@ G2L["187"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["187"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["187"]["LayoutOrder"] = 30;
 G2L["187"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["187"]["Text"] = [[8]];
+G2L["187"]["Text"] = [[9]];
 G2L["187"]["Name"] = [[VersionNumber]];
 G2L["187"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -10785,26 +10785,26 @@ task.spawn(C_dd);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.SettingsPage.SettingsRightSide.ExploitsGroup.FlingScriptRow.FlingScriptScript
 local function C_e0()
 local script = G2L["e0"];
-	local SSRow = script.Parent
-	local SSButton = SSRow.SSButton
-	local originalText = SSButton.Text
+	local FlingScriptRow = script.Parent
+	local FlingScriptButton = FlingScriptRow.FlingScriptButton
+	local originalText = FlingScriptButton.Text
 	local SCRIPT_URL = "https://rawscripts.net/raw/Universal-Script-Tropic-Hub-36356"
 	
-	SSButton.MouseButton1Click:Connect(function()
-		SSButton.Text = "LOADING..."
+	FlingScriptButton.MouseButton1Click:Connect(function()
+		FlingScriptButton.Text = "LOADING..."
 		task.spawn(function()
 			local success, err = pcall(function()
 				local code = game:HttpGet(SCRIPT_URL)
 				loadstring(code)()
 			end)
 			if success then
-				SSButton.Text = "SUCCESSFULLY EXECUTED"
+				FlingScriptButton.Text = "SUCCESSFULLY EXECUTED"
 				task.wait(3)
-				SSButton.Text = originalText
+				FlingScriptButton.Text = originalText
 			else
-				SSButton.Text = "FAILED TO EXECUTE"
+				FlingScriptButton.Text = "FAILED TO EXECUTE"
 				task.wait(3)
-				SSButton.Text = originalText
+				FlingScriptButton.Text = originalText
 			end
 		end)
 	end)
