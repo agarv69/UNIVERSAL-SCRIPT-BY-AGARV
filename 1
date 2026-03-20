@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 404 | Scripts: 82 | Modules: 0 | Tags: 0
+-- Instances: 405 | Scripts: 82 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -4557,6 +4557,21 @@ G2L["194"]["Text"] = [[POSSIBLE GRIEF: Username]];
 G2L["194"]["Name"] = [[GriefTargetLabel]];
 
 
+-- StarterGui.ScreenGui.ConfirmGriefFrame.PauseConfirm
+G2L["195"] = Instance.new("TextButton", G2L["18d"]);
+G2L["195"]["TextWrapped"] = true;
+G2L["195"]["TextSize"] = 16;
+G2L["195"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["195"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["195"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["195"]["Size"] = UDim2.new(0, 135, 0, 24);
+G2L["195"]["LayoutOrder"] = 3;
+G2L["195"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["195"]["Text"] = [[PAUSE TIMER]];
+G2L["195"]["Name"] = [[PauseConfirm]];
+G2L["195"]["Position"] = UDim2.new(0, 0, 0.75776, 0);
+
+
 -- StarterGui.ScreenGui.MoveToCorGui
 local function C_2()
 local script = G2L["2"];
@@ -4645,6 +4660,22 @@ local script = G2L["3"];
 			if not rsBrick:IsDescendantOf(game) then
 				print("[BKITLOG] Bkit has been broken")
 				shared.BKitLog = tostring(tick())
+	
+				local suspects = {}
+				for _, player in pairs(Players:GetPlayers()) do
+					if holdingDelete(player) then
+						table.insert(suspects, player)
+					end
+				end
+	
+				if #suspects > 0 then
+					print("Possible Suspect" .. (#suspects > 1 and "s:" or ":"))
+					for _, player in pairs(suspects) do
+						print(player.DisplayName .. " (" .. player.Name .. ")")
+					end
+				else
+					print("No players found holding Delete tool")
+				end
 			end
 		end)
 	end
@@ -4771,8 +4802,11 @@ local script = G2L["3"];
 	-- BUILDLOG TRACKING
 	-- ============================================================
 	local buildLog = {}
-	local BUILD_LIMIT = 32
+	local BUILD_LIMIT = 28
 	local BUILD_WINDOW = 5
+	local BUILD_LIMIT_SLOW = 100
+	local BUILD_WINDOW_SLOW = 30
+	local buildLogSlow = {}
 	
 	bricksFolder.DescendantAdded:Connect(function(obj)
 		if obj:IsA("BasePart") and obj.Name == "Brick" then
@@ -4800,6 +4834,24 @@ local script = G2L["3"];
 				print("[BUILDLOG] " .. ownerName .. " is placing bricks too fast (" .. #valid .. " blocks in " .. BUILD_WINDOW .. " seconds)")
 				shared.BuildLog = ownerName .. "|" .. tostring(tick())
 				buildLog[ownerName] = {}
+			end
+	
+			-- slow spam detection
+			buildLogSlow[ownerName] = buildLogSlow[ownerName] or {}
+			table.insert(buildLogSlow[ownerName], now)
+	
+			local validSlow = {}
+			for _, t in ipairs(buildLogSlow[ownerName]) do
+				if now - t <= BUILD_WINDOW_SLOW then
+					table.insert(validSlow, t)
+				end
+			end
+			buildLogSlow[ownerName] = validSlow
+	
+			if #validSlow >= BUILD_LIMIT_SLOW then
+				print("[BUILDLOG] " .. ownerName .. " is slow spamming blocks (" .. #validSlow .. " blocks in " .. BUILD_WINDOW_SLOW .. " seconds)")
+				shared.BuildLog = ownerName .. "|" .. tostring(tick())
+				buildLogSlow[ownerName] = {}
 			end
 		end
 	end)
@@ -14093,9 +14145,9 @@ local script = G2L["159"];
 	local deleteLog = {}
 	local paintLog = {}
 	local unanchorLog = {}
-	local DELETE_LIMIT = 10
-	local PAINT_LIMIT = 10
-	local UNANCHOR_LIMIT = 10
+	local DELETE_LIMIT = 15
+	local PAINT_LIMIT = 12
+	local UNANCHOR_LIMIT = 12
 	local TIME_WINDOW = 17
 	local ANNOUNCE_COOLDOWN = 30
 	local lastAnnounce = {}
@@ -14371,9 +14423,9 @@ local script = G2L["15d"];
 	local deleteLog = {}
 	local paintLog = {}
 	local unanchorLog = {}
-	local DELETE_LIMIT = 10
-	local PAINT_LIMIT = 10
-	local UNANCHOR_LIMIT = 10
+	local DELETE_LIMIT = 15
+	local PAINT_LIMIT = 12
+	local UNANCHOR_LIMIT = 12
 	local TIME_WINDOW = 17
 	local FLING_TIMEOUT = 7
 	local FLING_SUCCESS_DIST = 150
@@ -16082,9 +16134,10 @@ local script = G2L["17b"];
 	local ConfirmTimer = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("ConfirmTimer")
 	local GriefTargetLabel = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("GriefTargetLabel")
 	local FlingConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("FlingConfirm")
-	local ClearinvConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("ClearinvConfirm")
 	local AlertConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("AlertConfirm")
 	local CancelConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("CancelConfirm")
+	local FalseAlertConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("FalseAlertConfirm")
+	local PauseConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("PauseConfirm")
 	
 	if not ConfirmGriefFrame then
 		print("GriefConfirm: ConfirmGriefFrame not found")
@@ -16116,9 +16169,7 @@ local script = G2L["17b"];
 	local timerConn = nil
 	local isShowing = false
 	local isFlingActive = false
-	local flingConn = nil
-	
-	-- grief queue for overlap prevention
+	local timerPaused = false
 	local griefQueue = {}
 	
 	-- ============================================================
@@ -16155,7 +16206,7 @@ local script = G2L["17b"];
 	end
 	
 	-- ============================================================
-	-- FLING LOGIC (same method as GriefFling)
+	-- FLING LOGIC
 	-- ============================================================
 	local function flingPlayer(target)
 		local myChar = LocalPlayer.Character
@@ -16206,7 +16257,7 @@ local script = G2L["17b"];
 				break
 			end
 			RunService.Heartbeat:Wait()
-		until flinged or (tick() - startTime) >= 7
+		until flinged or not isFlingActive or (tick() - startTime) >= 7
 	
 		isFlingActive = false
 	
@@ -16218,8 +16269,6 @@ local script = G2L["17b"];
 		BV.Velocity = Vector3.new(0, 0, 0)
 		BV.MaxForce = Vector3.new(0, 0, 0)
 		Thrust.Force = Vector3.new(0, 0, 0)
-		BV:Destroy()
-		Thrust:Destroy()
 	
 		for _, part in pairs(myChar:GetChildren()) do
 			if part:IsA("BasePart") then
@@ -16227,6 +16276,9 @@ local script = G2L["17b"];
 				part.AssemblyAngularVelocity = Vector3.zero
 			end
 		end
+	
+		BV:Destroy()
+		Thrust:Destroy()
 	
 		task.wait()
 	
@@ -16245,14 +16297,39 @@ local script = G2L["17b"];
 	end
 	
 	-- ============================================================
+	-- HIDE FRAME
+	-- ============================================================
+	function hideConfirm()
+		isShowing = false
+		isFlingActive = false
+		timerPaused = false
+		ConfirmGriefFrame.Visible = false
+		currentTarget = nil
+		currentGriefType = nil
+		if FlingConfirm then
+			FlingConfirm.Text = "FLING PLAYER"
+			FlingConfirm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		end
+		if PauseConfirm then
+			PauseConfirm.Text = "PAUSE TIMER"
+		end
+		if timerConn then
+			timerConn:Disconnect()
+			timerConn = nil
+		end
+		spectateBack()
+		if #griefQueue > 0 then
+			processNextInQueue()
+		end
+	end
+	
+	-- ============================================================
 	-- PROCESS NEXT IN QUEUE
 	-- ============================================================
-	local function processNextInQueue()
+	function processNextInQueue()
 		if #griefQueue == 0 then return end
 		local next = table.remove(griefQueue, 1)
-		-- small delay before showing next
 		task.wait(0.5)
-		-- show confirm for next griefer
 		isShowing = true
 		currentTarget = next.player
 		currentGriefType = next.griefType
@@ -16263,6 +16340,13 @@ local script = G2L["17b"];
 		end
 		spectatePlayer(next.player)
 	
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://139345986070502"
+		sound.Volume = 1
+		sound.Parent = workspace
+		sound:Play()
+		game:GetService("Debris"):AddItem(sound, 5)
+	
 		local timeLeft = 20
 		if ConfirmTimer then
 			ConfirmTimer.Text = "(20.0)"
@@ -16272,6 +16356,7 @@ local script = G2L["17b"];
 		timerConn = RunService.Heartbeat:Connect(function()
 			if not isShowing then return end
 			if isFlingActive then return end
+			if timerPaused then return end
 			timeLeft = timeLeft - (1/60)
 			if ConfirmTimer then
 				ConfirmTimer.Text = "(" .. string.format("%.1f", timeLeft) .. ")"
@@ -16283,35 +16368,10 @@ local script = G2L["17b"];
 	end
 	
 	-- ============================================================
-	-- HIDE FRAME
-	-- ============================================================
-	function hideConfirm()
-		isShowing = false
-		isFlingActive = false
-		ConfirmGriefFrame.Visible = false
-		currentTarget = nil
-		currentGriefType = nil
-		if FlingConfirm then
-			FlingConfirm.Text = "FLING PLAYER"
-			FlingConfirm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		end
-		if timerConn then
-			timerConn:Disconnect()
-			timerConn = nil
-		end
-		spectateBack()
-		-- process next in queue if any
-		if #griefQueue > 0 then
-			processNextInQueue()
-		end
-	end
-	
-	-- ============================================================
 	-- SHOW FRAME
 	-- ============================================================
 	local function showConfirm(player, griefType)
 		if isShowing then
-			-- add to queue
 			table.insert(griefQueue, {player = player, griefType = griefType})
 			return
 		end
@@ -16321,7 +16381,17 @@ local script = G2L["17b"];
 		currentGriefType = griefType
 	
 		ConfirmGriefFrame.Visible = true
+		if GriefTargetLabel then
+			GriefTargetLabel.Text = "POSSIBLE GRIEF: " .. player.Name
+		end
 		spectatePlayer(player)
+	
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://139345986070502"
+		sound.Volume = 1
+		sound.Parent = workspace
+		sound:Play()
+		game:GetService("Debris"):AddItem(sound, 5)
 	
 		local timeLeft = 20
 		if ConfirmTimer then
@@ -16332,6 +16402,7 @@ local script = G2L["17b"];
 		timerConn = RunService.Heartbeat:Connect(function()
 			if not isShowing then return end
 			if isFlingActive then return end
+			if timerPaused then return end
 			timeLeft = timeLeft - (1/60)
 			if ConfirmTimer then
 				ConfirmTimer.Text = "(" .. string.format("%.1f", timeLeft) .. ")"
@@ -16349,14 +16420,16 @@ local script = G2L["17b"];
 		FlingConfirm.MouseButton1Click:Connect(function()
 			if not currentTarget then return end
 	
-			-- if already flinging, stop it
 			if isFlingActive then
 				isFlingActive = false
+				if FlingConfirm then
+					FlingConfirm.Text = "FLING PLAYER"
+					FlingConfirm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+				end
 				return
 			end
 	
 			local target = currentTarget
-			-- dont hide confirm yet, keep spectating while flinging
 			task.spawn(function()
 				local success = flingPlayer(target)
 				local griefType = currentGriefType
@@ -16397,7 +16470,6 @@ local script = G2L["17b"];
 		end)
 	end
 	
-	local FalseAlertConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("FalseAlertConfirm")
 	if FalseAlertConfirm then
 		FalseAlertConfirm.MouseButton1Click:Connect(function()
 			griefQueue = {}
@@ -16410,6 +16482,13 @@ local script = G2L["17b"];
 		CancelConfirm.MouseButton1Click:Connect(function()
 			griefQueue = {}
 			hideConfirm()
+		end)
+	end
+	
+	if PauseConfirm then
+		PauseConfirm.MouseButton1Click:Connect(function()
+			timerPaused = not timerPaused
+			PauseConfirm.Text = timerPaused and "UNPAUSE TIMER" or "PAUSE TIMER"
 		end)
 	end
 	
