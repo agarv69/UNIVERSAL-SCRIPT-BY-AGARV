@@ -2488,7 +2488,6 @@ G2L["e1"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 G2L["e2"] = Instance.new("ScrollingFrame", G2L["f"]);
 G2L["e2"]["Active"] = true;
 G2L["e2"]["BorderSizePixel"] = 0;
-G2L["e2"]["CanvasPosition"] = Vector2.new(0, 128.3333);
 G2L["e2"]["Name"] = [[TCOPage]];
 G2L["e2"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["e2"]["Size"] = UDim2.new(0, 349, 0, 250);
@@ -4514,14 +4513,16 @@ G2L["191"]["Position"] = UDim2.new(0, 0, 0.58065, 0);
 
 -- StarterGui.ScreenGui.ConfirmGriefFrame.ConfirmTimer
 G2L["192"] = Instance.new("TextLabel", G2L["18d"]);
+G2L["192"]["TextWrapped"] = true;
 G2L["192"]["TextSize"] = 14;
+G2L["192"]["TextScaled"] = true;
 G2L["192"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["192"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["192"]["TextColor3"] = Color3.fromRGB(0, 45, 86);
 G2L["192"]["BorderMode"] = Enum.BorderMode.Inset;
 G2L["192"]["Size"] = UDim2.new(0, 135, 0, 14);
 G2L["192"]["BorderColor3"] = Color3.fromRGB(0, 92, 189);
-G2L["192"]["Text"] = [[(10.0)]];
+G2L["192"]["Text"] = [[(20.0)]];
 G2L["192"]["Name"] = [[ConfirmTimer]];
 G2L["192"]["Position"] = UDim2.new(0, 0, 0.0452, 0);
 
@@ -4530,13 +4531,14 @@ G2L["192"]["Position"] = UDim2.new(0, 0, 0.0452, 0);
 G2L["193"] = Instance.new("TextButton", G2L["18d"]);
 G2L["193"]["TextWrapped"] = true;
 G2L["193"]["TextSize"] = 20;
+G2L["193"]["TextScaled"] = true;
 G2L["193"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["193"]["BackgroundColor3"] = Color3.fromRGB(58, 0, 0);
 G2L["193"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["193"]["Size"] = UDim2.new(0, 135, 0, 23);
 G2L["193"]["LayoutOrder"] = 4;
 G2L["193"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["193"]["Text"] = [[CANCEL]];
+G2L["193"]["Text"] = [[FALSE ALERT & CANCEL]];
 G2L["193"]["Name"] = [[CancelConfirm]];
 G2L["193"]["Position"] = UDim2.new(0, 0, 0.97191, 0);
 
@@ -16167,7 +16169,8 @@ local script = G2L["17b"];
 		isFlingActive = true
 	
 		if FlingConfirm then
-			FlingConfirm.Text = "STOP FLING"
+			FlingConfirm.Text = "CANCEL FLING"
+			FlingConfirm.BackgroundColor3 = Color3.fromRGB(57, 0, 0)
 		end
 	
 		repeat
@@ -16191,6 +16194,7 @@ local script = G2L["17b"];
 	
 		if FlingConfirm then
 			FlingConfirm.Text = "FLING PLAYER"
+			FlingConfirm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		end
 	
 		BV.Velocity = Vector3.new(0, 0, 0)
@@ -16288,18 +16292,18 @@ local script = G2L["17b"];
 		ConfirmGriefFrame.Visible = true
 		spectatePlayer(next.player)
 	
-		local timeLeft = 10
+		local timeLeft = 20
 		if ConfirmTimer then
-			ConfirmTimer.Text = "(" .. timeLeft .. ")"
+			ConfirmTimer.Text = "(20.0)"
 		end
 	
 		if timerConn then timerConn:Disconnect() end
 		timerConn = RunService.Heartbeat:Connect(function()
 			if not isShowing then return end
+			if isFlingActive then return end
 			timeLeft = timeLeft - (1/60)
-			local display = math.ceil(timeLeft)
 			if ConfirmTimer then
-				ConfirmTimer.Text = "(" .. display .. ")"
+				ConfirmTimer.Text = "(" .. string.format("%.1f", timeLeft) .. ")"
 			end
 			if timeLeft <= 0 then
 				hideConfirm()
@@ -16318,6 +16322,7 @@ local script = G2L["17b"];
 		currentGriefType = nil
 		if FlingConfirm then
 			FlingConfirm.Text = "FLING PLAYER"
+			FlingConfirm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		end
 		if timerConn then
 			timerConn:Disconnect()
@@ -16347,18 +16352,18 @@ local script = G2L["17b"];
 		ConfirmGriefFrame.Visible = true
 		spectatePlayer(player)
 	
-		local timeLeft = 10
+		local timeLeft = 20
 		if ConfirmTimer then
-			ConfirmTimer.Text = "(" .. timeLeft .. ")"
+			ConfirmTimer.Text = "(20.0)"
 		end
 	
 		if timerConn then timerConn:Disconnect() end
 		timerConn = RunService.Heartbeat:Connect(function()
 			if not isShowing then return end
+			if isFlingActive then return end
 			timeLeft = timeLeft - (1/60)
-			local display = math.ceil(timeLeft)
 			if ConfirmTimer then
-				ConfirmTimer.Text = "(" .. display .. ")"
+				ConfirmTimer.Text = "(" .. string.format("%.1f", timeLeft) .. ")"
 			end
 			if timeLeft <= 0 then
 				hideConfirm()
@@ -16448,9 +16453,9 @@ local script = G2L["17b"];
 	
 	if CancelConfirm then
 		CancelConfirm.MouseButton1Click:Connect(function()
-			-- clear queue too on cancel
 			griefQueue = {}
 			hideConfirm()
+			sendChat("❌False Alert")
 		end)
 	end
 	
