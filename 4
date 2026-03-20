@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 392 | Scripts: 81 | Modules: 0 | Tags: 0
+-- Instances: 404 | Scripts: 82 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -3793,8 +3793,8 @@ G2L["151"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 G2L["152"] = Instance.new("Frame", G2L["13a"]);
 G2L["152"]["BackgroundColor3"] = Color3.fromRGB(17, 17, 17);
 G2L["152"]["BorderMode"] = Enum.BorderMode.Middle;
-G2L["152"]["Size"] = UDim2.new(0, 170, 0, 202);
-G2L["152"]["Position"] = UDim2.new(0, 0, 0.13056, 0);
+G2L["152"]["Size"] = UDim2.new(0, 170, 0, 220);
+G2L["152"]["Position"] = UDim2.new(0, 0, 0.29722, 0);
 G2L["152"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["152"]["Name"] = [[ProtectionGroup]];
 G2L["152"]["LayoutOrder"] = 1;
@@ -4256,155 +4256,305 @@ G2L["179"]["Name"] = [[BKitBreakAnnounceText]];
 G2L["179"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 
--- StarterGui.ScreenGui.MainFrame.TopBar
-G2L["17a"] = Instance.new("Frame", G2L["5"]);
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefConfirmRow
+G2L["17a"] = Instance.new("Frame", G2L["152"]);
 G2L["17a"]["BorderSizePixel"] = 0;
-G2L["17a"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
-G2L["17a"]["Size"] = UDim2.new(0, 442, 0, 25);
+G2L["17a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["17a"]["Size"] = UDim2.new(0, 169, 0, 20);
+G2L["17a"]["Position"] = UDim2.new(0.00294, 0, 0.175, 0);
 G2L["17a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["17a"]["Name"] = [[TopBar]];
+G2L["17a"]["Name"] = [[GriefConfirmRow]];
+G2L["17a"]["LayoutOrder"] = 3;
+G2L["17a"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefConfirmRow.GriefConfirmScript
+G2L["17b"] = Instance.new("LocalScript", G2L["17a"]);
+G2L["17b"]["Name"] = [[GriefConfirmScript]];
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefConfirmRow.GriefConfirmTickBox
+G2L["17c"] = Instance.new("TextButton", G2L["17a"]);
+G2L["17c"]["TextSize"] = 14;
+G2L["17c"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17c"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17c"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["17c"]["Size"] = UDim2.new(0, 16, 0, 16);
+G2L["17c"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
+G2L["17c"]["Text"] = [[]];
+G2L["17c"]["Name"] = [[GriefConfirmTickBox]];
+G2L["17c"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
+
+
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefConfirmRow.GriefConfirmText
+G2L["17d"] = Instance.new("TextLabel", G2L["17a"]);
+G2L["17d"]["BorderSizePixel"] = 0;
+G2L["17d"]["TextSize"] = 14;
+G2L["17d"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["17d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["17d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["17d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["17d"]["BackgroundTransparency"] = 1;
+G2L["17d"]["Size"] = UDim2.new(0, 88, 0, 20);
+G2L["17d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17d"]["Text"] = [[Confirm Grief]];
+G2L["17d"]["Name"] = [[GriefConfirmText]];
+G2L["17d"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
+
+
+-- StarterGui.ScreenGui.MainFrame.TopBar
+G2L["17e"] = Instance.new("Frame", G2L["5"]);
+G2L["17e"]["BorderSizePixel"] = 0;
+G2L["17e"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
+G2L["17e"]["Size"] = UDim2.new(0, 442, 0, 25);
+G2L["17e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17e"]["Name"] = [[TopBar]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
-G2L["17b"] = Instance.new("LocalScript", G2L["17a"]);
-G2L["17b"]["Name"] = [[MinimizeDragScript]];
+G2L["17f"] = Instance.new("LocalScript", G2L["17e"]);
+G2L["17f"]["Name"] = [[MinimizeDragScript]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLEScript
-G2L["17c"] = Instance.new("LocalScript", G2L["17a"]);
-G2L["17c"]["Name"] = [[TITLEScript]];
+G2L["180"] = Instance.new("LocalScript", G2L["17e"]);
+G2L["180"]["Name"] = [[TITLEScript]];
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeGUI
-G2L["17d"] = Instance.new("TextButton", G2L["17a"]);
-G2L["17d"]["BorderSizePixel"] = 0;
-G2L["17d"]["TextSize"] = 14;
-G2L["17d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["17d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["17d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["17d"]["BackgroundTransparency"] = 1;
-G2L["17d"]["Size"] = UDim2.new(0, 25, 0, 25);
-G2L["17d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["17d"]["Text"] = [[-]];
-G2L["17d"]["Name"] = [[MinimizeGUI]];
-G2L["17d"]["Position"] = UDim2.new(0.99919, -25, 0, 0);
+G2L["181"] = Instance.new("TextButton", G2L["17e"]);
+G2L["181"]["BorderSizePixel"] = 0;
+G2L["181"]["TextSize"] = 14;
+G2L["181"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["181"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["181"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["181"]["BackgroundTransparency"] = 1;
+G2L["181"]["Size"] = UDim2.new(0, 25, 0, 25);
+G2L["181"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["181"]["Text"] = [[-]];
+G2L["181"]["Name"] = [[MinimizeGUI]];
+G2L["181"]["Position"] = UDim2.new(0.99919, -25, 0, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLE
-G2L["17e"] = Instance.new("TextLabel", G2L["17a"]);
-G2L["17e"]["BorderSizePixel"] = 0;
-G2L["17e"]["TextSize"] = 12;
-G2L["17e"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["17e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["17e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["17e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["17e"]["BackgroundTransparency"] = 1;
-G2L["17e"]["Size"] = UDim2.new(0, 200, 0, 25);
-G2L["17e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["17e"]["Text"] = [[Universal Script GUI | by agarv | 60 fps | players: 1]];
-G2L["17e"]["Name"] = [[TITLE]];
+G2L["182"] = Instance.new("TextLabel", G2L["17e"]);
+G2L["182"]["BorderSizePixel"] = 0;
+G2L["182"]["TextSize"] = 12;
+G2L["182"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["182"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["182"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["182"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["182"]["BackgroundTransparency"] = 1;
+G2L["182"]["Size"] = UDim2.new(0, 200, 0, 25);
+G2L["182"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["182"]["Text"] = [[Universal Script GUI | by agarv | 60 fps | players: 1]];
+G2L["182"]["Name"] = [[TITLE]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame
-G2L["17f"] = Instance.new("Frame", G2L["1"]);
-G2L["17f"]["BorderSizePixel"] = 0;
-G2L["17f"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["17f"]["Size"] = UDim2.new(0, 80, 0, 88);
-G2L["17f"]["Position"] = UDim2.new(0.92489, 0, 0.04342, 0);
-G2L["17f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["17f"]["Name"] = [[KeybindFrame]];
-G2L["17f"]["BackgroundTransparency"] = 1;
+G2L["183"] = Instance.new("Frame", G2L["1"]);
+G2L["183"]["BorderSizePixel"] = 0;
+G2L["183"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["183"]["Size"] = UDim2.new(0, 80, 0, 88);
+G2L["183"]["Position"] = UDim2.new(0.92489, 0, 0.04342, 0);
+G2L["183"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["183"]["Name"] = [[KeybindFrame]];
+G2L["183"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.ScreenGui.KeybindFrame.KeybindHideScript
-G2L["180"] = Instance.new("LocalScript", G2L["17f"]);
-G2L["180"]["Name"] = [[KeybindHideScript]];
+G2L["184"] = Instance.new("LocalScript", G2L["183"]);
+G2L["184"]["Name"] = [[KeybindHideScript]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.KeybindLockScript
-G2L["181"] = Instance.new("LocalScript", G2L["17f"]);
-G2L["181"]["Name"] = [[KeybindLockScript]];
+G2L["185"] = Instance.new("LocalScript", G2L["183"]);
+G2L["185"]["Name"] = [[KeybindLockScript]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.KeybindDragScript
-G2L["182"] = Instance.new("LocalScript", G2L["17f"]);
-G2L["182"]["Name"] = [[KeybindDragScript]];
+G2L["186"] = Instance.new("LocalScript", G2L["183"]);
+G2L["186"]["Name"] = [[KeybindDragScript]];
 
 
 -- StarterGui.ScreenGui.KeybindFrame.HideGUI
-G2L["183"] = Instance.new("TextButton", G2L["17f"]);
-G2L["183"]["TextSize"] = 14;
-G2L["183"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["183"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["183"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["183"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["183"]["LayoutOrder"] = 1;
-G2L["183"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["183"]["Text"] = [[Hide GUI]];
-G2L["183"]["Name"] = [[HideGUI]];
-
-
--- StarterGui.ScreenGui.KeybindFrame.UIListLayout
-G2L["184"] = Instance.new("UIListLayout", G2L["17f"]);
-G2L["184"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
-
-
--- StarterGui.ScreenGui.KeybindFrame.LockGUI
-G2L["185"] = Instance.new("TextButton", G2L["17f"]);
-G2L["185"]["TextSize"] = 14;
-G2L["185"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["185"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["185"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["185"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["185"]["LayoutOrder"] = 2;
-G2L["185"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["185"]["Text"] = [[Lock GUI]];
-G2L["185"]["Name"] = [[LockGUI]];
-
-
--- StarterGui.ScreenGui.KeybindFrame.Version
-G2L["186"] = Instance.new("TextButton", G2L["17f"]);
-G2L["186"]["TextWrapped"] = true;
-G2L["186"]["TextSize"] = 14;
-G2L["186"]["TextScaled"] = true;
-G2L["186"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["186"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["186"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["186"]["Size"] = UDim2.new(0, 80, 0, 10);
-G2L["186"]["LayoutOrder"] = 20;
-G2L["186"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["186"]["Text"] = [[GUI Version:]];
-G2L["186"]["Name"] = [[Version]];
-G2L["186"]["Position"] = UDim2.new(0, 0, 0.79545, 0);
-
-
--- StarterGui.ScreenGui.KeybindFrame.VersionNumber
-G2L["187"] = Instance.new("TextButton", G2L["17f"]);
-G2L["187"]["TextWrapped"] = true;
+G2L["187"] = Instance.new("TextButton", G2L["183"]);
 G2L["187"]["TextSize"] = 14;
-G2L["187"]["TextScaled"] = true;
 G2L["187"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["187"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["187"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["187"]["Size"] = UDim2.new(0, 80, 0, 15);
-G2L["187"]["LayoutOrder"] = 30;
+G2L["187"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["187"]["LayoutOrder"] = 1;
 G2L["187"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["187"]["Text"] = [[9]];
-G2L["187"]["Name"] = [[VersionNumber]];
-G2L["187"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
+G2L["187"]["Text"] = [[Hide GUI]];
+G2L["187"]["Name"] = [[HideGUI]];
+
+
+-- StarterGui.ScreenGui.KeybindFrame.UIListLayout
+G2L["188"] = Instance.new("UIListLayout", G2L["183"]);
+G2L["188"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.ScreenGui.KeybindFrame.LockGUI
+G2L["189"] = Instance.new("TextButton", G2L["183"]);
+G2L["189"]["TextSize"] = 14;
+G2L["189"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["189"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["189"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["189"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["189"]["LayoutOrder"] = 2;
+G2L["189"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["189"]["Text"] = [[Lock GUI]];
+G2L["189"]["Name"] = [[LockGUI]];
+
+
+-- StarterGui.ScreenGui.KeybindFrame.Version
+G2L["18a"] = Instance.new("TextButton", G2L["183"]);
+G2L["18a"]["TextWrapped"] = true;
+G2L["18a"]["TextSize"] = 14;
+G2L["18a"]["TextScaled"] = true;
+G2L["18a"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18a"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["18a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["18a"]["Size"] = UDim2.new(0, 80, 0, 10);
+G2L["18a"]["LayoutOrder"] = 20;
+G2L["18a"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18a"]["Text"] = [[GUI Version:]];
+G2L["18a"]["Name"] = [[Version]];
+G2L["18a"]["Position"] = UDim2.new(0, 0, 0.79545, 0);
+
+
+-- StarterGui.ScreenGui.KeybindFrame.VersionNumber
+G2L["18b"] = Instance.new("TextButton", G2L["183"]);
+G2L["18b"]["TextWrapped"] = true;
+G2L["18b"]["TextSize"] = 14;
+G2L["18b"]["TextScaled"] = true;
+G2L["18b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18b"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["18b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["18b"]["Size"] = UDim2.new(0, 80, 0, 15);
+G2L["18b"]["LayoutOrder"] = 30;
+G2L["18b"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18b"]["Text"] = [[9]];
+G2L["18b"]["Name"] = [[VersionNumber]];
+G2L["18b"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
 
 -- StarterGui.ScreenGui.KeybindFrame.DragGUI
-G2L["188"] = Instance.new("TextButton", G2L["17f"]);
-G2L["188"]["TextSize"] = 14;
-G2L["188"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["188"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["188"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["188"]["Size"] = UDim2.new(0, 80, 0, 25);
-G2L["188"]["LayoutOrder"] = 3;
-G2L["188"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["188"]["Text"] = [[DRAG]];
-G2L["188"]["Name"] = [[DragGUI]];
+G2L["18c"] = Instance.new("TextButton", G2L["183"]);
+G2L["18c"]["TextSize"] = 14;
+G2L["18c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18c"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["18c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["18c"]["Size"] = UDim2.new(0, 80, 0, 25);
+G2L["18c"]["LayoutOrder"] = 3;
+G2L["18c"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18c"]["Text"] = [[DRAG]];
+G2L["18c"]["Name"] = [[DragGUI]];
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame
+G2L["18d"] = Instance.new("Frame", G2L["1"]);
+G2L["18d"]["BorderSizePixel"] = 0;
+G2L["18d"]["BackgroundColor3"] = Color3.fromRGB(0, 84, 173);
+G2L["18d"]["Size"] = UDim2.new(0, 135, 0, 161);
+G2L["18d"]["Position"] = UDim2.new(0.66486, 0, 0.2513, 0);
+G2L["18d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["18d"]["Name"] = [[ConfirmGriefFrame]];
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame.UIListLayout
+G2L["18e"] = Instance.new("UIListLayout", G2L["18d"]);
+G2L["18e"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame.FlingConfirm
+G2L["18f"] = Instance.new("TextButton", G2L["18d"]);
+G2L["18f"]["TextSize"] = 16;
+G2L["18f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18f"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["18f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["18f"]["Size"] = UDim2.new(0, 135, 0, 47);
+G2L["18f"]["LayoutOrder"] = 3;
+G2L["18f"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18f"]["Text"] = [[FLING PLAYER]];
+G2L["18f"]["Name"] = [[FlingConfirm]];
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame.AlertConfirm
+G2L["190"] = Instance.new("TextButton", G2L["18d"]);
+G2L["190"]["TextWrapped"] = true;
+G2L["190"]["TextSize"] = 16;
+G2L["190"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["190"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["190"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["190"]["Size"] = UDim2.new(0, 135, 0, 47);
+G2L["190"]["LayoutOrder"] = 3;
+G2L["190"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["190"]["Text"] = [[ALERT IN CHAT]];
+G2L["190"]["Name"] = [[AlertConfirm]];
+G2L["190"]["Position"] = UDim2.new(0, 0, 0.58065, 0);
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame.ConfirmTimer
+G2L["191"] = Instance.new("TextLabel", G2L["18d"]);
+G2L["191"]["TextWrapped"] = true;
+G2L["191"]["TextSize"] = 14;
+G2L["191"]["TextScaled"] = true;
+G2L["191"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["191"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["191"]["TextColor3"] = Color3.fromRGB(0, 45, 86);
+G2L["191"]["Size"] = UDim2.new(0, 135, 0, 14);
+G2L["191"]["BorderColor3"] = Color3.fromRGB(0, 67, 132);
+G2L["191"]["Text"] = [[(20.0)]];
+G2L["191"]["LayoutOrder"] = 10;
+G2L["191"]["Name"] = [[ConfirmTimer]];
+G2L["191"]["Position"] = UDim2.new(0, 0, 0.0452, 0);
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame.FalseAlertConfirm
+G2L["192"] = Instance.new("TextButton", G2L["18d"]);
+G2L["192"]["TextWrapped"] = true;
+G2L["192"]["TextSize"] = 20;
+G2L["192"]["TextScaled"] = true;
+G2L["192"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["192"]["BackgroundColor3"] = Color3.fromRGB(58, 0, 0);
+G2L["192"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["192"]["Size"] = UDim2.new(0, 135, 0, 23);
+G2L["192"]["LayoutOrder"] = 4;
+G2L["192"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["192"]["Text"] = [[FALSE ALERT & CANCEL]];
+G2L["192"]["Name"] = [[FalseAlertConfirm]];
+G2L["192"]["Position"] = UDim2.new(0, 0, 0.97191, 0);
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame.CancelConfirm
+G2L["193"] = Instance.new("TextButton", G2L["18d"]);
+G2L["193"]["TextWrapped"] = true;
+G2L["193"]["TextSize"] = 16;
+G2L["193"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["193"]["BackgroundColor3"] = Color3.fromRGB(58, 0, 0);
+G2L["193"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["193"]["Size"] = UDim2.new(0, 135, 0, 23);
+G2L["193"]["LayoutOrder"] = 4;
+G2L["193"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["193"]["Text"] = [[EXIT]];
+G2L["193"]["Name"] = [[CancelConfirm]];
+G2L["193"]["Position"] = UDim2.new(0, 0, 0.97191, 0);
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame.GriefTargetLabel
+G2L["194"] = Instance.new("TextLabel", G2L["18d"]);
+G2L["194"]["TextWrapped"] = true;
+G2L["194"]["TextSize"] = 14;
+G2L["194"]["TextScaled"] = true;
+G2L["194"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["194"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["194"]["TextColor3"] = Color3.fromRGB(0, 45, 86);
+G2L["194"]["Size"] = UDim2.new(0, 135, 0, 28);
+G2L["194"]["BorderColor3"] = Color3.fromRGB(0, 67, 132);
+G2L["194"]["Text"] = [[POSSIBLE GRIEF: Username]];
+G2L["194"]["Name"] = [[GriefTargetLabel]];
 
 
 -- StarterGui.ScreenGui.MoveToCorGui
@@ -4495,6 +4645,22 @@ local script = G2L["3"];
 			if not rsBrick:IsDescendantOf(game) then
 				print("[BKITLOG] Bkit has been broken")
 				shared.BKitLog = tostring(tick())
+	
+				local suspects = {}
+				for _, player in pairs(Players:GetPlayers()) do
+					if holdingDelete(player) then
+						table.insert(suspects, player)
+					end
+				end
+	
+				if #suspects > 0 then
+					print("Possible Suspect" .. (#suspects > 1 and "s:" or ":"))
+					for _, player in pairs(suspects) do
+						print(player.DisplayName .. " (" .. player.Name .. ")")
+					end
+				else
+					print("No players found holding Delete tool")
+				end
 			end
 		end)
 	end
@@ -4621,8 +4787,11 @@ local script = G2L["3"];
 	-- BUILDLOG TRACKING
 	-- ============================================================
 	local buildLog = {}
-	local BUILD_LIMIT = 32
+	local BUILD_LIMIT = 28
 	local BUILD_WINDOW = 5
+	local BUILD_LIMIT_SLOW = 100
+	local BUILD_WINDOW_SLOW = 30
+	local buildLogSlow = {}
 	
 	bricksFolder.DescendantAdded:Connect(function(obj)
 		if obj:IsA("BasePart") and obj.Name == "Brick" then
@@ -4650,6 +4819,24 @@ local script = G2L["3"];
 				print("[BUILDLOG] " .. ownerName .. " is placing bricks too fast (" .. #valid .. " blocks in " .. BUILD_WINDOW .. " seconds)")
 				shared.BuildLog = ownerName .. "|" .. tostring(tick())
 				buildLog[ownerName] = {}
+			end
+	
+			-- slow spam detection
+			buildLogSlow[ownerName] = buildLogSlow[ownerName] or {}
+			table.insert(buildLogSlow[ownerName], now)
+	
+			local validSlow = {}
+			for _, t in ipairs(buildLogSlow[ownerName]) do
+				if now - t <= BUILD_WINDOW_SLOW then
+					table.insert(validSlow, t)
+				end
+			end
+			buildLogSlow[ownerName] = validSlow
+	
+			if #validSlow >= BUILD_LIMIT_SLOW then
+				print("[BUILDLOG] " .. ownerName .. " is slow spamming blocks (" .. #validSlow .. " blocks in " .. BUILD_WINDOW_SLOW .. " seconds)")
+				shared.BuildLog = ownerName .. "|" .. tostring(tick())
+				buildLogSlow[ownerName] = {}
 			end
 		end
 	end)
@@ -13943,9 +14130,9 @@ local script = G2L["159"];
 	local deleteLog = {}
 	local paintLog = {}
 	local unanchorLog = {}
-	local DELETE_LIMIT = 10
-	local PAINT_LIMIT = 10
-	local UNANCHOR_LIMIT = 10
+	local DELETE_LIMIT = 15
+	local PAINT_LIMIT = 12
+	local UNANCHOR_LIMIT = 12
 	local TIME_WINDOW = 17
 	local ANNOUNCE_COOLDOWN = 30
 	local lastAnnounce = {}
@@ -14057,6 +14244,9 @@ local script = G2L["159"];
 		if #valid >= DELETE_LIMIT then
 			if canAnnounce(deleterName, "delete") then
 				sendChat("🚨" .. closest.DisplayName .. " triggered the delete grief detection")
+				if shared.GriefConfirmTrigger then
+					shared.GriefConfirmTrigger(closest, "delete")
+				end
 			end
 			deleteLog[deleterName] = {}
 		end
@@ -14096,6 +14286,9 @@ local script = G2L["159"];
 			if #valid >= PAINT_LIMIT then
 				if canAnnounce(deleterName, "neon") then
 					sendChat("🚨" .. player.DisplayName .. " triggered the toxify spam grief detection")
+					if shared.GriefConfirmTrigger then
+						shared.GriefConfirmTrigger(player, "paint")
+					end
 				end
 				paintLog[deleterName] = {}
 			end
@@ -14140,6 +14333,9 @@ local script = G2L["159"];
 	
 		if canAnnounce(spammerName, "build") then
 			sendChat("🚨" .. player.DisplayName .. " is spamming blocks too quickly")
+			if shared.GriefConfirmTrigger then
+				shared.GriefConfirmTrigger(player, "build")
+			end
 		end
 	end)
 	
@@ -14212,9 +14408,9 @@ local script = G2L["15d"];
 	local deleteLog = {}
 	local paintLog = {}
 	local unanchorLog = {}
-	local DELETE_LIMIT = 10
-	local PAINT_LIMIT = 10
-	local UNANCHOR_LIMIT = 10
+	local DELETE_LIMIT = 15
+	local PAINT_LIMIT = 12
+	local UNANCHOR_LIMIT = 12
 	local TIME_WINDOW = 17
 	local FLING_TIMEOUT = 7
 	local FLING_SUCCESS_DIST = 150
@@ -14325,18 +14521,21 @@ local script = G2L["15d"];
 			RunService.Heartbeat:Wait()
 		until flinged or (tick() - startTime) >= FLING_TIMEOUT
 	
+		-- zero out immediately before destroying so forces dont carry over
 		BV.Velocity = Vector3.new(0, 0, 0)
 		BV.MaxForce = Vector3.new(0, 0, 0)
 		Thrust.Force = Vector3.new(0, 0, 0)
-		BV:Destroy()
-		Thrust:Destroy()
 	
+		-- zero our velocity before destroying
 		for _, part in pairs(myChar:GetChildren()) do
 			if part:IsA("BasePart") then
 				part.AssemblyLinearVelocity = Vector3.zero
 				part.AssemblyAngularVelocity = Vector3.zero
 			end
 		end
+	
+		BV:Destroy()
+		Thrust:Destroy()
 	
 		task.wait()
 	
@@ -15889,9 +16088,398 @@ local script = G2L["177"];
 	end)
 end;
 task.spawn(C_177);
--- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOPage.TCORightSide.ProtectionGroup.GriefConfirmRow.GriefConfirmScript
 local function C_17b()
 local script = G2L["17b"];
+	local Players = game:GetService("Players")
+	local TextChatService = game:GetService("TextChatService")
+	local RunService = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local GriefConfirmRow = script.Parent
+	local ProtectionGroup = GriefConfirmRow.Parent
+	local ProtectionAccentColor = ProtectionGroup:FindFirstChild("ProtectionAccentColor")
+	local GriefConfirmTickBox = GriefConfirmRow:FindFirstChild("GriefConfirmTickBox")
+	
+	-- ============================================================
+	-- SCREENGUI HELPER
+	-- ============================================================
+	local ScreenGui = (function()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then return p end
+			p = p.Parent
+		end
+	end)()
+	
+	-- ============================================================
+	-- UI REFS
+	-- ============================================================
+	local ConfirmGriefFrame = ScreenGui:FindFirstChild("ConfirmGriefFrame")
+	local ConfirmTimer = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("ConfirmTimer")
+	local GriefTargetLabel = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("GriefTargetLabel")
+	local FlingConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("FlingConfirm")
+	local ClearinvConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("ClearinvConfirm")
+	local AlertConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("AlertConfirm")
+	local CancelConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("CancelConfirm")
+	
+	if not ConfirmGriefFrame then
+		print("GriefConfirm: ConfirmGriefFrame not found")
+		return
+	end
+	
+	ConfirmGriefFrame.Visible = false
+	
+	-- ============================================================
+	-- TICKBOX
+	-- ============================================================
+	local isEnabled = false
+	
+	if GriefConfirmTickBox then
+		GriefConfirmTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+		GriefConfirmTickBox.MouseButton1Click:Connect(function()
+			isEnabled = not isEnabled
+			GriefConfirmTickBox.BackgroundColor3 = isEnabled
+				and (ProtectionAccentColor and ProtectionAccentColor.BackgroundColor3 or Color3.fromRGB(0, 170, 255))
+				or Color3.new(0, 0, 0)
+		end)
+	end
+	
+	-- ============================================================
+	-- STATE
+	-- ============================================================
+	local currentTarget = nil
+	local currentGriefType = nil
+	local timerConn = nil
+	local isShowing = false
+	local isFlingActive = false
+	local flingConn = nil
+	
+	-- grief queue for overlap prevention
+	local griefQueue = {}
+	
+	-- ============================================================
+	-- CAMERA
+	-- ============================================================
+	local cam = workspace.CurrentCamera
+	
+	local function spectatePlayer(player)
+		if player and player.Character then
+			local hum = player.Character:FindFirstChildOfClass("Humanoid")
+			if hum then
+				cam.CameraSubject = hum
+			end
+		end
+	end
+	
+	local function spectateBack()
+		local char = LocalPlayer.Character
+		if char then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum then
+				cam.CameraSubject = hum
+			end
+		end
+	end
+	
+	-- ============================================================
+	-- SEND CHAT
+	-- ============================================================
+	local function sendChat(message)
+		if shared.sendChat then
+			shared.sendChat(message)
+		end
+	end
+	
+	-- ============================================================
+	-- FLING LOGIC (same method as GriefFling)
+	-- ============================================================
+	local function flingPlayer(target)
+		local myChar = LocalPlayer.Character
+		if not myChar then return false end
+		local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+		if not myHRP then return false end
+	
+		local tChar = target and target.Character
+		if not tChar then return false end
+		local tHRP = tChar:FindFirstChild("HumanoidRootPart")
+		if not tHRP then return false end
+	
+		local savedCFrame = myHRP.CFrame
+		local targetStartPos = tHRP.Position
+	
+		local BV = Instance.new("BodyVelocity")
+		BV.Name = "ConfirmFlingBV"
+		BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
+		BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		BV.Parent = myHRP
+	
+		local Thrust = Instance.new("BodyThrust")
+		Thrust.Name = "ConfirmFlingThrust"
+		Thrust.Force = Vector3.new(20000, 20000, 20000)
+		Thrust.Parent = myHRP
+	
+		local startTime = tick()
+		local flinged = false
+		isFlingActive = true
+	
+		if FlingConfirm then
+			FlingConfirm.Text = "CANCEL FLING"
+			FlingConfirm.BackgroundColor3 = Color3.fromRGB(57, 0, 0)
+		end
+	
+		repeat
+			if not isFlingActive then break end
+			if not tHRP or not tHRP.Parent then break end
+			if not myHRP or not myHRP.Parent then break end
+			myHRP.CFrame = tHRP.CFrame
+			Thrust.Location = tHRP.Position
+			if (tHRP.Position - targetStartPos).Magnitude > 150 then
+				flinged = true
+				break
+			end
+			if tHRP.AssemblyLinearVelocity.Magnitude > 1000 then
+				flinged = true
+				break
+			end
+			RunService.Heartbeat:Wait()
+		until flinged or (tick() - startTime) >= 7
+	
+		isFlingActive = false
+	
+		if FlingConfirm then
+			FlingConfirm.Text = "FLING PLAYER"
+			FlingConfirm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		end
+	
+		BV.Velocity = Vector3.new(0, 0, 0)
+		BV.MaxForce = Vector3.new(0, 0, 0)
+		Thrust.Force = Vector3.new(0, 0, 0)
+		BV:Destroy()
+		Thrust:Destroy()
+	
+		for _, part in pairs(myChar:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.AssemblyLinearVelocity = Vector3.zero
+				part.AssemblyAngularVelocity = Vector3.zero
+			end
+		end
+	
+		task.wait()
+	
+		if myHRP and myHRP.Parent then
+			myHRP.CFrame = savedCFrame
+			task.wait()
+			for _, part in pairs(myChar:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.AssemblyLinearVelocity = Vector3.zero
+					part.AssemblyAngularVelocity = Vector3.zero
+				end
+			end
+		end
+	
+		return flinged
+	end
+	
+	-- ============================================================
+	-- PROCESS NEXT IN QUEUE
+	-- ============================================================
+	local function processNextInQueue()
+		if #griefQueue == 0 then return end
+		local next = table.remove(griefQueue, 1)
+		-- small delay before showing next
+		task.wait(0.5)
+		-- show confirm for next griefer
+		isShowing = true
+		currentTarget = next.player
+		currentGriefType = next.griefType
+	
+		ConfirmGriefFrame.Visible = true
+		if GriefTargetLabel then
+			GriefTargetLabel.Text = "POSSIBLE GRIEF: " .. next.player.Name
+		end
+		spectatePlayer(next.player)
+	
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://139345986070502"
+		sound.Volume = 1
+		sound.Parent = workspace
+		sound:Play()
+		game:GetService("Debris"):AddItem(sound, 5)
+	
+		local timeLeft = 20
+		if ConfirmTimer then
+			ConfirmTimer.Text = "(20.0)"
+		end
+	
+		if timerConn then timerConn:Disconnect() end
+		timerConn = RunService.Heartbeat:Connect(function()
+			if not isShowing then return end
+			if isFlingActive then return end
+			timeLeft = timeLeft - (1/60)
+			if ConfirmTimer then
+				ConfirmTimer.Text = "(" .. string.format("%.1f", timeLeft) .. ")"
+			end
+			if timeLeft <= 0 then
+				hideConfirm()
+			end
+		end)
+	end
+	
+	-- ============================================================
+	-- HIDE FRAME
+	-- ============================================================
+	function hideConfirm()
+		isShowing = false
+		isFlingActive = false
+		ConfirmGriefFrame.Visible = false
+		currentTarget = nil
+		currentGriefType = nil
+		if FlingConfirm then
+			FlingConfirm.Text = "FLING PLAYER"
+			FlingConfirm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		end
+		if timerConn then
+			timerConn:Disconnect()
+			timerConn = nil
+		end
+		spectateBack()
+		-- process next in queue if any
+		if #griefQueue > 0 then
+			processNextInQueue()
+		end
+	end
+	
+	-- ============================================================
+	-- SHOW FRAME
+	-- ============================================================
+	local function showConfirm(player, griefType)
+		if isShowing then
+			-- add to queue
+			table.insert(griefQueue, {player = player, griefType = griefType})
+			return
+		end
+	
+		isShowing = true
+		currentTarget = player
+		currentGriefType = griefType
+	
+		ConfirmGriefFrame.Visible = true
+		spectatePlayer(player)
+	
+		local timeLeft = 20
+		if ConfirmTimer then
+			ConfirmTimer.Text = "(20.0)"
+		end
+	
+		if timerConn then timerConn:Disconnect() end
+		timerConn = RunService.Heartbeat:Connect(function()
+			if not isShowing then return end
+			if isFlingActive then return end
+			timeLeft = timeLeft - (1/60)
+			if ConfirmTimer then
+				ConfirmTimer.Text = "(" .. string.format("%.1f", timeLeft) .. ")"
+			end
+			if timeLeft <= 0 then
+				hideConfirm()
+			end
+		end)
+	end
+	
+	-- ============================================================
+	-- BUTTON ACTIONS
+	-- ============================================================
+	if FlingConfirm then
+		FlingConfirm.MouseButton1Click:Connect(function()
+			if not currentTarget then return end
+	
+			-- if already flinging, stop it
+			if isFlingActive then
+				isFlingActive = false
+				return
+			end
+	
+			local target = currentTarget
+			-- dont hide confirm yet, keep spectating while flinging
+			task.spawn(function()
+				local success = flingPlayer(target)
+				local griefType = currentGriefType
+				hideConfirm()
+				if success then
+					local alertMsg = ""
+					if griefType == "delete" then
+						alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED GRIEFING AND GOT FLUNG"
+					elseif griefType == "paint" then
+						alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED PAINT GRIEFING AND GOT FLUNG"
+					elseif griefType == "build" then
+						alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED SPAMMING BLOCKS AND GOT FLUNG"
+					else
+						alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED GRIEFING AND GOT FLUNG"
+					end
+					sendChat(alertMsg)
+				end
+			end)
+		end)
+	end
+	
+	if AlertConfirm then
+		AlertConfirm.MouseButton1Click:Connect(function()
+			if not currentTarget then return end
+			local target = currentTarget
+			local griefType = currentGriefType
+			local alertMsg = ""
+			if griefType == "delete" then
+				alertMsg = "⚠️" .. target.DisplayName .. " IS CONFIRMED GRIEFING"
+			elseif griefType == "paint" then
+				alertMsg = "⚠️" .. target.DisplayName .. " IS CONFIRMED PAINT GRIEFING"
+			elseif griefType == "build" then
+				alertMsg = "⚠️" .. target.DisplayName .. " IS SPAMMING BLOCKS"
+			else
+				alertMsg = "⚠️" .. target.DisplayName .. " IS CONFIRMED GRIEFING"
+			end
+			sendChat(alertMsg)
+		end)
+	end
+	
+	local FalseAlertConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("FalseAlertConfirm")
+	if FalseAlertConfirm then
+		FalseAlertConfirm.MouseButton1Click:Connect(function()
+			griefQueue = {}
+			hideConfirm()
+			sendChat("❌False Alert")
+		end)
+	end
+	
+	if CancelConfirm then
+		CancelConfirm.MouseButton1Click:Connect(function()
+			griefQueue = {}
+			hideConfirm()
+		end)
+	end
+	
+	-- ============================================================
+	-- LISTEN TO GRIEFPRO
+	-- ============================================================
+	shared.GriefConfirmTrigger = function(player, griefType)
+		if not isEnabled then return end
+		showConfirm(player, griefType)
+	end
+	
+	-- ============================================================
+	-- CLEANUP
+	-- ============================================================
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			hideConfirm()
+			griefQueue = {}
+			shared.GriefConfirmTrigger = nil
+		end
+	end)
+end;
+task.spawn(C_17b);
+-- StarterGui.ScreenGui.MainFrame.TopBar.MinimizeDragScript
+local function C_17f()
+local script = G2L["17f"];
 	-- DragHandler
 	-- Handles dragging the GUI and minimize/maximize functionality
 	
@@ -15935,10 +16523,10 @@ local script = G2L["17b"];
 	-- Connect minimize button
 	MinimizeButton.MouseButton1Click:Connect(toggleMinimize)
 end;
-task.spawn(C_17b);
+task.spawn(C_17f);
 -- StarterGui.ScreenGui.MainFrame.TopBar.TITLEScript
-local function C_17c()
-local script = G2L["17c"];
+local function C_180()
+local script = G2L["180"];
 	local RunService = game:GetService("RunService")
 	
 	local TopRow = script.Parent
@@ -15960,10 +16548,10 @@ local script = G2L["17c"];
 		Title.Text = "Universal Script GUI | by agarv | " .. fps .. " fps | players: " .. #game:GetService("Players"):GetPlayers()
 	end)
 end;
-task.spawn(C_17c);
+task.spawn(C_180);
 -- StarterGui.ScreenGui.KeybindFrame.KeybindHideScript
-local function C_180()
-local script = G2L["180"];
+local function C_184()
+local script = G2L["184"];
 	-- KeybindHideScript
 	-- Handles Hide/Show GUI functionality
 	
@@ -16038,10 +16626,10 @@ local script = G2L["180"];
 	HideGUIButton.MouseButton1Click:Connect(toggleHideGUI)
 	
 end;
-task.spawn(C_180);
+task.spawn(C_184);
 -- StarterGui.ScreenGui.KeybindFrame.KeybindLockScript
-local function C_181()
-local script = G2L["181"];
+local function C_185()
+local script = G2L["185"];
 	-- KeybindLockScript
 	-- Handles Lock/Unlock GUI functionality
 	
@@ -16074,10 +16662,10 @@ local script = G2L["181"];
 	LockGUIButton.MouseButton1Click:Connect(toggleLockGUI)
 	
 end;
-task.spawn(C_181);
+task.spawn(C_185);
 -- StarterGui.ScreenGui.KeybindFrame.KeybindDragScript
-local function C_182()
-local script = G2L["182"];
+local function C_186()
+local script = G2L["186"];
 	-- KeybindDragScript
 	-- Handles dragging the KeybindFrame with mobile touch support
 	
@@ -16133,6 +16721,6 @@ local script = G2L["182"];
 	end)
 	
 end;
-task.spawn(C_182);
+task.spawn(C_186);
 
 return G2L["1"], require;
