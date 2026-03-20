@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 403 | Scripts: 82 | Modules: 0 | Tags: 0
+-- Instances: 404 | Scripts: 82 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -4457,7 +4457,7 @@ G2L["18c"]["Name"] = [[DragGUI]];
 G2L["18d"] = Instance.new("Frame", G2L["1"]);
 G2L["18d"]["BorderSizePixel"] = 0;
 G2L["18d"]["BackgroundColor3"] = Color3.fromRGB(0, 84, 173);
-G2L["18d"]["Size"] = UDim2.new(0, 135, 0, 186);
+G2L["18d"]["Size"] = UDim2.new(0, 135, 0, 161);
 G2L["18d"]["Position"] = UDim2.new(0.66486, 0, 0.2513, 0);
 G2L["18d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["18d"]["Name"] = [[ConfirmGriefFrame]];
@@ -4481,66 +4481,80 @@ G2L["18f"]["Text"] = [[FLING PLAYER]];
 G2L["18f"]["Name"] = [[FlingConfirm]];
 
 
--- StarterGui.ScreenGui.ConfirmGriefFrame.ClearinvConfirm
+-- StarterGui.ScreenGui.ConfirmGriefFrame.AlertConfirm
 G2L["190"] = Instance.new("TextButton", G2L["18d"]);
 G2L["190"]["TextWrapped"] = true;
 G2L["190"]["TextSize"] = 16;
-G2L["190"]["TextScaled"] = true;
 G2L["190"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["190"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["190"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["190"]["Size"] = UDim2.new(0, 135, 0, 47);
 G2L["190"]["LayoutOrder"] = 3;
 G2L["190"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["190"]["Text"] = [[CLEARINV PLAYER (must have enli)]];
-G2L["190"]["Name"] = [[ClearinvConfirm]];
-
-
--- StarterGui.ScreenGui.ConfirmGriefFrame.AlertConfirm
-G2L["191"] = Instance.new("TextButton", G2L["18d"]);
-G2L["191"]["TextWrapped"] = true;
-G2L["191"]["TextSize"] = 16;
-G2L["191"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["191"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["191"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["191"]["Size"] = UDim2.new(0, 135, 0, 47);
-G2L["191"]["LayoutOrder"] = 3;
-G2L["191"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["191"]["Text"] = [[ALERT IN CHAT]];
-G2L["191"]["Name"] = [[AlertConfirm]];
-G2L["191"]["Position"] = UDim2.new(0, 0, 0.58065, 0);
+G2L["190"]["Text"] = [[ALERT IN CHAT]];
+G2L["190"]["Name"] = [[AlertConfirm]];
+G2L["190"]["Position"] = UDim2.new(0, 0, 0.58065, 0);
 
 
 -- StarterGui.ScreenGui.ConfirmGriefFrame.ConfirmTimer
-G2L["192"] = Instance.new("TextLabel", G2L["18d"]);
+G2L["191"] = Instance.new("TextLabel", G2L["18d"]);
+G2L["191"]["TextWrapped"] = true;
+G2L["191"]["TextSize"] = 14;
+G2L["191"]["TextScaled"] = true;
+G2L["191"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["191"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["191"]["TextColor3"] = Color3.fromRGB(0, 45, 86);
+G2L["191"]["Size"] = UDim2.new(0, 135, 0, 14);
+G2L["191"]["BorderColor3"] = Color3.fromRGB(0, 67, 132);
+G2L["191"]["Text"] = [[(20.0)]];
+G2L["191"]["LayoutOrder"] = 10;
+G2L["191"]["Name"] = [[ConfirmTimer]];
+G2L["191"]["Position"] = UDim2.new(0, 0, 0.0452, 0);
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame.FalseAlertConfirm
+G2L["192"] = Instance.new("TextButton", G2L["18d"]);
 G2L["192"]["TextWrapped"] = true;
-G2L["192"]["TextSize"] = 14;
+G2L["192"]["TextSize"] = 20;
 G2L["192"]["TextScaled"] = true;
-G2L["192"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["192"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["192"]["BackgroundColor3"] = Color3.fromRGB(58, 0, 0);
 G2L["192"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["192"]["TextColor3"] = Color3.fromRGB(0, 45, 86);
-G2L["192"]["BorderMode"] = Enum.BorderMode.Inset;
-G2L["192"]["Size"] = UDim2.new(0, 135, 0, 14);
-G2L["192"]["BorderColor3"] = Color3.fromRGB(0, 92, 189);
-G2L["192"]["Text"] = [[(20.0)]];
-G2L["192"]["Name"] = [[ConfirmTimer]];
-G2L["192"]["Position"] = UDim2.new(0, 0, 0.0452, 0);
+G2L["192"]["Size"] = UDim2.new(0, 135, 0, 23);
+G2L["192"]["LayoutOrder"] = 4;
+G2L["192"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["192"]["Text"] = [[FALSE ALERT & CANCEL]];
+G2L["192"]["Name"] = [[FalseAlertConfirm]];
+G2L["192"]["Position"] = UDim2.new(0, 0, 0.97191, 0);
 
 
 -- StarterGui.ScreenGui.ConfirmGriefFrame.CancelConfirm
 G2L["193"] = Instance.new("TextButton", G2L["18d"]);
 G2L["193"]["TextWrapped"] = true;
-G2L["193"]["TextSize"] = 20;
-G2L["193"]["TextScaled"] = true;
+G2L["193"]["TextSize"] = 16;
 G2L["193"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["193"]["BackgroundColor3"] = Color3.fromRGB(58, 0, 0);
 G2L["193"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["193"]["Size"] = UDim2.new(0, 135, 0, 23);
 G2L["193"]["LayoutOrder"] = 4;
 G2L["193"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["193"]["Text"] = [[FALSE ALERT & CANCEL]];
+G2L["193"]["Text"] = [[EXIT]];
 G2L["193"]["Name"] = [[CancelConfirm]];
 G2L["193"]["Position"] = UDim2.new(0, 0, 0.97191, 0);
+
+
+-- StarterGui.ScreenGui.ConfirmGriefFrame.GriefTargetLabel
+G2L["194"] = Instance.new("TextLabel", G2L["18d"]);
+G2L["194"]["TextWrapped"] = true;
+G2L["194"]["TextSize"] = 14;
+G2L["194"]["TextScaled"] = true;
+G2L["194"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["194"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["194"]["TextColor3"] = Color3.fromRGB(0, 45, 86);
+G2L["194"]["Size"] = UDim2.new(0, 135, 0, 28);
+G2L["194"]["BorderColor3"] = Color3.fromRGB(0, 67, 132);
+G2L["194"]["Text"] = [[POSSIBLE GRIEF: Username]];
+G2L["194"]["Name"] = [[GriefTargetLabel]];
 
 
 -- StarterGui.ScreenGui.MoveToCorGui
@@ -14470,18 +14484,21 @@ local script = G2L["15d"];
 			RunService.Heartbeat:Wait()
 		until flinged or (tick() - startTime) >= FLING_TIMEOUT
 	
+		-- zero out immediately before destroying so forces dont carry over
 		BV.Velocity = Vector3.new(0, 0, 0)
 		BV.MaxForce = Vector3.new(0, 0, 0)
 		Thrust.Force = Vector3.new(0, 0, 0)
-		BV:Destroy()
-		Thrust:Destroy()
 	
+		-- zero our velocity before destroying
 		for _, part in pairs(myChar:GetChildren()) do
 			if part:IsA("BasePart") then
 				part.AssemblyLinearVelocity = Vector3.zero
 				part.AssemblyAngularVelocity = Vector3.zero
 			end
 		end
+	
+		BV:Destroy()
+		Thrust:Destroy()
 	
 		task.wait()
 	
@@ -16063,6 +16080,7 @@ local script = G2L["17b"];
 	-- ============================================================
 	local ConfirmGriefFrame = ScreenGui:FindFirstChild("ConfirmGriefFrame")
 	local ConfirmTimer = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("ConfirmTimer")
+	local GriefTargetLabel = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("GriefTargetLabel")
 	local FlingConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("FlingConfirm")
 	local ClearinvConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("ClearinvConfirm")
 	local AlertConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("AlertConfirm")
@@ -16227,56 +16245,6 @@ local script = G2L["17b"];
 	end
 	
 	-- ============================================================
-	-- ARK EQUIP FOR CLEARINV
-	-- ============================================================
-	local function equipArkAndSend(message)
-		local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if not humanoid then
-			sendChat(message)
-			return
-		end
-	
-		local char = LocalPlayer.Character
-		local ark = char:FindFirstChild("The Arkenstone")
-		local alreadyEquipped = ark ~= nil
-	
-		if not alreadyEquipped then
-			local backpack = LocalPlayer:FindFirstChild("Backpack")
-			if backpack then
-				ark = backpack:FindFirstChild("The Arkenstone")
-			end
-		end
-	
-		if not ark then
-			sendChat(message)
-			return
-		end
-	
-		local previousTool = nil
-		if not alreadyEquipped then
-			for _, obj in pairs(char:GetChildren()) do
-				if obj:IsA("Tool") then
-					previousTool = obj
-					break
-				end
-			end
-			humanoid:EquipTool(ark)
-			task.wait(0.5)
-		end
-	
-		sendChat(message)
-		task.wait(0.25)
-	
-		if not alreadyEquipped then
-			if previousTool and previousTool.Parent then
-				humanoid:EquipTool(previousTool)
-			else
-				humanoid:UnequipTools()
-			end
-		end
-	end
-	
-	-- ============================================================
 	-- PROCESS NEXT IN QUEUE
 	-- ============================================================
 	local function processNextInQueue()
@@ -16290,6 +16258,9 @@ local script = G2L["17b"];
 		currentGriefType = next.griefType
 	
 		ConfirmGriefFrame.Visible = true
+		if GriefTargetLabel then
+			GriefTargetLabel.Text = "POSSIBLE GRIEF: " .. next.player.Name
+		end
 		spectatePlayer(next.player)
 	
 		local timeLeft = 20
@@ -16407,43 +16378,18 @@ local script = G2L["17b"];
 		end)
 	end
 	
-	if ClearinvConfirm then
-		ClearinvConfirm.MouseButton1Click:Connect(function()
-			if not currentTarget then return end
-			local name = currentTarget.Name:gsub("_", ".")
-			local target = currentTarget
-			local griefType = currentGriefType
-			hideConfirm()
-			task.spawn(function()
-				equipArkAndSend(";clearinv " .. name)
-				local alertMsg = ""
-				if griefType == "delete" then
-					alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED GRIEFING AND GOT CLEARINV"
-				elseif griefType == "paint" then
-					alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED PAINT GRIEFING AND GOT CLEARINV"
-				elseif griefType == "build" then
-					alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED SPAMMING BLOCKS AND GOT CLEARINV"
-				else
-					alertMsg = "⚠️" .. target.DisplayName .. " WAS CONFIRMED GRIEFING AND GOT CLEARINV"
-				end
-				sendChat(alertMsg)
-			end)
-		end)
-	end
-	
 	if AlertConfirm then
 		AlertConfirm.MouseButton1Click:Connect(function()
 			if not currentTarget then return end
 			local target = currentTarget
 			local griefType = currentGriefType
-			hideConfirm()
 			local alertMsg = ""
 			if griefType == "delete" then
 				alertMsg = "⚠️" .. target.DisplayName .. " IS CONFIRMED GRIEFING"
 			elseif griefType == "paint" then
 				alertMsg = "⚠️" .. target.DisplayName .. " IS CONFIRMED PAINT GRIEFING"
 			elseif griefType == "build" then
-				alertMsg = "⚠️" .. target.DisplayName .. " IS CONFIRMED SPAMMING BLOCKS"
+				alertMsg = "⚠️" .. target.DisplayName .. " IS SPAMMING BLOCKS"
 			else
 				alertMsg = "⚠️" .. target.DisplayName .. " IS CONFIRMED GRIEFING"
 			end
@@ -16451,11 +16397,19 @@ local script = G2L["17b"];
 		end)
 	end
 	
+	local FalseAlertConfirm = ConfirmGriefFrame and ConfirmGriefFrame:FindFirstChild("FalseAlertConfirm")
+	if FalseAlertConfirm then
+		FalseAlertConfirm.MouseButton1Click:Connect(function()
+			griefQueue = {}
+			hideConfirm()
+			sendChat("❌False Alert")
+		end)
+	end
+	
 	if CancelConfirm then
 		CancelConfirm.MouseButton1Click:Connect(function()
 			griefQueue = {}
 			hideConfirm()
-			sendChat("❌False Alert")
 		end)
 	end
 	
