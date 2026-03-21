@@ -4641,9 +4641,10 @@ local script = G2L["3"];
 	
 	local brickAge = {}
 	
+	-- all bricks before i joined = 10000 seconds old
 	for _, obj in pairs(bricksFolder:GetDescendants()) do
 		if obj:IsA("BasePart") and obj.Name == "Brick" then
-			brickAge[obj] = tick() - 121
+			brickAge[obj] = tick() - 10000
 		end
 	end
 	
@@ -4652,9 +4653,68 @@ local script = G2L["3"];
 	shared.BuildLog = ""
 	shared.BKitLog = ""
 	
+	-- ============================================================
+	-- SPAM BRICK IMMUNITY
+	-- spamBricks[ownerName] = {brick = true, ...} 
+	-- cleared 60 seconds after spam detected
+	-- ============================================================
+	local spamBricks = {}
+	local spamBrickOwners = {}
+	
+	local function markSpamBricks(ownerName)
+		spamBricks[ownerName] = spamBricks[ownerName] or {}
+		local ownerFolder = bricksFolder:FindFirstChild(ownerName)
+		if ownerFolder then
+			for _, brick in pairs(ownerFolder:GetChildren()) do
+				if brick:IsA("BasePart") and brick.Name == "Brick" then
+					spamBricks[ownerName][brick] = true
+				end
+			end
+		end
+		spamBrickOwners[ownerName] = true
+		-- clear immunity after 60 seconds
+		task.delay(60, function()
+			spamBricks[ownerName] = nil
+			spamBrickOwners[ownerName] = nil
+		end)
+	end
+	
+	local function isSpamBrick(brick, ownerName)
+		if spamBrickOwners[ownerName] then
+			local ownerSpam = spamBricks[ownerName]
+			if ownerSpam and ownerSpam[brick] then
+				return true
+			end
+		end
+		return false
+	end
+	
 	-- Watch ReplicatedStorage.Brick for deletion
 	local rs = game:GetService("ReplicatedStorage")
 	local rsBrick = rs:FindFirstChild("Brick")
+	
+	local function holdingDelete(player)
+		local char = player.Character
+		if not char then return false end
+		for _, obj in pairs(char:GetChildren()) do
+			if obj:IsA("Tool") and obj.Name:lower():find("delete") then
+				return true
+			end
+		end
+		return false
+	end
+	
+	local function holdingPaint(player)
+		local char = player.Character
+		if not char then return false end
+		for _, obj in pairs(char:GetChildren()) do
+			if obj:IsA("Tool") and obj.Name:lower():find("paint") then
+				return true
+			end
+		end
+		return false
+	end
+	
 	if rsBrick then
 		rsBrick.AncestryChanged:Connect(function()
 			if not rsBrick:IsDescendantOf(game) then
@@ -4678,28 +4738,6 @@ local script = G2L["3"];
 				end
 			end
 		end)
-	end
-	
-	local function holdingDelete(player)
-		local char = player.Character
-		if not char then return false end
-		for _, obj in pairs(char:GetChildren()) do
-			if obj:IsA("Tool") and obj.Name:lower():find("delete") then
-				return true
-			end
-		end
-		return false
-	end
-	
-	local function holdingPaint(player)
-		local char = player.Character
-		if not char then return false end
-		for _, obj in pairs(char:GetChildren()) do
-			if obj:IsA("Tool") and obj.Name:lower():find("paint") then
-				return true
-			end
-		end
-		return false
 	end
 	
 	local previousBricks = {}
@@ -4747,6 +4785,9 @@ local script = G2L["3"];
 			if brick.Material ~= Enum.Material.Neon then return end
 			local currentOwner = getOwner(brick)
 	
+			-- skip if this is a spam brick
+			if isSpamBrick(brick, currentOwner) then return end
+	
 			local closest = nil
 			local closestDist = DELETE_RADIUS
 			for _, player in pairs(Players:GetPlayers()) do
@@ -4771,6 +4812,9 @@ local script = G2L["3"];
 			if not brick or not brick.Parent then return end
 			if brick.Anchored then return end
 			local currentOwner = getOwner(brick)
+	
+			-- skip if this is a spam brick
+			if isSpamBrick(brick, currentOwner) then return end
 	
 			local closest = nil
 			local closestDist = DELETE_RADIUS
@@ -4833,6 +4877,7 @@ local script = G2L["3"];
 			if #valid >= BUILD_LIMIT then
 				print("[BUILDLOG] " .. ownerName .. " is placing bricks too fast (" .. #valid .. " blocks in " .. BUILD_WINDOW .. " seconds)")
 				shared.BuildLog = ownerName .. "|" .. tostring(tick())
+				markSpamBricks(ownerName)
 				buildLog[ownerName] = {}
 			end
 	
@@ -4851,6 +4896,7 @@ local script = G2L["3"];
 			if #validSlow >= BUILD_LIMIT_SLOW then
 				print("[BUILDLOG] " .. ownerName .. " is slow spamming blocks (" .. #validSlow .. " blocks in " .. BUILD_WINDOW_SLOW .. " seconds)")
 				shared.BuildLog = ownerName .. "|" .. tostring(tick())
+				markSpamBricks(ownerName)
 				buildLogSlow[ownerName] = {}
 			end
 		end
@@ -4872,6 +4918,12 @@ local script = G2L["3"];
 				local ownerName = data.owner
 				local closest = nil
 				local closestDist = DELETE_RADIUS
+	
+				-- skip if this is a spam brick
+				if isSpamBrick(oldBrick, ownerName) then
+					continue
+				end
+	
 				for _, player in pairs(Players:GetPlayers()) do
 					local char = player.Character
 					if char and char:FindFirstChild("HumanoidRootPart") then
@@ -4883,7 +4935,7 @@ local script = G2L["3"];
 					end
 				end
 				if closest and closest.Name ~= ownerName then
-					local age = brickAge[oldBrick] and (tick() - brickAge[oldBrick]) or 121
+					local age = brickAge[oldBrick] and (tick() - brickAge[oldBrick]) or 10000
 					print("[GRIEFLOG] "..closest.Name.." deleted "..ownerName.."'s brick (age: "..math.floor(age).."s)")
 					shared.GriefLog = closest.Name .. "|" .. ownerName .. "|" .. tostring(tick()) .. "|" .. tostring(age)
 				end
@@ -14236,13 +14288,15 @@ local script = G2L["159"];
 		if not val or val == "" or val == lastSeenGriefLog then return end
 		lastSeenGriefLog = val
 	
-		local deleterName, ownerName = val:match("^([^|]+)|([^|]+)|")
+		local deleterName, ownerName, _, ageStr = val:match("^([^|]+)|([^|]+)|([^|]+)|([^|]+)$")
+		local brickAge = tonumber(ageStr) or 0
 		if not deleterName then return end
 	
 		local closest = Players:FindFirstChild(deleterName)
 		if not closest then return end
 		if isWhitelisted(deleterName) then return end
 		if shared.GriefDetectHandling and shared.GriefDetectHandling[deleterName] then return end
+		if brickAge < 30 then return end
 	
 		deleteLog[deleterName] = deleteLog[deleterName] or {}
 		table.insert(deleteLog[deleterName], tick())
@@ -14285,6 +14339,7 @@ local script = G2L["159"];
 		if not player then return end
 		if isWhitelisted(deleterName) then return end
 		if shared.GriefDetectHandling and shared.GriefDetectHandling[deleterName] then return end
+		if brickAge < 30 then return end
 	
 		local now = tick()
 	
@@ -14626,13 +14681,15 @@ local script = G2L["15d"];
 		if not val or val == "" or val == lastSeenGriefLog then return end
 		lastSeenGriefLog = val
 	
-		local deleterName, ownerName = val:match("^([^|]+)|([^|]+)|")
+		local deleterName, ownerName, _, ageStr = val:match("^([^|]+)|([^|]+)|([^|]+)|([^|]+)$")
 		if not deleterName then return end
+		local brickAge = tonumber(ageStr) or 0
 	
 		local closest = Players:FindFirstChild(deleterName)
 		if not closest then return end
 		if isWhitelisted(deleterName) then return end
 		if shared.GriefDetectHandling and shared.GriefDetectHandling[deleterName] then return end
+		if brickAge < 30 then return end
 	
 		deleteLog[deleterName] = deleteLog[deleterName] or {}
 		table.insert(deleteLog[deleterName], tick())
