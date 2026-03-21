@@ -2488,6 +2488,7 @@ G2L["e1"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 G2L["e2"] = Instance.new("ScrollingFrame", G2L["f"]);
 G2L["e2"]["Active"] = true;
 G2L["e2"]["BorderSizePixel"] = 0;
+G2L["e2"]["CanvasPosition"] = Vector2.new(0, 116.66667);
 G2L["e2"]["Name"] = [[TCOPage]];
 G2L["e2"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["e2"]["Size"] = UDim2.new(0, 349, 0, 250);
@@ -11552,7 +11553,24 @@ local script = G2L["ec"];
 			and Players:GetPlayerByUserId(mdata.TextSource.UserId)
 		if not plr then return end
 	
-		-- ---- CHATSPY COLOR LOGIC (always runs) ----
+		-- ---- CHATSPY COLOR LOGIC (only runs in TCO) ----
+		local TCO_PLACE_IDS = {
+			11137575513, -- Main
+			12943245078, -- XL
+			12943247001, -- VC
+			108097274488844, -- OG
+		}
+	
+		local isTCO = false
+		for _, id in ipairs(TCO_PLACE_IDS) do
+			if game.PlaceId == id then
+				isTCO = true
+				break
+			end
+		end
+	
+		if not isTCO then return end
+	
 		local cn
 		if plr.Neutral == true then
 			if plr:GetAttribute("Arken") == true then
