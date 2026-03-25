@@ -19161,7 +19161,8 @@ local script = G2L["1a2"];
 				local player = chosen.player
 				local isSelf = player.Name == ownerName
 				if not isSelf then
-					ScreenGui:SetAttribute("LastDeleteUserId", player.UserId + math.random())
+					ScreenGui:SetAttribute("LastDeleteUserId", nil)
+					ScreenGui:SetAttribute("LastDeleteUserId", player.UserId)
 				end
 				
 				local ownerPlayer = Players:FindFirstChild(ownerName)
@@ -23538,11 +23539,11 @@ local script = G2L["1de"];
 	-- LISTEN TO GLOBAL GRIEF
 	--------------------------------------------------
 	
-	ScreenGui:GetAttributeChangedSignal("LastGrieferUserId"):Connect(function()
+	ScreenGui:GetAttributeChangedSignal("LastDeleteUserId"):Connect(function()
 	
 		if not FlingTickBox:GetAttribute("Enabled") then return end
 	
-		local userId = ScreenGui:GetAttribute("LastGrieferUserId")
+		local userId = ScreenGui:GetAttribute("LastDeleteUserId")
 		if not userId then return end
 	
 		local player = Players:GetPlayerByUserId(userId)
@@ -23560,56 +23561,63 @@ local script = G2L["1e2"];
 	local Players = game:GetService("Players")
 	local TextChatService = game:GetService("TextChatService")
 	
-	--------------------------------------------------
-	-- GUI STRUCTURE
-	--------------------------------------------------
-	
-	local AlertRow = script.Parent
-	local PunishGroup = AlertRow.Parent
+	local AlertGriefRow = script.Parent
+	local PunishGroup = AlertGriefRow.Parent
 	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
-	local AlertTickBox = AlertRow:WaitForChild("AlertGriefTickBox")
-	
-	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
+	local AlertGriefTickBox = AlertGriefRow:WaitForChild("AlertGriefTickBox")
 	
 	--------------------------------------------------
 	-- ENABLE STATE
 	--------------------------------------------------
 	
-	AlertTickBox:SetAttribute("Enabled", false)
+	AlertGriefTickBox:SetAttribute("Enabled", false)
 	
 	local function updateVisual()
-		if AlertTickBox:GetAttribute("Enabled") then
-			AlertTickBox.BackgroundColor3 = PunishAccentColor.BackgroundColor3
+		if AlertGriefTickBox:GetAttribute("Enabled") then
+			AlertGriefTickBox.BackgroundColor3 = PunishAccentColor.BackgroundColor3
 		else
-			AlertTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
+			AlertGriefTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
 		end
 	end
 	
-	AlertTickBox.MouseButton1Click:Connect(function()
-		local state = not AlertTickBox:GetAttribute("Enabled")
-		AlertTickBox:SetAttribute("Enabled", state)
+	AlertGriefTickBox.MouseButton1Click:Connect(function()
+		local state = not AlertGriefTickBox:GetAttribute("Enabled")
+		AlertGriefTickBox:SetAttribute("Enabled", state)
 		updateVisual()
 	end)
 	
 	updateVisual()
 	
 	--------------------------------------------------
-	-- LISTEN TO GLOBAL GRIEF
+	-- ENSURE GRIEF EVENT EXISTS
 	--------------------------------------------------
 	
-	ScreenGui:GetAttributeChangedSignal("LastGrieferUserId"):Connect(function()
+	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
 	
-		if not AlertTickBox:GetAttribute("Enabled") then return end
+	--------------------------------------------------
+	-- CHAT FUNCTION
+	--------------------------------------------------
 	
-		local userId = ScreenGui:GetAttribute("LastGrieferUserId")
-		if not userId then return end
+	local function sendChat(message)
+		if shared.sendChat then
+			shared.sendChat(message)
+		else
+			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
+		end
+	end
 	
-		local player = Players:GetPlayerByUserId(userId)
-		if not player then return end
+	--------------------------------------------------
+	-- LISTEN FOR GRIEF
+	--------------------------------------------------
 	
-		local message = "🚨"..player.DisplayName.." has been detected deleting another players blocks"
+	shared.GriefEvent.Event:Connect(function(player, griefType)
 	
-		TextChatService.TextChannels.RBXGeneral:SendAsync(message)
+		if not AlertGriefTickBox:GetAttribute("Enabled") then return end
+		if griefType ~= "delete" then return end
+	
+		local msg = "🚨" .. player.DisplayName .. " has been detected deleting another players blocks"
+	
+		sendChat(msg)
 	
 	end)
 end;
