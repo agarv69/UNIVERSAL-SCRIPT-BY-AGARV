@@ -4653,38 +4653,38 @@ G2L["1a2"] = Instance.new("LocalScript", G2L["1a1"]);
 G2L["1a2"]["Name"] = [[EnableDeleteScript]];
 
 
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableDeleteRow.EnableDeleteGrief
+G2L["1a3"] = Instance.new("LocalScript", G2L["1a1"]);
+G2L["1a3"]["Name"] = [[EnableDeleteGrief]];
+
+
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableDeleteRow.EnableDeleteTickBox
-G2L["1a3"] = Instance.new("TextButton", G2L["1a1"]);
-G2L["1a3"]["TextSize"] = 14;
-G2L["1a3"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1a3"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1a3"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["1a3"]["Size"] = UDim2.new(0, 16, 0, 16);
-G2L["1a3"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
-G2L["1a3"]["Text"] = [[]];
-G2L["1a3"]["Name"] = [[EnableDeleteTickBox]];
-G2L["1a3"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
+G2L["1a4"] = Instance.new("TextButton", G2L["1a1"]);
+G2L["1a4"]["TextSize"] = 14;
+G2L["1a4"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1a4"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1a4"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1a4"]["Size"] = UDim2.new(0, 16, 0, 16);
+G2L["1a4"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
+G2L["1a4"]["Text"] = [[]];
+G2L["1a4"]["Name"] = [[EnableDeleteTickBox]];
+G2L["1a4"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableDeleteRow.EnableDeleteText
-G2L["1a4"] = Instance.new("TextLabel", G2L["1a1"]);
-G2L["1a4"]["BorderSizePixel"] = 0;
-G2L["1a4"]["TextSize"] = 14;
-G2L["1a4"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["1a4"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1a4"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["1a4"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1a4"]["BackgroundTransparency"] = 1;
-G2L["1a4"]["Size"] = UDim2.new(0, 88, 0, 20);
-G2L["1a4"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1a4"]["Text"] = [[Detect Delete]];
-G2L["1a4"]["Name"] = [[EnableDeleteText]];
-G2L["1a4"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
-
-
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableDeleteRow.EnableDeleteGrief
-G2L["1a5"] = Instance.new("LocalScript", G2L["1a1"]);
-G2L["1a5"]["Name"] = [[EnableDeleteGrief]];
+G2L["1a5"] = Instance.new("TextLabel", G2L["1a1"]);
+G2L["1a5"]["BorderSizePixel"] = 0;
+G2L["1a5"]["TextSize"] = 14;
+G2L["1a5"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["1a5"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1a5"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1a5"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1a5"]["BackgroundTransparency"] = 1;
+G2L["1a5"]["Size"] = UDim2.new(0, 88, 0, 20);
+G2L["1a5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1a5"]["Text"] = [[Detect Delete]];
+G2L["1a5"]["Name"] = [[EnableDeleteText]];
+G2L["1a5"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableToxifyRow
@@ -18970,6 +18970,8 @@ task.spawn(C_19b);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableDeleteRow.EnableDeleteScript
 local function C_1a2()
 local script = G2L["1a2"];
+	shared.DeleteEvent = shared.DeleteEvent or Instance.new("BindableEvent")
+	
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	
@@ -19197,6 +19199,8 @@ local script = G2L["1a2"];
 	
 				-- FIRE PUNISH SYSTEMS
 				if not isSelf then
+					
+					shared.DeleteEvent:Fire(player.UserId)
 	
 					if shared.GriefConfirmTrigger then
 						shared.GriefConfirmTrigger(player, "delete")
@@ -19217,8 +19221,8 @@ local script = G2L["1a2"];
 end;
 task.spawn(C_1a2);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableDeleteRow.EnableDeleteGrief
-local function C_1a5()
-local script = G2L["1a5"];
+local function C_1a3()
+local script = G2L["1a3"];
 	local Players = game:GetService("Players")
 	
 	--------------------------------------------------
@@ -19258,12 +19262,18 @@ local script = G2L["1a5"];
 	local griefCooldown = {}
 	
 	--------------------------------------------------
+	-- ENSURE DELETE EVENT EXISTS
+	--------------------------------------------------
+	
+	shared.DeleteEvent = shared.DeleteEvent or Instance.new("BindableEvent")
+	
+	--------------------------------------------------
 	-- HELPERS
 	--------------------------------------------------
 	
 	local function getCooldown()
 		local val = tonumber(GriefCooldownChanger.Text)
-		if val and val > 0 then
+		if val and val >= 0 then
 			return val
 		end
 		return 60
@@ -19277,35 +19287,17 @@ local script = G2L["1a5"];
 		return 0
 	end
 	
-	local function isOnCooldown(userId)
-		local endTime = griefCooldown[userId]
-		if not endTime then return false end
-	
-		if tick() >= endTime then
-			griefCooldown[userId] = nil
-			return false
-		end
-	
-		return true
-	end
-	
-	--------------------------------------------------
-	-- CORE LISTENER
-	--------------------------------------------------
-	
-	ScreenGui:GetAttributeChangedSignal("LastDeleteUserId"):Connect(function()
-	
-		local userId = ScreenGui:GetAttribute("LastDeleteUserId")
-		if not userId then return end
+	local function onDelete(userId)
 	
 		local player = Players:GetPlayerByUserId(userId)
 		if not player then return end
 	
-		if isOnCooldown(userId) then
+		-- cooldown
+		if griefCooldown[userId] and tick() < griefCooldown[userId] then
 			return
 		end
 	
-		-- TIME FILTER (0 = disabled)
+		-- time filter
 		local timeFilter = getTimeFilter()
 		if timeFilter > 0 then
 			local leaderstats = player:FindFirstChild("leaderstats")
@@ -19317,10 +19309,10 @@ local script = G2L["1a5"];
 		end
 	
 		--------------------------------------------------
-		-- DEBUG PRINT (SO YOU KNOW IT READS)
+		-- DEBUG (prints EVERY delete)
 		--------------------------------------------------
 	
-		print("[GRIEF DEBUG] " .. player.Name .. " broke 1 brick")
+		print("[DEBUG] Delete registered from:", player.Name)
 	
 		--------------------------------------------------
 		-- TRACK WINDOW
@@ -19341,19 +19333,23 @@ local script = G2L["1a5"];
 		-- TRIGGER
 		--------------------------------------------------
 	
+		print("TRACK COUNT:", #griefTracker[userId])
 		if #griefTracker[userId] >= GRIEF_COUNT then
 	
-			print("[GRIEF DETECTED] 🔴 " .. player.Name .. " broke 12 bricks in 5 seconds")
-	
-			ScreenGui:SetAttribute("LastDeleteGrieferUserId", userId)
+			print("[GRIEF DETECTED] 🔊🔴", player.Name, "hit", GRIEF_COUNT, "deletes in", GRIEF_TIME, "seconds")
 	
 			griefTracker[userId] = {}
 			griefCooldown[userId] = tick() + getCooldown()
 		end
+	end
 	
-	end)
+	--------------------------------------------------
+	-- LISTEN TO DELETE EVENT
+	--------------------------------------------------
+	
+	shared.DeleteEvent.Event:Connect(onDelete)
 end;
-task.spawn(C_1a5);
+task.spawn(C_1a3);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableToxifyRow.EnableToxifyScript
 local function C_1a7()
 local script = G2L["1a7"];
@@ -23508,7 +23504,7 @@ local script = G2L["1de"];
 	local LocalPlayer = Players.LocalPlayer
 	
 	--------------------------------------------------
-	-- GUI STRUCTURE (MATCHES YOUR REAL NAMES)
+	-- GUI STRUCTURE
 	--------------------------------------------------
 	
 	local FlingGriefRow = script.Parent
@@ -23517,48 +23513,26 @@ local script = G2L["1de"];
 	local PunishGroup = FlingGriefRow.Parent
 	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
 	
+	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
+	
 	--------------------------------------------------
-	-- ENABLE STATE (SAFE MUTUAL EXCLUSIVE)
+	-- ENABLE STATE
 	--------------------------------------------------
 	
-	local FlingGriefRow = script.Parent
-	local PunishGroup = FlingGriefRow.Parent
-	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
-	local FlingTickBox = FlingGriefRow:WaitForChild("FlingGriefTickBox")
-	
-	FlingTickBox:SetAttribute("Enabled", false)
+	FlingGriefTickBox:SetAttribute("Enabled", false)
 	
 	local function updateVisual()
-		if FlingTickBox:GetAttribute("Enabled") then
-			FlingTickBox.BackgroundColor3 = PunishAccentColor.BackgroundColor3
+		if FlingGriefTickBox:GetAttribute("Enabled") then
+			FlingGriefTickBox.BackgroundColor3 = PunishAccentColor.BackgroundColor3
 		else
-			FlingTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
+			FlingGriefTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
 		end
 	end
 	
-	FlingTickBox.MouseButton1Click:Connect(function()
-	
-		local currentlyEnabled = FlingTickBox:GetAttribute("Enabled")
-	
-		if currentlyEnabled then
-			FlingTickBox:SetAttribute("Enabled", false)
-			PunishGroup:SetAttribute("ActivePunishMode", nil)
-		else
-			PunishGroup:SetAttribute("ActivePunishMode", "Fling")
-			FlingTickBox:SetAttribute("Enabled", true)
-		end
-	
+	FlingGriefTickBox.MouseButton1Click:Connect(function()
+		local state = not FlingGriefTickBox:GetAttribute("Enabled")
+		FlingGriefTickBox:SetAttribute("Enabled", state)
 		updateVisual()
-	end)
-	
-	PunishGroup:GetAttributeChangedSignal("ActivePunishMode"):Connect(function()
-	
-		local mode = PunishGroup:GetAttribute("ActivePunishMode")
-	
-		if mode ~= "Fling" and FlingTickBox:GetAttribute("Enabled") then
-			FlingTickBox:SetAttribute("Enabled", false)
-			updateVisual()
-		end
 	end)
 	
 	updateVisual()
@@ -23604,24 +23578,17 @@ local script = G2L["1de"];
 	end
 	
 	--------------------------------------------------
-	-- LISTEN TO DELETE GRIEF LOG
+	-- LISTEN FOR REAL GRIEF DETECTION
 	--------------------------------------------------
 	
-	local lastSeen = ""
-	
-	RunService.Heartbeat:Connect(function()
+	ScreenGui:GetAttributeChangedSignal("LastDeleteGrieferUserId"):Connect(function()
 	
 		if not FlingGriefTickBox:GetAttribute("Enabled") then return end
-		if not shared.GriefLog then return end
-		if shared.GriefLog == "" then return end
-		if shared.GriefLog == lastSeen then return end
 	
-		lastSeen = shared.GriefLog
+		local userId = ScreenGui:GetAttribute("LastDeleteGrieferUserId")
+		if not userId then return end
 	
-		local deleterName = shared.GriefLog:match("^([^|]+)|")
-		if not deleterName then return end
-	
-		local player = Players:FindFirstChild(deleterName)
+		local player = Players:GetPlayerByUserId(userId)
 		if not player then return end
 		if player == LocalPlayer then return end
 	
@@ -23634,10 +23601,7 @@ task.spawn(C_1de);
 local function C_1e2()
 local script = G2L["1e2"];
 	local Players = game:GetService("Players")
-	local TextChatService = game:GetService("TextChatService")
-	local RunService = game:GetService("RunService")
-	
-	local LocalPlayer = Players.LocalPlayer
+	local StarterGui = game:GetService("StarterGui")
 	
 	--------------------------------------------------
 	-- GUI STRUCTURE
@@ -23645,13 +23609,14 @@ local script = G2L["1e2"];
 	
 	local AlertGriefRow = script.Parent
 	local AlertGriefTickBox = AlertGriefRow:WaitForChild("AlertGriefTickBox")
-	local AlertGriefText = AlertGriefRow:WaitForChild("AlertGriefText")
 	
 	local PunishGroup = AlertGriefRow.Parent
 	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
 	
+	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
+	
 	--------------------------------------------------
-	-- TOGGLE
+	-- ENABLE STATE
 	--------------------------------------------------
 	
 	AlertGriefTickBox:SetAttribute("Enabled", false)
@@ -23665,45 +23630,35 @@ local script = G2L["1e2"];
 	end
 	
 	AlertGriefTickBox.MouseButton1Click:Connect(function()
-		local state = AlertGriefTickBox:GetAttribute("Enabled")
-		AlertGriefTickBox:SetAttribute("Enabled", not state)
+		local state = not AlertGriefTickBox:GetAttribute("Enabled")
+		AlertGriefTickBox:SetAttribute("Enabled", state)
 		updateVisual()
 	end)
 	
 	updateVisual()
 	
 	--------------------------------------------------
-	-- ALERT LISTENER
+	-- LISTEN FOR REAL GRIEF DETECTION
 	--------------------------------------------------
 	
-	local lastSeen = ""
-	
-	RunService.Heartbeat:Connect(function()
+	ScreenGui:GetAttributeChangedSignal("LastDeleteGrieferUserId"):Connect(function()
 	
 		if not AlertGriefTickBox:GetAttribute("Enabled") then return end
-		if not shared.GriefLog then return end
-		if shared.GriefLog == "" then return end
-		if shared.GriefLog == lastSeen then return end
 	
-		lastSeen = shared.GriefLog
+		local userId = ScreenGui:GetAttribute("LastDeleteGrieferUserId")
+		if not userId then return end
 	
-		local deleterName = shared.GriefLog:match("^([^|]+)|")
-		if not deleterName then return end
-	
-		local player = Players:FindFirstChild(deleterName)
+		local player = Players:GetPlayerByUserId(userId)
 		if not player then return end
 	
-		local display = player.DisplayName
+		local message = "🚨 " .. player.DisplayName .. " has been detected deleting another players blocks"
 	
-		local message = "🚨 "..display.." has been detected deleting another players blocks"
-	
-		-- Modern TextChat
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-			channel:DisplaySystemMessage(message)
-		else
-			game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
-		end
+		StarterGui:SetCore("ChatMakeSystemMessage", {
+			Text = message,
+			Color = Color3.fromRGB(255, 60, 60),
+			Font = Enum.Font.SourceSansBold,
+			TextSize = 18
+		})
 	
 	end)
 end;
