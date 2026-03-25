@@ -19226,52 +19226,26 @@ local function C_1a3()
 local script = G2L["1a3"];
 	local Players = game:GetService("Players")
 	
-	--------------------------------------------------
-	-- SETTINGS
-	--------------------------------------------------
-	
 	local GRIEF_COUNT = 12
 	local GRIEF_TIME = 5
-	
-	--------------------------------------------------
-	-- TABLES
-	--------------------------------------------------
+	local COOLDOWN = 30
 	
 	local griefTracker = {}
 	local griefCooldown = {}
 	
-	--------------------------------------------------
-	-- ENSURE EVENTS EXIST
-	--------------------------------------------------
-	
-	shared.DeleteEvent = shared.DeleteEvent or Instance.new("BindableEvent")
-	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
-	
-	--------------------------------------------------
-	-- SETTINGS HELPERS (OPTIONAL SAFE DEFAULTS)
-	--------------------------------------------------
-	
-	local function getCooldown()
-		return 60 -- default cooldown (change if you want)
-	end
-	
-	--------------------------------------------------
-	-- CORE DELETE LISTENER
-	--------------------------------------------------
+	print("Grief detection loaded")
 	
 	local function onDelete(userId)
 	
 		local player = Players:GetPlayerByUserId(userId)
 		if not player then return end
 	
-		-- Cooldown check
+		-- cooldown
 		if griefCooldown[userId] and tick() < griefCooldown[userId] then
 			return
 		end
 	
-		--------------------------------------------------
-		-- TRACK WINDOW
-		--------------------------------------------------
+		print("[DEBUG] Delete from:", player.Name)
 	
 		local now = tick()
 	
@@ -19284,27 +19258,21 @@ local script = G2L["1a3"];
 			end
 		end
 	
-		print("[DEBUG] Delete count for", player.Name, "=", #griefTracker[userId])
-	
-		--------------------------------------------------
-		-- TRIGGER
-		--------------------------------------------------
+		print("TRACK COUNT:", #griefTracker[userId])
 	
 		if #griefTracker[userId] >= GRIEF_COUNT then
 	
 			print("[GRIEF DETECTED]", player.Name)
 	
-			-- 🔥 FIRE GLOBAL GRIEF EVENT
-			shared.GriefEvent:Fire(player, "delete")
+			local screenGui = script:FindFirstAncestorOfClass("ScreenGui")
+			if screenGui then
+				screenGui:SetAttribute("LastGrieferUserId", userId)
+			end
 	
 			griefTracker[userId] = {}
-			griefCooldown[userId] = tick() + getCooldown()
+			griefCooldown[userId] = tick() + COOLDOWN
 		end
 	end
-	
-	--------------------------------------------------
-	-- LISTEN TO DELETE EVENT
-	--------------------------------------------------
 	
 	shared.DeleteEvent.Event:Connect(onDelete)
 end;
@@ -23539,11 +23507,11 @@ local script = G2L["1de"];
 	-- LISTEN TO GLOBAL GRIEF
 	--------------------------------------------------
 	
-	ScreenGui:GetAttributeChangedSignal("LastDeleteUserId"):Connect(function()
+	ScreenGui:GetAttributeChangedSignal("LastGriefDetectedUserId"):Connect(function()
 	
 		if not FlingTickBox:GetAttribute("Enabled") then return end
 	
-		local userId = ScreenGui:GetAttribute("LastDeleteUserId")
+		local userId = ScreenGui:GetAttribute("LastGriefDetectedUserId")
 		if not userId then return end
 	
 		local player = Players:GetPlayerByUserId(userId)
