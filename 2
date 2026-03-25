@@ -19084,13 +19084,11 @@ local script = G2L["1a2"];
 	--------------------------------------------------
 	
 	local function watchFolder(folder)
-	
 		folder.ChildAdded:Connect(function(child)
 			if child.Name == "Brick" then
 				brickBirth[child:GetDebugId()] = tick()
 			end
 		end)
-	
 	end
 	
 	for _,folder in ipairs(bricksFolder:GetChildren()) do
@@ -19160,57 +19158,15 @@ local script = G2L["1a2"];
 	
 				local player = chosen.player
 				local isSelf = player.Name == ownerName
+	
+				-- PRINT LOG
+				print("[DELETELOG]", player.Name, "deleted a block from", ownerName)
+	
+				-- FIRE EVENT FOR GRIEF DETECTION
 				if not isSelf then
-					ScreenGui:SetAttribute("LastDeleteUserId", nil)
-					ScreenGui:SetAttribute("LastDeleteUserId", player.UserId)
-				end
-				
-				local ownerPlayer = Players:FindFirstChild(ownerName)
-	
-				local age = "Unknown"
-				if brickBirth[debugId] then
-					age = string.format("%.0f", removedAt - brickBirth[debugId])
-					brickBirth[debugId] = nil
-				end
-	
-				local square = isSelf and "🟩" or (ownerPlayer and "🟥" or "🟧")
-	
-				local extra = ""
-				if player == LocalPlayer then
-					extra = "👤"
-				elseif ownerName == LocalPlayer.Name and not isSelf then
-					extra = "⚠️"
-				end
-	
-				local ownerText
-				if isSelf then
-					ownerText = "their block"
-				else
-					if ownerPlayer then
-						ownerText = ownerPlayer.DisplayName.."'s ("..ownerName..") block"
-					else
-						ownerText = ownerName.."'s (NOT INGAME) block"
-					end
-				end
-	
-				print("[DELETELOG] "..square..extra.." "..player.DisplayName.." ("..player.Name..") deleted "..ownerText..
-					" (Magnitude: "..string.format("%.2f",chosen.dist)..
-					" | Root Delay: "..string.format("%.3f",chosen.delay)..
-					" | Block Age: "..age..")")
-	
-				-- FIRE PUNISH SYSTEMS
-				if not isSelf then
-					
 					shared.DeleteEvent:Fire(player.UserId)
-	
-					if shared.GriefConfirmTrigger then
-						shared.GriefConfirmTrigger(player, "delete")
-					end
-	
-					if shared.GriefFlingTrigger then
-						shared.GriefFlingTrigger(player)
-					end
 				end
+	
 			end)
 		end)
 	end
@@ -19228,88 +19184,24 @@ local script = G2L["1a3"];
 	
 	local Players = game:GetService("Players")
 	
-	--------------------------------------------------
-	-- GUI STRUCTURE
-	--------------------------------------------------
-	
-	local Root = script.Parent
-	local ScreenGui = Root:FindFirstAncestorOfClass("ScreenGui")
-	
-	local Page = ScreenGui.MainFrame.ContentArea.Page
-	local RightSide = Page:WaitForChild("TCODetectionRightSide")
-	local GSettingsGroup = RightSide:WaitForChild("GSettingsGroup")
-	
-	local GriefCooldownChanger = GSettingsGroup:WaitForChild("GriefCooldownRow"):WaitForChild("GriefCooldownChanger")
-	local TimeFilterChanger = GSettingsGroup:WaitForChild("TimeFilterRow"):WaitForChild("TimeFilterChanger")
-	
-	--------------------------------------------------
-	-- SETTINGS
-	--------------------------------------------------
+	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
 	
 	local GRIEF_COUNT = 12
 	local GRIEF_TIME = 5
 	
-	--------------------------------------------------
-	-- TABLES
-	--------------------------------------------------
-	
 	local griefTracker = {}
-	local griefCooldown = {}
 	
-	--------------------------------------------------
-	-- HELPERS
-	--------------------------------------------------
-	
-	local function getCooldown()
-		local val = tonumber(GriefCooldownChanger.Text)
-		if val then
-			return math.max(val, 0)
-		end
-		return 0
-	end
-	
-	local function getTimeFilter()
-		local val = tonumber(TimeFilterChanger.Text)
-		if val then
-			return math.max(val, 0)
-		end
-		return 0
-	end
-	
-	--------------------------------------------------
-	-- CORE DELETE LISTENER
-	--------------------------------------------------
-	
-	local function onDelete(userId)
+	shared.DeleteEvent.Event:Connect(function(userId)
 	
 		local player = Players:GetPlayerByUserId(userId)
 		if not player then return end
-	
-		-- Cooldown check
-		if griefCooldown[userId] and tick() < griefCooldown[userId] then
-			return
-		end
-	
-		-- Time filter
-		local timeFilter = getTimeFilter()
-		if timeFilter > 0 then
-			local leaderstats = player:FindFirstChild("leaderstats")
-			local timeStat = leaderstats and leaderstats:FindFirstChild("Time")
-	
-			if not timeStat or timeStat.Value >= timeFilter then
-				return
-			end
-		end
-	
-		--------------------------------------------------
-		-- TRACK WINDOW
-		--------------------------------------------------
 	
 		local now = tick()
 	
 		griefTracker[userId] = griefTracker[userId] or {}
 		table.insert(griefTracker[userId], now)
 	
+		-- remove old timestamps
 		for i = #griefTracker[userId], 1, -1 do
 			if now - griefTracker[userId][i] > GRIEF_TIME then
 				table.remove(griefTracker[userId], i)
@@ -19318,27 +19210,17 @@ local script = G2L["1a3"];
 	
 		print("TRACK COUNT:", #griefTracker[userId])
 	
-		--------------------------------------------------
-		-- TRIGGER
-		--------------------------------------------------
-	
 		if #griefTracker[userId] >= GRIEF_COUNT then
 	
 			print("[GRIEF DETECTED]", player.Name)
 	
-			-- fire global attribute for punish scripts
+			-- FORCE refresh so it fires every time
+			ScreenGui:SetAttribute("LastGrieferUserId", nil)
 			ScreenGui:SetAttribute("LastGrieferUserId", userId)
 	
 			griefTracker[userId] = {}
-			griefCooldown[userId] = tick() + getCooldown()
 		end
-	end
-	
-	--------------------------------------------------
-	-- LISTEN
-	--------------------------------------------------
-	
-	shared.DeleteEvent.Event:Connect(onDelete)
+	end)
 end;
 task.spawn(C_1a3);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableToxifyRow.EnableToxifyScript
@@ -23494,20 +23376,12 @@ local script = G2L["1de"];
 	
 	local LocalPlayer = Players.LocalPlayer
 	
-	--------------------------------------------------
-	-- GUI STRUCTURE
-	--------------------------------------------------
-	
 	local FlingRow = script.Parent
+	local FlingTickBox = FlingRow:WaitForChild("FlingGriefTickBox")
 	local PunishGroup = FlingRow.Parent
 	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
-	local FlingTickBox = FlingRow:WaitForChild("FlingGriefTickBox")
 	
 	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
-	
-	--------------------------------------------------
-	-- ENABLE STATE
-	--------------------------------------------------
 	
 	FlingTickBox:SetAttribute("Enabled", false)
 	
@@ -23520,16 +23394,11 @@ local script = G2L["1de"];
 	end
 	
 	FlingTickBox.MouseButton1Click:Connect(function()
-		local state = not FlingTickBox:GetAttribute("Enabled")
-		FlingTickBox:SetAttribute("Enabled", state)
+		FlingTickBox:SetAttribute("Enabled", not FlingTickBox:GetAttribute("Enabled"))
 		updateVisual()
 	end)
 	
 	updateVisual()
-	
-	--------------------------------------------------
-	-- FLING FUNCTION
-	--------------------------------------------------
 	
 	local function flingPlayer(target)
 	
@@ -23555,7 +23424,6 @@ local script = G2L["1de"];
 		local start = tick()
 	
 		repeat
-			if not tHRP.Parent then break end
 			myHRP.CFrame = tHRP.CFrame
 			RunService.Heartbeat:Wait()
 		until tick() - start > 4
@@ -23567,15 +23435,11 @@ local script = G2L["1de"];
 		end
 	end
 	
-	--------------------------------------------------
-	-- LISTEN TO GLOBAL GRIEF
-	--------------------------------------------------
-	
-	ScreenGui:GetAttributeChangedSignal("LastGriefDetectedUserId"):Connect(function()
+	ScreenGui:GetAttributeChangedSignal("LastGrieferUserId"):Connect(function()
 	
 		if not FlingTickBox:GetAttribute("Enabled") then return end
 	
-		local userId = ScreenGui:GetAttribute("LastGriefDetectedUserId")
+		local userId = ScreenGui:GetAttribute("LastGrieferUserId")
 		if not userId then return end
 	
 		local player = Players:GetPlayerByUserId(userId)
@@ -23591,65 +23455,42 @@ task.spawn(C_1de);
 local function C_1e2()
 local script = G2L["1e2"];
 	local Players = game:GetService("Players")
-	local TextChatService = game:GetService("TextChatService")
 	
-	local AlertGriefRow = script.Parent
-	local PunishGroup = AlertGriefRow.Parent
+	local AlertRow = script.Parent
+	local AlertTickBox = AlertRow:WaitForChild("AlertGriefTickBox")
+	local PunishGroup = AlertRow.Parent
 	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
-	local AlertGriefTickBox = AlertGriefRow:WaitForChild("AlertGriefTickBox")
 	
-	--------------------------------------------------
-	-- ENABLE STATE
-	--------------------------------------------------
+	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
 	
-	AlertGriefTickBox:SetAttribute("Enabled", false)
+	AlertTickBox:SetAttribute("Enabled", false)
 	
 	local function updateVisual()
-		if AlertGriefTickBox:GetAttribute("Enabled") then
-			AlertGriefTickBox.BackgroundColor3 = PunishAccentColor.BackgroundColor3
+		if AlertTickBox:GetAttribute("Enabled") then
+			AlertTickBox.BackgroundColor3 = PunishAccentColor.BackgroundColor3
 		else
-			AlertGriefTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
+			AlertTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
 		end
 	end
 	
-	AlertGriefTickBox.MouseButton1Click:Connect(function()
-		local state = not AlertGriefTickBox:GetAttribute("Enabled")
-		AlertGriefTickBox:SetAttribute("Enabled", state)
+	AlertTickBox.MouseButton1Click:Connect(function()
+		AlertTickBox:SetAttribute("Enabled", not AlertTickBox:GetAttribute("Enabled"))
 		updateVisual()
 	end)
 	
 	updateVisual()
 	
-	--------------------------------------------------
-	-- ENSURE GRIEF EVENT EXISTS
-	--------------------------------------------------
+	ScreenGui:GetAttributeChangedSignal("LastGrieferUserId"):Connect(function()
 	
-	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
+		if not AlertTickBox:GetAttribute("Enabled") then return end
 	
-	--------------------------------------------------
-	-- CHAT FUNCTION
-	--------------------------------------------------
+		local userId = ScreenGui:GetAttribute("LastGrieferUserId")
+		if not userId then return end
 	
-	local function sendChat(message)
-		if shared.sendChat then
-			shared.sendChat(message)
-		else
-			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
-		end
-	end
+		local player = Players:GetPlayerByUserId(userId)
+		if not player then return end
 	
-	--------------------------------------------------
-	-- LISTEN FOR GRIEF
-	--------------------------------------------------
-	
-	shared.GriefEvent.Event:Connect(function(player, griefType)
-	
-		if not AlertGriefTickBox:GetAttribute("Enabled") then return end
-		if griefType ~= "delete" then return end
-	
-		local msg = "🚨" .. player.DisplayName .. " has been detected deleting another players blocks"
-	
-		sendChat(msg)
+		print("🚨 "..player.DisplayName.." has been detected deleting another player's blocks")
 	
 	end)
 end;
