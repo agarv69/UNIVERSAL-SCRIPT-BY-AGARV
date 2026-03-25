@@ -18970,6 +18970,8 @@ task.spawn(C_19b);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableDeleteRow.EnableDeleteScript
 local function C_1a2()
 local script = G2L["1a2"];
+	shared.DeleteEvent = shared.DeleteEvent or Instance.new("BindableEvent")
+	
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	
@@ -19159,7 +19161,7 @@ local script = G2L["1a2"];
 				local player = chosen.player
 				local isSelf = player.Name == ownerName
 				if not isSelf then
-					ScreenGui:SetAttribute("LastDeleteUserId", player.UserId)
+					ScreenGui:SetAttribute("LastDeleteUserId", player.UserId + math.random())
 				end
 				
 				local ownerPlayer = Players:FindFirstChild(ownerName)
@@ -19197,6 +19199,8 @@ local script = G2L["1a2"];
 	
 				-- FIRE PUNISH SYSTEMS
 				if not isSelf then
+					
+					shared.DeleteEvent:Fire(player.UserId)
 	
 					if shared.GriefConfirmTrigger then
 						shared.GriefConfirmTrigger(player, "delete")
@@ -19254,20 +19258,22 @@ local script = G2L["1a5"];
 	-- TABLES
 	--------------------------------------------------
 	
-	local griefTracker = {}     -- [userId] = {timestamps}
-	local griefCooldown = {}    -- [userId] = cooldownEndTime
+	local griefTracker = {}
+	local griefCooldown = {}
+	
+	--------------------------------------------------
+	-- ENSURE DELETE EVENT EXISTS
+	--------------------------------------------------
+	
+	shared.DeleteEvent = shared.DeleteEvent or Instance.new("BindableEvent")
 	
 	--------------------------------------------------
 	-- HELPERS
 	--------------------------------------------------
 	
-	local function LogsEnabled()
-		return ScreenGui:GetAttribute("DeleteLogsEnabled") == true
-	end
-	
 	local function getCooldown()
 		local val = tonumber(GriefCooldownChanger.Text)
-		if val and val == math.floor(val) and val > 0 then
+		if val and val >= 0 then
 			return val
 		end
 		return 60
@@ -19275,58 +19281,23 @@ local script = G2L["1a5"];
 	
 	local function getTimeFilter()
 		local val = tonumber(TimeFilterChanger.Text)
-		if val and val == math.floor(val) and val >= 0 then
+		if val and val >= 0 then
 			return val
 		end
 		return 0
 	end
 	
-	local function getRemainingCooldown(userId)
-		local endTime = griefCooldown[userId]
-		if not endTime then return nil end
-	
-		local remaining = math.ceil(endTime - tick())
-		if remaining <= 0 then
-			griefCooldown[userId] = nil
-			return nil
-		end
-	
-		return remaining
-	end
-	
-	local function reconcileCooldowns()
-		local newCooldown = getCooldown()
-	
-		for userId, endTime in pairs(griefCooldown) do
-			local remaining = endTime - tick()
-			if remaining > newCooldown then
-				griefCooldown[userId] = tick() + newCooldown
-			end
-		end
-	end
-	
-	GriefCooldownChanger:GetPropertyChangedSignal("Text"):Connect(reconcileCooldowns)
-	
-	--------------------------------------------------
-	-- CORE GRIEF LISTENER
-	--------------------------------------------------
-	
-	ScreenGui:GetAttributeChangedSignal("LastDeleteUserId"):Connect(function()
-	
-		if not LogsEnabled() then return end
-	
-		local userId = ScreenGui:GetAttribute("LastDeleteUserId")
-		if not userId then return end
+	local function onDelete(userId)
 	
 		local player = Players:GetPlayerByUserId(userId)
 		if not player then return end
 	
-		-- Cooldown check
-		if getRemainingCooldown(userId) then
+		-- cooldown
+		if griefCooldown[userId] and tick() < griefCooldown[userId] then
 			return
 		end
 	
-		-- Time filter check
+		-- time filter
 		local timeFilter = getTimeFilter()
 		if timeFilter > 0 then
 			local leaderstats = player:FindFirstChild("leaderstats")
@@ -19336,6 +19307,12 @@ local script = G2L["1a5"];
 				return
 			end
 		end
+	
+		--------------------------------------------------
+		-- DEBUG (prints EVERY delete)
+		--------------------------------------------------
+	
+		print("[DEBUG] Delete registered from:", player.Name)
 	
 		--------------------------------------------------
 		-- TRACK WINDOW
@@ -19358,14 +19335,18 @@ local script = G2L["1a5"];
 	
 		if #griefTracker[userId] >= GRIEF_COUNT then
 	
-			print("[GRIEFLOG] 🔊🔴 " .. player.DisplayName .. " (" .. player.Name .. ") triggered the grief detection (Delete)")
-			ScreenGui:SetAttribute("LastDeleteGrieferUserId", player.UserId)
+			print("[GRIEF DETECTED] 🔊🔴", player.Name, "hit", GRIEF_COUNT, "deletes in", GRIEF_TIME, "seconds")
 	
 			griefTracker[userId] = {}
 			griefCooldown[userId] = tick() + getCooldown()
 		end
+	end
 	
-	end)
+	--------------------------------------------------
+	-- LISTEN TO DELETE EVENT
+	--------------------------------------------------
+	
+	shared.DeleteEvent.Event:Connect(onDelete)
 end;
 task.spawn(C_1a5);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableToxifyRow.EnableToxifyScript
