@@ -19161,6 +19161,7 @@ local script = G2L["1a2"];
 				local player = chosen.player
 				local isSelf = player.Name == ownerName
 				if not isSelf then
+					ScreenGui:SetAttribute("LastDeleteUserId", nil)
 					ScreenGui:SetAttribute("LastDeleteUserId", player.UserId)
 				end
 				
@@ -19223,7 +19224,23 @@ task.spawn(C_1a2);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableDeleteRow.EnableDeleteGrief
 local function C_1a3()
 local script = G2L["1a3"];
+	shared.DeleteEvent = shared.DeleteEvent or Instance.new("BindableEvent")
+	
 	local Players = game:GetService("Players")
+	
+	--------------------------------------------------
+	-- GUI STRUCTURE
+	--------------------------------------------------
+	
+	local Root = script.Parent
+	local ScreenGui = Root:FindFirstAncestorOfClass("ScreenGui")
+	
+	local Page = ScreenGui.MainFrame.ContentArea.Page
+	local RightSide = Page:WaitForChild("TCODetectionRightSide")
+	local GSettingsGroup = RightSide:WaitForChild("GSettingsGroup")
+	
+	local GriefCooldownChanger = GSettingsGroup:WaitForChild("GriefCooldownRow"):WaitForChild("GriefCooldownChanger")
+	local TimeFilterChanger = GSettingsGroup:WaitForChild("TimeFilterRow"):WaitForChild("TimeFilterChanger")
 	
 	--------------------------------------------------
 	-- SETTINGS
@@ -19240,18 +19257,23 @@ local script = G2L["1a3"];
 	local griefCooldown = {}
 	
 	--------------------------------------------------
-	-- ENSURE EVENTS EXIST
-	--------------------------------------------------
-	
-	shared.DeleteEvent = shared.DeleteEvent or Instance.new("BindableEvent")
-	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
-	
-	--------------------------------------------------
-	-- SETTINGS HELPERS (OPTIONAL SAFE DEFAULTS)
+	-- HELPERS
 	--------------------------------------------------
 	
 	local function getCooldown()
-		return 60 -- default cooldown (change if you want)
+		local val = tonumber(GriefCooldownChanger.Text)
+		if val then
+			return math.max(val, 0)
+		end
+		return 0
+	end
+	
+	local function getTimeFilter()
+		local val = tonumber(TimeFilterChanger.Text)
+		if val then
+			return math.max(val, 0)
+		end
+		return 0
 	end
 	
 	--------------------------------------------------
@@ -19266,6 +19288,17 @@ local script = G2L["1a3"];
 		-- Cooldown check
 		if griefCooldown[userId] and tick() < griefCooldown[userId] then
 			return
+		end
+	
+		-- Time filter
+		local timeFilter = getTimeFilter()
+		if timeFilter > 0 then
+			local leaderstats = player:FindFirstChild("leaderstats")
+			local timeStat = leaderstats and leaderstats:FindFirstChild("Time")
+	
+			if not timeStat or timeStat.Value >= timeFilter then
+				return
+			end
 		end
 	
 		--------------------------------------------------
@@ -19283,7 +19316,7 @@ local script = G2L["1a3"];
 			end
 		end
 	
-		print("[DEBUG] Delete count for", player.Name, "=", #griefTracker[userId])
+		print("TRACK COUNT:", #griefTracker[userId])
 	
 		--------------------------------------------------
 		-- TRIGGER
@@ -19293,8 +19326,8 @@ local script = G2L["1a3"];
 	
 			print("[GRIEF DETECTED]", player.Name)
 	
-			-- 🔥 FIRE GLOBAL GRIEF EVENT
-			shared.GriefEvent:Fire(player, "delete")
+			-- fire global attribute for punish scripts
+			ScreenGui:SetAttribute("LastGrieferUserId", userId)
 	
 			griefTracker[userId] = {}
 			griefCooldown[userId] = tick() + getCooldown()
@@ -19302,7 +19335,7 @@ local script = G2L["1a3"];
 	end
 	
 	--------------------------------------------------
-	-- LISTEN TO DELETE EVENT
+	-- LISTEN
 	--------------------------------------------------
 	
 	shared.DeleteEvent.Event:Connect(onDelete)
@@ -23538,11 +23571,11 @@ local script = G2L["1de"];
 	-- LISTEN TO GLOBAL GRIEF
 	--------------------------------------------------
 	
-	ScreenGui:GetAttributeChangedSignal("LastGrieferUserId"):Connect(function()
+	ScreenGui:GetAttributeChangedSignal("LastGriefDetectedUserId"):Connect(function()
 	
 		if not FlingTickBox:GetAttribute("Enabled") then return end
 	
-		local userId = ScreenGui:GetAttribute("LastGrieferUserId")
+		local userId = ScreenGui:GetAttribute("LastGriefDetectedUserId")
 		if not userId then return end
 	
 		local player = Players:GetPlayerByUserId(userId)
