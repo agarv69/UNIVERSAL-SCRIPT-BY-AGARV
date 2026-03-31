@@ -14155,7 +14155,7 @@ local script = G2L["145"];
 		if enlightenEnabled then
 			return true
 		else
-			return not hasArkenstone(player)S
+			return not hasArkenstone(player)
 		end
 	end
 	--------------------------------------------------
@@ -18597,32 +18597,17 @@ local function C_1cb()
 local script = G2L["1cb"];
 	local TextChatService = game:GetService("TextChatService")
 	local Players = game:GetService("Players")
-	
 	local TCO_PLACE_IDS = {
 		11137575513,
 		12943245078,
 		12943247001,
 		108097274488844,
 	}
-	
-	local serverStartTime = os.clock()
-	
 	task.defer(function()
 		local systemChannel = TextChatService.TextChannels:FindFirstChild("RBXSystem")
 		if systemChannel then
 			systemChannel:DisplaySystemMessage("Thank you for using my script - agarvvoid")
-	
 			task.wait(0.1)
-	
-			local uptime = math.floor(os.clock() - serverStartTime)
-			local minutes = math.floor(uptime / 60)
-			local seconds = uptime % 60
-			systemChannel:DisplaySystemMessage(
-				string.format("Server uptime: %dm %ds", minutes, seconds)
-			)
-	
-			task.wait(0.1)
-	
 			local currentPlaceId = game.PlaceId
 			local isValidPlace = false
 			for _, id in ipairs(TCO_PLACE_IDS) do
@@ -18631,12 +18616,9 @@ local script = G2L["1cb"];
 					break
 				end
 			end
-	
 			if isValidPlace then
-				-- Find player with highest Time leaderstats value
 				local topPlayer = nil
 				local topTime = -1
-	
 				for _, player in ipairs(Players:GetPlayers()) do
 					local leaderstats = player:FindFirstChild("leaderstats")
 					if leaderstats then
@@ -18647,19 +18629,15 @@ local script = G2L["1cb"];
 						end
 					end
 				end
-	
 				if topPlayer then
 					local localPlayer = Players.LocalPlayer
 					local isFriend = false
-	
-					-- Friend check can fail so we pcall it
 					local success, result = pcall(function()
 						return localPlayer:IsFriendsWith(topPlayer.UserId)
 					end)
 					if success then
 						isFriend = result
 					end
-	
 					local displayName = topPlayer.DisplayName
 					local label = isFriend and (displayName .. " (Friend)") or displayName
 					systemChannel:DisplaySystemMessage("Current Admin: " .. label)
