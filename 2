@@ -1,3 +1,12 @@
+--[=[
+ d888b  db    db d888888b      .d888b.      db      db    db  .d8b.  
+88' Y8b 88    88   `88'        VP  `8D      88      88    88 d8' `8b 
+88      88    88    88            odD'      88      88    88 88ooo88 
+88  ooo 88    88    88          .88'        88      88    88 88~~~88 
+88. ~8~ 88b  d88   .88.        j88.         88booo. 88b  d88 88   88    @uniquadev
+ Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
+]=]
+
 -- Instances: 459 | Scripts: 97 | Modules: 0 | Tags: 0
 local G2L = {};
 
@@ -11392,6 +11401,7 @@ local script = G2L["dd"];
 			BotMinTimeChanger = desc:FindFirstChild("BotMinTimeChanger")
 		end
 	end
+	
 	-- ============================================================
 	-- STATE
 	-- ============================================================
@@ -11516,15 +11526,11 @@ local script = G2L["dd"];
 	local function botMessageMatches(msg, trigger)
 		local caseInsensitive = not botReplyTickOn(BotReplyCaseTickBox)
 		local contains = botReplyTickOn(BotReplyContainsTickBox)
-	
 		local m = caseInsensitive and msg:lower() or msg
 		local t = caseInsensitive and trigger:lower() or trigger
-	
 		if contains then
 			for word in m:gmatch("%S+") do
-				if word == t then
-					return true
-				end
+				if word == t then return true end
 			end
 			return false
 		else
@@ -11534,17 +11540,14 @@ local script = G2L["dd"];
 	end
 	
 	local function convertForCommands(str)
-		-- Arken / admin commands treat _ as .
 		return str:gsub("_", ".")
 	end
 	
 	local function buildReply(text, player)
 		local usernameForCommand = convertForCommands(player.Name)
 		local displayForCommand = convertForCommands(player.DisplayName)
-	
 		text = text:gsub("%[Username%]", usernameForCommand)
 		text = text:gsub("%[Display%]", displayForCommand)
-	
 		return text
 	end
 	
@@ -11580,6 +11583,7 @@ local script = G2L["dd"];
 		if playerTime == nil then return true end
 		return playerTime >= exact
 	end
+	
 	-- ============================================================
 	-- ARKSPY HELPERS
 	-- ============================================================
@@ -11607,55 +11611,33 @@ local script = G2L["dd"];
 	local function findPlayerByPartialName(partial)
 		local lowerPartial = partial:lower()
 		for _, p in pairs(Players:GetPlayers()) do
-			if p.Name:lower():sub(1, #lowerPartial) == lowerPartial then
-				return p
-			end
-			if p.DisplayName:lower():sub(1, #lowerPartial) == lowerPartial then
-				return p
-			end
+			if p.Name:lower():sub(1, #lowerPartial) == lowerPartial then return p end
+			if p.DisplayName:lower():sub(1, #lowerPartial) == lowerPartial then return p end
 		end
 		return nil
-	end
-	
-	local function getPlayerTime(player)
-		local ls = player:FindFirstChild("leaderstats")
-		if not ls then return nil end
-		local t = ls:FindFirstChild("Time")
-		if not t then return nil end
-		return t.Value
 	end
 	
 	local function parseDonate(msg, sender)
 		local stripped = msg:sub(1,1) == ";" and msg:sub(2) or msg
 		stripped = stripped:match("^%s*(.-)%s*$")
-	
 		local rest = stripped:match("^[Dd][Oo][Nn][Aa][Tt][Ee]%s+(.*)")
 		if not rest then return nil, nil end
-	
 		local parts = {}
-		for word in rest:gmatch("%S+") do
-			table.insert(parts, word)
-		end
-	
+		for word in rest:gmatch("%S+") do table.insert(parts, word) end
 		if #parts == 0 then return nil, nil end
-	
 		local targetPartial = parts[1]
 		local amount = 60
-	
 		if #parts >= 2 then
 			local num = tonumber(parts[2])
 			if not num or num < 1 then return nil, nil end
 			amount = math.floor(num)
 		end
-	
 		local target = findPlayerByPartialName(targetPartial)
 		if not target then return nil, nil end
 		if target == sender then return nil, nil end
-	
 		local senderTime = getPlayerTime(sender)
 		if senderTime == nil then return nil, nil end
 		if senderTime < amount then return nil, nil end
-	
 		return target, amount
 	end
 	
@@ -11671,16 +11653,13 @@ local script = G2L["dd"];
 		frame.Size = UDim2.new(0, 212, 0, 0)
 		frame.Visible = false
 		frame.Parent = parent
-	
 		local stroke = Instance.new("UIStroke", frame)
 		stroke.Color = Color3.fromRGB(57, 57, 57)
-	
 		local padding = Instance.new("UIPadding", frame)
 		padding.PaddingTop = UDim.new(0, 6)
 		padding.PaddingBottom = UDim.new(0, 6)
 		padding.PaddingLeft = UDim.new(0, 6)
 		padding.PaddingRight = UDim.new(0, 6)
-	
 		local label = Instance.new("TextLabel", frame)
 		label.BackgroundTransparency = 1
 		label.Text = text
@@ -11693,7 +11672,6 @@ local script = G2L["dd"];
 		label.Size = UDim2.new(0, 200, 0, 0)
 		label.AutomaticSize = Enum.AutomaticSize.Y
 		label.ZIndex = 101
-	
 		return frame
 	end
 	
@@ -11742,22 +11720,17 @@ local script = G2L["dd"];
 			and Players:GetPlayerByUserId(mdata.TextSource.UserId)
 		if not plr then return end
 	
-		-- ---- CHATSPY COLOR LOGIC (only runs in TCO) ----
 		local TCO_PLACE_IDS = {
-			11137575513, -- Main
-			12943245078, -- XL
-			12943247001, -- VC
-			108097274488844, -- OG
+			11137575513,
+			12943245078,
+			12943247001,
+			108097274488844,
 		}
 	
 		local isTCO = false
 		for _, id in ipairs(TCO_PLACE_IDS) do
-			if game.PlaceId == id then
-				isTCO = true
-				break
-			end
+			if game.PlaceId == id then isTCO = true; break end
 		end
-	
 		if not isTCO then return end
 	
 		local cn
@@ -11774,9 +11747,7 @@ local script = G2L["dd"];
 		local muted = plr:HasTag("Muted")
 		if muted then
 			cn = "hidden"
-			if not spychat then
-				mdata.Text = ""
-			end
+			if not spychat then mdata.Text = "" end
 		end
 	
 		local hidden = false
@@ -11793,10 +11764,10 @@ local script = G2L["dd"];
 		if spychat and plr:GetAttribute("IQ") then
 			local iq = plr:GetAttribute("IQ")
 			if iq >= 200 then
-				iqEmoji = "\u{1F9E0}"
+				iqEmoji = "🧠"
 				cn = "iqgenius"
 			elseif iq <= 50 then
-				iqEmoji = "\u{1F92A}"
+				iqEmoji = "🤪"
 				cn = "iqdumb"
 			end
 		end
@@ -11804,9 +11775,9 @@ local script = G2L["dd"];
 		local icon = ""
 		if spychat then
 			if hidden then
-				icon = "\u{1F6AB} "
+				icon = "🚫 "
 			elseif muted then
-				icon = "\u{1F910} "
+				icon = "🤐 "
 			elseif iqEmoji then
 				icon = iqEmoji .. " "
 			end
@@ -11824,7 +11795,6 @@ local script = G2L["dd"];
 			mdata.PrefixText = "<font color=\"" .. hex .. "\"><i><font color='rgb(" .. r .. "," .. g .. "," .. b .. ")'>" .. icon .. "(" .. displayName .. ") </font></i></font>"
 		end
 	
-		-- skip self for spy features
 		if plr == LocalPlayer then return end
 	
 		local rawMsg = mdata.Text or ""
@@ -11833,7 +11803,7 @@ local script = G2L["dd"];
 		local mutedPlayer = isMuted(plr)
 		local mutedPrefix = mutedPlayer and "MUTED " or ""
 	
-		-- ---- ARKSPY DETECTION ----
+		-- ---- ARKSPY ----
 		local caughtByArk = false
 		if arkSpyOn then
 			local admin = isAdmin(plr)
@@ -11858,12 +11828,11 @@ local script = G2L["dd"];
 			end
 		end
 	
-		-- ---- DONATESPY DETECTION ----
+		-- ---- DONATESPY ----
 		local caughtByDonate = false
 		if donateSpyOn then
 			local isDonate = rawMsg:lower():match("^;?%s*donate%s") ~= nil
 				or rawMsg:lower():match("^;?%s*donate$") ~= nil
-	
 			if isDonate then
 				local shouldAnnounce = false
 				if mutedPlayer then
@@ -11872,7 +11841,6 @@ local script = G2L["dd"];
 				elseif silent then
 					shouldAnnounce = true
 				end
-	
 				if shouldAnnounce then
 					local target, amount = parseDonate(rawMsg, plr)
 					if target and amount then
@@ -11884,7 +11852,7 @@ local script = G2L["dd"];
 			end
 		end
 	
-		-- ---- MUTEDSPY DETECTION ----
+		-- ---- MUTEDSPY ----
 		if mutedSpyOn and mutedPlayer then
 			if not caughtByArk and not caughtByDonate then
 				task.spawn(function()
@@ -11892,44 +11860,33 @@ local script = G2L["dd"];
 				end)
 			end
 		end
-		
-		-- ---- BOTREPLY DETECTION ----
+	
+		-- ---- BOTREPLY ----
 		if botReplyOn then
 			local trigger = getTrigger()
 			local reply = getReply()
-	
 			if trigger and reply then
 				if botMessageMatches(rawMsg, trigger) and passesMinTimeRequirement(plr) and not isBlacklisted(plr) then
 					local finalReply = buildReply(reply, plr)
-					local isPriv = botReplyTickOn(BotReplyPrivTickBox)
-	
 					task.spawn(function()
-	
 						local messageToSend = finalReply
 						local usePrivate = botReplyTickOn(BotReplyPrivTickBox)
-						local useArk = botReplyTickOn(BotReplyArkTickBox)
-							and shared.BotReplyArkSend ~= nil
-	
-						-- If Ark script exists, let it handle equip + restore
+						local useArk = botReplyTickOn(BotReplyArkTickBox) and shared.BotReplyArkSend ~= nil
 						if useArk then
 							shared.BotReplyArkSend(function()
-	
 								if usePrivate and shared.BotReplyPrivSend then
 									shared.BotReplyPrivSend(plr, messageToSend)
 								else
 									sendChat(messageToSend)
 								end
-	
 							end)
 						else
-							-- No Ark, just send
 							if usePrivate and shared.BotReplyPrivSend then
 								shared.BotReplyPrivSend(plr, messageToSend)
 							else
 								sendChat(messageToSend)
 							end
 						end
-	
 					end)
 				end
 			end
@@ -11963,8 +11920,7 @@ local script = G2L["dd"];
 	local function arkEnable()
 		arkSpyOn = true
 		if ArkSpyTickBox then
-			local accent = ProtectionAccentColor
-			ArkSpyTickBox.BackgroundColor3 = accent and accent.BackgroundColor3 or Color3.fromRGB(0, 170, 255)
+			ArkSpyTickBox.BackgroundColor3 = ProtectionAccentColor and ProtectionAccentColor.BackgroundColor3 or Color3.fromRGB(0, 170, 255)
 		end
 	end
 	
@@ -11987,8 +11943,7 @@ local script = G2L["dd"];
 	local function donateEnable()
 		donateSpyOn = true
 		if DonateSpyTickBox then
-			local accent = MiscAccentColor
-			DonateSpyTickBox.BackgroundColor3 = accent and accent.BackgroundColor3 or Color3.fromRGB(0, 170, 255)
+			DonateSpyTickBox.BackgroundColor3 = MiscAccentColor and MiscAccentColor.BackgroundColor3 or Color3.fromRGB(0, 170, 255)
 		end
 	end
 	
@@ -12011,8 +11966,7 @@ local script = G2L["dd"];
 	local function mutedEnable()
 		mutedSpyOn = true
 		if MutedSpyTickBox then
-			local accent = MiscAccentColor
-			MutedSpyTickBox.BackgroundColor3 = accent and accent.BackgroundColor3 or Color3.fromRGB(0, 170, 255)
+			MutedSpyTickBox.BackgroundColor3 = MiscAccentColor and MiscAccentColor.BackgroundColor3 or Color3.fromRGB(0, 170, 255)
 		end
 	end
 	
@@ -12028,6 +11982,7 @@ local script = G2L["dd"];
 			if mutedSpyOn then mutedDisable() else mutedEnable() end
 		end)
 	end
+	
 	-- ============================================================
 	-- BOTREPLY ENABLE / DISABLE
 	-- ============================================================
@@ -12058,15 +12013,11 @@ local script = G2L["dd"];
 	
 	if BotReplyTickBox then
 		BotReplyTickBox.BackgroundColor3 = Color3.new(0,0,0)
-	
 		BotReplyTickBox.MouseButton1Click:Connect(function()
-			if botReplyOn then
-				botReplyDisable()
-			else
-				botReplyEnable()
-			end
+			if botReplyOn then botReplyDisable() else botReplyEnable() end
 		end)
 	end
+	
 	-- ============================================================
 	-- CLEANUP
 	-- ============================================================
@@ -12680,29 +12631,32 @@ local function C_f3()
 local script = G2L["f3"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
+	
 	local BKitBreakRow = script.Parent
 	local BKitBreakButton = BKitBreakRow.BKitBreakButton
 	local originalText = BKitBreakButton.Text
 	
 	BKitBreakButton.MouseButton1Click:Connect(function()
 		BKitBreakButton.Text = "BREAKING..."
+	
 		task.spawn(function()
 			local success, err = pcall(function()
 				local character = LocalPlayer.Character
 				if not character then error("No character") end
 	
-				-- Find delete tool in character or backpack, no equipping needed
 				local deleteTool = character:FindFirstChild("Delete")
-					or LocalPlayer.Backpack:FindFirstChild("Delete")
-				if not deleteTool then error("Delete tool not found") end
-	
-				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+				if not deleteTool then error("Delete tool not equipped, equip it first") end
 	
 				local rs = game:GetService("ReplicatedStorage")
 				local brick = rs:FindFirstChild("Brick")
 				if not brick then error("No Brick in ReplicatedStorage") end
 	
-				event:FireServer(brick, character.HumanoidRootPart.Position)
+				deleteTool.Script.Event:FireServer(
+					brick,
+					character.HumanoidRootPart.Position
+				)
+	
+				deleteTool.Parent = LocalPlayer.Backpack
 			end)
 	
 			if success then
@@ -17198,6 +17152,72 @@ task.spawn(C_181);
 local function C_188()
 local script = G2L["188"];
 	local Players = game:GetService("Players")
+	local TextChatService = game:GetService("TextChatService")
+	local AlertGriefRow = script.Parent
+	local PunishGroup = AlertGriefRow.Parent
+	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
+	local AlertGriefTickBox = AlertGriefRow:WaitForChild("AlertGriefTickBox")
+	--------------------------------------------------
+	-- ENABLE STATE
+	--------------------------------------------------
+	AlertGriefTickBox:SetAttribute("Enabled", false)
+	local function updateVisual()
+		if AlertGriefTickBox:GetAttribute("Enabled") then
+			AlertGriefTickBox.BackgroundColor3 = PunishAccentColor.BackgroundColor3
+		else
+			AlertGriefTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
+		end
+	end
+	AlertGriefTickBox.MouseButton1Click:Connect(function()
+		local state = not AlertGriefTickBox:GetAttribute("Enabled")
+		AlertGriefTickBox:SetAttribute("Enabled", state)
+		updateVisual()
+	end)
+	updateVisual()
+	--------------------------------------------------
+	-- ENSURE EVENTS EXIST
+	--------------------------------------------------
+	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
+	shared.DeleteGriefEvent = shared.DeleteGriefEvent or Instance.new("BindableEvent")
+	shared.ToxifyGriefEvent = shared.ToxifyGriefEvent or Instance.new("BindableEvent")
+	shared.UnanchorGriefEvent = shared.UnanchorGriefEvent or Instance.new("BindableEvent")
+	shared.BuildGriefEvent = shared.BuildGriefEvent or Instance.new("BindableEvent")
+	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
+	--------------------------------------------------
+	-- CHAT FUNCTION
+	--------------------------------------------------
+	local function sendChat(message)
+		if shared.sendChat then
+			shared.sendChat(message)
+		else
+			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
+		end
+	end
+	--------------------------------------------------
+	-- ALERT MESSAGES
+	--------------------------------------------------
+	local griefMessages = {
+		["delete"]   = "🚨 %s has been detected deleting another player's blocks",
+		["toxify"]   = "🚨 %s has been detected toxifying another player's blocks",
+		["unanchor"] = "🚨 %s has been detected unanchoring another player's blocks",
+		["build"]    = "🚨 %s has been detected spam building",
+		["exploit"]  = "🚨 %s has been detected using exploits to grief",
+	}
+	--------------------------------------------------
+	-- LISTEN FOR GRIEF EVENT ONLY
+	--------------------------------------------------
+	shared.GriefEvent.Event:Connect(function(player, griefType)
+		if not AlertGriefTickBox:GetAttribute("Enabled") then return end
+		local template = griefMessages[griefType]
+		if not template then return end
+		sendChat(string.format(template, player.DisplayName))
+	end)
+end;
+task.spawn(C_188);
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionRightSide.PunishGroup.ConfirmGriefRow.ConfirmGriefScript
+local function C_18c()
+local script = G2L["18c"];
+	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
 	
@@ -17661,492 +17681,6 @@ local script = G2L["188"];
 	shared.UnanchorGriefEvent = shared.UnanchorGriefEvent or Instance.new("BindableEvent")
 	shared.BuildGriefEvent = shared.BuildGriefEvent or Instance.new("BindableEvent")
 	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
-	
-	--------------------------------------------------
-	-- LISTEN FOR GRIEF EVENT ONLY
-	--------------------------------------------------
-	
-	shared.GriefEvent.Event:Connect(function(player, griefType)
-		if not ConfirmGriefTickBox:GetAttribute("Enabled") then return end
-		showConfirm(player, griefType)
-	end)
-	
-	--------------------------------------------------
-	-- CLEANUP
-	--------------------------------------------------
-	
-	script.AncestryChanged:Connect(function()
-		if not script:IsDescendantOf(game) then
-			flingCancelled = true
-			hideConfirm(true)
-		end
-	end)
-end;
-task.spawn(C_188);
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionRightSide.PunishGroup.ConfirmGriefRow.ConfirmGriefScript
-local function C_18c()
-local script = G2L["18c"];
-	local Players = game:GetService("Players")
-	local RunService = game:GetService("RunService")
-	local LocalPlayer = Players.LocalPlayer
-	
-	--------------------------------------------------
-	-- GUI STRUCTURE
-	--------------------------------------------------
-	
-	local ConfirmGriefRow = script.Parent
-	local PunishGroup = ConfirmGriefRow.Parent
-	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
-	local ConfirmGriefTickBox = ConfirmGriefRow:WaitForChild("ConfirmGriefTickBox")
-	
-	--------------------------------------------------
-	-- SCREEN GUI
-	--------------------------------------------------
-	
-	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
-	local ConfirmGriefFrame = ScreenGui:WaitForChild("ConfirmGriefFrame")
-	
-	local ConfirmTimer = ConfirmGriefFrame:WaitForChild("ConfirmTimer")
-	local GriefTargetLabel = ConfirmGriefFrame:WaitForChild("GriefTargetLabel")
-	local FlingConfirm = ConfirmGriefFrame:WaitForChild("FlingConfirm")
-	local AlertConfirm = ConfirmGriefFrame:WaitForChild("AlertConfirm")
-	local CancelConfirm = ConfirmGriefFrame:WaitForChild("CancelConfirm")
-	local FalseAlertConfirm = ConfirmGriefFrame:WaitForChild("FalseAlertConfirm")
-	local PauseConfirm = ConfirmGriefFrame:WaitForChild("PauseConfirm")
-	
-	ConfirmGriefFrame.Visible = false
-	
-	--------------------------------------------------
-	-- ENABLE STATE (SAFE MUTUAL EXCLUSIVE)
-	--------------------------------------------------
-	
-	ConfirmGriefTickBox:SetAttribute("Enabled", false)
-	
-	local function updateVisual()
-		if ConfirmGriefTickBox:GetAttribute("Enabled") then
-			ConfirmGriefTickBox.BackgroundColor3 = PunishAccentColor.BackgroundColor3
-		else
-			ConfirmGriefTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
-		end
-	end
-	
-	ConfirmGriefTickBox.MouseButton1Click:Connect(function()
-		local currentlyEnabled = ConfirmGriefTickBox:GetAttribute("Enabled")
-		if currentlyEnabled then
-			ConfirmGriefTickBox:SetAttribute("Enabled", false)
-			PunishGroup:SetAttribute("ActivePunishMode", nil)
-		else
-			PunishGroup:SetAttribute("ActivePunishMode", "Confirm")
-			ConfirmGriefTickBox:SetAttribute("Enabled", true)
-		end
-		updateVisual()
-	end)
-	
-	PunishGroup:GetAttributeChangedSignal("ActivePunishMode"):Connect(function()
-		local mode = PunishGroup:GetAttribute("ActivePunishMode")
-		if mode ~= "Confirm" and ConfirmGriefTickBox:GetAttribute("Enabled") then
-			ConfirmGriefTickBox:SetAttribute("Enabled", false)
-			updateVisual()
-		end
-	end)
-	
-	updateVisual()
-	
-	--------------------------------------------------
-	-- CAMERA
-	--------------------------------------------------
-	
-	local cam = workspace.CurrentCamera
-	
-	local function spectatePlayer(player)
-		if player and player.Character then
-			local hum = player.Character:FindFirstChildOfClass("Humanoid")
-			if hum then cam.CameraSubject = hum end
-		end
-	end
-	
-	local function spectateBack()
-		if LocalPlayer.Character then
-			local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-			if hum then cam.CameraSubject = hum end
-		end
-	end
-	
-	--------------------------------------------------
-	-- SAFE RETURN after cancelled/failed fling
-	--------------------------------------------------
-	
-	local function safeReturn()
-		local chr = LocalPlayer.Character
-		if not chr then return end
-		local hrp = chr:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-		local hum = chr:FindFirstChildOfClass("Humanoid")
-	
-		if not getgenv().OldPos then return end
-	
-		if hum then
-			for _, state in pairs(Enum.HumanoidStateType:GetEnumItems()) do
-				pcall(function() hum:SetStateEnabled(state, false) end)
-			end
-			hum.PlatformStand = true
-		end
-	
-		local bv = Instance.new("BodyVelocity")
-		bv.Velocity = Vector3.new(0, 0, 0)
-		bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-		bv.Parent = hrp
-	
-		hrp.CFrame = getgenv().OldPos * CFrame.new(0, 0.5, 0)
-		task.wait(0.4)
-		bv:Destroy()
-	
-		if hum then
-			for _, state in pairs(Enum.HumanoidStateType:GetEnumItems()) do
-				pcall(function() hum:SetStateEnabled(state, true) end)
-			end
-			hum.PlatformStand = false
-			hum:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
-		end
-	end
-	
-	--------------------------------------------------
-	-- FLING STATE
-	--------------------------------------------------
-	
-	local flingCancelled = false
-	
-	--------------------------------------------------
-	-- FLING (Rip_IKASI method with cancel support)
-	--------------------------------------------------
-	
-	local function flingPlayer(TargetPlayer)
-		local Character = LocalPlayer.Character
-		local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
-		local RootPart = Humanoid and Humanoid.RootPart
-	
-		local TCharacter = TargetPlayer.Character
-		if not TCharacter then return false end
-	
-		local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
-		local TRootPart = THumanoid and THumanoid.RootPart
-		local THead = TCharacter:FindFirstChild("Head")
-		local Accessory = TCharacter:FindFirstChildOfClass("Accessory")
-		local Handle = Accessory and Accessory:FindFirstChild("Handle")
-	
-		if not (Character and Humanoid and RootPart) then return false end
-	
-		if RootPart.Velocity.Magnitude < 50 then
-			getgenv().OldPos = RootPart.CFrame
-		end
-	
-		if THumanoid and THumanoid.Sit then return false end
-	
-		if THead then
-			cam.CameraSubject = THead
-		elseif Handle then
-			cam.CameraSubject = Handle
-		elseif THumanoid then
-			cam.CameraSubject = THumanoid
-		end
-	
-		if not TCharacter:FindFirstChildWhichIsA("BasePart") then return false end
-	
-		local flinged = false
-		flingCancelled = false
-	
-		local FPos = function(BasePart, Pos, Ang)
-			if flingCancelled then return end
-			RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
-			Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
-			RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-			RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-		end
-	
-		local SFBasePart = function(BasePart)
-			local TimeToWait = 2
-			local Time = tick()
-			local Angle = 0
-	
-			repeat
-				if flingCancelled then break end
-				if RootPart and THumanoid then
-					if BasePart.Velocity.Magnitude < 50 then
-						Angle = Angle + 100
-						FPos(BasePart, CFrame.new(0, 1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, -1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0)); task.wait()
-					else
-						FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(-90), 0, 0)); task.wait()
-						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0)); task.wait()
-					end
-				else
-					break
-				end
-			until flingCancelled
-				or (BasePart.Velocity.Magnitude > 500)
-				or (BasePart.Parent ~= TargetPlayer.Character)
-				or (TargetPlayer.Parent ~= Players)
-				or THumanoid.Sit
-				or (Humanoid.Health <= 0)
-				or (tick() > (Time + TimeToWait))
-	
-			if BasePart.Velocity.Magnitude > 500 then
-				flinged = true
-			end
-		end
-	
-		local savedFPDH = workspace.FallenPartsDestroyHeight
-		workspace.FallenPartsDestroyHeight = math.huge * -1
-	
-		local BV = Instance.new("BodyVelocity")
-		BV.Name = "ConfirmFlingVel"
-		BV.Parent = RootPart
-		BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
-		BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-	
-		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-	
-		if TRootPart and THead then
-			if (TRootPart.CFrame.p - THead.CFrame.p).Magnitude > 5 then
-				SFBasePart(THead)
-			else
-				SFBasePart(TRootPart)
-			end
-		elseif TRootPart and not THead then
-			SFBasePart(TRootPart)
-		elseif not TRootPart and THead then
-			SFBasePart(THead)
-		elseif not TRootPart and not THead and Accessory and Handle then
-			SFBasePart(Handle)
-		end
-	
-		BV:Destroy()
-		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-		cam.CameraSubject = Humanoid
-	
-		if flingCancelled then
-			safeReturn()
-		else
-			if getgenv().OldPos then
-				repeat
-					RootPart.CFrame = getgenv().OldPos * CFrame.new(0, 0.5, 0)
-					Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, 0.5, 0))
-					Humanoid:ChangeState("GettingUp")
-					for _, part in ipairs(Character:GetChildren()) do
-						if part:IsA("BasePart") then
-							part.Velocity = Vector3.new()
-							part.RotVelocity = Vector3.new()
-						end
-					end
-					task.wait()
-				until (RootPart.Position - getgenv().OldPos.p).Magnitude < 25
-			end
-		end
-	
-		workspace.FallenPartsDestroyHeight = savedFPDH
-	
-		return flinged
-	end
-	
-	--------------------------------------------------
-	-- STATE
-	--------------------------------------------------
-	
-	local currentTarget = nil
-	local currentGriefType = nil
-	local timerConn = nil
-	local isShowing = false
-	local isFlingActive = false
-	local isFlingDone = false
-	local timerPaused = false
-	local griefQueue = {}
-	
-	--------------------------------------------------
-	-- GRIEF TYPE LABELS & MESSAGES
-	--------------------------------------------------
-	
-	local griefTypeLabels = {
-		["delete"]   = "DELETING BLOCKS",
-		["toxify"]   = "TOXIFYING BLOCKS",
-		["unanchor"] = "UNANCHORING BLOCKS",
-		["build"]    = "SPAM BUILDING",
-	}
-	
-	local alertMessages = {
-		["delete"]   = "⚠️%s IS GRIEVING",
-		["toxify"]   = "⚠️%s IS SPAMMING TOXIFY",
-		["unanchor"] = "⚠️%s IS SPAMMING UNANCHOR",
-		["build"]    = "⚠️%s IS SPAMMING BLOCKS",
-	}
-	
-	local flingMessages = {
-		["delete"]   = "⚠️%s was grieving and got flung",
-		["toxify"]   = "⚠️%s was spamming toxify and got flung",
-		["unanchor"] = "⚠️%s was spamming unanchor and got flung",
-		["build"]    = "⚠️%s was spamming blocks and got flung",
-	}
-	
-	--------------------------------------------------
-	-- HIDE
-	--------------------------------------------------
-	
-	local function hideConfirm(clearQueue)
-		isShowing = false
-		isFlingActive = false
-		timerPaused = false
-		currentTarget = nil
-		currentGriefType = nil
-		ConfirmGriefFrame.Visible = false
-		spectateBack()
-	
-		if timerConn then
-			timerConn:Disconnect()
-			timerConn = nil
-		end
-	
-		if clearQueue then
-			griefQueue = {}
-			return
-		end
-	
-		if #griefQueue > 0 then
-			task.wait(0.3)
-			local nextItem = table.remove(griefQueue, 1)
-			showConfirm(nextItem.player, nextItem.griefType)
-		end
-	end
-	
-	--------------------------------------------------
-	-- SHOW
-	--------------------------------------------------
-	
-	function showConfirm(player, griefType)
-		if isShowing then
-			table.insert(griefQueue, {player = player, griefType = griefType})
-			return
-		end
-	
-		isShowing = true
-		isFlingDone = false
-		currentTarget = player
-		currentGriefType = griefType
-	
-		local label = griefTypeLabels[griefType] or "GRIEFING"
-		ConfirmGriefFrame.Visible = true
-		GriefTargetLabel.Text = "POSSIBLE GRIEF: " .. player.DisplayName .. " | " .. label
-		spectatePlayer(player)
-	
-		local timeLeft = 20
-		ConfirmTimer.Text = "(20.0)"
-	
-		if timerConn then timerConn:Disconnect() end
-	
-		timerConn = RunService.Heartbeat:Connect(function()
-			if not isShowing then return end
-			if isFlingActive then return end
-			if timerPaused then return end
-	
-			timeLeft -= (1/60)
-			ConfirmTimer.Text = "(" .. string.format("%.1f", timeLeft) .. ")"
-	
-			if timeLeft <= 0 then
-				hideConfirm(false)
-			end
-		end)
-	end
-	
-	--------------------------------------------------
-	-- BUTTONS
-	--------------------------------------------------
-	
-	FlingConfirm.MouseButton1Click:Connect(function()
-		if not currentTarget then return end
-		if isFlingDone then return end
-	
-		if isFlingActive then
-			flingCancelled = true
-			return
-		end
-	
-		local target = currentTarget
-		local griefType = currentGriefType
-	
-		isFlingActive = true
-		flingCancelled = false
-		FlingConfirm.Text = "CANCEL FLING"
-		FlingConfirm.BackgroundColor3 = Color3.fromRGB(57,0,0)
-	
-		task.spawn(function()
-			local success = flingPlayer(target)
-	
-			isFlingActive = false
-			isFlingDone = true
-			FlingConfirm.Text = "FLING PLAYER"
-			FlingConfirm.BackgroundColor3 = Color3.fromRGB(0,0,0)
-	
-			hideConfirm(true)
-	
-			if success and not flingCancelled and shared.sendChat then
-				local template = flingMessages[griefType] or "⚠️%s was grieving and got flung"
-				shared.sendChat(string.format(template, target.DisplayName))
-			end
-		end)
-	end)
-	
-	AlertConfirm.MouseButton1Click:Connect(function()
-		if not currentTarget then return end
-		if shared.sendChat then
-			local template = alertMessages[currentGriefType] or "⚠️%s IS GRIEVING"
-			shared.sendChat(string.format(template, currentTarget.DisplayName))
-		end
-	end)
-	
-	FalseAlertConfirm.MouseButton1Click:Connect(function()
-		if isFlingActive then
-			flingCancelled = true
-			task.wait(0.1)
-		end
-		if shared.sendChat then
-			shared.sendChat("❌False Alert")
-		end
-		hideConfirm(true)
-	end)
-	
-	-- Cancel closes silently with no chat message
-	CancelConfirm.MouseButton1Click:Connect(function()
-		if isFlingActive then
-			flingCancelled = true
-			task.wait(0.1)
-		end
-		hideConfirm(true)
-	end)
-	
-	PauseConfirm.MouseButton1Click:Connect(function()
-		timerPaused = not timerPaused
-		PauseConfirm.Text = timerPaused and "UNPAUSE TIMER" or "PAUSE TIMER"
-	end)
-	
-	--------------------------------------------------
-	-- ENSURE EVENTS EXIST
-	--------------------------------------------------
-	
-	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
-	shared.DeleteGriefEvent = shared.DeleteGriefEvent or Instance.new("BindableEvent")
-	shared.ToxifyGriefEvent = shared.ToxifyGriefEvent or Instance.new("BindableEvent")
-	shared.UnanchorGriefEvent = shared.UnanchorGriefEvent or Instance.new("BindableEvent")
-	shared.BuildGriefEvent = shared.BuildGriefEvent or Instance.new("BindableEvent")
 	
 	--------------------------------------------------
 	-- LISTEN FOR GRIEF EVENT ONLY
