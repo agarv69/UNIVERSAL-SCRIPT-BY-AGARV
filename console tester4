@@ -1,203 +1,30 @@
-local VERSION = 170
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local DELETE_RADIUS = 24
 
-print("Delete Detector Running [ID "..VERSION.."]")
+local CHECK_INTERVAL = 5
+local lastPrint = {}
 
-local bricksFolder = workspace:WaitForChild("Bricks")
-
-local brickAge = {}
-
-for _, obj in pairs(bricksFolder:GetDescendants()) do
-	if obj:IsA("BasePart") and obj.Name == "Brick" then
-		brickAge[obj] = tick() - 121
-	end
-end
-
-shared.GriefLog = ""
-shared.PaintLog = ""
-
-local function holdingDelete(player)
-	local char = player.Character
-	if not char then return false end
-	for _, obj in pairs(char:GetChildren()) do
-		if obj:IsA("Tool") and obj.Name:lower():find("delete") then
-			return true
-		end
-	end
-	return false
-end
-
-local function holdingPaint(player)
-	local char = player.Character
-	if not char then return false end
-	for _, obj in pairs(char:GetChildren()) do
-		if obj:IsA("Tool") and obj.Name:lower():find("paint") then
-			return true
-		end
-	end
-	return false
-end
-
-local previousBricks = {}
-
-local function getOwner(brick)
-	if brick:IsDescendantOf(bricksFolder) then
-		local parent = brick.Parent
-		if parent then
-			local possiblePlayer = Players:FindFirstChild(parent.Name)
-			if possiblePlayer then
-				return parent.Name
-			end
-		end
-	end
-	return "Server"
-end
-
-local function snapshot()
-	local current = {}
-	for _, obj in pairs(bricksFolder:GetDescendants()) do
-		if obj:IsA("BasePart") and obj.Name == "Brick" then
-			current[obj] = {
-				position = obj.Position,
-				owner = getOwner(obj)
-			}
-		end
-	end
-	return current
-end
-
-previousBricks = snapshot()
-
--- ============================================================
--- PAINT/NEON/UNANCHOR DETECTION
--- ============================================================
-local watchedBricks = {}
-
-local function watchBrick(brick)
-	if watchedBricks[brick] then return end
-	watchedBricks[brick] = true
-
-	local ownerName = getOwner(brick)
-
-	brick:GetPropertyChangedSignal("Material"):Connect(function()
-		if not brick or not brick.Parent then return end
-		if brick.Material ~= Enum.Material.Neon then return end
-		local currentOwner = getOwner(brick)
-
-		local closest = nil
-		local closestDist = DELETE_RADIUS
-		for _, player in pairs(Players:GetPlayers()) do
-			local char = player.Character
-			if char and char:FindFirstChild("HumanoidRootPart") then
-				local dist = (char.HumanoidRootPart.Position - brick.Position).Magnitude
-				if dist <= closestDist and holdingPaint(player) then
-					closestDist = dist
-					closest = player
-				end
-			end
-		end
-
-		if closest and closest.Name ~= currentOwner then
-			print("[PAINTLOG] "..closest.Name.." neon painted "..currentOwner.."'s brick")
-			shared.PaintLog = closest.Name .. "|" .. currentOwner .. "|neon|" .. tostring(tick())
-		end
-	end)
-
-	brick:GetPropertyChangedSignal("Anchored"):Connect(function()
-		if not brick or not brick.Parent then return end
-		if brick.Anchored then return end
-		local currentOwner = getOwner(brick)
-
-		local closest = nil
-		local closestDist = DELETE_RADIUS
-		for _, player in pairs(Players:GetPlayers()) do
-			local char = player.Character
-			if char and char:FindFirstChild("HumanoidRootPart") then
-				local dist = (char.HumanoidRootPart.Position - brick.Position).Magnitude
-				if dist <= closestDist and holdingPaint(player) then
-					closestDist = dist
-					closest = player
-				end
-			end
-		end
-
-		if closest and closest.Name ~= currentOwner then
-			print("[PAINTLOG] "..closest.Name.." unanchored "..currentOwner.."'s brick")
-			shared.PaintLog = closest.Name .. "|" .. currentOwner .. "|unanchor|" .. tostring(tick())
-		end
-	end)
-end
-
-for _, obj in pairs(bricksFolder:GetDescendants()) do
-	if obj:IsA("BasePart") and obj.Name == "Brick" then
-		watchBrick(obj)
-	end
-end
-
--- ============================================================
--- BUILDLOG TRACKING
--- ============================================================
-local buildLog = {}
-local BUILD_LIMIT = 22
-local BUILD_WINDOW = 5.5
-
-bricksFolder.DescendantAdded:Connect(function(obj)
-	if obj:IsA("BasePart") and obj.Name == "Brick" then
-		watchBrick(obj)
-		brickAge[obj] = tick()
-
-		local ownerName = getOwner(obj)
-		if ownerName == "Server" then return end
-
-		local now = tick()
-		buildLog[ownerName] = buildLog[ownerName] or {}
-		table.insert(buildLog[ownerName], now)
-
-		local valid = {}
-		for _, t in ipairs(buildLog[ownerName]) do
-			if now - t <= BUILD_WINDOW then
-				table.insert(valid, t)
-			end
-		end
-		buildLog[ownerName] = valid
-
-		if #valid >= BUILD_LIMIT then
-			print("[BUILDLOG] " .. ownerName .. " is placing bricks too fast (" .. #valid .. " blocks in " .. BUILD_WINDOW .. " seconds)")
-			buildLog[ownerName] = {}
-		end
-	end
-end)
-
--- ============================================================
--- DELETE DETECTION
--- ============================================================
 RunService.Heartbeat:Connect(function()
-	local currentBricks = snapshot()
-	for oldBrick, data in pairs(previousBricks) do
-		if not currentBricks[oldBrick] then
-			local oldPos = data.position
-			local ownerName = data.owner
-			local closest = nil
-			local closestDist = DELETE_RADIUS
-			for _, player in pairs(Players:GetPlayers()) do
-				local char = player.Character
-				if char and char:FindFirstChild("HumanoidRootPart") then
-					local dist = (char.HumanoidRootPart.Position - oldPos).Magnitude
-					if dist <= closestDist and holdingDelete(player) then
-						closestDist = dist
-						closest = player
-					end
+	local now = tick()
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		local char = workspace:FindFirstChild(player.Name)
+		if not char then continue end
+
+		local boombox = char:FindFirstChild("SuperFlyGoldBoombox")
+		if not boombox then continue end
+
+		for _, obj in ipairs(boombox:GetDescendants()) do
+			if obj:IsA("Sound") and obj.IsPlaying then
+				local key = player.UserId .. "_" .. obj.SoundId
+
+				if not lastPrint[key] or now - lastPrint[key] >= CHECK_INTERVAL then
+					lastPrint[key] = now
+					print("[BOOMBOX] " .. player.Name .. " | ID " .. obj.SoundId .. " | " .. string.format("%.1f", obj.PlaybackLoudness) .. " dBFS")
 				end
-			end
-			if closest and closest.Name ~= ownerName then
-				local age = brickAge[oldBrick] and (tick() - brickAge[oldBrick]) or 121
-				print("[GRIEFLOG] "..closest.Name.." deleted "..ownerName.."'s brick (age: "..math.floor(age).."s)")
-				shared.GriefLog = closest.Name .. "|" .. ownerName .. "|" .. tostring(tick()) .. "|" .. tostring(age)
 			end
 		end
 	end
-	previousBricks = currentBricks
 end)
+
+print("[BOOMBOX DEBUG] Running - will print every 5s per active boombox")
