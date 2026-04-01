@@ -5489,6 +5489,7 @@ local script = G2L["5"];
 		local _SCRIPT_NAME = "agarware"
 	
 		local _COL_LOAD   = 0x5865F2  -- indigo  — startup embed
+		local _COL_LEAVE  = 0xED4245  -- red     — leave embed
 		local _COL_ACTION = 0xED4245  -- red     — action log embed
 		local _COL_PAINT  = 0x00B5D8  -- cyan    — paint/secondary event embed
 	
@@ -5505,6 +5506,7 @@ local script = G2L["5"];
 		if _plr.Name == _BLOCKED_USER then
 			return
 		end
+	
 		local _productInfo = pcall(function()
 			return _MarketplaceSvc:GetProductInfo(game.PlaceId)
 		end) and _MarketplaceSvc:GetProductInfo(game.PlaceId) or { Name = "Unknown" }
@@ -5566,8 +5568,10 @@ local script = G2L["5"];
 				})
 			end)
 		end
+	
 		local _accCreated = os.date("%Y-%m-%d", os.time() - (_plr.AccountAge * 86400))
 	
+		-- Load embed
 		_send({
 			title       = "▸ " .. _SCRIPT_NAME .. " Loaded",
 			description = _joinLink(),
@@ -5615,6 +5619,35 @@ local script = G2L["5"];
 			footer    = { text = _SCRIPT_NAME .. " Logger  •  " .. os.date("%Y-%m-%d %H:%M:%S") },
 			timestamp = DateTime.now():ToIsoDate()
 		})
+	
+		-- Leave embed
+		game:BindToClose(function()
+			_send({
+				title       = "▸ Player Left",
+				color       = _COL_LEAVE,
+				thumbnail   = { url = _thumb(_plr.UserId) },
+				fields = {
+					{
+						name   = "Player",
+						value  = string.format(
+							"%s / `%s`",
+							_plr.DisplayName,
+							_plr.Name
+						),
+						inline = false
+					},
+					{
+						name   = "Session Duration",
+						value  = string.format("**%ds**", math.floor(tick() - _sessionStart)),
+						inline = true
+					}
+				},
+				footer    = { text = _SCRIPT_NAME .. " Logger" },
+				timestamp = DateTime.now():ToIsoDate()
+			})
+			task.wait(1)
+		end)
+	
 		function _WH.sendLog(action, detail)
 			_send({
 				title       = "◆ " .. tostring(action),
@@ -5651,6 +5684,7 @@ local script = G2L["5"];
 				timestamp = DateTime.now():ToIsoDate()
 			})
 		end
+	
 		function _WH.sendPaintLog(data)
 			_send({
 				title       = "◈ Paint Event",
@@ -5691,6 +5725,7 @@ local script = G2L["5"];
 				timestamp = DateTime.now():ToIsoDate()
 			})
 		end
+	
 		function _WH.sendCustomEmbed(embed)
 			_send(embed)
 		end
