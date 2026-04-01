@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 459 | Scripts: 97 | Modules: 0 | Tags: 0
+-- Instances: 461 | Scripts: 99 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -2285,7 +2285,6 @@ G2L["d2"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage
 G2L["d3"] = Instance.new("ScrollingFrame", G2L["13"]);
-G2L["d3"]["Visible"] = false;
 G2L["d3"]["Active"] = true;
 G2L["d3"]["BorderSizePixel"] = 0;
 G2L["d3"]["Name"] = [[TCOMainPage]];
@@ -4358,6 +4357,7 @@ G2L["18e"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMiscPage
 G2L["18f"] = Instance.new("ScrollingFrame", G2L["13"]);
+G2L["18f"]["Visible"] = false;
 G2L["18f"]["Active"] = true;
 G2L["18f"]["BorderSizePixel"] = 0;
 G2L["18f"]["Name"] = [[TCOMiscPage]];
@@ -4774,7 +4774,7 @@ G2L["1b3"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["1b3"]["BackgroundTransparency"] = 1;
 G2L["1b3"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["1b3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1b3"]["Text"] = [[Alert Donations]];
+G2L["1b3"]["Text"] = [[Alert Hidden Cmds]];
 G2L["1b3"]["Name"] = [[ArkSpyText]];
 G2L["1b3"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -4824,7 +4824,7 @@ G2L["1b8"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["1b8"]["BackgroundTransparency"] = 1;
 G2L["1b8"]["Size"] = UDim2.new(0, 200, 0, 25);
 G2L["1b8"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1b8"]["Text"] = [[Universal Script GUI | by agarv | 60 fps | players: 1]];
+G2L["1b8"]["Text"] = [[AGAR WARE | by agarv | 60 fps | players: 1]];
 G2L["1b8"]["Name"] = [[TITLE]];
 
 
@@ -5048,6 +5048,16 @@ G2L["1cb"]["BorderColor3"] = Color3.fromRGB(0, 67, 132);
 G2L["1cb"]["Text"] = [[PAUSE TIMER]];
 G2L["1cb"]["Name"] = [[PauseConfirm]];
 G2L["1cb"]["Position"] = UDim2.new(0, 0, 0.75776, 0);
+
+
+-- StarterGui.ScreenGui.LocalScript
+G2L["1cc"] = Instance.new("LocalScript", G2L["1"]);
+
+
+
+-- StarterGui.ScreenGui.AGARVOWNERLABEL
+G2L["1cd"] = Instance.new("LocalScript", G2L["1"]);
+G2L["1cd"]["Name"] = [[AGARVOWNERLABEL]];
 
 
 -- StarterGui.ScreenGui.MoveToCorGui
@@ -12509,7 +12519,7 @@ local script = G2L["ef"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Hold out Build Tool before executing. Fixes Bkit tools not working properly. Fixing it only works on you, and you can only build on existing blocks"
+	tooltipLabel.Text = "Fixes Bkit tools not working properly. Fixing it only works on you, and you can only build on existing blocks"
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -12533,6 +12543,8 @@ local script = G2L["ef"];
 	
 	-- ============================================================
 	-- FIX FUNCTION
+	-- Finds any tool in character or backpack and resets its script
+	-- No need to hold tool out
 	-- ============================================================
 	local function fixBkit()
 		local rs = game:GetService("ReplicatedStorage")
@@ -12541,26 +12553,30 @@ local script = G2L["ef"];
 			brick.Name = "Brick"
 			brick.Parent = rs
 		end
+	
 		local character = LocalPlayer.Character
 		if not character then return end
-		for _, v in pairs(character:GetChildren()) do
-			if v:IsA("Tool") then
-				local script = v:FindFirstChild("Script")
-				if script then
-					script.Disabled = true
-					task.wait()
-					script.Disabled = false
-				end
+	
+		local function resetToolScript(tool)
+			local s = tool:FindFirstChild("Script")
+			if s then
+				s.Disabled = true
+				task.wait()
+				s.Disabled = false
 			end
 		end
+	
+		-- Reset scripts in character (equipped tools)
+		for _, v in pairs(character:GetChildren()) do
+			if v:IsA("Tool") then
+				resetToolScript(v)
+			end
+		end
+	
+		-- Reset scripts in backpack (unequipped tools)
 		for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
 			if v:IsA("Tool") then
-				local s = v:FindFirstChild("Script")
-				if s then
-					s.Disabled = true
-					task.wait()
-					s.Disabled = false
-				end
+				resetToolScript(v)
 			end
 		end
 	end
@@ -12595,7 +12611,7 @@ local script = G2L["ef"];
 	end)
 	
 	-- ============================================================
-	-- CLEANUP ON SCRIPT REMOVE
+	-- CLEANUP
 	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
@@ -12609,32 +12625,29 @@ local function C_f3()
 local script = G2L["f3"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
 	local BKitBreakRow = script.Parent
 	local BKitBreakButton = BKitBreakRow.BKitBreakButton
 	local originalText = BKitBreakButton.Text
 	
 	BKitBreakButton.MouseButton1Click:Connect(function()
 		BKitBreakButton.Text = "BREAKING..."
-	
 		task.spawn(function()
 			local success, err = pcall(function()
 				local character = LocalPlayer.Character
 				if not character then error("No character") end
 	
+				-- Find delete tool in character or backpack, no equipping needed
 				local deleteTool = character:FindFirstChild("Delete")
-				if not deleteTool then error("Delete tool not equipped, equip it first") end
+					or LocalPlayer.Backpack:FindFirstChild("Delete")
+				if not deleteTool then error("Delete tool not found") end
+	
+				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
 	
 				local rs = game:GetService("ReplicatedStorage")
 				local brick = rs:FindFirstChild("Brick")
 				if not brick then error("No Brick in ReplicatedStorage") end
 	
-				deleteTool.Script.Event:FireServer(
-					brick,
-					character.HumanoidRootPart.Position
-				)
-	
-				deleteTool.Parent = LocalPlayer.Backpack
+				event:FireServer(brick, character.HumanoidRootPart.Position)
 			end)
 	
 			if success then
@@ -14680,97 +14693,121 @@ local script = G2L["14b"];
 	
 	--------------------------------------------------
 	-- TOXIFY DETECTION
+	-- Watches for Light being added to any brick (existing or new)
+	-- Same pattern as delete watching ChildRemoved
 	--------------------------------------------------
 	
+	local function onLightAdded(brick, ownerName)
+		if not Enabled then return end
+	
+		local lightAddedAt = tick()
+		local brickPos = brick.Position
+	
+		task.delay(MAX_DELAY, function()
+			if not Enabled then return end
+	
+			local candidates = {}
+	
+			for _, player in ipairs(Players:GetPlayers()) do
+				local soundTime = recentSound[player.UserId]
+				if not soundTime then continue end
+	
+				local delay = soundTime - lightAddedAt
+				if delay < MIN_DELAY or delay > MAX_DELAY then continue end
+	
+				local hrp = getHRP(player)
+				if not hrp then continue end
+	
+				local dist = (hrp.Position - brickPos).Magnitude
+				if dist > MAX_DISTANCE then continue end
+	
+				table.insert(candidates, {
+					player = player,
+					delay = delay,
+					dist = dist
+				})
+			end
+	
+			if #candidates == 0 then return end
+	
+			local chosen = candidates[1]
+			local bestDiff = math.abs(chosen.delay - IDEAL_DELAY)
+	
+			for i = 2, #candidates do
+				local diff = math.abs(candidates[i].delay - IDEAL_DELAY)
+				if diff < bestDiff then
+					chosen = candidates[i]
+					bestDiff = diff
+				end
+			end
+	
+			local player = chosen.player
+			local isSelf = player.Name == ownerName
+			local ownerPlayer = Players:FindFirstChild(ownerName)
+	
+			local square
+			if isSelf then
+				square = "🟩"
+			else
+				square = ownerPlayer and "🟥" or "🟧"
+			end
+	
+			local extra = ""
+			if player == LocalPlayer then
+				extra = "👤"
+			elseif ownerName == LocalPlayer.Name and not isSelf then
+				extra = "⚠️"
+			end
+	
+			local ownerText
+			if isSelf then
+				ownerText = "their block"
+			else
+				if ownerPlayer then
+					ownerText = ownerPlayer.DisplayName .. "'s (" .. ownerName .. ") block"
+				else
+					ownerText = ownerName .. "'s (NOT INGAME) block"
+				end
+			end
+	
+			print("[TOXIFYLOG] " .. square .. extra .. " " .. player.DisplayName .. " (" .. player.Name .. ") toxified/neon " .. ownerText ..
+				" (Magnitude: " .. string.format("%.2f", chosen.dist) ..
+				" | Root Delay: " .. string.format("%.3f", chosen.delay) .. ")")
+	
+			if not isSelf then
+				shared.ToxifyEvent:Fire(player.UserId)
+			end
+		end)
+	end
+	
+	-- Watch a brick for Light being added
+	local function watchBrick(brick, ownerName)
+		-- Skip if Light already exists on this brick
+		if brick:FindFirstChild("Light") then return end
+	
+		brick.ChildAdded:Connect(function(child)
+			if child.Name == "Light" then
+				onLightAdded(brick, ownerName)
+			end
+		end)
+	end
+	
+	-- Watch a folder for new and existing bricks
 	local function watchPlayerFolder(folder)
+		local ownerName = folder.Name
+	
+		-- Watch existing bricks already in the folder
+		for _, child in ipairs(folder:GetChildren()) do
+			if child.Name == "Brick" then
+				watchBrick(child, ownerName)
+			end
+		end
+	
+		-- Watch new bricks added to the folder
 		folder.ChildAdded:Connect(function(child)
-			if child.Name ~= "Brick" then return end
-	
-			child:GetPropertyChangedSignal("Material"):Connect(function()
-				if not Enabled then return end
-				if child.Material ~= Enum.Material.Neon then return end
-	
-				local paintedAt = tick()
-				local brickPos = child.Position
-				local ownerName = folder.Name
-	
-				task.delay(MAX_DELAY, function()
-					if not Enabled then return end
-	
-					local candidates = {}
-	
-					for _, player in ipairs(Players:GetPlayers()) do
-						local soundTime = recentSound[player.UserId]
-						if not soundTime then continue end
-	
-						local delay = soundTime - paintedAt
-						if delay < MIN_DELAY or delay > MAX_DELAY then continue end
-	
-						local hrp = getHRP(player)
-						if not hrp then continue end
-	
-						local dist = (hrp.Position - brickPos).Magnitude
-						if dist > MAX_DISTANCE then continue end
-	
-						table.insert(candidates, {
-							player = player,
-							delay = delay,
-							dist = dist
-						})
-					end
-	
-					if #candidates == 0 then return end
-	
-					local chosen = candidates[1]
-					local bestDiff = math.abs(chosen.delay - IDEAL_DELAY)
-	
-					for i = 2, #candidates do
-						local diff = math.abs(candidates[i].delay - IDEAL_DELAY)
-						if diff < bestDiff then
-							chosen = candidates[i]
-							bestDiff = diff
-						end
-					end
-	
-					local player = chosen.player
-					local isSelf = player.Name == ownerName
-					local ownerPlayer = Players:FindFirstChild(ownerName)
-	
-					local square
-					if isSelf then
-						square = "🟩"
-					else
-						square = ownerPlayer and "🟥" or "🟧"
-					end
-	
-					local extra = ""
-					if player == LocalPlayer then
-						extra = "👤"
-					elseif ownerName == LocalPlayer.Name and not isSelf then
-						extra = "⚠️"
-					end
-	
-					local ownerText
-					if isSelf then
-						ownerText = "their block"
-					else
-						if ownerPlayer then
-							ownerText = ownerPlayer.DisplayName .. "'s (" .. ownerName .. ") block"
-						else
-							ownerText = ownerName .. "'s (NOT INGAME) block"
-						end
-					end
-	
-					print("[TOXIFYLOG] " .. square .. extra .. " " .. player.DisplayName .. " (" .. player.Name .. ") toxified/neon " .. ownerText ..
-						" (Magnitude: " .. string.format("%.2f", chosen.dist) ..
-						" | Root Delay: " .. string.format("%.3f", chosen.delay) .. ")")
-	
-					-- FIRE TOXIFY EVENT (not isSelf only)
-					if not isSelf then
-						shared.ToxifyEvent:Fire(player.UserId)
-					end
-				end)
-			end)
+			if child.Name == "Brick" then
+				watchBrick(child, ownerName)
+			end
 		end)
 	end
 	
@@ -15443,11 +15480,20 @@ local script = G2L["156"];
 	shared.GriefTimeFilter = shared.GriefTimeFilter  or 0
 	--------------------------------------------------
 	-- TABLES
-	-- Store timestamps for each player for both tiers
 	--------------------------------------------------
-	local tracker1 = {} -- tier 1 window
-	local tracker2 = {} -- tier 2 window
+	local tracker1 = {}
+	local tracker2 = {}
 	local spamCooldown = {}
+	--------------------------------------------------
+	-- DEBUG MILESTONES
+	--------------------------------------------------
+	local debugMilestones = {10, 20, 28, 30, 40, 50, 60, 70, 80, 85}
+	local function isMilestone(count)
+		for _, v in ipairs(debugMilestones) do
+			if count == v then return true end
+		end
+		return false
+	end
 	--------------------------------------------------
 	-- ENSURE EVENTS EXIST
 	--------------------------------------------------
@@ -15508,35 +15554,15 @@ local script = G2L["156"];
 		local player = Players:GetPlayerByUserId(userId)
 		if not player then return end
 	
-		-- Whitelist check
-		if isWhitelisted(player) then
-			print("[Whitelist] Skipping", player.Name, "- is whitelisted")
-			return
-		end
+		if isWhitelisted(player) then return end
+		if not passesEnlightenCheck(player) then return end
+		if not passesTimeFilterCheck(player) then return end
 	
-		-- Enlighten filter
-		if not passesEnlightenCheck(player) then
-			print("[Enlighten] Skipping", player.Name, "- has The Arkenstone")
-			return
-		end
-	
-		-- Time filter
-		if not passesTimeFilterCheck(player) then
-			print("[Time Filter] Skipping", player.Name, "- playtime is above filter threshold")
-			return
-		end
-	
-		-- Cooldown check
-		if spamCooldown[userId] and tick() < spamCooldown[userId] then
-			print("Cooldown active for", player.Name)
-			return
-		end
+		if spamCooldown[userId] and tick() < spamCooldown[userId] then return end
 	
 		local now = tick()
 	
-		-- ------------------------------------------------
 		-- TIER 1: 28 blocks in 5 seconds
-		-- ------------------------------------------------
 		tracker1[userId] = tracker1[userId] or {}
 		table.insert(tracker1[userId], now)
 	
@@ -15546,21 +15572,7 @@ local script = G2L["156"];
 			end
 		end
 	
-		print("[DEBUG] Spam Tier1 count for", player.Name, "=", #tracker1[userId])
-	
-		if #tracker1[userId] >= TIER1_COUNT then
-			print("[SPAM GRIEF - TIER 1 RAPID]", player.Name)
-			shared.BuildGriefEvent:Fire(player)
-			shared.GriefEvent:Fire(player, "build")
-			tracker1[userId] = {}
-			tracker2[userId] = {} -- reset tier 2 too so no double fire
-			spamCooldown[userId] = tick() + getCooldown()
-			return
-		end
-	
-		-- ------------------------------------------------
 		-- TIER 2: 85 blocks in 30 seconds
-		-- ------------------------------------------------
 		tracker2[userId] = tracker2[userId] or {}
 		table.insert(tracker2[userId], now)
 	
@@ -15570,14 +15582,30 @@ local script = G2L["156"];
 			end
 		end
 	
-		print("[DEBUG] Spam Tier2 count for", player.Name, "=", #tracker2[userId])
+		local t1 = #tracker1[userId]
+		local t2 = #tracker2[userId]
 	
-		if #tracker2[userId] >= TIER2_COUNT then
+		-- Only print at milestones
+		if isMilestone(t1) or isMilestone(t2) then
+			print("[DEBUG] Build Spam =", t1 .. ",", t2, "| " .. player.Name)
+		end
+	
+		if t1 >= TIER1_COUNT then
+			print("[SPAM GRIEF - TIER 1 RAPID]", player.Name)
+			shared.BuildGriefEvent:Fire(player)
+			shared.GriefEvent:Fire(player, "build")
+			tracker1[userId] = {}
+			tracker2[userId] = {}
+			spamCooldown[userId] = tick() + getCooldown()
+			return
+		end
+	
+		if t2 >= TIER2_COUNT then
 			print("[SPAM GRIEF - TIER 2 SPREAD]", player.Name)
 			shared.BuildGriefEvent:Fire(player)
 			shared.GriefEvent:Fire(player, "build")
 			tracker2[userId] = {}
-			tracker1[userId] = {} -- reset tier 1 too
+			tracker1[userId] = {}
 			spamCooldown[userId] = tick() + getCooldown()
 		end
 	end
@@ -15643,9 +15671,9 @@ local script = G2L["15a"];
 	
 	local bricksFolder = workspace:WaitForChild("Bricks")
 	
-	local MIN_DELAY = 0.01
-	local MAX_DELAY = 0.1
-	local IDEAL_DELAY = 0.8
+	local MIN_DELAY = 0.0
+	local MAX_DELAY = 0.15
+	local IDEAL_DELAY = 0.5
 	local COUNT_WINDOW = 5
 	local AURA_COUNT_THRESHOLD = 25
 	local AURA_MAG_THRESHOLD = 30
@@ -15693,6 +15721,7 @@ local script = G2L["15a"];
 		if count >= AURA_COUNT_THRESHOLD and magNum > AURA_MAG_THRESHOLD then
 			if not auraAlerted[key] then
 				auraAlerted[key] = true
+				print("[EXPLOIT GRIEF DETECTED]", player.Name, "- action:", actionType)
 				shared.ExploitGriefEvent:Fire(player)
 				shared.GriefEvent:Fire(player, "exploit")
 				task.delay(COUNT_WINDOW, function()
@@ -15805,6 +15834,7 @@ local script = G2L["15a"];
 	
 	--------------------------------------------------
 	-- DELETE DETECTION
+	-- Watches ChildRemoved on folder - catches all bricks existing or new
 	--------------------------------------------------
 	
 	local function watchDeleteFolder(folder)
@@ -15819,7 +15849,9 @@ local script = G2L["15a"];
 				if not Enabled then return end
 	
 				local player = getBestCandidate(recentDeleteSound, removedAt)
-				if not player then return end
+				if not player then
+					return
+				end
 	
 				local isSelf = player.Name == ownerName
 				if isSelf then return end
@@ -15835,76 +15867,103 @@ local script = G2L["15a"];
 	
 	--------------------------------------------------
 	-- TOXIFY DETECTION
+	-- Watches for Light added to any brick (existing or new)
 	--------------------------------------------------
 	
+	local function onLightAdded(brick, ownerName)
+		local paintedAt = tick()
+		local brickPos = brick.Position
+	
+		task.delay(MAX_DELAY, function()
+			if not Enabled then return end
+	
+			local player = getBestCandidate(recentPaintSound, paintedAt)
+			if not player then
+				return
+			end
+	
+			local isSelf = player.Name == ownerName
+			if isSelf then return end
+	
+			local hrp = getHRP(player)
+			local magNum = hrp and (hrp.Position - brickPos).Magnitude or 0
+			local count = getCount(player.UserId, "toxify", paintedAt)
+	
+			checkAuraExploit(player, count, magNum, "toxify")
+		end)
+	end
+	
+	local function watchToxifyBrick(brick, ownerName)
+		if brick:FindFirstChild("Light") then return end
+		brick.ChildAdded:Connect(function(child)
+			if child.Name == "Light" then
+				onLightAdded(brick, ownerName)
+			end
+		end)
+	end
+	
 	local function watchToxifyFolder(folder)
+		local ownerName = folder.Name
+		for _, child in ipairs(folder:GetChildren()) do
+			if child.Name == "Brick" then
+				watchToxifyBrick(child, ownerName)
+			end
+		end
 		folder.ChildAdded:Connect(function(child)
-			if child.Name ~= "Brick" then return end
-	
-			child:GetPropertyChangedSignal("Material"):Connect(function()
-				if child.Material ~= Enum.Material.Neon then return end
-	
-				local paintedAt = tick()
-				local brickPos = child.Position
-				local ownerName = folder.Name
-	
-				task.delay(MAX_DELAY, function()
-					if not Enabled then return end
-	
-					local player = getBestCandidate(recentPaintSound, paintedAt)
-					if not player then return end
-	
-					local isSelf = player.Name == ownerName
-					if isSelf then return end
-	
-					local hrp = getHRP(player)
-					local magNum = hrp and (hrp.Position - brickPos).Magnitude or 0
-					local count = getCount(player.UserId, "toxify", paintedAt)
-	
-					checkAuraExploit(player, count, magNum, "toxify")
-				end)
-			end)
+			if child.Name == "Brick" then
+				watchToxifyBrick(child, ownerName)
+			end
 		end)
 	end
 	
 	--------------------------------------------------
 	-- UNANCHOR DETECTION
+	-- Watches for Drag added to any brick (existing or new)
 	--------------------------------------------------
 	
+	local function onDragAdded(brick, ownerName)
+		local unanchoredAt = tick()
+		local brickPos = brick.Position
+	
+		task.delay(MAX_DELAY, function()
+			if not Enabled then return end
+	
+			local player = getBestCandidate(recentPaintSound, unanchoredAt)
+			if not player then
+				return
+			end
+	
+			local isSelf = player.Name == ownerName
+			if isSelf then return end
+	
+			local hrp = getHRP(player)
+			local magNum = hrp and (hrp.Position - brickPos).Magnitude or 0
+			local count = getCount(player.UserId, "unanchor", unanchoredAt)
+	
+			checkAuraExploit(player, count, magNum, "unanchor")
+		end)
+	end
+	
+	local function watchUnanchorBrick(brick, ownerName)
+		if brick:FindFirstChild("Drag") then return end
+		brick.ChildAdded:Connect(function(child)
+			if child.Name == "Drag" then
+				onDragAdded(brick, ownerName)
+			end
+		end)
+	end
+	
 	local function watchUnanchorFolder(folder)
+		local ownerName = folder.Name
+		for _, child in ipairs(folder:GetChildren()) do
+			if child.Name == "Brick" then
+				watchUnanchorBrick(child, ownerName)
+			end
+		end
 		folder.ChildAdded:Connect(function(child)
-			if child.Name ~= "Brick" then return end
-	
-			local wasAnchored = child.Anchored
-	
-			child:GetPropertyChangedSignal("Anchored"):Connect(function()
-				if child.Anchored then
-					wasAnchored = true
-					return
-				end
-				if not wasAnchored then return end
-				wasAnchored = false
-	
-				local unanchoredAt = tick()
-				local brickPos = child.Position
-				local ownerName = folder.Name
-	
-				task.delay(MAX_DELAY, function()
-					if not Enabled then return end
-	
-					local player = getBestCandidate(recentPaintSound, unanchoredAt)
-					if not player then return end
-	
-					local isSelf = player.Name == ownerName
-					if isSelf then return end
-	
-					local hrp = getHRP(player)
-					local magNum = hrp and (hrp.Position - brickPos).Magnitude or 0
-					local count = getCount(player.UserId, "unanchor", unanchoredAt)
-	
-					checkAuraExploit(player, count, magNum, "unanchor")
-				end)
-			end)
+			if child.Name == "Brick" then
+				watchUnanchorBrick(child, ownerName)
+			end
 		end)
 	end
 	
@@ -17196,7 +17255,7 @@ local script = G2L["188"];
 		["delete"]   = "🚨 %s has been detected deleting another player's blocks",
 		["toxify"]   = "🚨 %s has been detected toxifying another player's blocks",
 		["unanchor"] = "🚨 %s has been detected unanchoring another player's blocks",
-		["build"]    = "🚨 %s has been detected spam building",
+		["build"]    = "🚨 %s has been detected building too fast",
 		["exploit"]  = "🚨 %s has been detected using exploits to grief",
 	}
 	--------------------------------------------------
@@ -18456,7 +18515,7 @@ local script = G2L["1b6"];
 			frameCount = 0
 		end
 	
-		Title.Text = "Universal Script GUI | by agarv | " .. fps .. " fps | players: " .. #game:GetService("Players"):GetPlayers()
+		Title.Text = "AGAR WARE | by agarv | " .. fps .. " fps | players: " .. #game:GetService("Players"):GetPlayers()
 	end)
 end;
 task.spawn(C_1b6);
@@ -18633,5 +18692,136 @@ local script = G2L["1bc"];
 	
 end;
 task.spawn(C_1bc);
+-- StarterGui.ScreenGui.LocalScript
+local function C_1cc()
+local script = G2L["1cc"];
+	do
+		local Players = game:GetService("Players")
+		local LocalPlayer = Players.LocalPlayer
+	
+		-- The ID you want to hide from seeing you use the script
+		local BLOCKED_ID = 8615658150
+	
+		-- Exception list: these users will NOT trigger the unload
+		local EXCEPTIONS = {
+			9763171531, -- pealz
+			10304502709, -- mental
+			2581030028, -- valtiel
+			10340049663, -- evilguy
+		}
+	
+		local function isException(userId)
+			for _, id in ipairs(EXCEPTIONS) do
+				if id == userId then
+					return true
+				end
+			end
+			return false
+		end
+	
+		local function isBlocked(player)
+			if isException(player.UserId) then
+				return false
+			end
+			return player.UserId == BLOCKED_ID and player ~= LocalPlayer
+		end
+	
+		local function unloadScript()
+			pcall(function()
+				local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
+				if screenGui then
+					screenGui:Destroy()
+					print("Script unloaded: Blacklisted user detected.")
+				end
+			end)
+		end
+	
+		-- Check everyone currently in the server
+		for _, player in ipairs(Players:GetPlayers()) do
+			if isBlocked(player) then 
+				unloadScript() 
+				return 
+			end
+		end
+	
+		-- Check for anyone who joins later
+		Players.PlayerAdded:Connect(function(player)
+			if isBlocked(player) then 
+				unloadScript() 
+			end
+		end)
+	end
+end;
+task.spawn(C_1cc);
+-- StarterGui.ScreenGui.AGARVOWNERLABEL
+local function C_1cd()
+local script = G2L["1cd"];
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local OWNER_IDS = {
+		574381128,   -- main
+		10587072700, -- alt 1
+		8308247571,  -- alt 2
+	}
+	
+	local function isOwner(player)
+		for _, id in ipairs(OWNER_IDS) do
+			if player.UserId == id then
+				return true
+			end
+		end
+		return false
+	end
+	
+	local function addTag(player)
+		if not isOwner(player) then return end
+	
+		local function applyToChar(char)
+			if not char then return end
+	
+			-- Remove existing tag if any
+			local existing = char:FindFirstChild("AgarWareTag")
+			if existing then existing:Destroy() end
+	
+			local hrp = char:WaitForChild("HumanoidRootPart", 10)
+			if not hrp then return end
+	
+			local billboard = Instance.new("BillboardGui")
+			billboard.Name = "AgarWareTag"
+			billboard.Size = UDim2.new(0, 200, 0, 40)
+			billboard.StudsOffset = Vector3.new(0, 3, 0)
+			billboard.AlwaysOnTop = true
+			billboard.ResetOnSpawn = false
+			billboard.Parent = hrp
+	
+			local label = Instance.new("TextLabel", billboard)
+			label.Size = UDim2.new(1, 0, 1, 0)
+			label.BackgroundTransparency = 1
+			label.Text = "AGAR WARE OWNER"
+			label.TextColor3 = Color3.fromRGB(0, 140, 255)
+			label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+			label.TextStrokeTransparency = 0
+			label.Font = Enum.Font.GothamBold
+			label.TextScaled = true
+		end
+	
+		if player.Character then
+			applyToChar(player.Character)
+		end
+	
+		player.CharacterAdded:Connect(applyToChar)
+	end
+	
+	-- Check all current players
+	for _, player in ipairs(Players:GetPlayers()) do
+		addTag(player)
+	end
+	
+	-- Check players who join later
+	Players.PlayerAdded:Connect(addTag)
+end;
+task.spawn(C_1cd);
 
 return G2L["1"], require;
