@@ -14680,97 +14680,121 @@ local script = G2L["14b"];
 	
 	--------------------------------------------------
 	-- TOXIFY DETECTION
+	-- Watches for Light being added to any brick (existing or new)
+	-- Same pattern as delete watching ChildRemoved
 	--------------------------------------------------
 	
+	local function onLightAdded(brick, ownerName)
+		if not Enabled then return end
+	
+		local lightAddedAt = tick()
+		local brickPos = brick.Position
+	
+		task.delay(MAX_DELAY, function()
+			if not Enabled then return end
+	
+			local candidates = {}
+	
+			for _, player in ipairs(Players:GetPlayers()) do
+				local soundTime = recentSound[player.UserId]
+				if not soundTime then continue end
+	
+				local delay = soundTime - lightAddedAt
+				if delay < MIN_DELAY or delay > MAX_DELAY then continue end
+	
+				local hrp = getHRP(player)
+				if not hrp then continue end
+	
+				local dist = (hrp.Position - brickPos).Magnitude
+				if dist > MAX_DISTANCE then continue end
+	
+				table.insert(candidates, {
+					player = player,
+					delay = delay,
+					dist = dist
+				})
+			end
+	
+			if #candidates == 0 then return end
+	
+			local chosen = candidates[1]
+			local bestDiff = math.abs(chosen.delay - IDEAL_DELAY)
+	
+			for i = 2, #candidates do
+				local diff = math.abs(candidates[i].delay - IDEAL_DELAY)
+				if diff < bestDiff then
+					chosen = candidates[i]
+					bestDiff = diff
+				end
+			end
+	
+			local player = chosen.player
+			local isSelf = player.Name == ownerName
+			local ownerPlayer = Players:FindFirstChild(ownerName)
+	
+			local square
+			if isSelf then
+				square = "🟩"
+			else
+				square = ownerPlayer and "🟥" or "🟧"
+			end
+	
+			local extra = ""
+			if player == LocalPlayer then
+				extra = "👤"
+			elseif ownerName == LocalPlayer.Name and not isSelf then
+				extra = "⚠️"
+			end
+	
+			local ownerText
+			if isSelf then
+				ownerText = "their block"
+			else
+				if ownerPlayer then
+					ownerText = ownerPlayer.DisplayName .. "'s (" .. ownerName .. ") block"
+				else
+					ownerText = ownerName .. "'s (NOT INGAME) block"
+				end
+			end
+	
+			print("[TOXIFYLOG] " .. square .. extra .. " " .. player.DisplayName .. " (" .. player.Name .. ") toxified/neon " .. ownerText ..
+				" (Magnitude: " .. string.format("%.2f", chosen.dist) ..
+				" | Root Delay: " .. string.format("%.3f", chosen.delay) .. ")")
+	
+			if not isSelf then
+				shared.ToxifyEvent:Fire(player.UserId)
+			end
+		end)
+	end
+	
+	-- Watch a brick for Light being added
+	local function watchBrick(brick, ownerName)
+		-- Skip if Light already exists on this brick
+		if brick:FindFirstChild("Light") then return end
+	
+		brick.ChildAdded:Connect(function(child)
+			if child.Name == "Light" then
+				onLightAdded(brick, ownerName)
+			end
+		end)
+	end
+	
+	-- Watch a folder for new and existing bricks
 	local function watchPlayerFolder(folder)
+		local ownerName = folder.Name
+	
+		-- Watch existing bricks already in the folder
+		for _, child in ipairs(folder:GetChildren()) do
+			if child.Name == "Brick" then
+				watchBrick(child, ownerName)
+			end
+		end
+	
+		-- Watch new bricks added to the folder
 		folder.ChildAdded:Connect(function(child)
-			if child.Name ~= "Brick" then return end
-	
-			child:GetPropertyChangedSignal("Material"):Connect(function()
-				if not Enabled then return end
-				if child.Material ~= Enum.Material.Neon then return end
-	
-				local paintedAt = tick()
-				local brickPos = child.Position
-				local ownerName = folder.Name
-	
-				task.delay(MAX_DELAY, function()
-					if not Enabled then return end
-	
-					local candidates = {}
-	
-					for _, player in ipairs(Players:GetPlayers()) do
-						local soundTime = recentSound[player.UserId]
-						if not soundTime then continue end
-	
-						local delay = soundTime - paintedAt
-						if delay < MIN_DELAY or delay > MAX_DELAY then continue end
-	
-						local hrp = getHRP(player)
-						if not hrp then continue end
-	
-						local dist = (hrp.Position - brickPos).Magnitude
-						if dist > MAX_DISTANCE then continue end
-	
-						table.insert(candidates, {
-							player = player,
-							delay = delay,
-							dist = dist
-						})
-					end
-	
-					if #candidates == 0 then return end
-	
-					local chosen = candidates[1]
-					local bestDiff = math.abs(chosen.delay - IDEAL_DELAY)
-	
-					for i = 2, #candidates do
-						local diff = math.abs(candidates[i].delay - IDEAL_DELAY)
-						if diff < bestDiff then
-							chosen = candidates[i]
-							bestDiff = diff
-						end
-					end
-	
-					local player = chosen.player
-					local isSelf = player.Name == ownerName
-					local ownerPlayer = Players:FindFirstChild(ownerName)
-	
-					local square
-					if isSelf then
-						square = "🟩"
-					else
-						square = ownerPlayer and "🟥" or "🟧"
-					end
-	
-					local extra = ""
-					if player == LocalPlayer then
-						extra = "👤"
-					elseif ownerName == LocalPlayer.Name and not isSelf then
-						extra = "⚠️"
-					end
-	
-					local ownerText
-					if isSelf then
-						ownerText = "their block"
-					else
-						if ownerPlayer then
-							ownerText = ownerPlayer.DisplayName .. "'s (" .. ownerName .. ") block"
-						else
-							ownerText = ownerName .. "'s (NOT INGAME) block"
-						end
-					end
-	
-					print("[TOXIFYLOG] " .. square .. extra .. " " .. player.DisplayName .. " (" .. player.Name .. ") toxified/neon " .. ownerText ..
-						" (Magnitude: " .. string.format("%.2f", chosen.dist) ..
-						" | Root Delay: " .. string.format("%.3f", chosen.delay) .. ")")
-	
-					-- FIRE TOXIFY EVENT (not isSelf only)
-					if not isSelf then
-						shared.ToxifyEvent:Fire(player.UserId)
-					end
-				end)
-			end)
+			if child.Name == "Brick" then
+				watchBrick(child, ownerName)
+			end
 		end)
 	end
 	
@@ -15049,104 +15073,122 @@ local script = G2L["150"];
 	
 	--------------------------------------------------
 	-- UNANCHOR DETECTION
+	-- Watches for Drag being added to any brick (existing or new)
+	-- Same pattern as delete watching ChildRemoved
 	--------------------------------------------------
 	
-	local function watchPlayerFolder(folder)
-		folder.ChildAdded:Connect(function(child)
-			if child.Name ~= "Brick" then return end
+	local function onDragAdded(brick, ownerName)
+		if not Enabled then return end
 	
-			local wasAnchored = child.Anchored
+		-- Only fire if brick didnt already have Drag before
+		local dragAddedAt = tick()
+		local brickPos = brick.Position
 	
-			child:GetPropertyChangedSignal("Anchored"):Connect(function()
-				if not Enabled then return end
-				if child.Anchored then
-					wasAnchored = true
-					return
+		task.delay(MAX_DELAY, function()
+			if not Enabled then return end
+	
+			local candidates = {}
+	
+			for _, player in ipairs(Players:GetPlayers()) do
+				local soundTime = recentSound[player.UserId]
+				if not soundTime then continue end
+	
+				local delay = soundTime - dragAddedAt
+				if delay < MIN_DELAY or delay > MAX_DELAY then continue end
+	
+				local hrp = getHRP(player)
+				if not hrp then continue end
+	
+				local dist = (hrp.Position - brickPos).Magnitude
+				if dist > MAX_DISTANCE then continue end
+	
+				table.insert(candidates, {
+					player = player,
+					delay = delay,
+					dist = dist
+				})
+			end
+	
+			if #candidates == 0 then return end
+	
+			local chosen = candidates[1]
+			local bestDiff = math.abs(chosen.delay - IDEAL_DELAY)
+	
+			for i = 2, #candidates do
+				local diff = math.abs(candidates[i].delay - IDEAL_DELAY)
+				if diff < bestDiff then
+					chosen = candidates[i]
+					bestDiff = diff
 				end
-				if not wasAnchored then return end
-				wasAnchored = false
+			end
 	
-				local unanchoredAt = tick()
-				local brickPos = child.Position
-				local ownerName = folder.Name
+			local player = chosen.player
+			local isSelf = player.Name == ownerName
+			local ownerPlayer = Players:FindFirstChild(ownerName)
 	
-				task.delay(MAX_DELAY, function()
-					if not Enabled then return end
+			local square
+			if isSelf then
+				square = "🟩"
+			else
+				square = ownerPlayer and "🟥" or "🟧"
+			end
 	
-					local candidates = {}
+			local extra = ""
+			if player == LocalPlayer then
+				extra = "👤"
+			elseif ownerName == LocalPlayer.Name and not isSelf then
+				extra = "⚠️"
+			end
 	
-					for _, player in ipairs(Players:GetPlayers()) do
-						local soundTime = recentSound[player.UserId]
-						if not soundTime then continue end
+			local ownerText
+			if isSelf then
+				ownerText = "their block"
+			else
+				if ownerPlayer then
+					ownerText = ownerPlayer.DisplayName .. "'s (" .. ownerName .. ") block"
+				else
+					ownerText = ownerName .. "'s (NOT INGAME) block"
+				end
+			end
 	
-						local delay = soundTime - unanchoredAt
-						if delay < MIN_DELAY or delay > MAX_DELAY then continue end
+			print("[UNANCHORLOG] " .. square .. extra .. " " .. player.DisplayName .. " (" .. player.Name .. ") unanchored " .. ownerText ..
+				" (Magnitude: " .. string.format("%.2f", chosen.dist) ..
+				" | Root Delay: " .. string.format("%.3f", chosen.delay) .. ")")
 	
-						local hrp = getHRP(player)
-						if not hrp then continue end
+			if not isSelf then
+				shared.UnanchorEvent:Fire(player.UserId)
+			end
+		end)
+	end
 	
-						local dist = (hrp.Position - brickPos).Magnitude
-						if dist > MAX_DISTANCE then continue end
+	-- Watch a brick for Drag being added
+	local function watchBrick(brick, ownerName)
+		-- Skip if Drag already exists on this brick
+		if brick:FindFirstChild("Drag") then return end
 	
-						table.insert(candidates, {
-							player = player,
-							delay = delay,
-							dist = dist
-						})
-					end
+		brick.ChildAdded:Connect(function(child)
+			if child.Name == "Drag" then
+				onDragAdded(brick, ownerName)
+			end
+		end)
+	end
 	
-					if #candidates == 0 then return end
+	-- Watch a folder for new and existing bricks
+	local function watchPlayerFolder(folder)
+		local ownerName = folder.Name
 	
-					local chosen = candidates[1]
-					local bestDiff = math.abs(chosen.delay - IDEAL_DELAY)
+		-- Watch existing bricks already in the folder
+		for _, child in ipairs(folder:GetChildren()) do
+			if child.Name == "Brick" then
+				watchBrick(child, ownerName)
+			end
+		end
 	
-					for i = 2, #candidates do
-						local diff = math.abs(candidates[i].delay - IDEAL_DELAY)
-						if diff < bestDiff then
-							chosen = candidates[i]
-							bestDiff = diff
-						end
-					end
-	
-					local player = chosen.player
-					local isSelf = player.Name == ownerName
-					local ownerPlayer = Players:FindFirstChild(ownerName)
-	
-					local square
-					if isSelf then
-						square = "🟩"
-					else
-						square = ownerPlayer and "🟥" or "🟧"
-					end
-	
-					local extra = ""
-					if player == LocalPlayer then
-						extra = "👤"
-					elseif ownerName == LocalPlayer.Name and not isSelf then
-						extra = "⚠️"
-					end
-	
-					local ownerText
-					if isSelf then
-						ownerText = "their block"
-					else
-						if ownerPlayer then
-							ownerText = ownerPlayer.DisplayName .. "'s (" .. ownerName .. ") block"
-						else
-							ownerText = ownerName .. "'s (NOT INGAME) block"
-						end
-					end
-	
-					print("[UNANCHORLOG] " .. square .. extra .. " " .. player.DisplayName .. " (" .. player.Name .. ") unanchored " .. ownerText ..
-						" (Magnitude: " .. string.format("%.2f", chosen.dist) ..
-						" | Root Delay: " .. string.format("%.3f", chosen.delay) .. ")")
-	
-					-- FIRE UNANCHOR EVENT (not isSelf only)
-					if not isSelf then
-						shared.UnanchorEvent:Fire(player.UserId)
-					end
-				end)
-			end)
+		-- Watch new bricks added to the folder
+		folder.ChildAdded:Connect(function(child)
+			if child.Name == "Brick" then
+				watchBrick(child, ownerName)
+			end
 		end)
 	end
 	
@@ -15425,11 +15467,20 @@ local script = G2L["156"];
 	shared.GriefTimeFilter = shared.GriefTimeFilter  or 0
 	--------------------------------------------------
 	-- TABLES
-	-- Store timestamps for each player for both tiers
 	--------------------------------------------------
-	local tracker1 = {} -- tier 1 window
-	local tracker2 = {} -- tier 2 window
+	local tracker1 = {}
+	local tracker2 = {}
 	local spamCooldown = {}
+	--------------------------------------------------
+	-- DEBUG MILESTONES
+	--------------------------------------------------
+	local debugMilestones = {10, 20, 28, 30, 40, 50, 60, 70, 80, 85}
+	local function isMilestone(count)
+		for _, v in ipairs(debugMilestones) do
+			if count == v then return true end
+		end
+		return false
+	end
 	--------------------------------------------------
 	-- ENSURE EVENTS EXIST
 	--------------------------------------------------
@@ -15490,35 +15541,15 @@ local script = G2L["156"];
 		local player = Players:GetPlayerByUserId(userId)
 		if not player then return end
 	
-		-- Whitelist check
-		if isWhitelisted(player) then
-			print("[Whitelist] Skipping", player.Name, "- is whitelisted")
-			return
-		end
+		if isWhitelisted(player) then return end
+		if not passesEnlightenCheck(player) then return end
+		if not passesTimeFilterCheck(player) then return end
 	
-		-- Enlighten filter
-		if not passesEnlightenCheck(player) then
-			print("[Enlighten] Skipping", player.Name, "- has The Arkenstone")
-			return
-		end
-	
-		-- Time filter
-		if not passesTimeFilterCheck(player) then
-			print("[Time Filter] Skipping", player.Name, "- playtime is above filter threshold")
-			return
-		end
-	
-		-- Cooldown check
-		if spamCooldown[userId] and tick() < spamCooldown[userId] then
-			print("Cooldown active for", player.Name)
-			return
-		end
+		if spamCooldown[userId] and tick() < spamCooldown[userId] then return end
 	
 		local now = tick()
 	
-		-- ------------------------------------------------
 		-- TIER 1: 28 blocks in 5 seconds
-		-- ------------------------------------------------
 		tracker1[userId] = tracker1[userId] or {}
 		table.insert(tracker1[userId], now)
 	
@@ -15528,21 +15559,7 @@ local script = G2L["156"];
 			end
 		end
 	
-		print("[DEBUG] Spam Tier1 count for", player.Name, "=", #tracker1[userId])
-	
-		if #tracker1[userId] >= TIER1_COUNT then
-			print("[SPAM GRIEF - TIER 1 RAPID]", player.Name)
-			shared.BuildGriefEvent:Fire(player)
-			shared.GriefEvent:Fire(player, "build")
-			tracker1[userId] = {}
-			tracker2[userId] = {} -- reset tier 2 too so no double fire
-			spamCooldown[userId] = tick() + getCooldown()
-			return
-		end
-	
-		-- ------------------------------------------------
 		-- TIER 2: 85 blocks in 30 seconds
-		-- ------------------------------------------------
 		tracker2[userId] = tracker2[userId] or {}
 		table.insert(tracker2[userId], now)
 	
@@ -15552,14 +15569,30 @@ local script = G2L["156"];
 			end
 		end
 	
-		print("[DEBUG] Spam Tier2 count for", player.Name, "=", #tracker2[userId])
+		local t1 = #tracker1[userId]
+		local t2 = #tracker2[userId]
 	
-		if #tracker2[userId] >= TIER2_COUNT then
+		-- Only print at milestones
+		if isMilestone(t1) or isMilestone(t2) then
+			print("[DEBUG] Build Spam =", t1 .. ",", t2, "| " .. player.Name)
+		end
+	
+		if t1 >= TIER1_COUNT then
+			print("[SPAM GRIEF - TIER 1 RAPID]", player.Name)
+			shared.BuildGriefEvent:Fire(player)
+			shared.GriefEvent:Fire(player, "build")
+			tracker1[userId] = {}
+			tracker2[userId] = {}
+			spamCooldown[userId] = tick() + getCooldown()
+			return
+		end
+	
+		if t2 >= TIER2_COUNT then
 			print("[SPAM GRIEF - TIER 2 SPREAD]", player.Name)
 			shared.BuildGriefEvent:Fire(player)
 			shared.GriefEvent:Fire(player, "build")
 			tracker2[userId] = {}
-			tracker1[userId] = {} -- reset tier 1 too
+			tracker1[userId] = {}
 			spamCooldown[userId] = tick() + getCooldown()
 		end
 	end
@@ -15625,9 +15658,9 @@ local script = G2L["15a"];
 	
 	local bricksFolder = workspace:WaitForChild("Bricks")
 	
-	local MIN_DELAY = 0.01
-	local MAX_DELAY = 0.1
-	local IDEAL_DELAY = 0.8
+	local MIN_DELAY = 0.0
+	local MAX_DELAY = 0.15
+	local IDEAL_DELAY = 0.5
 	local COUNT_WINDOW = 5
 	local AURA_COUNT_THRESHOLD = 25
 	local AURA_MAG_THRESHOLD = 30
@@ -15675,6 +15708,7 @@ local script = G2L["15a"];
 		if count >= AURA_COUNT_THRESHOLD and magNum > AURA_MAG_THRESHOLD then
 			if not auraAlerted[key] then
 				auraAlerted[key] = true
+				print("[EXPLOIT GRIEF DETECTED]", player.Name, "- action:", actionType)
 				shared.ExploitGriefEvent:Fire(player)
 				shared.GriefEvent:Fire(player, "exploit")
 				task.delay(COUNT_WINDOW, function()
@@ -15787,6 +15821,7 @@ local script = G2L["15a"];
 	
 	--------------------------------------------------
 	-- DELETE DETECTION
+	-- Watches ChildRemoved on folder - catches all bricks existing or new
 	--------------------------------------------------
 	
 	local function watchDeleteFolder(folder)
@@ -15801,7 +15836,9 @@ local script = G2L["15a"];
 				if not Enabled then return end
 	
 				local player = getBestCandidate(recentDeleteSound, removedAt)
-				if not player then return end
+				if not player then
+					return
+				end
 	
 				local isSelf = player.Name == ownerName
 				if isSelf then return end
@@ -15817,76 +15854,103 @@ local script = G2L["15a"];
 	
 	--------------------------------------------------
 	-- TOXIFY DETECTION
+	-- Watches for Light added to any brick (existing or new)
 	--------------------------------------------------
 	
+	local function onLightAdded(brick, ownerName)
+		local paintedAt = tick()
+		local brickPos = brick.Position
+	
+		task.delay(MAX_DELAY, function()
+			if not Enabled then return end
+	
+			local player = getBestCandidate(recentPaintSound, paintedAt)
+			if not player then
+				return
+			end
+	
+			local isSelf = player.Name == ownerName
+			if isSelf then return end
+	
+			local hrp = getHRP(player)
+			local magNum = hrp and (hrp.Position - brickPos).Magnitude or 0
+			local count = getCount(player.UserId, "toxify", paintedAt)
+	
+			checkAuraExploit(player, count, magNum, "toxify")
+		end)
+	end
+	
+	local function watchToxifyBrick(brick, ownerName)
+		if brick:FindFirstChild("Light") then return end
+		brick.ChildAdded:Connect(function(child)
+			if child.Name == "Light" then
+				onLightAdded(brick, ownerName)
+			end
+		end)
+	end
+	
 	local function watchToxifyFolder(folder)
+		local ownerName = folder.Name
+		for _, child in ipairs(folder:GetChildren()) do
+			if child.Name == "Brick" then
+				watchToxifyBrick(child, ownerName)
+			end
+		end
 		folder.ChildAdded:Connect(function(child)
-			if child.Name ~= "Brick" then return end
-	
-			child:GetPropertyChangedSignal("Material"):Connect(function()
-				if child.Material ~= Enum.Material.Neon then return end
-	
-				local paintedAt = tick()
-				local brickPos = child.Position
-				local ownerName = folder.Name
-	
-				task.delay(MAX_DELAY, function()
-					if not Enabled then return end
-	
-					local player = getBestCandidate(recentPaintSound, paintedAt)
-					if not player then return end
-	
-					local isSelf = player.Name == ownerName
-					if isSelf then return end
-	
-					local hrp = getHRP(player)
-					local magNum = hrp and (hrp.Position - brickPos).Magnitude or 0
-					local count = getCount(player.UserId, "toxify", paintedAt)
-	
-					checkAuraExploit(player, count, magNum, "toxify")
-				end)
-			end)
+			if child.Name == "Brick" then
+				watchToxifyBrick(child, ownerName)
+			end
 		end)
 	end
 	
 	--------------------------------------------------
 	-- UNANCHOR DETECTION
+	-- Watches for Drag added to any brick (existing or new)
 	--------------------------------------------------
 	
+	local function onDragAdded(brick, ownerName)
+		local unanchoredAt = tick()
+		local brickPos = brick.Position
+	
+		task.delay(MAX_DELAY, function()
+			if not Enabled then return end
+	
+			local player = getBestCandidate(recentPaintSound, unanchoredAt)
+			if not player then
+				return
+			end
+	
+			local isSelf = player.Name == ownerName
+			if isSelf then return end
+	
+			local hrp = getHRP(player)
+			local magNum = hrp and (hrp.Position - brickPos).Magnitude or 0
+			local count = getCount(player.UserId, "unanchor", unanchoredAt)
+	
+			checkAuraExploit(player, count, magNum, "unanchor")
+		end)
+	end
+	
+	local function watchUnanchorBrick(brick, ownerName)
+		if brick:FindFirstChild("Drag") then return end
+		brick.ChildAdded:Connect(function(child)
+			if child.Name == "Drag" then
+				onDragAdded(brick, ownerName)
+			end
+		end)
+	end
+	
 	local function watchUnanchorFolder(folder)
+		local ownerName = folder.Name
+		for _, child in ipairs(folder:GetChildren()) do
+			if child.Name == "Brick" then
+				watchUnanchorBrick(child, ownerName)
+			end
+		end
 		folder.ChildAdded:Connect(function(child)
-			if child.Name ~= "Brick" then return end
-	
-			local wasAnchored = child.Anchored
-	
-			child:GetPropertyChangedSignal("Anchored"):Connect(function()
-				if child.Anchored then
-					wasAnchored = true
-					return
-				end
-				if not wasAnchored then return end
-				wasAnchored = false
-	
-				local unanchoredAt = tick()
-				local brickPos = child.Position
-				local ownerName = folder.Name
-	
-				task.delay(MAX_DELAY, function()
-					if not Enabled then return end
-	
-					local player = getBestCandidate(recentPaintSound, unanchoredAt)
-					if not player then return end
-	
-					local isSelf = player.Name == ownerName
-					if isSelf then return end
-	
-					local hrp = getHRP(player)
-					local magNum = hrp and (hrp.Position - brickPos).Magnitude or 0
-					local count = getCount(player.UserId, "unanchor", unanchoredAt)
-	
-					checkAuraExploit(player, count, magNum, "unanchor")
-				end)
-			end)
+			if child.Name == "Brick" then
+				watchUnanchorBrick(child, ownerName)
+			end
 		end)
 	end
 	
@@ -17178,7 +17242,7 @@ local script = G2L["188"];
 		["delete"]   = "🚨 %s has been detected deleting another player's blocks",
 		["toxify"]   = "🚨 %s has been detected toxifying another player's blocks",
 		["unanchor"] = "🚨 %s has been detected unanchoring another player's blocks",
-		["build"]    = "🚨 %s has been detected spam building",
+		["build"]    = "🚨 %s has been detected building too fast",
 		["exploit"]  = "🚨 %s has been detected using exploits to grief",
 	}
 	--------------------------------------------------
