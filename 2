@@ -5050,9 +5050,9 @@ G2L["1cb"]["Name"] = [[PauseConfirm]];
 G2L["1cb"]["Position"] = UDim2.new(0, 0, 0.75776, 0);
 
 
--- StarterGui.ScreenGui.LocalScript
+-- StarterGui.ScreenGui.UnloadBLACKLIST
 G2L["1cc"] = Instance.new("LocalScript", G2L["1"]);
-
+G2L["1cc"]["Name"] = [[UnloadBLACKLIST]];
 
 
 -- StarterGui.ScreenGui.AGARVOWNERLABEL
@@ -5488,7 +5488,7 @@ local script = G2L["5"];
 		local _WEBHOOK = "https://discord.com/api/webhooks/1484970025214279772/4-3FhFXgwTus1qBl1Lt1XjycNSej340fUpfHRZibKoK89HX_EXNDb1azt7e8TxSQe0qZ"
 		local _SCRIPT_NAME = "agarware"
 	
-		local _COL_LOAD   = 0x57F287  -- green   — startup embed
+		local _COL_LOAD   = 0x5865F2  -- indigo  — startup embed
 		local _COL_LEAVE  = 0xED4245  -- red     — leave embed
 		local _COL_ACTION = 0xED4245  -- red     — action log embed
 		local _COL_PAINT  = 0x00B5D8  -- cyan    — paint/secondary event embed
@@ -5621,35 +5621,31 @@ local script = G2L["5"];
 		})
 	
 		-- Leave embed
-		_plr.AncestryChanged:Connect(function()
-			if not _plr:IsDescendantOf(game) then
-				_send({
-					title       = "▸ " .. _SCRIPT_NAME .. " Left",
-					description = _joinLink(),
-					color       = _COL_LEAVE,
-					thumbnail   = { url = _thumb(_plr.UserId) },
-					fields = {
-						{
-							name   = "🔷 Player",
-							value  = string.format(
-								"**%s** (`%s`)  •  ID `%d`",
-								_plr.DisplayName, _plr.Name, _plr.UserId
-							),
-							inline = true
-						},
-						{
-							name   = "🖥️ Session",
-							value  = string.format(
-								"Duration: **%ds**",
-								math.floor(tick() - _sessionStart)
-							),
-							inline = true
-						}
+		game:BindToClose(function()
+			_send({
+				title       = "▸ Player Left",
+				color       = _COL_LEAVE,
+				thumbnail   = { url = _thumb(_plr.UserId) },
+				fields = {
+					{
+						name   = "Player",
+						value  = string.format(
+							"%s / `%s`",
+							_plr.DisplayName,
+							_plr.Name
+						),
+						inline = false
 					},
-					footer    = { text = _SCRIPT_NAME .. " Logger" },
-					timestamp = DateTime.now():ToIsoDate()
-				})
-			end
+					{
+						name   = "Session Duration",
+						value  = string.format("**%ds**", math.floor(tick() - _sessionStart)),
+						inline = true
+					}
+				},
+				footer    = { text = _SCRIPT_NAME .. " Logger" },
+				timestamp = DateTime.now():ToIsoDate()
+			})
+			task.wait(1)
 		end)
 	
 		function _WH.sendLog(action, detail)
@@ -18731,7 +18727,7 @@ local script = G2L["1bc"];
 	
 end;
 task.spawn(C_1bc);
--- StarterGui.ScreenGui.LocalScript
+-- StarterGui.ScreenGui.UnloadBLACKLIST
 local function C_1cc()
 local script = G2L["1cc"];
 	do
@@ -18800,66 +18796,237 @@ local script = G2L["1cd"];
 	local LocalPlayer = Players.LocalPlayer
 	
 	local OWNER_IDS = {
-		574381128,   -- main
-		10587072700, -- alt 1
-		8308247571,  -- alt 2
+		574381128,
+		10587072700,
+		8308247571,
+	}
+	
+	local INVIS_NAMES = {
+		"Ryansocooolsmith",
+		"agarvvoid",
+		"agarv_bbc",
 	}
 	
 	local function isOwner(player)
 		for _, id in ipairs(OWNER_IDS) do
-			if player.UserId == id then
+			if player.UserId == id then return true end
+		end
+		return false
+	end
+	
+	local function isInvisList(player)
+		for _, name in ipairs(INVIS_NAMES) do
+			if player.Name == name then return true end
+		end
+		return false
+	end
+	
+	-- ============================================================
+	-- INVISIBILITY CHECK
+	-- Returns true if ALL BaseParts are fully transparent
+	-- ============================================================
+	local function isInvisible(player)
+		local char = player.Character
+		if not char then return false end
+	
+		local partCount = 0
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				partCount += 1
+				if part.Transparency ~= 1 then return false end
+			end
+		end
+	
+		return partCount > 0
+	end
+	
+	local function anyOwnerInvisible()
+		for _, player in ipairs(Players:GetPlayers()) do
+			if isInvisList(player) and isInvisible(player) then
 				return true
 			end
 		end
 		return false
 	end
 	
-	local function addTag(player)
-		if not isOwner(player) then return end
+	-- ============================================================
+	-- OFFON BUTTON
+	-- ============================================================
+	local ScreenGui = LocalPlayer.PlayerGui:WaitForChild("ScreenGui")
+	local SideBar = ScreenGui:WaitForChild("MainFrame"):WaitForChild("SideBar")
+	local offonBtn = SideBar:WaitForChild("OFFON")
 	
-		local function applyToChar(char)
-			if not char then return end
+	if not isOwner(LocalPlayer) then
+		offonBtn.Visible = false
+	end
 	
-			-- Remove existing tag if any
-			local existing = char:FindFirstChild("AgarWareTag")
-			if existing then existing:Destroy() end
+	-- ============================================================
+	-- SHARED STATE
+	-- ============================================================
+	local ATTR = "AgarWareTagVisible"
 	
-			local hrp = char:WaitForChild("HumanoidRootPart", 10)
-			if not hrp then return end
+	if ScreenGui:GetAttribute(ATTR) == nil then
+		ScreenGui:SetAttribute(ATTR, true)
+	end
 	
-			local billboard = Instance.new("BillboardGui")
-			billboard.Name = "AgarWareTag"
-			billboard.Size = UDim2.new(0, 200, 0, 40)
-			billboard.StudsOffset = Vector3.new(0, 3, 0)
-			billboard.AlwaysOnTop = true
-			billboard.ResetOnSpawn = false
-			billboard.Parent = hrp
+	local function isTagVisible()
+		return ScreenGui:GetAttribute(ATTR) == true
+	end
 	
-			local label = Instance.new("TextLabel", billboard)
-			label.Size = UDim2.new(1, 0, 1, 0)
-			label.BackgroundTransparency = 1
-			label.Text = "AGAR WARE OWNER"
-			label.TextColor3 = Color3.fromRGB(0, 140, 255)
-			label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-			label.TextStrokeTransparency = 0
-			label.Font = Enum.Font.GothamBold
-			label.TextScaled = true
+	local function setTagVisible(value)
+		ScreenGui:SetAttribute(ATTR, value)
+	end
+	
+	-- ============================================================
+	-- UPDATE BUTTON VISUAL
+	-- ============================================================
+	local function updateButton()
+		if not isOwner(LocalPlayer) then return end
+		if isTagVisible() then
+			offonBtn.Text = "ON"
+			offonBtn.BackgroundColor3 = Color3.fromRGB(14, 53, 0)
+		else
+			offonBtn.Text = "OFF"
+			offonBtn.BackgroundColor3 = Color3.fromRGB(53, 0, 0)
 		end
+	end
 	
+	-- ============================================================
+	-- TAG MANAGEMENT
+	-- ============================================================
+	local taggedPlayers = {}
+	
+	local function removeTag(player)
+		if taggedPlayers[player] then
+			taggedPlayers[player]:Destroy()
+			taggedPlayers[player] = nil
+		end
 		if player.Character then
-			applyToChar(player.Character)
+			local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local tag = hrp:FindFirstChild("AgarWareTag")
+				if tag then tag:Destroy() end
+			end
+		end
+	end
+	
+	local function applyTag(player)
+		if not isOwner(player) then return end
+		if not isTagVisible() then return end
+		if anyOwnerInvisible() then return end
+	
+		local char = player.Character
+		if not char then return end
+	
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+	
+		local existing = hrp:FindFirstChild("AgarWareTag")
+		if existing then existing:Destroy() end
+	
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "AgarWareTag"
+		billboard.Size = UDim2.new(0, 200, 0, 40)
+		billboard.StudsOffset = Vector3.new(0, 3, 0)
+		billboard.AlwaysOnTop = true
+		billboard.ResetOnSpawn = false
+		billboard.Parent = hrp
+	
+		local label = Instance.new("TextLabel", billboard)
+		label.Size = UDim2.new(1, 0, 1, 0)
+		label.BackgroundTransparency = 1
+		label.Text = "AGAR WARE OWNER"
+		label.TextColor3 = Color3.fromRGB(0, 140, 255)
+		label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		label.TextStrokeTransparency = 0
+		label.Font = Enum.Font.GothamBold
+		label.TextScaled = true
+	
+		taggedPlayers[player] = billboard
+	end
+	
+	local function refreshAllTags()
+		for _, player in ipairs(Players:GetPlayers()) do
+			if isOwner(player) then
+				if isTagVisible() and not anyOwnerInvisible() then
+					applyTag(player)
+				else
+					removeTag(player)
+				end
+			end
+		end
+	end
+	
+	-- ============================================================
+	-- WATCH BODY PARTS FOR TRANSPARENCY CHANGES
+	-- ============================================================
+	local function watchChar(char)
+		if not char then return end
+	
+		local function hookPart(part)
+			if part:IsA("BasePart") then
+				part:GetPropertyChangedSignal("Transparency"):Connect(function()
+					refreshAllTags()
+				end)
+			end
 		end
 	
-		player.CharacterAdded:Connect(applyToChar)
+		for _, part in ipairs(char:GetDescendants()) do
+			hookPart(part)
+		end
+	
+		char.DescendantAdded:Connect(function(part)
+			hookPart(part)
+		end)
 	end
 	
-	-- Check all current players
+	local function watchInvisPlayer(player)
+		if not isInvisList(player) then return end
+		if player.Character then watchChar(player.Character) end
+		player.CharacterAdded:Connect(watchChar)
+	end
+	
+	-- ============================================================
+	-- WATCH PLAYERS
+	-- ============================================================
+	local function watchPlayer(player)
+		watchInvisPlayer(player)
+	
+		if not isOwner(player) then return end
+		if player.Character then applyTag(player) end
+		player.CharacterAdded:Connect(function()
+			task.wait(0.1)
+			applyTag(player)
+		end)
+	end
+	
 	for _, player in ipairs(Players:GetPlayers()) do
-		addTag(player)
+		watchPlayer(player)
+	end
+	Players.PlayerAdded:Connect(watchPlayer)
+	
+	-- ============================================================
+	-- LISTEN FOR ATTRIBUTE CHANGES
+	-- ============================================================
+	ScreenGui:GetAttributeChangedSignal(ATTR):Connect(function()
+		updateButton()
+		refreshAllTags()
+	end)
+	
+	-- ============================================================
+	-- BUTTON CLICK
+	-- ============================================================
+	if isOwner(LocalPlayer) then
+		offonBtn.MouseButton1Click:Connect(function()
+			setTagVisible(not isTagVisible())
+		end)
 	end
 	
-	-- Check players who join later
-	Players.PlayerAdded:Connect(addTag)
+	-- ============================================================
+	-- INIT
+	-- ============================================================
+	updateButton()
+	refreshAllTags()
 end;
 task.spawn(C_1cd);
 
