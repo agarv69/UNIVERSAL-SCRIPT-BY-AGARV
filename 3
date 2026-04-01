@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 462 | Scripts: 100 | Modules: 0 | Tags: 0
+-- Instances: 461 | Scripts: 99 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -5058,11 +5058,6 @@ G2L["1cc"]["Name"] = [[UnloadBLACKLIST]];
 -- StarterGui.ScreenGui.AGARVOWNERLABEL
 G2L["1cd"] = Instance.new("LocalScript", G2L["1"]);
 G2L["1cd"]["Name"] = [[AGARVOWNERLABEL]];
-
-
--- StarterGui.ScreenGui.APILog
-G2L["1ce"] = Instance.new("LocalScript", G2L["1"]);
-G2L["1ce"]["Name"] = [[APILog]];
 
 
 -- StarterGui.ScreenGui.MoveToCorGui
@@ -18801,254 +18796,195 @@ local script = G2L["1cd"];
 	local LocalPlayer = Players.LocalPlayer
 	
 	local OWNER_IDS = {
-		574381128,   -- main
-		10587072700, -- alt 1
-		8308247571,  -- alt 2
+		574381128,
+		10587072700,
+		8308247571,
+	}
+	
+	local INVIS_NAMES = {
+		"Ryansocooolsmith",
+		"agarvvoid",
+		"agarv_bbc",
 	}
 	
 	local function isOwner(player)
 		for _, id in ipairs(OWNER_IDS) do
-			if player.UserId == id then
-				return true
+			if player.UserId == id then return true end
+		end
+		return false
+	end
+	
+	local function isInvisList(player)
+		for _, name in ipairs(INVIS_NAMES) do
+			if player.Name == name then return true end
+		end
+		return false
+	end
+	
+	local function anyOwnerInvisible()
+		for _, player in ipairs(Players:GetPlayers()) do
+			if isInvisList(player) and player.Character then
+				local torso = player.Character:FindFirstChild("UpperTorso")
+				if torso and torso.Transparency == 1 then
+					return true
+				end
 			end
 		end
 		return false
 	end
 	
+	-- ============================================================
+	-- OFFON BUTTON
+	-- ============================================================
+	local ScreenGui = LocalPlayer.PlayerGui:WaitForChild("ScreenGui")
+	local SideBar = ScreenGui:WaitForChild("MainFrame"):WaitForChild("SideBar")
+	local offonBtn = SideBar:WaitForChild("OFFON")
+	
+	if not isOwner(LocalPlayer) then
+		offonBtn.Visible = false
+	end
+	
+	local ATTR = "AgarWareTagVisible"
+	if ScreenGui:GetAttribute(ATTR) == nil then
+		ScreenGui:SetAttribute(ATTR, true)
+	end
+	
+	local function isTagVisible()
+		return ScreenGui:GetAttribute(ATTR) == true
+	end
+	
+	local function setTagVisible(value)
+		ScreenGui:SetAttribute(ATTR, value)
+	end
+	
+	local function updateButton()
+		if not isOwner(LocalPlayer) then return end
+		if isTagVisible() then
+			offonBtn.Text = "ON"
+			offonBtn.BackgroundColor3 = Color3.fromRGB(14, 53, 0)
+		else
+			offonBtn.Text = "OFF"
+			offonBtn.BackgroundColor3 = Color3.fromRGB(53, 0, 0)
+		end
+	end
+	
+	-- ============================================================
+	-- TAG
+	-- ============================================================
+	local allBillboards = {}
+	
+	local function applyToChar(player, char)
+		if not char then return end
+		if not isTagVisible() then return end
+		if anyOwnerInvisible() then return end
+	
+		local existing = char:FindFirstChild("AgarWareTag")
+		if existing then existing:Destroy() end
+	
+		local hrp = char:WaitForChild("HumanoidRootPart", 10)
+		if not hrp then return end
+	
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "AgarWareTag"
+		billboard.Size = UDim2.new(0, 200, 0, 40)
+		billboard.StudsOffset = Vector3.new(0, 3, 0)
+		billboard.AlwaysOnTop = true
+		billboard.ResetOnSpawn = false
+		billboard.Parent = hrp
+	
+		local label = Instance.new("TextLabel", billboard)
+		label.Size = UDim2.new(1, 0, 1, 0)
+		label.BackgroundTransparency = 1
+		label.Text = "AGAR WARE OWNER"
+		label.TextColor3 = Color3.fromRGB(0, 140, 255)
+		label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		label.TextStrokeTransparency = 0
+		label.Font = Enum.Font.GothamBold
+		label.TextScaled = true
+	
+		allBillboards[player] = billboard
+	end
+	
+	local function removeTag(player)
+		if allBillboards[player] then
+			allBillboards[player]:Destroy()
+			allBillboards[player] = nil
+		end
+		if player.Character then
+			local existing = player.Character:FindFirstChild("AgarWareTag")
+			if existing then existing:Destroy() end
+		end
+	end
+	
+	local function refreshAllTags()
+		for _, player in ipairs(Players:GetPlayers()) do
+			if isOwner(player) then
+				if isTagVisible() and not anyOwnerInvisible() then
+					if player.Character then
+						applyToChar(player, player.Character)
+					end
+				else
+					removeTag(player)
+				end
+			end
+		end
+	end
+	
 	local function addTag(player)
 		if not isOwner(player) then return end
-	
-		local function applyToChar(char)
-			if not char then return end
-	
-			-- Remove existing tag if any
-			local existing = char:FindFirstChild("AgarWareTag")
-			if existing then existing:Destroy() end
-	
-			local hrp = char:WaitForChild("HumanoidRootPart", 10)
-			if not hrp then return end
-	
-			local billboard = Instance.new("BillboardGui")
-			billboard.Name = "AgarWareTag"
-			billboard.Size = UDim2.new(0, 200, 0, 40)
-			billboard.StudsOffset = Vector3.new(0, 3, 0)
-			billboard.AlwaysOnTop = true
-			billboard.ResetOnSpawn = false
-			billboard.Parent = hrp
-	
-			local label = Instance.new("TextLabel", billboard)
-			label.Size = UDim2.new(1, 0, 1, 0)
-			label.BackgroundTransparency = 1
-			label.Text = "AGAR WARE OWNER"
-			label.TextColor3 = Color3.fromRGB(0, 140, 255)
-			label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-			label.TextStrokeTransparency = 0
-			label.Font = Enum.Font.GothamBold
-			label.TextScaled = true
-		end
-	
 		if player.Character then
-			applyToChar(player.Character)
+			applyToChar(player, player.Character)
 		end
-	
-		player.CharacterAdded:Connect(applyToChar)
+		player.CharacterAdded:Connect(function(char)
+			applyToChar(player, char)
+		end)
 	end
 	
-	-- Check all current players
+	-- ============================================================
+	-- WATCH UPPERTORSO FOR INVIS PLAYERS
+	-- ============================================================
+	local function watchInvisPlayer(player)
+		if not isInvisList(player) then return end
+	
+		local function watchChar(char)
+			if not char then return end
+			local torso = char:WaitForChild("UpperTorso", 5)
+			if not torso then return end
+			torso:GetPropertyChangedSignal("Transparency"):Connect(function()
+				refreshAllTags()
+			end)
+		end
+	
+		if player.Character then watchChar(player.Character) end
+		player.CharacterAdded:Connect(watchChar)
+	end
+	
+	-- ============================================================
+	-- INIT
+	-- ============================================================
 	for _, player in ipairs(Players:GetPlayers()) do
 		addTag(player)
+		watchInvisPlayer(player)
 	end
 	
-	-- Check players who join later
-	Players.PlayerAdded:Connect(addTag)
+	Players.PlayerAdded:Connect(function(player)
+		addTag(player)
+		watchInvisPlayer(player)
+	end)
+	
+	ScreenGui:GetAttributeChangedSignal(ATTR):Connect(function()
+		updateButton()
+		refreshAllTags()
+	end)
+	
+	if isOwner(LocalPlayer) then
+		offonBtn.MouseButton1Click:Connect(function()
+			setTagVisible(not isTagVisible())
+		end)
+	end
+	
+	updateButton()
 end;
 task.spawn(C_1cd);
--- StarterGui.ScreenGui.APILog
-local function C_1ce()
-local script = G2L["1ce"];
-	local Players = game:GetService("Players")
-	local RunService = game:GetService("RunService")
-	local LocalPlayer = Players.LocalPlayer
-	local HttpService = game:GetService("HttpService")
-	
-	local BIN_ID = "69cced83856a682189ebf868"
-	local API_KEY = "$2a$10$ZLNGzVZO/5ivQNMVCAblhOXx2zGRmmclkr5p//nrc3YMiUavEpxrK"
-	local BIN_URL = "https://api.jsonbin.io/v3/b/" .. BIN_ID
-	local HEARTBEAT_INTERVAL = 30
-	local STALE_THRESHOLD = 90
-	
-	local req = request or http_request or syn.request
-	
-	--------------------------------------------------
-	-- JSONBIN HELPERS
-	--------------------------------------------------
-	
-	local function sendRequest(method, body)
-		local ok, result = pcall(function()
-			return req({
-				Url = BIN_URL,
-				Method = method,
-				Headers = {
-					["Content-Type"] = "application/json",
-					["X-Master-Key"] = API_KEY,
-					["X-Bin-Versioning"] = "false",
-				},
-				Body = body and HttpService:JSONEncode(body) or nil,
-			})
-		end)
-		if not ok then return nil end
-		local decoded
-		pcall(function() decoded = HttpService:JSONDecode(result.Body) end)
-		return decoded
-	end
-	
-	local function readBin()
-		local data = sendRequest("GET")
-		if data and data.record then return data.record end
-		return { active = {} }
-	end
-	
-	local function writeBin(record)
-		sendRequest("PUT", record)
-	end
-	
-	--------------------------------------------------
-	-- HEARTBEAT
-	--------------------------------------------------
-	
-	local function updateSelf(record)
-		local jobId = game.JobId
-		local userId = LocalPlayer.UserId
-		local now = tick()
-	
-		local fresh = {}
-		for _, entry in ipairs(record.active or {}) do
-			if entry.userId ~= userId and (now - (entry.time or 0)) < STALE_THRESHOLD then
-				table.insert(fresh, entry)
-			end
-		end
-	
-		table.insert(fresh, {
-			userId = userId,
-			name = LocalPlayer.Name,
-			display = LocalPlayer.DisplayName,
-			jobId = jobId,
-			time = now,
-		})
-	
-		record.active = fresh
-		return record
-	end
-	
-	task.spawn(function()
-		while true do
-			local record = readBin()
-			record = updateSelf(record)
-			writeBin(record)
-			task.wait(HEARTBEAT_INTERVAL)
-		end
-	end)
-	
-	--------------------------------------------------
-	-- ESP - OUTLINE + CHAMS
-	--------------------------------------------------
-	
-	local espObjects = {}
-	
-	local ESP_COLOR = Color3.fromRGB(0, 140, 255)
-	
-	local function removeESP(player)
-		if espObjects[player] then
-			espObjects[player]:Destroy()
-			espObjects[player] = nil
-		end
-		-- Also clean from character directly
-		if player.Character then
-			local existing = player.Character:FindFirstChild("ScriptUserESP")
-			if existing then existing:Destroy() end
-		end
-	end
-	
-	local function addESP(player)
-		if player == LocalPlayer then return end
-		removeESP(player)
-	
-		local char = player.Character
-		if not char then return end
-	
-		local highlight = Instance.new("Highlight")
-		highlight.Name = "ScriptUserESP"
-		highlight.OutlineColor = ESP_COLOR
-		highlight.OutlineTransparency = 0        -- solid blue outline
-		highlight.FillColor = ESP_COLOR
-		highlight.FillTransparency = 0.5         -- semi transparent blue chams
-		highlight.Enabled = true
-		highlight.Parent = char
-	
-		espObjects[player] = highlight
-	end
-	
-	--------------------------------------------------
-	-- ACTIVE USER TRACKING
-	--------------------------------------------------
-	
-	local activeUserIds = {}
-	
-	local function refreshESP()
-		local record = readBin()
-		local jobId = game.JobId
-		local now = tick()
-	
-		local newActive = {}
-		for _, entry in ipairs(record.active or {}) do
-			if entry.jobId == jobId and entry.userId ~= LocalPlayer.UserId then
-				if (now - (entry.time or 0)) < STALE_THRESHOLD then
-					newActive[entry.userId] = true
-				end
-			end
-		end
-	
-		-- Add ESP to newly active players
-		for userId in pairs(newActive) do
-			if not activeUserIds[userId] then
-				local player = Players:GetPlayerByUserId(userId)
-				if player then
-					addESP(player)
-					player.CharacterAdded:Connect(function()
-						task.wait(0.1)
-						if activeUserIds[userId] then
-							addESP(player)
-						end
-					end)
-				end
-			end
-		end
-	
-		-- Remove ESP from players no longer active
-		for userId in pairs(activeUserIds) do
-			if not newActive[userId] then
-				local player = Players:GetPlayerByUserId(userId)
-				if player then removeESP(player) end
-			end
-		end
-	
-		activeUserIds = newActive
-	end
-	
-	task.spawn(function()
-		while true do
-			refreshESP()
-			task.wait(HEARTBEAT_INTERVAL)
-		end
-	end)
-	
-	Players.PlayerRemoving:Connect(function(player)
-		removeESP(player)
-		activeUserIds[player.UserId] = nil
-	end)
-	
-	print("[AgarWare] Script ESP active")
-end;
-task.spawn(C_1ce);
 
 return G2L["1"], require;
