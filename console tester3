@@ -1,102 +1,51 @@
--- Anti-Fling Detector
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-local prevVelocities = {}
-local prevPositions = {}
+local VELOCITY_THRESHOLD = 50 -- studs/sec
+local SUSTAIN_TIME = 0.5      -- seconds velocity must be high
+local DETECTION_COOLDOWN = 2  -- seconds before re-flagging same player
+
+local velocityHistory = {}
+local lastFlagged = {}
 
 local function getHRP(player)
-	local char = player.Character
-	if char then
-		return char:FindFirstChild("HumanoidRootPart")
-	end
-	return nil
+	return player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 end
-
-local function magnitude(vec)
-	if vec then
-		return vec.Magnitude
-	end
-	return 0
-end
-
--- Thresholds (adjust if too sensitive)
-local VELOCITY_SPIKE_THRESHOLD = 50 -- studs/sec sudden spike
-local ANGULAR_VELOCITY_THRESHOLD = 50
-local BODY_MOVER_THRESHOLD = 30
 
 RunService.Heartbeat:Connect(function(deltaTime)
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= LocalPlayer then
 			local hrp = getHRP(player)
 			if hrp then
-				-- Current velocities
 				local vel = hrp.Velocity.Magnitude
-				local assemblyVel = hrp.AssemblyLinearVelocity.Magnitude
-				local assemblyAng = hrp.AssemblyAngularVelocity.Magnitude
 
-				-- Body movers
-				local bodyVel = hrp:FindFirstChildWhichIsA("BodyVelocity")
-				local bodyAng = hrp:FindFirstChildWhichIsA("BodyAngularVelocity")
-				local bodyForce = hrp:FindFirstChildWhichIsA("BodyForce")
-				local bodyThrust = hrp:FindFirstChildWhichIsA("BodyThrust")
-				local alignOri = hrp:FindFirstChildWhichIsA("AlignOrientation")
-
-				-- Previous velocity
-				local prevVel = prevVelocities[player] or vel
-				local deltaVel = math.abs(vel - prevVel)
-				prevVelocities[player] = vel
-
-				-- Detect fling criteria
-				local flagged = false
-				local reasons = {}
-
-				if deltaVel > VELOCITY_SPIKE_THRESHOLD then
-					flagged = true
-					table.insert(reasons, "Velocity Spike: "..string.format("%.1f", deltaVel))
+				-- history buffer
+				velocityHistory[player] = velocityHistory[player] or {time=0, max=0}
+				if vel > velocityHistory[player].max then
+					velocityHistory[player].max = vel
 				end
 
-				if assemblyAng > ANGULAR_VELOCITY_THRESHOLD then
-					flagged = true
-					table.insert(reasons, "Angular Velocity: "..string.format("%.1f", assemblyAng))
+				-- accumulate time above threshold
+				if vel > VELOCITY_THRESHOLD then
+					velocityHistory[player].time = velocityHistory[player].time + deltaTime
+				else
+					velocityHistory[player].time = 0
+					velocityHistory[player].max = vel
 				end
 
-				if (bodyVel and magnitude(bodyVel.Velocity) > BODY_MOVER_THRESHOLD) then
-					flagged = true
-					table.insert(reasons, "BodyVelocity: "..string.format("%.1f", magnitude(bodyVel.Velocity)))
-				end
-
-				if (bodyAng and magnitude(bodyAng.AngularVelocity) > BODY_MOVER_THRESHOLD) then
-					flagged = true
-					table.insert(reasons, "BodyAngularVelocity: "..string.format("%.1f", magnitude(bodyAng.AngularVelocity)))
-				end
-
-				if (bodyForce and magnitude(bodyForce.Force) > BODY_MOVER_THRESHOLD) then
-					flagged = true
-					table.insert(reasons, "BodyForce: "..string.format("%.1f", magnitude(bodyForce.Force)))
-				end
-
-				if (bodyThrust and magnitude(bodyThrust.Thrust) > BODY_MOVER_THRESHOLD) then
-					flagged = true
-					table.insert(reasons, "BodyThrust: "..string.format("%.1f", magnitude(bodyThrust.Thrust)))
-				end
-
-				if alignOri then
-					-- small chance AlignOrientation itself can rotate violently
-					local rotSpeed = hrp.CFrame.LookVector.Magnitude / deltaTime
-					if rotSpeed > 20 then
-						flagged = true
-						table.insert(reasons, "AlignOrientation rotation spike")
+				-- detect sustained fling
+				if velocityHistory[player].time >= SUSTAIN_TIME then
+					-- cooldown check
+					if not lastFlagged[player] or os.clock() - lastFlagged[player] > DETECTION_COOLDOWN then
+						print("⚠️ PLAYER FLUNG - "..player.Name)
+						print("   Max Velocity: "..string.format("%.1f", velocityHistory[player].max))
+						print("------------------")
+						lastFlagged[player] = os.clock()
 					end
-				end
-
-				if flagged then
-					print("⚠️ FLING DETECTED - "..player.Name)
-					for _, reason in ipairs(reasons) do
-						print("   "..reason)
-					end
-					print("------------------")
+					-- reset timer so it only flags once per event
+					velocityHistory[player].time = 0
+					velocityHistory[player].max = 0
 				end
 			end
 		end
