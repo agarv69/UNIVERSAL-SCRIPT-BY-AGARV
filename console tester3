@@ -2,58 +2,73 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-local CHECK_INTERVAL = 15
-local FAR_DISTANCE = 100
-local lastPrint = {}
-
-local function getLoudness(player, sound)
-	local myChar = LocalPlayer.Character
-	local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
-	local theirChar = workspace:FindFirstChild(player.Name)
-	local theirHRP = theirChar and theirChar:FindFirstChild("HumanoidRootPart")
-
-	if not myHRP or not theirHRP then
-		return sound.PlaybackLoudness
+-- Helper to get humanoid root part safely
+local function getHRP(player)
+	local char = player.Character
+	if char then
+		return char:FindFirstChild("HumanoidRootPart")
 	end
-
-	local dist = (myHRP.Position - theirHRP.Position).Magnitude
-
-	if dist <= FAR_DISTANCE then
-		return sound.PlaybackLoudness
-	end
-
-	local cam = workspace.CurrentCamera
-	local savedCFrame = cam.CFrame
-	cam.CFrame = CFrame.new(theirHRP.Position)
-	RunService.RenderStepped:Wait()
-	local loudness = sound.PlaybackLoudness
-	cam.CFrame = savedCFrame
-	return loudness
+	return nil
 end
 
-RunService.Heartbeat:Connect(function()
-	local now = tick()
-
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player == LocalPlayer then continue end
-
-		local char = workspace:FindFirstChild(player.Name)
-		if not char then continue end
-
-		local boombox = char:FindFirstChild("SuperFlyGoldBoombox")
-		if not boombox then continue end
-
-		local userId = player.UserId
-		if lastPrint[userId] and now - lastPrint[userId] < CHECK_INTERVAL then continue end
-
-		for _, obj in ipairs(boombox:GetDescendants()) do
-			if obj:IsA("Sound") and obj.IsPlaying then
-				lastPrint[userId] = now
-				local loudness = getLoudness(player, obj)
-				print("[BOOMBOX] " .. player.Name .. " | ID " .. obj.SoundId .. " | " .. string.format("%.1f", loudness) .. " dBFS")
-			end
+-- Helper to sum magnitude of vector properties if they exist
+local function getMagnitude(obj, prop)
+	if obj and obj[prop] then
+		local val = obj[prop]
+		if typeof(val) == "Vector3" then
+			return val.Magnitude
+		elseif typeof(val) == "number" then
+			return val
 		end
 	end
-end)
+	return nil
+end
 
-print("[BOOMBOX DEBUG] Running - checks every " .. CHECK_INTERVAL .. "s, snaps camera if player is over " .. FAR_DISTANCE .. " studs away")
+-- Main loop
+while true do
+	print("=====")
+
+	-- Sort players alphabetically by username
+	local playerList = Players:GetPlayers()
+	table.sort(playerList, function(a,b) return a.Name:lower() < b.Name:lower() end)
+
+	for _, player in ipairs(playerList) do
+		local hrp = getHRP(player)
+		print("👤"..player.Name)
+
+		if hrp then
+			-- Measured properties
+			local velocity = hrp.Velocity.Magnitude
+			local assemblyVelocity = hrp.AssemblyLinearVelocity.Magnitude
+			local assemblyAngular = hrp.AssemblyAngularVelocity.Magnitude
+
+			-- Check for Body movers in the HRP
+			local bodyVelocity = hrp:FindFirstChildWhichIsA("BodyVelocity")
+			local bodyAngular = hrp:FindFirstChildWhichIsA("BodyAngularVelocity")
+			local bodyForce = hrp:FindFirstChildWhichIsA("BodyForce")
+			local bodyThrust = hrp:FindFirstChildWhichIsA("BodyThrust")
+			local alignOri = hrp:FindFirstChildWhichIsA("AlignOrientation")
+			local platformStand = false
+			local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				platformStand = humanoid.PlatformStand
+			end
+
+			print("Velocity: "..string.format("%.2f", velocity))
+			print("AssemblyLinearVelocity: "..string.format("%.2f", assemblyVelocity))
+			print("AssemblyAngularVelocity: "..string.format("%.2f", assemblyAngular))
+			print("BodyVelocity: "..(bodyVelocity and string.format("%.2f", bodyVelocity.Velocity.Magnitude) or "N/A"))
+			print("BodyAngularVelocity: "..(bodyAngular and string.format("%.2f", bodyAngular.AngularVelocity.Magnitude) or "N/A"))
+			print("BodyForce: "..(bodyForce and string.format("%.2f", bodyForce.Force.Magnitude) or "N/A"))
+			print("BodyThrust: "..(bodyThrust and string.format("%.2f", bodyThrust.Thrust.Magnitude) or "N/A"))
+			print("AlignOrientation: "..(alignOri and "Yes" or "No"))
+			print("PlatformStand: "..tostring(platformStand))
+		else
+			print("Velocity: N/A")
+		end
+		print("-")
+	end
+
+	print("=====")
+	task.wait(1)
+end
