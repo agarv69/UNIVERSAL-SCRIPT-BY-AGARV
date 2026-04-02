@@ -1,30 +1,18 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 
-local CHECK_INTERVAL = 5
-local lastPrint = {}
-
-RunService.Heartbeat:Connect(function()
-	local now = tick()
-
+while true do
+	print("=====")
 	for _, player in ipairs(Players:GetPlayers()) do
+		if player == LocalPlayer then continue end
 		local char = workspace:FindFirstChild(player.Name)
-		if not char then continue end
-
-		local boombox = char:FindFirstChild("SuperFlyGoldBoombox")
-		if not boombox then continue end
-
-		for _, obj in ipairs(boombox:GetDescendants()) do
-			if obj:IsA("Sound") and obj.IsPlaying then
-				local key = player.UserId .. "_" .. obj.SoundId
-
-				if not lastPrint[key] or now - lastPrint[key] >= CHECK_INTERVAL then
-					lastPrint[key] = now
-					print("[BOOMBOX] " .. player.Name .. " | ID " .. obj.SoundId .. " | " .. string.format("%.1f", obj.PlaybackLoudness) .. " dBFS")
-				end
-			end
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			print(player.Name .. ": " .. string.format("%.1f", hrp.Velocity.Magnitude))
+		else
+			print(player.Name .. ": N/A")
 		end
 	end
-end)
-
-print("[BOOMBOX DEBUG] Running - will print every 5s per active boombox")
+	print("=====")
+	task.wait(1)
+end
