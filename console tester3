@@ -2,10 +2,12 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-local VELOCITY_THRESHOLD = 50 -- studs/sec
-local SUSTAIN_TIME = 0.5      -- seconds velocity must be high
-local DETECTION_COOLDOWN = 2  -- seconds before re-flagging same player
+-- CONFIG
+local VELOCITY_THRESHOLD = 50       -- studs/sec to count as a fling
+local SUSTAIN_TIME = 0.2            -- minimum time velocity must be sustained
+local FLING_RADIUS = 10             -- max distance between flinger and victim
 
+-- TRACKING
 local velocityHistory = {}
 local lastFlagged = {}
 
@@ -14,38 +16,53 @@ local function getHRP(player)
 end
 
 RunService.Heartbeat:Connect(function(deltaTime)
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			local hrp = getHRP(player)
+	for _, victim in ipairs(Players:GetPlayers()) do
+		if victim ~= LocalPlayer then
+			local hrp = getHRP(victim)
 			if hrp then
 				local vel = hrp.Velocity.Magnitude
 
-				-- history buffer
-				velocityHistory[player] = velocityHistory[player] or {time=0, max=0}
-				if vel > velocityHistory[player].max then
-					velocityHistory[player].max = vel
+				velocityHistory[victim] = velocityHistory[victim] or {time=0, max=0}
+
+				if vel > velocityHistory[victim].max then
+					velocityHistory[victim].max = vel
 				end
 
-				-- accumulate time above threshold
 				if vel > VELOCITY_THRESHOLD then
-					velocityHistory[player].time = velocityHistory[player].time + deltaTime
+					velocityHistory[victim].time = velocityHistory[victim].time + deltaTime
 				else
-					velocityHistory[player].time = 0
-					velocityHistory[player].max = vel
+					velocityHistory[victim].time = 0
+					velocityHistory[victim].max = vel
 				end
 
-				-- detect sustained fling
-				if velocityHistory[player].time >= SUSTAIN_TIME then
-					-- cooldown check
-					if not lastFlagged[player] or os.clock() - lastFlagged[player] > DETECTION_COOLDOWN then
-						print("⚠️ PLAYER FLUNG - "..player.Name)
-						print("   Max Velocity: "..string.format("%.1f", velocityHistory[player].max))
-						print("------------------")
-						lastFlagged[player] = os.clock()
+				-- DETECT FLING
+				if velocityHistory[victim].time >= SUSTAIN_TIME then
+					if not lastFlagged[victim] or os.clock() - lastFlagged[victim].time > 2 then
+						-- Find possible flinger
+						local flingerName = "Unknown"
+						local victimPos = hrp.Position
+						for _, p in ipairs(Players:GetPlayers()) do
+							if p ~= victim then
+								local flingerHRP = getHRP(p)
+								if flingerHRP then
+									local dist = (flingerHRP.Position - victimPos).Magnitude
+									if dist <= FLING_RADIUS then
+										flingerName = p.Name
+										break
+									end
+								end
+							end
+						end
+
+						print("⚠️ PLAYER FLUNG: "..victim.Name.." by "..flingerName)
+						print("   Max Velocity: "..string.format("%.1f", velocityHistory[victim].max))
+						print("-------------------")
+
+						lastFlagged[victim] = {time=os.clock(), flinger=flingerName}
 					end
-					-- reset timer so it only flags once per event
-					velocityHistory[player].time = 0
-					velocityHistory[player].max = 0
+					-- reset
+					velocityHistory[victim].time = 0
+					velocityHistory[victim].max = 0
 				end
 			end
 		end
