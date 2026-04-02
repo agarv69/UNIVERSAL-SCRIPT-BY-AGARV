@@ -4988,7 +4988,7 @@ G2L["1c8"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["1c8"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["1c8"]["LayoutOrder"] = 30;
 G2L["1c8"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1c8"]["Text"] = [[9]];
+G2L["1c8"]["Text"] = [[10]];
 G2L["1c8"]["Name"] = [[VersionNumber]];
 G2L["1c8"]["Position"] = UDim2.new(0, 0, 0.96591, 0);
 
@@ -14364,7 +14364,7 @@ local script = G2L["14f"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local EnableExploitsRow = script.Parent
+	local EnableExploitsRow = script.Parent 
 	local EnableGroup = EnableExploitsRow.Parent
 	local EnableExploitsTickBox = EnableExploitsRow:WaitForChild("EnableExploitsTickBox")
 	local EnableAccentColor = EnableGroup:WaitForChild("EnableAccentColor")
@@ -14395,20 +14395,106 @@ local script = G2L["14f"];
 	updateVisual()
 	
 	--------------------------------------------------
-	-- ENSURE EVENTS EXIST
+	-- EVENTS
 	--------------------------------------------------
 	
+	shared.ExploitEvent      = shared.ExploitEvent      or Instance.new("BindableEvent")
 	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
 	shared.GriefEvent        = shared.GriefEvent        or Instance.new("BindableEvent")
 	
 	--------------------------------------------------
-	-- LISTEN FOR EXPLOIT DETECTIONS FROM CONSOLE
+	-- SETTINGS (MATCH OTHERS)
 	--------------------------------------------------
 	
-	shared.ExploitGriefEvent.Event:Connect(function(player)
+	local DEFAULT_COOLDOWN = 30
+	
+	shared.GriefCooldown   = shared.GriefCooldown   or DEFAULT_COOLDOWN
+	shared.GriefTimeFilter = shared.GriefTimeFilter or 0
+	
+	local exploitCooldown = {}
+	
+	--------------------------------------------------
+	-- FILTERS (SAME AS YOUR SYSTEM)
+	--------------------------------------------------
+	
+	local function getCooldown()
+		return shared.GriefCooldown or DEFAULT_COOLDOWN
+	end
+	
+	local function isWhitelisted(player)
+		local w = shared.GriefWhitelist
+		return w and w[player.Name] == true
+	end
+	
+	local function hasArkenstone(player)
+		local b = player:FindFirstChild("Backpack")
+		return b and b:FindFirstChild("The Arkenstone") ~= nil
+	end
+	
+	local function passesEnlightenCheck(player)
+		local e = shared.GriefEnlightenEnabled
+		if e == nil then e = true end
+		if e then return true end
+		return not hasArkenstone(player)
+	end
+	
+	local function passesTimeFilterCheck(player)
+		local filter = shared.GriefTimeFilter or 0
+		if filter == 0 then return true end
+	
+		local ls = player:FindFirstChild("leaderstats")
+		if not ls then return true end
+	
+		local t = ls:FindFirstChild("Time")
+		if not t then return true end
+	
+		return t.Value < filter
+	end
+	
+	--------------------------------------------------
+	-- LISTEN (AURA DETECTION)
+	--------------------------------------------------
+	
+	shared.ExploitEvent.Event:Connect(function(userId)
 		if not Enabled then return end
+	
+		local player = Players:GetPlayerByUserId(userId)
 		if not player then return end
-		print("[EXPLOIT GRIEF DETECTED]", player.Name, "- using grief aura/exploit")
+	
+		--------------------------------------------------
+		-- LOG
+		--------------------------------------------------
+	
+		print("[EXPLOIT LOG] 🚨", player.DisplayName, "(" .. player.Name .. ") detected using aura/exploit")
+	
+		--------------------------------------------------
+		-- FILTERS
+		--------------------------------------------------
+	
+		if isWhitelisted(player) then return end
+		if not passesEnlightenCheck(player) then return end
+		if not passesTimeFilterCheck(player) then return end
+	
+		--------------------------------------------------
+		-- COOLDOWN
+		--------------------------------------------------
+	
+		local now = tick()
+	
+		if exploitCooldown[userId] and now < exploitCooldown[userId] then
+			return
+		end
+	
+		exploitCooldown[userId] = now + getCooldown()
+	
+		--------------------------------------------------
+		-- FIRE EVENTS
+		--------------------------------------------------
+	
+		print("[GRIEF DETECTED - EXPLOIT]", player.Name)
+	
+		shared.ExploitGriefEvent:Fire(player)
+		shared.GriefEvent:Fire(player, "exploit")
 	end)
 end;
 task.spawn(C_14f);
@@ -14795,7 +14881,7 @@ local script = G2L["15e"];
 	local LocalPlayer = Players.LocalPlayer
 	
 	--------------------------------------------------
-	-- GUI REFERENCES
+	-- GUI (UNCHANGED)
 	--------------------------------------------------
 	
 	local FDetectorRow = script.Parent
@@ -14804,10 +14890,6 @@ local script = G2L["15e"];
 	local FDetectorTickBox = FDetectorRow:WaitForChild("FDetectorRowTickBox")
 	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
 	
-	--------------------------------------------------
-	-- ENABLE STATE
-	--------------------------------------------------
-	
 	local Enabled = false
 	
 	local function updateVisual()
@@ -14815,7 +14897,7 @@ local script = G2L["15e"];
 			FDetectorTickBox.BackgroundColor3 = MiscAccentColor.BackgroundColor3
 			print("Fling Detection ON")
 		else
-			FDetectorTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			FDetectorTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
 			print("Fling Detection OFF")
 		end
 	end
@@ -14831,245 +14913,171 @@ local script = G2L["15e"];
 	-- SETTINGS
 	--------------------------------------------------
 	
-	-- Default fling (script flingers)
-	local SCRIPT_FLING_VELOCITY    = 1000000  -- velocity to identify as script flinger
-	local SCRIPT_VICTIM_THRESHOLD  = 10000   -- victim velocity to count as fling
-	local SCRIPT_FLING_WINDOW      = 180     -- 3 minutes
-	local SCRIPT_FLING_COUNT       = 2       -- flings before flagged
+	local FLINGER_VELOCITY = 100000
+	local VICTIM_SPIKE = 1000
+	local SPIKE_TIME = 0.5
 	
-	-- Touch fling
-	local TOUCH_VICTIM_THRESHOLD   = 10000   -- victim velocity to count as fling
-	local TOUCH_FLING_WINDOW       = 120     -- 2 minutes
-	local TOUCH_FLING_COUNT        = 4       -- flings before flagged
+	local REQUIRED_FLINGS = 3
+	local FLING_WINDOW = 60
 	
-	-- Shared
-	local VICTIM_CHECK_TIME        = 1       -- seconds to check victim velocity after touch
-	local COOLDOWN                 = 30      -- seconds before same player can be flagged again
+	local VICTIM_COOLDOWN = 60
+	local FLAG_COOLDOWN = 30
 	
-	--------------------------------------------------
-	-- ENSURE EVENTS
-	--------------------------------------------------
-	
-	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
+	local MAX_DISTANCE = 25 -- distance to associate flinger
 	
 	--------------------------------------------------
 	-- STATE
 	--------------------------------------------------
 	
-	local scriptFlingers   = {}  -- userId -> true if over 1M velocity
-	local flingCounts      = {}  -- userId -> {times = {}, type = "script"/"touch"}
-	local flagCooldown     = {}  -- userId -> tick() cooldown
+	local victimCooldown = {}      -- victimUserId -> time
+	local flingCounts = {}        -- flingerUserId -> {times}
+	local flagCooldown = {}       -- flingerUserId -> time
+	
+	local spikeTrack = {}         -- victim spike tracking
 	
 	--------------------------------------------------
-	-- ALERT HELPERS
+	-- HELPERS
 	--------------------------------------------------
 	
-	local function sendAlertChat(player, flingType)
-		if not shared.sendChat then return end
-		local alertRow = ScreenGui:FindFirstChild("AlertGriefRow", true)
-		local alertTickBox = alertRow and alertRow:FindFirstChild("AlertGriefTickBox")
-		if alertTickBox and alertTickBox:GetAttribute("Enabled") then
-			local msg = flingType == "script"
-				and "🚨" .. player.DisplayName .. " is using a fling script"
-				or  "🚨" .. player.DisplayName .. " is touch flinging players"
-			shared.sendChat(msg)
-		end
+	local function getHRP(char)
+		return char and char:FindFirstChild("HumanoidRootPart")
 	end
 	
-	local function playSFX()
-		local sfxRow = ScreenGui:FindFirstChild("SFXGriefRow", true)
-		local sfxTickBox = sfxRow and sfxRow:FindFirstChild("SFXGriefTickBox")
-		if sfxTickBox and sfxTickBox:GetAttribute("Enabled") then
-			local sound = LocalPlayer.PlayerGui:FindFirstChildOfClass("Sound")
-			if sound then
-				sound:Stop()
-				sound:Play()
-				task.delay(2, function() sound:Stop() end)
+	local function getNearbyFlinger(pos)
+		local closest = nil
+		local closestDist = MAX_DISTANCE
+	
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr ~= LocalPlayer and plr.Character then
+				local hrp = getHRP(plr.Character)
+				if hrp then
+					local vel = hrp.Velocity.Magnitude
+					if vel >= FLINGER_VELOCITY then
+						local dist = (hrp.Position - pos).Magnitude
+						if dist < closestDist then
+							closest = plr
+							closestDist = dist
+						end
+					end
+				end
 			end
 		end
+	
+		return closest
 	end
 	
 	--------------------------------------------------
-	-- FLAG PLAYER
+	-- FLAG
 	--------------------------------------------------
 	
-	local function flagPlayer(player, flingType)
+	local function flagPlayer(player)
 		if not Enabled then return end
-		local userId = player.UserId
 	
-		if flagCooldown[userId] and tick() < flagCooldown[userId] then return end
-		flagCooldown[userId] = tick() + COOLDOWN
+		local id = player.UserId
+		if flagCooldown[id] and tick() < flagCooldown[id] then return end
+		flagCooldown[id] = tick() + FLAG_COOLDOWN
 	
-		local typeLabel = flingType == "script" and "SCRIPT FLING" or "TOUCH FLING"
-		print("[FLING DETECTOR] 🚨 FLAGGED: " .. player.Name .. " (" .. player.DisplayName .. ") - " .. typeLabel)
+		print("🚨 FLINGER DETECTED:", player.Name)
 	
-		sendAlertChat(player, flingType)
-		playSFX()
-		shared.GriefEvent:Fire(player, "fling")
+		if shared.GriefEvent then
+			shared.GriefEvent:Fire(player, "fling")
+		end
 	end
 	
 	--------------------------------------------------
-	-- ADD FLING COUNT
+	-- ADD FLING
 	--------------------------------------------------
 	
-	local function addFlingCount(flinger, victim, flingType)
-		if not Enabled then return end
-		local userId = flinger.UserId
-		local window = flingType == "script" and SCRIPT_FLING_WINDOW or TOUCH_FLING_WINDOW
-		local maxCount = flingType == "script" and SCRIPT_FLING_COUNT or TOUCH_FLING_COUNT
+	local function addFling(flinger)
+		local id = flinger.UserId
 		local now = tick()
 	
-		flingCounts[userId] = flingCounts[userId] or {times = {}, victims = {}}
+		flingCounts[id] = flingCounts[id] or {times = {}}
 	
-		-- Remove expired entries
-		for i = #flingCounts[userId].times, 1, -1 do
-			if now - flingCounts[userId].times[i] > window then
-				table.remove(flingCounts[userId].times, i)
-				table.remove(flingCounts[userId].victims, i)
+		-- clean old
+		for i = #flingCounts[id].times, 1, -1 do
+			if now - flingCounts[id].times[i] > FLING_WINDOW then
+				table.remove(flingCounts[id].times, i)
 			end
 		end
 	
-		-- Prevent counting same victim twice in a row
-		local lastVictim = flingCounts[userId].victims[#flingCounts[userId].victims]
-		if lastVictim == victim.UserId then return end
+		table.insert(flingCounts[id].times, now)
 	
-		table.insert(flingCounts[userId].times, now)
-		table.insert(flingCounts[userId].victims, victim.UserId)
+		print("[FLING COUNT]", flinger.Name, #flingCounts[id].times.."/"..REQUIRED_FLINGS)
 	
-		print("[FLING DETECTOR] " .. flinger.Name .. " flung " .. victim.Name ..
-			" (" .. flingType .. ") | Count: " .. #flingCounts[userId].times .. "/" .. maxCount)
-	
-		if #flingCounts[userId].times >= maxCount then
-			flingCounts[userId] = {times = {}, victims = {}}
-			flagPlayer(flinger, flingType)
+		if #flingCounts[id].times >= REQUIRED_FLINGS then
+			flingCounts[id] = {times = {}}
+			flagPlayer(flinger)
 		end
 	end
 	
 	--------------------------------------------------
-	-- WATCH VICTIM VELOCITY AFTER TOUCH
+	-- WATCH PLAYER (VICTIMS)
 	--------------------------------------------------
 	
-	local function watchVictimAfterTouch(flinger, victim, flingType)
-		local startTime = tick()
-		local conn
-		conn = RunService.Heartbeat:Connect(function()
-			if tick() - startTime > VICTIM_CHECK_TIME then
-				conn:Disconnect()
-				return
-			end
+	local function watchPlayer(player)
+		if player == LocalPlayer then return end
 	
-			local char = workspace:FindFirstChild(victim.Name)
-			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-			if not hrp then
-				conn:Disconnect()
-				return
-			end
+		player.CharacterAdded:Connect(function(char)
+			local hrp = char:WaitForChild("HumanoidRootPart", 10)
+			if not hrp then return end
 	
-			if hrp.Velocity.Magnitude > TOUCH_VICTIM_THRESHOLD then
-				conn:Disconnect()
-				addFlingCount(flinger, victim, flingType)
-			end
+			local id = player.UserId
+	
+			RunService.Heartbeat:Connect(function()
+				if not Enabled then return end
+				if not hrp.Parent then return end
+	
+				local vel = hrp.Velocity.Magnitude
+	
+				-- START SPIKE
+				if vel >= VICTIM_SPIKE and not spikeTrack[id] then
+					spikeTrack[id] = {
+						start = tick(),
+						pos = hrp.Position
+					}
+				end
+	
+				-- CHECK SPIKE END
+				if spikeTrack[id] then
+					local elapsed = tick() - spikeTrack[id].start
+	
+					if elapsed > SPIKE_TIME then
+						-- VALID SPIKE
+						if vel >= VICTIM_SPIKE then
+	
+							-- victim cooldown
+							if not victimCooldown[id] or tick() > victimCooldown[id] then
+								victimCooldown[id] = tick() + VICTIM_COOLDOWN
+	
+								local flinger = getNearbyFlinger(hrp.Position)
+								if flinger then
+									print(player.Name, "was flung by", flinger.Name)
+									addFling(flinger)
+								end
+							end
+						end
+	
+						spikeTrack[id] = nil
+					end
+	
+					if vel < VICTIM_SPIKE then
+						spikeTrack[id] = nil
+					end
+				end
+			end)
 		end)
 	end
 	
 	--------------------------------------------------
-	-- WATCH TOUCHES
+	-- INIT
 	--------------------------------------------------
 	
-	local watchedChars = {}
-	
-	local function watchCharTouches(player)
-		if watchedChars[player] then return end
-		watchedChars[player] = true
-	
-		local function setupTouches(char)
-			if not char then return end
-			local hrp = char:WaitForChild("HumanoidRootPart", 10)
-			if not hrp then return end
-	
-			hrp.Touched:Connect(function(hit)
-				if not Enabled then return end
-	
-				-- Find who owns the hit part
-				local hitChar = hit.Parent
-				local victim = nil
-				for _, p in ipairs(Players:GetPlayers()) do
-					if p.Character == hitChar then
-						victim = p
-						break
-					end
-				end
-	
-				if not victim then return end
-				if victim == player then return end
-				if victim == LocalPlayer then return end
-	
-				-- Determine fling type based on flinger velocity
-				local flingerHRP = char:FindFirstChild("HumanoidRootPart")
-				if not flingerHRP then return end
-	
-				local flingerVel = flingerHRP.Velocity.Magnitude
-				local flingType = flingerVel >= SCRIPT_FLING_VELOCITY and "script" or "touch"
-	
-				watchVictimAfterTouch(player, victim, flingType)
-			end)
-		end
-	
-		if player.Character then setupTouches(player.Character) end
-		player.CharacterAdded:Connect(setupTouches)
+	for _, p in ipairs(Players:GetPlayers()) do
+		watchPlayer(p)
 	end
 	
-	--------------------------------------------------
-	-- MONITOR SCRIPT FLINGERS (velocity over 1M)
-	--------------------------------------------------
-	
-	RunService.Heartbeat:Connect(function()
-		if not Enabled then return end
-	
-		for _, player in ipairs(Players:GetPlayers()) do
-			if player == LocalPlayer then continue end
-	
-			local char = workspace:FindFirstChild(player.Name)
-			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-			if not hrp then continue end
-	
-			local vel = hrp.Velocity.Magnitude
-			local wasFlinger = scriptFlingers[player.UserId]
-	
-			if vel >= SCRIPT_FLING_VELOCITY then
-				if not wasFlinger then
-					scriptFlingers[player.UserId] = true
-					print("[FLING DETECTOR] " .. player.Name .. " reached script fling velocity (" .. string.format("%.0f", vel) .. " studs/s)")
-				end
-			else
-				if wasFlinger then
-					scriptFlingers[player.UserId] = nil
-				end
-			end
-		end
-	end)
-	
-	--------------------------------------------------
-	-- WATCH ALL PLAYERS
-	--------------------------------------------------
-	
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			watchCharTouches(player)
-		end
-	end
-	
-	Players.PlayerAdded:Connect(function(player)
-		if player ~= LocalPlayer then
-			watchCharTouches(player)
-		end
-	end)
-	
-	Players.PlayerRemoving:Connect(function(player)
-		scriptFlingers[player.UserId] = nil
-		flingCounts[player.UserId] = nil
-		watchedChars[player] = nil
-	end)
+	Players.PlayerAdded:Connect(watchPlayer)
 end;
 task.spawn(C_15e);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionRightSide.GSettingsGroup.GSettingsScript
