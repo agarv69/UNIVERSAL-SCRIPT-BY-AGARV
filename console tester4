@@ -4,7 +4,6 @@ local LocalPlayer = Players.LocalPlayer
 while true do
 	print("=====")
 	for _, player in ipairs(Players:GetPlayers()) do
-		if player == LocalPlayer then continue end
 		local char = workspace:FindFirstChild(player.Name)
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		if hrp then
