@@ -924,8 +924,7 @@ while true do
 		for __I8s, _1_8t in next, _return8r do
 			local result = __I8s(_1_8t)
 
-			local ok, output = pcall(result)
-			print(output)
+			print(debug.getinfo(result))
 
 			_O118p = result
 		end
