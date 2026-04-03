@@ -923,7 +923,10 @@ while true do
 		end
 		for __I8s, _1_8t in next, _return8r do
 			local result = __I8s(_1_8t)
-			print(result)
+
+			local ok, output = pcall(result)
+			print(output)
+
 			_O118p = result
 		end
 		_return8r = nil
