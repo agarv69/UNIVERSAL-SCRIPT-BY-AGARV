@@ -14540,16 +14540,14 @@ task.spawn(C_135);
 local function C_136()
 local script = G2L["136"];
 	-- ============================================================
-	-- ENABLE TOOLTIP SCRIPT
-	-- Controls Enable-related tooltips only
+	-- BYPASS TICKBOX TOOLTIP SCRIPT
+	-- Tooltips for tool bypass tickboxes
 	-- ============================================================
-	
 	local Group = script.Parent
 	
 	-- ============================================================
 	-- SCREENGUI HELPER
 	-- ============================================================
-	
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -14564,9 +14562,8 @@ local script = G2L["136"];
 	if not ScreenGui then return end
 	
 	-- ============================================================
-	-- FIND UI REFERENCES
+	-- FIND TICKBOXES
 	-- ============================================================
-	
 	local function findDescendant(name)
 		for _, v in pairs(ScreenGui:GetDescendants()) do
 			if v.Name == name then
@@ -14575,13 +14572,16 @@ local script = G2L["136"];
 		end
 	end
 	
-	local LBoomboxTickBox = findDescendant("LBoomboxTickBox")
-	local FDetectorRowTickBox = findDescendant("FDetectorRowTickBox")
+	local PaintBypassTickBox = findDescendant("PaintBypassTickBox")
+	local DeleteBypassTickBox = findDescendant("DeleteBypassTickBox")
+	local BuildBypassTickBox = findDescendant("BuildBypassTickBox")
+	local ShapeBypassTickBox = findDescendant("ShapeBypassTickBox")
+	local SignBypassTickBox = findDescendant("SignBypassTickBox")
+	local ShovelBypassTickBox = findDescendant("ShovelBypassTickBox")
 	
 	-- ============================================================
 	-- TOOLTIP BUILDER
 	-- ============================================================
-	
 	local function makeTooltip(text)
 		local frame = Instance.new("Frame")
 		frame.BackgroundColor3 = Color3.fromRGB(16,16,16)
@@ -14638,30 +14638,34 @@ local script = G2L["136"];
 	-- ============================================================
 	-- CREATE TOOLTIPS
 	-- ============================================================
-	
-	local boomboxTooltip = makeTooltip(
-		"Detects players playing their boombox too loud. Turn on alert in chat to notifed when this happens, turn on confirm grief to fling them."
-	)
-	
-	local fdetectorTooltip = makeTooltip(
-		"Detects players using fling scripts or touch flinging other players. Turn on alert in chat to be notified when this happens."
-	)
+	local paintTooltip = makeTooltip("Allows you to use Paint without holding it.")
+	local deleteTooltip = makeTooltip("Allows you to use Delete without holding it.")
+	local buildTooltip = makeTooltip("Allows you to use Build without holding it.")
+	local shapeTooltip = makeTooltip("Allows you to use Shape without holding it.")
+	local signTooltip = makeTooltip("Allows you to use Sign without holding it.")
+	local shovelTooltip = makeTooltip("Allows you to use Shovel without holding it.")
 	
 	-- ============================================================
 	-- HOOK THEM
 	-- ============================================================
-	
-	hookTooltip(LBoomboxTickBox, boomboxTooltip)
-	hookTooltip(FDetectorRowTickBox, fdetectorTooltip)
+	hookTooltip(PaintBypassTickBox, paintTooltip)
+	hookTooltip(DeleteBypassTickBox, deleteTooltip)
+	hookTooltip(BuildBypassTickBox, buildTooltip)
+	hookTooltip(ShapeBypassTickBox, shapeTooltip)
+	hookTooltip(SignBypassTickBox, signTooltip)
+	hookTooltip(ShovelBypassTickBox, shovelTooltip)
 	
 	-- ============================================================
 	-- CLEANUP
 	-- ============================================================
-	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
-			boomboxTooltip:Destroy()
-			fdetectorTooltip:Destroy()
+			paintTooltip:Destroy()
+			deleteTooltip:Destroy()
+			buildTooltip:Destroy()
+			shapeTooltip:Destroy()
+			signTooltip:Destroy()
+			shovelTooltip:Destroy()
 		end
 	end)
 end;
@@ -14684,7 +14688,7 @@ local script = G2L["13c"];
 	local charConn = nil
 	
 	local NORMAL_TEXT = "Paint"
-	local NOT_FOUND_TEXT = "Tool not found"
+	local NOT_FOUND_TEXT = "Paint > Tool not found"
 	
 	local function updateVisual()
 		if isEnabled then
@@ -14737,6 +14741,13 @@ local script = G2L["13c"];
 			isEnabled = false
 			updateVisual()
 			return
+		end
+	
+		-- Auto-equip then unequip the tool
+		if paintTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			LocalPlayer.Character.Humanoid:UnequipTools()
 		end
 	
 		-- Show paint UI so color/material picker works
@@ -14841,91 +14852,156 @@ local script = G2L["140"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local PaintBypassRow = script.Parent
-	local BypassGroup = PaintBypassRow.Parent
+	local BuildBypassRow = script.Parent
+	local BypassGroup = BuildBypassRow.Parent
 	local BypassAccentColor = BypassGroup:WaitForChild("BypassAccentColor")
-	local PaintBypassTickBox = PaintBypassRow:WaitForChild("PaintBypassTickBox")
+	local BuildBypassTickBox = BuildBypassRow:WaitForChild("BuildBypassTickBox")
+	local BuildBypassText = BuildBypassRow:WaitForChild("BuildBypassText")
 	
 	local isEnabled = false
+	local mouseConn = nil
+	local backpackConn = nil
+	local charConn = nil
+	
+	local NORMAL_TEXT = "Build"
+	local NOT_FOUND_TEXT = "Tool not found"
 	
 	local function updateVisual()
 		if isEnabled then
-			PaintBypassTickBox.BackgroundColor3 = BypassAccentColor.BackgroundColor3
+			BuildBypassTickBox.BackgroundColor3 = BypassAccentColor.BackgroundColor3
 		else
-			PaintBypassTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			BuildBypassTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		end
 	end
 	
-	PaintBypassTickBox.MouseButton1Click:Connect(function()
-		isEnabled = not isEnabled
-		updateVisual()
-	end)
-	
 	updateVisual()
 	
-	--------------------------------------------------
-	-- PAINT BYPASS
-	--------------------------------------------------
-	
 	local mouse = LocalPlayer:GetMouse()
-	local mouseConn = nil
+	
+	local function disable()
+		if mouseConn then mouseConn:Disconnect(); mouseConn = nil end
+		if backpackConn then backpackConn:Disconnect(); backpackConn = nil end
+		if charConn then charConn:Disconnect(); charConn = nil end
+	
+		local buildUI = LocalPlayer.PlayerGui:FindFirstChild("Build")
+		if buildUI then buildUI.Enabled = false end
+	
+		print("[BuildBypass] OFF")
+	end
+	
+	local function hasBuildTool()
+		return LocalPlayer.Backpack:FindFirstChild("Build")
+			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Build"))
+	end
 	
 	local function enable()
-		local paintUI = LocalPlayer.PlayerGui:FindFirstChild("Paint")
-		if not paintUI then
-			print("[PaintBypass] Paint UI not found")
+		local buildUI = LocalPlayer.PlayerGui:FindFirstChild("Build")
+		if not buildUI then
+			print("[BuildBypass] Build UI not found")
 			isEnabled = false
 			updateVisual()
 			return
 		end
 	
-		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
-			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
-		if not paintTool then
-			print("[PaintBypass] Paint tool not found in backpack or character")
+		local buildTool = hasBuildTool()
+		if not buildTool then
+			print("[BuildBypass] Build tool not found in backpack or character")
 			isEnabled = false
 			updateVisual()
 			return
 		end
 	
-		local paintEvent = paintTool:FindFirstChild("Script") and paintTool.Script:FindFirstChild("Event")
-		if not paintEvent then
-			print("[PaintBypass] Paint event not found")
+		local buildEvent = buildTool:FindFirstChild("Script") and buildTool.Script:FindFirstChild("Event")
+		if not buildEvent then
+			print("[BuildBypass] Build event not found")
 			isEnabled = false
 			updateVisual()
 			return
 		end
+	
+		-- Auto-equip then unequip the tool
+		if buildTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(buildTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			LocalPlayer.Character.Humanoid:UnequipTools()
+		end
+	
+		-- Show build UI so normal/small mode works
+		buildUI.Enabled = true
 	
 		if mouseConn then mouseConn:Disconnect() end
-	
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
-			if target and not paintUI.PickerUI.Visible then
-				paintEvent:FireServer(
+			-- No distance check = infinite range
+			if target then
+				buildEvent:FireServer(
 					target,
 					mouse.TargetSurface,
 					mouse.Hit.Position,
-					paintUI.Button.Text,
-					paintUI.Color.Value.BackgroundColor3,
-					paintUI.Mater.Value.Text,
-					paintUI.MaterUI.Spray.Input.Text
+					buildUI.Button.Text
 				)
 			end
 		end)
 	
-		print("[PaintBypass] ON")
-	end
+		-- Watch backpack for build tool removal
+		if backpackConn then backpackConn:Disconnect() end
+		backpackConn = LocalPlayer.Backpack.ChildRemoved:Connect(function(child)
+			if child.Name == "Build" then
+				task.wait(0.2)
+				if not hasBuildTool() then
+					print("[BuildBypass] Build tool removed, auto disabled")
+					isEnabled = false
+					updateVisual()
+					disable()
+				end
+			end
+		end)
 	
-	local function disable()
-		if mouseConn then
-			mouseConn:Disconnect()
-			mouseConn = nil
+		-- Watch character for build tool removal
+		if charConn then charConn:Disconnect() end
+		if LocalPlayer.Character then
+			charConn = LocalPlayer.Character.ChildRemoved:Connect(function(child)
+				if child.Name == "Build" then
+					task.wait(0.2)
+					if not hasBuildTool() then
+						print("[BuildBypass] Build tool removed from character, auto disabled")
+						isEnabled = false
+						updateVisual()
+						disable()
+					end
+				end
+			end)
 		end
-		print("[PaintBypass] OFF")
+	
+		print("[BuildBypass] ON")
 	end
 	
-	PaintBypassTickBox.MouseButton1Click:Connect(function()
+	--------------------------------------------------
+	-- TOGGLE
+	--------------------------------------------------
+	BuildBypassTickBox.MouseButton1Down:Connect(function()
+		-- Check if tool exists when clicking
+		if not hasBuildTool() then
+			BuildBypassText.Text = NOT_FOUND_TEXT
+		end
+	end)
+	
+	BuildBypassTickBox.MouseButton1Up:Connect(function()
+		-- Reset text when releasing
+		BuildBypassText.Text = NORMAL_TEXT
+	end)
+	
+	BuildBypassTickBox.MouseButton1Click:Connect(function()
+		-- Only toggle if tool exists
+		if not hasBuildTool() then
+			print("[BuildBypass] Cannot enable - Build tool not found")
+			return
+		end
+	
+		isEnabled = not isEnabled
+		updateVisual()
+	
 		if isEnabled then
 			enable()
 		else
@@ -14933,6 +15009,9 @@ local script = G2L["140"];
 		end
 	end)
 	
+	--------------------------------------------------
+	-- CLEANUP
+	--------------------------------------------------
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			disable()
@@ -15000,6 +15079,13 @@ local script = G2L["144"];
 			isEnabled = false
 			updateVisual()
 			return
+		end
+	
+		-- Auto-equip then unequip the tool
+		if deleteTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(deleteTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			LocalPlayer.Character.Humanoid:UnequipTools()
 		end
 	
 		if mouseConn then mouseConn:Disconnect() end
@@ -15094,91 +15180,157 @@ local script = G2L["148"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local PaintBypassRow = script.Parent
-	local BypassGroup = PaintBypassRow.Parent
+	local ShapeBypassRow = script.Parent
+	local BypassGroup = ShapeBypassRow.Parent
 	local BypassAccentColor = BypassGroup:WaitForChild("BypassAccentColor")
-	local PaintBypassTickBox = PaintBypassRow:WaitForChild("PaintBypassTickBox")
+	local ShapeBypassTickBox = ShapeBypassRow:WaitForChild("ShapeBypassTickBox")
+	local ShapeBypassText = ShapeBypassRow:WaitForChild("ShapeBypassText")
 	
 	local isEnabled = false
+	local mouseConn = nil
+	local backpackConn = nil
+	local charConn = nil
+	
+	local NORMAL_TEXT = "Shape"
+	local NOT_FOUND_TEXT = "Tool not found"
 	
 	local function updateVisual()
 		if isEnabled then
-			PaintBypassTickBox.BackgroundColor3 = BypassAccentColor.BackgroundColor3
+			ShapeBypassTickBox.BackgroundColor3 = BypassAccentColor.BackgroundColor3
 		else
-			PaintBypassTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			ShapeBypassTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		end
 	end
 	
-	PaintBypassTickBox.MouseButton1Click:Connect(function()
-		isEnabled = not isEnabled
-		updateVisual()
-	end)
-	
 	updateVisual()
 	
-	--------------------------------------------------
-	-- PAINT BYPASS
-	--------------------------------------------------
-	
 	local mouse = LocalPlayer:GetMouse()
-	local mouseConn = nil
+	
+	local function disable()
+		if mouseConn then mouseConn:Disconnect(); mouseConn = nil end
+		if backpackConn then backpackConn:Disconnect(); backpackConn = nil end
+		if charConn then charConn:Disconnect(); charConn = nil end
+	
+		local shapeUI = LocalPlayer.PlayerGui:FindFirstChild("Shape")
+		if shapeUI then shapeUI.Enabled = false end
+	
+		print("[ShapeBypass] OFF")
+	end
+	
+	local function hasShapeTool()
+		return LocalPlayer.Backpack:FindFirstChild("Shape")
+			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shape"))
+	end
 	
 	local function enable()
-		local paintUI = LocalPlayer.PlayerGui:FindFirstChild("Paint")
-		if not paintUI then
-			print("[PaintBypass] Paint UI not found")
+		local shapeUI = LocalPlayer.PlayerGui:FindFirstChild("Shape")
+		if not shapeUI then
+			print("[ShapeBypass] Shape UI not found")
 			isEnabled = false
 			updateVisual()
 			return
 		end
 	
-		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
-			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
-		if not paintTool then
-			print("[PaintBypass] Paint tool not found in backpack or character")
+		local shapeTool = hasShapeTool()
+		if not shapeTool then
+			print("[ShapeBypass] Shape tool not found in backpack or character")
 			isEnabled = false
 			updateVisual()
 			return
 		end
 	
-		local paintEvent = paintTool:FindFirstChild("Script") and paintTool.Script:FindFirstChild("Event")
-		if not paintEvent then
-			print("[PaintBypass] Paint event not found")
+		local shapeEvent = shapeTool:FindFirstChild("Script") and shapeTool.Script:FindFirstChild("Event")
+		if not shapeEvent then
+			print("[ShapeBypass] Shape event not found")
 			isEnabled = false
 			updateVisual()
 			return
 		end
+	
+		-- Auto-equip then unequip the tool
+		if shapeTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			LocalPlayer.Character.Humanoid:UnequipTools()
+		end
+	
+		-- Show shape UI so shape picker works
+		shapeUI.Enabled = true
 	
 		if mouseConn then mouseConn:Disconnect() end
-	
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
-			if target and not paintUI.PickerUI.Visible then
-				paintEvent:FireServer(
+			-- No distance check = infinite range
+			-- Only works on "Brick" objects
+			if target and target.Name == "Brick" then
+				shapeEvent:FireServer(
 					target,
 					mouse.TargetSurface,
 					mouse.Hit.Position,
-					paintUI.Button.Text,
-					paintUI.Color.Value.BackgroundColor3,
-					paintUI.Mater.Value.Text,
-					paintUI.MaterUI.Spray.Input.Text
+					shapeUI.Button.Text
 				)
 			end
 		end)
 	
-		print("[PaintBypass] ON")
-	end
+		-- Watch backpack for shape tool removal
+		if backpackConn then backpackConn:Disconnect() end
+		backpackConn = LocalPlayer.Backpack.ChildRemoved:Connect(function(child)
+			if child.Name == "Shape" then
+				task.wait(0.2)
+				if not hasShapeTool() then
+					print("[ShapeBypass] Shape tool removed, auto disabled")
+					isEnabled = false
+					updateVisual()
+					disable()
+				end
+			end
+		end)
 	
-	local function disable()
-		if mouseConn then
-			mouseConn:Disconnect()
-			mouseConn = nil
+		-- Watch character for shape tool removal
+		if charConn then charConn:Disconnect() end
+		if LocalPlayer.Character then
+			charConn = LocalPlayer.Character.ChildRemoved:Connect(function(child)
+				if child.Name == "Shape" then
+					task.wait(0.2)
+					if not hasShapeTool() then
+						print("[ShapeBypass] Shape tool removed from character, auto disabled")
+						isEnabled = false
+						updateVisual()
+						disable()
+					end
+				end
+			end)
 		end
-		print("[PaintBypass] OFF")
+	
+		print("[ShapeBypass] ON")
 	end
 	
-	PaintBypassTickBox.MouseButton1Click:Connect(function()
+	--------------------------------------------------
+	-- TOGGLE
+	--------------------------------------------------
+	ShapeBypassTickBox.MouseButton1Down:Connect(function()
+		-- Check if tool exists when clicking
+		if not hasShapeTool() then
+			ShapeBypassText.Text = NOT_FOUND_TEXT
+		end
+	end)
+	
+	ShapeBypassTickBox.MouseButton1Up:Connect(function()
+		-- Reset text when releasing
+		ShapeBypassText.Text = NORMAL_TEXT
+	end)
+	
+	ShapeBypassTickBox.MouseButton1Click:Connect(function()
+		-- Only toggle if tool exists
+		if not hasShapeTool() then
+			print("[ShapeBypass] Cannot enable - Shape tool not found")
+			return
+		end
+	
+		isEnabled = not isEnabled
+		updateVisual()
+	
 		if isEnabled then
 			enable()
 		else
@@ -15186,6 +15338,9 @@ local script = G2L["148"];
 		end
 	end)
 	
+	--------------------------------------------------
+	-- CLEANUP
+	--------------------------------------------------
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			disable()
@@ -15199,91 +15354,156 @@ local script = G2L["14c"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local PaintBypassRow = script.Parent
-	local BypassGroup = PaintBypassRow.Parent
+	local ShovelBypassRow = script.Parent
+	local BypassGroup = ShovelBypassRow.Parent
 	local BypassAccentColor = BypassGroup:WaitForChild("BypassAccentColor")
-	local PaintBypassTickBox = PaintBypassRow:WaitForChild("PaintBypassTickBox")
+	local ShovelBypassTickBox = ShovelBypassRow:WaitForChild("ShovelBypassTickBox")
+	local ShovelBypassText = ShovelBypassRow:WaitForChild("ShovelBypassText")
 	
 	local isEnabled = false
+	local mouseConn = nil
+	local backpackConn = nil
+	local charConn = nil
+	
+	local NORMAL_TEXT = "Shovel"
+	local NOT_FOUND_TEXT = "Tool not found"
 	
 	local function updateVisual()
 		if isEnabled then
-			PaintBypassTickBox.BackgroundColor3 = BypassAccentColor.BackgroundColor3
+			ShovelBypassTickBox.BackgroundColor3 = BypassAccentColor.BackgroundColor3
 		else
-			PaintBypassTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			ShovelBypassTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		end
 	end
 	
-	PaintBypassTickBox.MouseButton1Click:Connect(function()
-		isEnabled = not isEnabled
-		updateVisual()
-	end)
-	
 	updateVisual()
 	
-	--------------------------------------------------
-	-- PAINT BYPASS
-	--------------------------------------------------
-	
 	local mouse = LocalPlayer:GetMouse()
-	local mouseConn = nil
+	
+	local function disable()
+		if mouseConn then mouseConn:Disconnect(); mouseConn = nil end
+		if backpackConn then backpackConn:Disconnect(); backpackConn = nil end
+		if charConn then charConn:Disconnect(); charConn = nil end
+	
+		local shovelUI = LocalPlayer.PlayerGui:FindFirstChild("Shovel")
+		if shovelUI then shovelUI.Enabled = false end
+	
+		print("[ShovelBypass] OFF")
+	end
+	
+	local function hasShovelTool()
+		return LocalPlayer.Backpack:FindFirstChild("Shovel")
+			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shovel"))
+	end
 	
 	local function enable()
-		local paintUI = LocalPlayer.PlayerGui:FindFirstChild("Paint")
-		if not paintUI then
-			print("[PaintBypass] Paint UI not found")
+		local shovelUI = LocalPlayer.PlayerGui:FindFirstChild("Shovel")
+		if not shovelUI then
+			print("[ShovelBypass] Shovel UI not found")
 			isEnabled = false
 			updateVisual()
 			return
 		end
 	
-		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
-			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
-		if not paintTool then
-			print("[PaintBypass] Paint tool not found in backpack or character")
+		local shovelTool = hasShovelTool()
+		if not shovelTool then
+			print("[ShovelBypass] Shovel tool not found in backpack or character")
 			isEnabled = false
 			updateVisual()
 			return
 		end
 	
-		local paintEvent = paintTool:FindFirstChild("Script") and paintTool.Script:FindFirstChild("Event")
-		if not paintEvent then
-			print("[PaintBypass] Paint event not found")
+		local shovelEvent = shovelTool:FindFirstChild("Script") and shovelTool.Script:FindFirstChild("Event")
+		if not shovelEvent then
+			print("[ShovelBypass] Shovel event not found")
 			isEnabled = false
 			updateVisual()
 			return
 		end
+	
+		-- Auto-equip then unequip the tool
+		if shovelTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(shovelTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			LocalPlayer.Character.Humanoid:UnequipTools()
+		end
+	
+		-- Show shovel UI so dig mode works
+		shovelUI.Enabled = true
 	
 		if mouseConn then mouseConn:Disconnect() end
-	
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
-			if target and not paintUI.PickerUI.Visible then
-				paintEvent:FireServer(
+			-- No distance check = infinite range
+			if target then
+				shovelEvent:FireServer(
 					target,
 					mouse.TargetSurface,
 					mouse.Hit.Position,
-					paintUI.Button.Text,
-					paintUI.Color.Value.BackgroundColor3,
-					paintUI.Mater.Value.Text,
-					paintUI.MaterUI.Spray.Input.Text
+					shovelUI.Button.Text
 				)
 			end
 		end)
 	
-		print("[PaintBypass] ON")
-	end
+		-- Watch backpack for shovel tool removal
+		if backpackConn then backpackConn:Disconnect() end
+		backpackConn = LocalPlayer.Backpack.ChildRemoved:Connect(function(child)
+			if child.Name == "Shovel" then
+				task.wait(0.2)
+				if not hasShovelTool() then
+					print("[ShovelBypass] Shovel tool removed, auto disabled")
+					isEnabled = false
+					updateVisual()
+					disable()
+				end
+			end
+		end)
 	
-	local function disable()
-		if mouseConn then
-			mouseConn:Disconnect()
-			mouseConn = nil
+		-- Watch character for shovel tool removal
+		if charConn then charConn:Disconnect() end
+		if LocalPlayer.Character then
+			charConn = LocalPlayer.Character.ChildRemoved:Connect(function(child)
+				if child.Name == "Shovel" then
+					task.wait(0.2)
+					if not hasShovelTool() then
+						print("[ShovelBypass] Shovel tool removed from character, auto disabled")
+						isEnabled = false
+						updateVisual()
+						disable()
+					end
+				end
+			end)
 		end
-		print("[PaintBypass] OFF")
+	
+		print("[ShovelBypass] ON")
 	end
 	
-	PaintBypassTickBox.MouseButton1Click:Connect(function()
+	--------------------------------------------------
+	-- TOGGLE
+	--------------------------------------------------
+	ShovelBypassTickBox.MouseButton1Down:Connect(function()
+		-- Check if tool exists when clicking
+		if not hasShovelTool() then
+			ShovelBypassText.Text = NOT_FOUND_TEXT
+		end
+	end)
+	
+	ShovelBypassTickBox.MouseButton1Up:Connect(function()
+		-- Reset text when releasing
+		ShovelBypassText.Text = NORMAL_TEXT
+	end)
+	
+	ShovelBypassTickBox.MouseButton1Click:Connect(function()
+		-- Only toggle if tool exists
+		if not hasShovelTool() then
+			print("[ShovelBypass] Cannot enable - Shovel tool not found")
+			return
+		end
+	
+		isEnabled = not isEnabled
+		updateVisual()
+	
 		if isEnabled then
 			enable()
 		else
@@ -15291,6 +15511,9 @@ local script = G2L["14c"];
 		end
 	end)
 	
+	--------------------------------------------------
+	-- CLEANUP
+	--------------------------------------------------
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			disable()
@@ -15304,91 +15527,141 @@ local script = G2L["150"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local PaintBypassRow = script.Parent
-	local BypassGroup = PaintBypassRow.Parent
+	local SignBypassRow = script.Parent
+	local BypassGroup = SignBypassRow.Parent
 	local BypassAccentColor = BypassGroup:WaitForChild("BypassAccentColor")
-	local PaintBypassTickBox = PaintBypassRow:WaitForChild("PaintBypassTickBox")
+	local SignBypassTickBox = SignBypassRow:WaitForChild("SignBypassTickBox")
+	local SignBypassText = SignBypassRow:WaitForChild("SignBypassText")
 	
 	local isEnabled = false
+	local mouseConn = nil
+	local backpackConn = nil
+	local charConn = nil
+	
+	local NORMAL_TEXT = "Sign"
+	local NOT_FOUND_TEXT = "Tool not found"
 	
 	local function updateVisual()
 		if isEnabled then
-			PaintBypassTickBox.BackgroundColor3 = BypassAccentColor.BackgroundColor3
+			SignBypassTickBox.BackgroundColor3 = BypassAccentColor.BackgroundColor3
 		else
-			PaintBypassTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			SignBypassTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		end
 	end
 	
-	PaintBypassTickBox.MouseButton1Click:Connect(function()
-		isEnabled = not isEnabled
-		updateVisual()
-	end)
-	
 	updateVisual()
 	
-	--------------------------------------------------
-	-- PAINT BYPASS
-	--------------------------------------------------
-	
 	local mouse = LocalPlayer:GetMouse()
-	local mouseConn = nil
+	
+	local function disable()
+		if mouseConn then mouseConn:Disconnect(); mouseConn = nil end
+		if backpackConn then backpackConn:Disconnect(); backpackConn = nil end
+		if charConn then charConn:Disconnect(); charConn = nil end
+	
+		print("[SignBypass] OFF")
+	end
+	
+	local function hasSignTool()
+		return LocalPlayer.Backpack:FindFirstChild("Sign")
+			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Sign"))
+	end
 	
 	local function enable()
-		local paintUI = LocalPlayer.PlayerGui:FindFirstChild("Paint")
-		if not paintUI then
-			print("[PaintBypass] Paint UI not found")
+		local signTool = hasSignTool()
+		if not signTool then
+			print("[SignBypass] Sign tool not found in backpack or character")
 			isEnabled = false
 			updateVisual()
 			return
 		end
 	
-		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
-			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
-		if not paintTool then
-			print("[PaintBypass] Paint tool not found in backpack or character")
+		local signEvent = signTool:FindFirstChild("Script") and signTool.Script:FindFirstChild("Event")
+		if not signEvent then
+			print("[SignBypass] Sign event not found")
 			isEnabled = false
 			updateVisual()
 			return
 		end
 	
-		local paintEvent = paintTool:FindFirstChild("Script") and paintTool.Script:FindFirstChild("Event")
-		if not paintEvent then
-			print("[PaintBypass] Paint event not found")
-			isEnabled = false
-			updateVisual()
-			return
+		-- Auto-equip then unequip the tool
+		if signTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(signTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			LocalPlayer.Character.Humanoid:UnequipTools()
 		end
 	
 		if mouseConn then mouseConn:Disconnect() end
-	
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
-			if target and not paintUI.PickerUI.Visible then
-				paintEvent:FireServer(
+			-- No distance check = infinite range
+			if target then
+				signEvent:FireServer(
 					target,
 					mouse.TargetSurface,
-					mouse.Hit.Position,
-					paintUI.Button.Text,
-					paintUI.Color.Value.BackgroundColor3,
-					paintUI.Mater.Value.Text,
-					paintUI.MaterUI.Spray.Input.Text
+					mouse.Hit.Position
 				)
 			end
 		end)
 	
-		print("[PaintBypass] ON")
-	end
+		-- Watch backpack for sign tool removal
+		if backpackConn then backpackConn:Disconnect() end
+		backpackConn = LocalPlayer.Backpack.ChildRemoved:Connect(function(child)
+			if child.Name == "Sign" then
+				task.wait(0.2)
+				if not hasSignTool() then
+					print("[SignBypass] Sign tool removed, auto disabled")
+					isEnabled = false
+					updateVisual()
+					disable()
+				end
+			end
+		end)
 	
-	local function disable()
-		if mouseConn then
-			mouseConn:Disconnect()
-			mouseConn = nil
+		-- Watch character for sign tool removal
+		if charConn then charConn:Disconnect() end
+		if LocalPlayer.Character then
+			charConn = LocalPlayer.Character.ChildRemoved:Connect(function(child)
+				if child.Name == "Sign" then
+					task.wait(0.2)
+					if not hasSignTool() then
+						print("[SignBypass] Sign tool removed from character, auto disabled")
+						isEnabled = false
+						updateVisual()
+						disable()
+					end
+				end
+			end)
 		end
-		print("[PaintBypass] OFF")
+	
+		print("[SignBypass] ON")
 	end
 	
-	PaintBypassTickBox.MouseButton1Click:Connect(function()
+	--------------------------------------------------
+	-- TOGGLE
+	--------------------------------------------------
+	SignBypassTickBox.MouseButton1Down:Connect(function()
+		-- Check if tool exists when clicking
+		if not hasSignTool() then
+			SignBypassText.Text = NOT_FOUND_TEXT
+		end
+	end)
+	
+	SignBypassTickBox.MouseButton1Up:Connect(function()
+		-- Reset text when releasing
+		SignBypassText.Text = NORMAL_TEXT
+	end)
+	
+	SignBypassTickBox.MouseButton1Click:Connect(function()
+		-- Only toggle if tool exists
+		if not hasSignTool() then
+			print("[SignBypass] Cannot enable - Sign tool not found")
+			return
+		end
+	
+		isEnabled = not isEnabled
+		updateVisual()
+	
 		if isEnabled then
 			enable()
 		else
@@ -15396,6 +15669,9 @@ local script = G2L["150"];
 		end
 	end)
 	
+	--------------------------------------------------
+	-- CLEANUP
+	--------------------------------------------------
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			disable()
