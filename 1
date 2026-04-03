@@ -323,7 +323,6 @@ G2L["22"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftSide.MovementGroup.WalkspeedRow.WalkspeedSpeedChanger
 G2L["23"] = Instance.new("TextBox", G2L["1f"]);
-G2L["23"]["CursorPosition"] = -1;
 G2L["23"]["Name"] = [[WalkspeedSpeedChanger]];
 G2L["23"]["PlaceholderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["23"]["TextWrapped"] = true;
@@ -387,7 +386,6 @@ G2L["27"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftSide.MovementGroup.JumppowerRow.JumppowerJumpChanger
 G2L["28"] = Instance.new("TextBox", G2L["24"]);
-G2L["28"]["CursorPosition"] = -1;
 G2L["28"]["Name"] = [[JumppowerJumpChanger]];
 G2L["28"]["PlaceholderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["28"]["TextWrapped"] = true;
@@ -451,7 +449,6 @@ G2L["2c"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftSide.MovementGroup.FlyRow.FlySpeedChanger
 G2L["2d"] = Instance.new("TextBox", G2L["29"]);
-G2L["2d"]["CursorPosition"] = -1;
 G2L["2d"]["Name"] = [[FlySpeedChanger]];
 G2L["2d"]["PlaceholderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["2d"]["TextWrapped"] = true;
@@ -701,7 +698,6 @@ G2L["42"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MainPage.MainLeftSide.MiscGroup.GravityRow.GravityChanger
 G2L["43"] = Instance.new("TextBox", G2L["3f"]);
-G2L["43"]["CursorPosition"] = -1;
 G2L["43"]["Name"] = [[GravityChanger]];
 G2L["43"]["PlaceholderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["43"]["TextWrapped"] = true;
@@ -1757,7 +1753,6 @@ G2L["a1"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.VisualPage.VisualLeftSide.ESPGroup.ESPMaxDistRow.ESPMaxDistChanger
 G2L["a2"] = Instance.new("TextBox", G2L["9e"]);
-G2L["a2"]["CursorPosition"] = -1;
 G2L["a2"]["Name"] = [[ESPMaxDistChanger]];
 G2L["a2"]["PlaceholderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["a2"]["TextWrapped"] = true;
@@ -3170,7 +3165,6 @@ G2L["123"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MiscPage.MiscLeftSide.Misc1Group.SpinRow.SpinChanger
 G2L["124"] = Instance.new("TextBox", G2L["120"]);
-G2L["124"]["CursorPosition"] = -1;
 G2L["124"]["Name"] = [[SpinChanger]];
 G2L["124"]["PlaceholderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["124"]["TextWrapped"] = true;
@@ -3234,7 +3228,6 @@ G2L["128"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MiscPage.MiscLeftSide.Misc1Group.FakeLagRow.FakeLagChanger
 G2L["129"] = Instance.new("TextBox", G2L["125"]);
-G2L["129"]["CursorPosition"] = -1;
 G2L["129"]["Name"] = [[FakeLagChanger]];
 G2L["129"]["PlaceholderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["129"]["TextWrapped"] = true;
@@ -3298,7 +3291,6 @@ G2L["12d"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.MiscPage.MiscLeftSide.Misc1Group.AnimSpeedRow.AnimSpeedChanger
 G2L["12e"] = Instance.new("TextBox", G2L["12a"]);
-G2L["12e"]["CursorPosition"] = -1;
 G2L["12e"]["Name"] = [[AnimSpeedChanger]];
 G2L["12e"]["PlaceholderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["12e"]["TextWrapped"] = true;
@@ -13124,9 +13116,9 @@ task.spawn(C_e3);
 local function C_e7()
 local script = G2L["e7"];
 	-- ============================================================
-	-- AUTO PICKUP SCRIPT (SAFE WITH AUTO DROP ON DEATH)
-	-- Automatically picks up dropped tools in workspace
-	-- Won't pick up items while dead to prevent losing them
+	-- AUTO PICKUP SCRIPT (STEALTH MODE)
+	-- Automatically picks up dropped tools and instantly unequips them
+	-- Re-equips your previously held tool to make it look like nothing happened
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -13173,7 +13165,7 @@ local script = G2L["e7"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Automatically picks up all dropped tools in workspace (won't pick up your death-dropped items)"
+	tooltipLabel.Text = "Stealthily picks up all dropped tools and hides them in backpack (won't pick up your death-dropped items)"
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -13201,7 +13193,7 @@ local script = G2L["e7"];
 	local pickupLoop = nil
 	
 	-- ============================================================
-	-- AUTO PICKUP LOOP
+	-- AUTO PICKUP LOOP (STEALTH MODE)
 	-- ============================================================
 	local function startPickupLoop()
 		pickupLoop = task.spawn(function()
@@ -13211,14 +13203,33 @@ local script = G2L["e7"];
 	
 				-- Only pickup if alive (Health > 0)
 				if hum and hum.Health > 0 then
+					-- Remember what tool we're currently holding
+					local currentlyEquipped = char:FindFirstChildOfClass("Tool")
+	
 					for _, obj in ipairs(workspace:GetChildren()) do
 						if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
 							-- Skip tools tagged by Auto Drop on Death
 							if not obj:HasTag(DEATH_TAG) then
-								-- Try to equip the tool
-								pcall(function()
+								-- Try to equip the tool (picks it up)
+								local success = pcall(function()
 									hum:EquipTool(obj)
 								end)
+	
+								if success then
+									-- Wait a tiny bit for the tool to be fully equipped
+									task.wait(0.03)
+	
+									-- Immediately unequip it (send to backpack)
+									if obj.Parent == char then
+										obj.Parent = LocalPlayer.Backpack
+									end
+	
+									-- Re-equip the tool we were holding before
+									if currentlyEquipped and currentlyEquipped.Parent == LocalPlayer.Backpack then
+										task.wait(0.03)
+										hum:EquipTool(currentlyEquipped)
+									end
+								end
 							end
 						end
 					end
