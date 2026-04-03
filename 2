@@ -15204,8 +15204,7 @@ local script = G2L["147"];
 			if target and not paintUI.PickerUI.Visible then
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
-				local inRange = useInfiniteRange or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - mouse.Hit.Position).Magnitude < 24)
-	
+				local inRange = true
 				if inRange then
 					paintEvent:FireServer(
 						target,
@@ -15391,8 +15390,7 @@ local script = G2L["14b"];
 			if target then
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
-				local inRange = useInfiniteRange or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - mouse.Hit.Position).Magnitude < 24)
-	
+				local inRange = true
 				if inRange then
 					buildEvent:FireServer(
 						target,
@@ -15560,8 +15558,7 @@ local script = G2L["14f"];
 			if target and target.Name == "Brick" then
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
-				local inRange = useInfiniteRange or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - mouse.Hit.Position).Magnitude < 24)
-	
+				local inRange = true
 				if inRange then
 					deleteEvent:FireServer(target, mouse.Hit.Position)
 				end
@@ -15740,8 +15737,7 @@ local script = G2L["153"];
 			if target and target.Name == "Brick" then
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
-				local inRange = useInfiniteRange or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - mouse.Hit.Position).Magnitude < 24)
-	
+				local inRange = true
 				if inRange then
 					shapeEvent:FireServer(
 						target,
@@ -15924,8 +15920,7 @@ local script = G2L["157"];
 			if target then
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
-				local inRange = useInfiniteRange or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - mouse.Hit.Position).Magnitude < 24)
-	
+				local inRange = true
 				if inRange then
 					shovelEvent:FireServer(
 						target,
@@ -16092,8 +16087,7 @@ local script = G2L["15b"];
 			if target then
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
-				local inRange = useInfiniteRange or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - mouse.Hit.Position).Magnitude < 24)
-	
+				local inRange = true
 				if inRange then
 					signEvent:FireServer(
 						target,
