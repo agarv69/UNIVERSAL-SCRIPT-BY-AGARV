@@ -14788,32 +14788,17 @@ task.spawn(C_134);
 local function C_13a()
 local script = G2L["13a"];
 	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
 	
 	local BypassRangeRow = script.Parent
 	local BkitGroup = BypassRangeRow.Parent
 	local BkitAccentColor = BkitGroup:WaitForChild("BkitAccentColor")
 	local BypassRangeTickBox = BypassRangeRow:WaitForChild("RangeBypassTickBox")
-	local BypassRangeText = BypassRangeRow:WaitForChild("BypassRangeText")
-	
-	-- DEBUG
-	print("[RangeBypass] BkitAccentColor:", BkitAccentColor)
-	print("[RangeBypass] BypassRangeTickBox:", BypassRangeTickBox)
-	print("[RangeBypass] RangeBypassEnabled:", RangeBypassEnabled)
-	
-	--------------------------------------------------
-	-- RANGE BYPASS VALUE
-	--------------------------------------------------
-	
-	local RangeBypassEnabled = BkitGroup:FindFirstChild("RangeBypassEnabled")
-	if not RangeBypassEnabled then
-		RangeBypassEnabled = Instance.new("BoolValue")
-		RangeBypassEnabled.Name = "RangeBypassEnabled"
-		RangeBypassEnabled.Value = false
-		RangeBypassEnabled.Parent = BkitGroup
-	end
 	
 	local isEnabled = false
+	local renderConn = nil
+	local deactivateConn = nil
 	
 	local function updateVisual()
 		if isEnabled then
@@ -14826,24 +14811,175 @@ local script = G2L["13a"];
 	updateVisual()
 	
 	--------------------------------------------------
+	-- HOOK DELETE TOOL
+	--------------------------------------------------
+	
+	local hookedTools = {}
+	
+	local function hookDeleteTool(tool)
+		if hookedTools[tool] then return end
+		hookedTools[tool] = true
+	
+		local toolScript = tool:FindFirstChild("Script")
+		if not toolScript then return end
+	
+		local event = toolScript:FindFirstChild("Event")
+		if not event then return end
+	
+		local v1 = game:GetService("ReplicatedStorage")
+		local v_u_2 = v1.Brick
+		local v_u_3 = require(v1.GetPos)
+		local v_u_8 = LocalPlayer.PlayerGui:WaitForChild("Build")
+		local mouse = LocalPlayer:GetMouse()
+		local v_u_6 = nil
+	
+		-- Disable original script
+		toolScript.Disabled = true
+	
+		-- Replace Deactivated - no distance check
+		local deactConn = tool.Deactivated:Connect(function()
+			if not isEnabled then
+				-- If bypass off, use original 24 stud limit
+				local target = mouse.Target
+				local hitPos = mouse.Hit.Position
+				if target and (LocalPlayer.Character.HumanoidRootPart.Position - hitPos).Magnitude < 24 and target.Name == "Brick" then
+					event:FireServer(target, hitPos)
+				end
+				return
+			end
+			-- Bypass on - no distance check
+			local target = mouse.Target
+			local hitPos = mouse.Hit.Position
+			if target and target.Name == "Brick" then
+				event:FireServer(target, hitPos)
+			end
+		end)
+	
+		-- Replace Equipped RenderStepped - no distance check on preview
+		local equippedConn = tool.Equipped:Connect(function()
+			if v_u_6 then v_u_6:Disconnect() end
+			v_u_6 = RunService.RenderStepped:Connect(function()
+				if tool.Parent == LocalPlayer.Character then
+					local target = mouse.Target
+					local surface = mouse.TargetSurface
+					local hitPos = mouse.Hit.Position
+	
+					if isEnabled then
+						-- No distance check on preview
+						if target and target.Name == "Brick" then
+							tool.Preview.Adornee = target
+						else
+							tool.Preview.Adornee = v_u_2
+						end
+					else
+						-- Original 24 stud limit on preview
+						if target and (LocalPlayer.Character.HumanoidRootPart.Position - hitPos).Magnitude < 24 then
+							if target.Name == "Brick" then
+								tool.Preview.Adornee = target
+							else
+								tool.Preview.Adornee = v_u_2
+							end
+						else
+							tool.Preview.Adornee = nil
+						end
+					end
+	
+					if v_u_8.Button.Text == "normal" then
+						v_u_2.Size = Vector3.new(4, 4, 4)
+					else
+						v_u_2.Size = Vector3.new(1, 1, 1)
+					end
+					v_u_2.Position = v_u_3("Dig", v_u_2.Size, surface, hitPos)
+				else
+					if v_u_6 then v_u_6:Disconnect() end
+					tool.Preview.Adornee = nil
+				end
+			end)
+		end)
+	
+		-- Store connections so we can clean up
+		hookedTools[tool] = {deactConn = deactConn, equippedConn = equippedConn, toolScript = toolScript}
+	
+		print("[RangeBypass] Hooked delete tool")
+	end
+	
+	local function unhookDeleteTool(tool)
+		local data = hookedTools[tool]
+		if not data or type(data) ~= "table" then return end
+	
+		if data.deactConn then data.deactConn:Disconnect() end
+		if data.equippedConn then data.equippedConn:Disconnect() end
+	
+		-- Re-enable original script
+		if data.toolScript then
+			data.toolScript.Disabled = false
+		end
+	
+		hookedTools[tool] = nil
+		print("[RangeBypass] Unhooked delete tool")
+	end
+	
+	--------------------------------------------------
+	-- WATCH FOR DELETE TOOL
+	--------------------------------------------------
+	
+	local function watchForTool(container)
+		container.ChildAdded:Connect(function(child)
+			if child.Name == "Delete" and isEnabled then
+				hookDeleteTool(child)
+			end
+		end)
+		-- Hook existing tool if already there
+		local existing = container:FindFirstChild("Delete")
+		if existing and isEnabled then
+			hookDeleteTool(existing)
+		end
+	end
+	
+	--------------------------------------------------
+	-- ENABLE / DISABLE
+	--------------------------------------------------
+	
+	local function enable()
+		-- Hook delete in backpack
+		local inBackpack = LocalPlayer.Backpack:FindFirstChild("Delete")
+		if inBackpack then hookDeleteTool(inBackpack) end
+	
+		-- Hook delete in character (already equipped)
+		if LocalPlayer.Character then
+			local inChar = LocalPlayer.Character:FindFirstChild("Delete")
+			if inChar then hookDeleteTool(inChar) end
+		end
+	
+		-- Watch for future equips
+		watchForTool(LocalPlayer.Backpack)
+		if LocalPlayer.Character then
+			watchForTool(LocalPlayer.Character)
+		end
+	
+		print("[RangeBypass] ON")
+	end
+	
+	local function disable()
+		-- Unhook all hooked tools
+		for tool, _ in pairs(hookedTools) do
+			unhookDeleteTool(tool)
+		end
+		print("[RangeBypass] OFF")
+	end
+	
+	--------------------------------------------------
 	-- TOGGLE
 	--------------------------------------------------
 	
 	BypassRangeTickBox.MouseButton1Click:Connect(function()
 		isEnabled = not isEnabled
-		RangeBypassEnabled.Value = isEnabled
 		updateVisual()
 		if isEnabled then
-			print("[RangeBypass] ON - Infinite range enabled for all tools")
+			enable()
 		else
-			print("[RangeBypass] OFF - Normal range")
+			disable()
 		end
-	end)
-	
-	-- Listen for external changes
-	RangeBypassEnabled.Changed:Connect(function(newValue)
-		isEnabled = newValue
-		updateVisual()
 	end)
 	
 	--------------------------------------------------
@@ -14852,9 +14988,7 @@ local script = G2L["13a"];
 	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
-			if RangeBypassEnabled then
-				RangeBypassEnabled:Destroy()
-			end
+			disable()
 		end
 	end)
 end;
