@@ -14797,7 +14797,8 @@ local script = G2L["13a"];
 	local BypassRangeTickBox = BypassRangeRow:WaitForChild("RangeBypassTickBox")
 	
 	local isEnabled = false
-	local hookedTools = {}
+	local mouseConn = nil
+	local renderConn = nil
 	local mouse = LocalPlayer:GetMouse()
 	
 	local function updateVisual()
@@ -14811,26 +14812,92 @@ local script = G2L["13a"];
 	updateVisual()
 	
 	--------------------------------------------------
-	-- HOOK DELETE TOOL
+	-- GET DELETE TOOL EVENT
 	--------------------------------------------------
 	
-	local function hookDeleteTool(tool)
-		if hookedTools[tool] then return end
+	local function getDeleteEvent()
+		local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete")
+		if not tool then return nil end
+		local s = tool:FindFirstChild("Script")
+		if not s then return nil end
+		return s:FindFirstChild("Event")
+	end
 	
-		local toolScript = tool:FindFirstChild("Script")
-		if not toolScript then return end
-		local event = toolScript:FindFirstChild("Event")
-		if not event then return end
+	local function getDeleteTool()
+		return LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete")
+	end
 	
-		local v1 = game:GetService("ReplicatedStorage")
-		local v_u_2 = v1:FindFirstChild("Brick")
-		local v_u_3 = require(v1.GetPos)
-		local v_u_8 = LocalPlayer.PlayerGui:WaitForChild("Build")
-		local renderConn = nil
+	--------------------------------------------------
+	-- PREVIEW OUTLINE
+	--------------------------------------------------
 	
-		-- Additional Deactivated hook - fires without distance check when bypass on
-		local deactConn = tool.Deactivated:Connect(function()
+	local v1 = game:GetService("ReplicatedStorage")
+	local v_u_2 = v1:FindFirstChild("Brick")
+	
+	local function startPreview()
+		if renderConn then renderConn:Disconnect() end
+		local ok, v_u_3 = pcall(function() return require(v1.GetPos) end)
+		local v_u_8 = LocalPlayer.PlayerGui:FindFirstChild("Build")
+	
+		renderConn = RunService.RenderStepped:Connect(function()
 			if not isEnabled then return end
+			local tool = getDeleteTool()
+			if not tool then
+				tool = tool
+				-- no tool equipped, hide preview
+				if tool and tool:FindFirstChild("Preview") then
+					tool.Preview.Adornee = nil
+				end
+				return
+			end
+	
+			local target = mouse.Target
+			local surface = mouse.TargetSurface
+			local hitPos = mouse.Hit.Position
+	
+			if target and target.Name == "Brick" then
+				tool.Preview.Adornee = target
+			else
+				if v_u_2 then tool.Preview.Adornee = v_u_2 end
+			end
+	
+			if v_u_2 and v_u_8 then
+				if v_u_8.Button.Text == "normal" then
+					v_u_2.Size = Vector3.new(4, 4, 4)
+				else
+					v_u_2.Size = Vector3.new(1, 1, 1)
+				end
+				if ok and v_u_3 then
+					v_u_2.Position = v_u_3("Dig", v_u_2.Size, surface, hitPos)
+				end
+			end
+		end)
+	end
+	
+	--------------------------------------------------
+	-- ENABLE / DISABLE
+	--------------------------------------------------
+	
+	local function disable()
+		if mouseConn then mouseConn:Disconnect(); mouseConn = nil end
+		if renderConn then renderConn:Disconnect(); renderConn = nil end
+		-- Hide preview
+		local tool = getDeleteTool()
+		if tool and tool:FindFirstChild("Preview") then
+			tool.Preview.Adornee = nil
+		end
+		print("[RangeBypass] OFF")
+	end
+	
+	local function enable()
+		-- Fire delete event on mouse release (same as Deactivated)
+		if mouseConn then mouseConn:Disconnect() end
+		mouseConn = mouse.Button1Up:Connect(function()
+			if not isEnabled then return end
+			local tool = getDeleteTool()
+			if not tool then return end
+			local event = getDeleteEvent()
+			if not event then return end
 			local target = mouse.Target
 			local hitPos = mouse.Hit.Position
 			if target and target.Name == "Brick" then
@@ -14838,81 +14905,8 @@ local script = G2L["13a"];
 			end
 		end)
 	
-		-- Additional Equipped hook - extends preview range when bypass on
-		local equippedConn = tool.Equipped:Connect(function()
-			if renderConn then renderConn:Disconnect() end
-			renderConn = RunService.RenderStepped:Connect(function()
-				if not isEnabled then return end
-				if tool.Parent ~= LocalPlayer.Character then
-					if renderConn then renderConn:Disconnect(); renderConn = nil end
-					return
-				end
-				local target = mouse.Target
-				local surface = mouse.TargetSurface
-				local hitPos = mouse.Hit.Position
-	
-				if target and target.Name == "Brick" then
-					tool.Preview.Adornee = target
-				else
-					tool.Preview.Adornee = v_u_2
-				end
-	
-				if v_u_8.Button.Text == "normal" then
-					v_u_2.Size = Vector3.new(4, 4, 4)
-				else
-					v_u_2.Size = Vector3.new(1, 1, 1)
-				end
-				v_u_2.Position = v_u_3("Dig", v_u_2.Size, surface, hitPos)
-			end)
-		end)
-	
-		hookedTools[tool] = {deactConn = deactConn, equippedConn = equippedConn, renderConn = renderConn}
-		print("[RangeBypass] Hooked delete tool")
-	end
-	
-	local function unhookDeleteTool(tool)
-		local data = hookedTools[tool]
-		if not data or type(data) ~= "table" then return end
-		if data.deactConn then data.deactConn:Disconnect() end
-		if data.equippedConn then data.equippedConn:Disconnect() end
-		if data.renderConn then data.renderConn:Disconnect() end
-		hookedTools[tool] = nil
-	end
-	
-	--------------------------------------------------
-	-- ENABLE / DISABLE
-	--------------------------------------------------
-	
-	local function hookExisting()
-		local inBackpack = LocalPlayer.Backpack:FindFirstChild("Delete")
-		if inBackpack then hookDeleteTool(inBackpack) end
-		if LocalPlayer.Character then
-			local inChar = LocalPlayer.Character:FindFirstChild("Delete")
-			if inChar then hookDeleteTool(inChar) end
-		end
-	end
-	
-	local function enable()
-		hookExisting()
-	
-		LocalPlayer.Backpack.ChildAdded:Connect(function(child)
-			if child.Name == "Delete" and isEnabled then hookDeleteTool(child) end
-		end)
-	
-		if LocalPlayer.Character then
-			LocalPlayer.Character.ChildAdded:Connect(function(child)
-				if child.Name == "Delete" and isEnabled then hookDeleteTool(child) end
-			end)
-		end
-	
+		startPreview()
 		print("[RangeBypass] ON")
-	end
-	
-	local function disable()
-		for tool, _ in pairs(hookedTools) do
-			unhookDeleteTool(tool)
-		end
-		print("[RangeBypass] OFF")
 	end
 	
 	--------------------------------------------------
@@ -15562,16 +15556,22 @@ local script = G2L["14f"];
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
-			-- Only delete if target is a "Brick"
-			if target and target.Name == "Brick" then
-				-- Check if Range Bypass is enabled
-				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
-				local inRange = useInfiniteRange or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - mouse.Hit.Position).Magnitude < 24)
+			if not target or target.Name ~= "Brick" then return end
 	
-				if inRange then
-					deleteEvent:FireServer(target, mouse.Hit.Position)
-				end
+			-- Re-equip and unequip to refresh server context
+			local tool = hasDeleteTool()
+			if not tool then return end
+			local event = tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
+			if not event then return end
+	
+			if tool.Parent == LocalPlayer.Backpack then
+				LocalPlayer.Character.Humanoid:EquipTool(tool)
+				task.wait(0.05)
+				LocalPlayer.Character.Humanoid:UnequipTools()
+				task.wait(0.05)
 			end
+	
+			event:FireServer(target, mouse.Hit.Position)
 		end)
 	
 		-- Watch backpack for delete tool removal
