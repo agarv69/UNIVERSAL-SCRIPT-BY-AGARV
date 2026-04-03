@@ -14688,7 +14688,7 @@ local script = G2L["13c"];
 	local charConn = nil
 	
 	local NORMAL_TEXT = "Paint"
-	local NOT_FOUND_TEXT = "Tool not found"
+	local NOT_FOUND_TEXT = "Paint > Tool not found"
 	
 	local function updateVisual()
 		if isEnabled then
@@ -14743,8 +14743,17 @@ local script = G2L["13c"];
 			return
 		end
 	
-		-- Show paint UI so color/material picker works
-		paintUI.Enabled = true
+		-- Auto-equip then unequip the tool
+		if paintTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			paintUI.Enabled = true -- Enable UI before unequipping
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			task.wait(0.05)
+			paintUI.Enabled = true -- Keep UI visible after unequipping
+		else
+			paintUI.Enabled = true
+		end
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
@@ -14912,8 +14921,17 @@ local script = G2L["140"];
 			return
 		end
 	
-		-- Show build UI so normal/small mode works
-		buildUI.Enabled = true
+		-- Auto-equip then unequip the tool
+		if buildTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(buildTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			buildUI.Enabled = true -- Enable UI before unequipping
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			task.wait(0.05)
+			buildUI.Enabled = true -- Keep UI visible after unequipping
+		else
+			buildUI.Enabled = true
+		end
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
@@ -15065,6 +15083,13 @@ local script = G2L["144"];
 			isEnabled = false
 			updateVisual()
 			return
+		end
+	
+		-- Auto-equip then unequip the tool
+		if deleteTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(deleteTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			LocalPlayer.Character.Humanoid:UnequipTools()
 		end
 	
 		if mouseConn then mouseConn:Disconnect() end
@@ -15226,8 +15251,17 @@ local script = G2L["148"];
 			return
 		end
 	
-		-- Show shape UI so shape picker works
-		shapeUI.Enabled = true
+		-- Auto-equip then unequip the tool
+		if shapeTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			shapeUI.Enabled = true -- Enable UI before unequipping
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			task.wait(0.05)
+			shapeUI.Enabled = true -- Keep UI visible after unequipping
+		else
+			shapeUI.Enabled = true
+		end
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
@@ -15393,8 +15427,17 @@ local script = G2L["14c"];
 			return
 		end
 	
-		-- Show shovel UI so dig mode works
-		shovelUI.Enabled = true
+		-- Auto-equip then unequip the tool
+		if shovelTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(shovelTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			shovelUI.Enabled = true -- Enable UI before unequipping
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			task.wait(0.05)
+			shovelUI.Enabled = true -- Keep UI visible after unequipping
+		else
+			shovelUI.Enabled = true
+		end
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
@@ -15546,6 +15589,13 @@ local script = G2L["150"];
 			isEnabled = false
 			updateVisual()
 			return
+		end
+	
+		-- Auto-equip then unequip the tool
+		if signTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(signTool)
+			task.wait(0.1) -- Small delay to let the tool initialize
+			LocalPlayer.Character.Humanoid:UnequipTools()
 		end
 	
 		if mouseConn then mouseConn:Disconnect() end
