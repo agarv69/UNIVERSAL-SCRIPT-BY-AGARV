@@ -14801,17 +14801,6 @@ local script = G2L["13a"];
 	local renderConn = nil
 	local mouse = LocalPlayer:GetMouse()
 	
-	--------------------------------------------------
-	-- SELECTION BOX (hover outline)
-	--------------------------------------------------
-	
-	local selectionBox = Instance.new("SelectionBox")
-	selectionBox.Color3 = Color3.fromRGB(255, 0, 0)
-	selectionBox.LineThickness = 0.05
-	selectionBox.SurfaceTransparency = 0.7
-	selectionBox.SurfaceColor3 = Color3.fromRGB(255, 0, 0)
-	selectionBox.Parent = workspace
-	
 	local function updateVisual()
 		if isEnabled then
 			BypassRangeTickBox.BackgroundColor3 = BkitAccentColor.BackgroundColor3
@@ -14823,73 +14812,101 @@ local script = G2L["13a"];
 	updateVisual()
 	
 	--------------------------------------------------
-	-- GET DELETE EVENT
+	-- GET DELETE TOOL EVENT
 	--------------------------------------------------
 	
-	local function getDeleteTool()
-		return LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete")
-	end
-	
 	local function getDeleteEvent()
-		local tool = getDeleteTool()
+		local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete")
 		if not tool then return nil end
 		local s = tool:FindFirstChild("Script")
 		if not s then return nil end
 		return s:FindFirstChild("Event")
 	end
 	
+	local function getDeleteTool()
+		return LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete")
+	end
+	
 	--------------------------------------------------
-	-- DISABLE
+	-- PREVIEW OUTLINE
+	--------------------------------------------------
+	
+	local v1 = game:GetService("ReplicatedStorage")
+	local v_u_2 = v1:FindFirstChild("Brick")
+	
+	local function startPreview()
+		if renderConn then renderConn:Disconnect() end
+		local ok, v_u_3 = pcall(function() return require(v1.GetPos) end)
+		local v_u_8 = LocalPlayer.PlayerGui:FindFirstChild("Build")
+	
+		renderConn = RunService.RenderStepped:Connect(function()
+			if not isEnabled then return end
+			local tool = getDeleteTool()
+			if not tool then
+				tool = tool
+				-- no tool equipped, hide preview
+				if tool and tool:FindFirstChild("Preview") then
+					tool.Preview.Adornee = nil
+				end
+				return
+			end
+	
+			local target = mouse.Target
+			local surface = mouse.TargetSurface
+			local hitPos = mouse.Hit.Position
+	
+			if target and target.Name == "Brick" then
+				tool.Preview.Adornee = target
+			else
+				if v_u_2 then tool.Preview.Adornee = v_u_2 end
+			end
+	
+			if v_u_2 and v_u_8 then
+				if v_u_8.Button.Text == "normal" then
+					v_u_2.Size = Vector3.new(4, 4, 4)
+				else
+					v_u_2.Size = Vector3.new(1, 1, 1)
+				end
+				if ok and v_u_3 then
+					v_u_2.Position = v_u_3("Dig", v_u_2.Size, surface, hitPos)
+				end
+			end
+		end)
+	end
+	
+	--------------------------------------------------
+	-- ENABLE / DISABLE
 	--------------------------------------------------
 	
 	local function disable()
 		if mouseConn then mouseConn:Disconnect(); mouseConn = nil end
 		if renderConn then renderConn:Disconnect(); renderConn = nil end
-		selectionBox.Adornee = nil
+		-- Hide preview
+		local tool = getDeleteTool()
+		if tool and tool:FindFirstChild("Preview") then
+			tool.Preview.Adornee = nil
+		end
 		print("[RangeBypass] OFF")
 	end
 	
-	--------------------------------------------------
-	-- ENABLE
-	--------------------------------------------------
-	
 	local function enable()
+		-- Fire delete event on mouse release (same as Deactivated)
 		if mouseConn then mouseConn:Disconnect() end
-		if renderConn then renderConn:Disconnect() end
-	
-		-- Hover outline loop
-		renderConn = RunService.RenderStepped:Connect(function()
+		mouseConn = mouse.Button1Up:Connect(function()
 			if not isEnabled then return end
 			local tool = getDeleteTool()
-			if not tool then
-				selectionBox.Adornee = nil
-				return
-			end
-			local target = mouse.Target
-			if target and target.Name == "Brick" then
-				selectionBox.Adornee = target
-			else
-				selectionBox.Adornee = nil
-			end
-		end)
-	
-		-- Click to delete
-		mouseConn = mouse.Button1Down:Connect(function()
-			if not isEnabled then return end
-	
-			local target = mouse.Target
-			local hitPos = mouse.Hit.Position
-	
-			if not target then return end
-			if target.Name ~= "Brick" then return end
-	
+			if not tool then return end
 			local event = getDeleteEvent()
 			if not event then return end
-	
-			event:FireServer(target, hitPos)
+			local target = mouse.Target
+			local hitPos = mouse.Hit.Position
+			if target and target.Name == "Brick" then
+				event:FireServer(target, hitPos)
+			end
 		end)
 	
-		print("[RangeBypass] ON - Infinite delete range")
+		startPreview()
+		print("[RangeBypass] ON")
 	end
 	
 	--------------------------------------------------
@@ -14912,7 +14929,6 @@ local script = G2L["13a"];
 	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
-			selectionBox:Destroy()
 			disable()
 		end
 	end)
