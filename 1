@@ -5709,6 +5709,22 @@ local script = G2L["8"];
 	local ScreenGui = script.Parent
 	
 	--------------------------------------------------
+	-- ENSURE ALL SHARED EVENTS EXIST FIRST
+	--------------------------------------------------
+	
+	shared.GriefEvent        = shared.GriefEvent        or Instance.new("BindableEvent")
+	shared.DeleteEvent       = shared.DeleteEvent       or Instance.new("BindableEvent")
+	shared.ToxifyEvent       = shared.ToxifyEvent       or Instance.new("BindableEvent")
+	shared.UnanchorEvent     = shared.UnanchorEvent     or Instance.new("BindableEvent")
+	shared.BuildEvent        = shared.BuildEvent        or Instance.new("BindableEvent")
+	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
+	shared.BoomboxLoudEvent  = shared.BoomboxLoudEvent  or Instance.new("BindableEvent")
+	shared.DeleteGriefEvent  = shared.DeleteGriefEvent  or Instance.new("BindableEvent")
+	shared.ToxifyGriefEvent  = shared.ToxifyGriefEvent  or Instance.new("BindableEvent")
+	shared.UnanchorGriefEvent = shared.UnanchorGriefEvent or Instance.new("BindableEvent")
+	shared.BuildGriefEvent   = shared.BuildGriefEvent   or Instance.new("BindableEvent")
+	
+	--------------------------------------------------
 	-- DETECTION ATTRIBUTES
 	--------------------------------------------------
 	
@@ -5719,18 +5735,6 @@ local script = G2L["8"];
 		"SpamLogsEnabled",
 		"ExploitsLogsEnabled",
 	}
-	
-	--------------------------------------------------
-	-- ENSURE EVENTS EXIST
-	--------------------------------------------------
-	
-	shared.DeleteEvent       = shared.DeleteEvent       or Instance.new("BindableEvent")
-	shared.ToxifyEvent       = shared.ToxifyEvent       or Instance.new("BindableEvent")
-	shared.UnanchorEvent     = shared.UnanchorEvent     or Instance.new("BindableEvent")
-	shared.BuildEvent        = shared.BuildEvent        or Instance.new("BindableEvent")
-	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
-	shared.GriefEvent        = shared.GriefEvent        or Instance.new("BindableEvent")
-	
 	--------------------------------------------------
 	-- SETTINGS - DELETE/TOXIFY/UNANCHOR CANDIDATE
 	--------------------------------------------------
@@ -16999,7 +17003,7 @@ local script = G2L["18c"];
 		if shared.sendChat then
 			shared.sendChat("❌False Alert")
 		end
-		hideConfirm(true)
+		hideConfirm(false)
 	end)
 	
 	CancelConfirm.MouseButton1Click:Connect(function()
@@ -17007,7 +17011,7 @@ local script = G2L["18c"];
 			flingCancelled = true
 			task.wait(0.1)
 		end
-		hideConfirm(true)
+		hideConfirm(false)
 	end)
 	
 	PauseConfirm.MouseButton1Click:Connect(function()
@@ -17117,6 +17121,17 @@ local script = G2L["190"];
 		sound:Play()
 	
 		-- Stop after 2 seconds
+		task.delay(2, function()
+			sound:Stop()
+		end)
+	end)
+	
+	shared.BoomboxLoudEvent = shared.BoomboxLoudEvent or Instance.new("BindableEvent")
+	
+	shared.BoomboxLoudEvent.Event:Connect(function(player)
+		if not SFXGriefTickBox:GetAttribute("Enabled") then return end
+		sound:Stop()
+		sound:Play()
 		task.delay(2, function()
 			sound:Stop()
 		end)
