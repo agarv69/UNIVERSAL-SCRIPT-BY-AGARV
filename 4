@@ -18571,23 +18571,48 @@ local script = G2L["17a"];
 			return false
 		end
 	
-		-- STEP 2: Unanchor the block (if it's anchored)
-		if block.Anchored == true then
-			BlockSpamButton.Text = "Unanchoring..."
-			local unanchorSuccess = spamPaintUntil(
-				block,
-				function(b)
-					-- Check if unanchored
-					return b.Anchored == false
-				end,
-				"both 🤝", -- Toggle anchor mode
-				"anchor", -- Anchor toggle
-				5 -- 5 second timeout
-			)
+		-- STEP 2: Unanchor the block (check for Drag child)
+		print("[BlockSpam] Checking for Drag - Has Drag:", block:FindFirstChild("Drag") ~= nil)
 	
-			if not unanchorSuccess then
-				print("[BlockSpam] Failed to unanchor block")
+		if not block:FindFirstChild("Drag") then
+			BlockSpamButton.Text = "Unanchoring..."
+			print("[BlockSpam] Firing unanchor event once...")
+	
+			local paintEvent = getPaintEvent()
+			if paintEvent then
+				-- Fire the unanchor event ONCE
+				pcall(function()
+					paintEvent:FireServer(
+						block,
+						Enum.NormalId.Top,
+						block.Position,
+						"material",
+						TARGET_COLOR,
+						"anchor",
+						""
+					)
+				end)
+	
+				-- Wait and check if Drag appeared (max 3 seconds)
+				local startTime = tick()
+				local timeout = 3
+				local success = false
+	
+				while tick() - startTime < timeout do
+					if block:FindFirstChild("Drag") then
+						success = true
+						print("[BlockSpam] Drag appeared - Successfully unanchored!")
+						break
+					end
+					task.wait(0.1)
+				end
+	
+				if not success then
+					print("[BlockSpam] Drag didn't appear - Block might still be anchored")
+				end
 			end
+		else
+			print("[BlockSpam] Block already has Drag (unanchored), skipping")
 		end
 	
 		-- Unequip paint tool
