@@ -18507,7 +18507,8 @@ local script = G2L["17a"];
 		end
 	
 		-- Check paint tool exists
-		if not getPaintTool() then
+		local paintTool = getPaintTool()
+		if not paintTool then
 			BlockSpamButton.Text = "Paint tool not found"
 			task.wait(1)
 			BlockSpamButton.Text = TEXT_START
@@ -18522,8 +18523,8 @@ local script = G2L["17a"];
 			return false
 		end
 	
-		-- Enable paint UI
-		paintUI.Enabled = true
+		-- Store what tool was equipped before
+		local previousTool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
 	
 		-- Store original position
 		local originalPosition = LocalPlayer.Character.HumanoidRootPart.CFrame
@@ -18533,7 +18534,13 @@ local script = G2L["17a"];
 		LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(blockTop)
 	
 		print("[BlockSpam] Teleported to block")
-		task.wait(0.5) -- Wait for teleport to register
+	
+		-- Equip paint tool immediately
+		if paintTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
+		end
+	
+		task.wait(0.2) -- Wait for tool to equip and UI to show
 	
 		-- STEP 1: Paint the block black with neon material
 		BlockSpamButton.Text = "Painting..."
@@ -18547,34 +18554,59 @@ local script = G2L["17a"];
 				local materialMatches = b.Material == TARGET_MATERIAL
 				return colorMatches and materialMatches
 			end,
-			"both 🤝", -- Paint + anchor
+			"both 🤝", -- Paint mode
 			"toxic", -- Neon material
 			5 -- 5 second timeout
 		)
 	
 		if not paintSuccess then
 			print("[BlockSpam] Failed to paint block")
+			-- Unequip paint tool
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			-- Re-equip previous tool if any
+			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+				LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+			end
 			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
 			return false
 		end
 	
-		-- STEP 2: Unanchor the block
-		BlockSpamButton.Text = "Unanchoring..."
-		local unanchorSuccess = spamPaintUntil(
-			block,
-			function(b)
-				-- Check if unanchored
-				return b.Anchored == false
-			end,
-			"both 🤝", -- This should unanchor
-			"anchor", -- Anchor mode
-			5 -- 5 second timeout
-		)
+		-- STEP 2: Unanchor the block (if it's anchored)
+		print("[BlockSpam] Checking anchor state - Currently anchored:", block.Anchored)
 	
-		if not unanchorSuccess then
-			print("[BlockSpam] Failed to unanchor block")
-			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
-			return false
+		if block.Anchored == true then
+			BlockSpamButton.Text = "Unanchoring..."
+			print("[BlockSpam] Starting unanchor spam...")
+	
+			local unanchorSuccess = spamPaintUntil(
+				block,
+				function(b)
+					-- Check if unanchored
+					local isUnanchored = (b.Anchored == false)
+					print("[BlockSpam] Anchor check - Anchored:", b.Anchored, "Target: false, Match:", isUnanchored)
+					return isUnanchored
+				end,
+				"material", -- Material mode (for anchor toggle)
+				"anchor", -- Anchor toggle
+				5 -- 5 second timeout
+			)
+	
+			if not unanchorSuccess then
+				print("[BlockSpam] Failed to unanchor block - Final state:", block.Anchored)
+			else
+				print("[BlockSpam] Successfully unanchored - Final state:", block.Anchored)
+			end
+		else
+			print("[BlockSpam] Block already unanchored, skipping")
+		end
+	
+		-- Unequip paint tool
+		LocalPlayer.Character.Humanoid:UnequipTools()
+	
+		-- Re-equip previous tool if any
+		if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+			task.wait(0.1)
+			LocalPlayer.Character.Humanoid:EquipTool(previousTool)
 		end
 	
 		-- Teleport back to original position
