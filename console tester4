@@ -1,5 +1,6 @@
 local player = game:GetService("Players").LocalPlayer
 local mouse = player:GetMouse()
+local RunService = game:GetService("RunService")
 
 -- Wait for delete tool
 local deleteTool = player.Backpack:WaitForChild("Delete", 10)
@@ -24,20 +25,88 @@ toggleButton.TextScaled = true
 
 local deleteActive = false
 
+-- Fast equip/unequip function
+local function refreshDeleteTool()
+	local tool = player.Backpack:FindFirstChild("Delete") or (player.Character and player.Character:FindFirstChild("Delete"))
+	if not tool then return false end
+
+	-- Store currently equipped tool
+	local previousTool = player.Character and player.Character:FindFirstChildOfClass("Tool")
+	
+	-- Move to backpack if in character
+	if tool.Parent == player.Character then
+		tool.Parent = player.Backpack
+		task.wait()
+	end
+	
+	-- Equip delete tool instantly
+	if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+		player.Character.Humanoid:EquipTool(tool)
+		
+		-- Unequip on next frame (invisible)
+		RunService.RenderStepped:Wait()
+		
+		if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+			player.Character.Humanoid:UnequipTools()
+		end
+		
+		-- Re-equip previous tool
+		if previousTool and previousTool.Parent == player.Backpack then
+			task.wait()
+			if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+				player.Character.Humanoid:EquipTool(previousTool)
+			end
+		end
+		
+		return true
+	end
+	
+	return false
+end
+
 toggleButton.MouseButton1Click:Connect(function()
     deleteActive = not deleteActive
     toggleButton.Text = deleteActive and "Delete: ON" or "Delete: OFF"
     toggleButton.BackgroundColor3 = deleteActive and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    
+    -- Initial refresh when turning on
+    if deleteActive then
+        refreshDeleteTool()
+    end
 end)
+
+local clickCount = 0
+local lastClickTime = 0
 
 -- Delete on click when active (INFINITE RANGE)
 mouse.Button1Down:Connect(function()
     if deleteActive then
         local target = mouse.Target
         if target and target.Name == "Brick" then
-            deleteEvent:FireServer(target, mouse.Hit.Position)
+            local currentTime = tick()
+            
+            -- Track clicks for auto-refresh
+            if currentTime - lastClickTime < 0.5 then
+                clickCount = clickCount + 1
+            else
+                clickCount = 1
+            end
+            lastClickTime = currentTime
+            
+            -- Auto-refresh every 5 rapid clicks
+            if clickCount >= 5 then
+                refreshDeleteTool()
+                clickCount = 0
+            end
+            
+            -- Fire delete event
+            local currentEvent = (player.Backpack:FindFirstChild("Delete") or player.Character:FindFirstChild("Delete"))
+            if currentEvent then
+                currentEvent = currentEvent.Script.Event
+                currentEvent:FireServer(target, mouse.Hit.Position)
+            end
         end
     end
 end)
 
-print("Infinite range delete bypass with toggle loaded!")
+print("Infinite range delete bypass with fast equip/unequip loaded!")
