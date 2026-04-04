@@ -18431,116 +18431,90 @@ local script = G2L["17a"];
 	
 	-- Text states
 	local TEXT_START = "Start Spam"
-	local TEXT_STOP = "Stop Spam"
 	local TEXT_NO_BLOCK = "No Block Selected"
 	local TEXT_PROCESSING = "Processing..."
 	
 	-- Target properties
-	local TARGET_COLOR = Color3.new(0.01, 0.01, 0.005) -- Really black (closest to it)
+	local TARGET_COLOR = Color3.new(0.01, 0.01, 0.005) -- Really black
 	local TARGET_MATERIAL = Enum.Material.Neon
-	local TARGET_ANCHORED = false
 	
 	-- ============================================================
 	-- PAINT TOOL HELPERS
 	-- ============================================================
-	local function hasPaintTool()
+	local function getPaintTool()
 		return LocalPlayer.Backpack:FindFirstChild("Paint")
 			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
 	end
 	
 	local function getPaintEvent()
-		local tool = hasPaintTool()
+		local tool = getPaintTool()
 		if tool then
 			return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
 		end
 		return nil
 	end
 	
-	-- INSTANT re-equip and unequip function (keeps UI visible)
-	local function refreshPaintTool()
-		local tool = hasPaintTool()
-		if not tool then
+	local function getPaintUI()
+		return LocalPlayer.PlayerGui:FindFirstChild("Paint")
+	end
+	
+	-- ============================================================
+	-- SPAM FIRE UNTIL PROPERTY MATCHES
+	-- ============================================================
+	local function spamPaintUntil(block, checkFunc, buttonText, materialText, maxTime)
+		local paintEvent = getPaintEvent()
+		local paintUI = getPaintUI()
+	
+		if not paintEvent or not paintUI then
 			return false
 		end
 	
-		local paintUI = LocalPlayer.PlayerGui:FindFirstChild("Paint")
-		if not paintUI then
-			return false
-		end
+		local startTime = tick()
 	
-		-- Store currently equipped tool to re-equip it after
-		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
-	
-		-- Move to backpack if it's in character
-		if tool.Parent == LocalPlayer.Character then
-			tool.Parent = LocalPlayer.Backpack
-			task.wait()
-		end
-	
-		-- Equip paint tool instantly
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-			LocalPlayer.Character.Humanoid:EquipTool(tool)
-	
-			-- Use RenderStepped to unequip on the very next frame (invisible to player)
-			RunService.RenderStepped:Wait()
-	
-			-- Enable UI BEFORE unequipping
-			paintUI.Enabled = true
-	
-			-- Unequip immediately
-			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-				LocalPlayer.Character.Humanoid:UnequipTools()
+		while tick() - startTime < maxTime do
+			-- Check if condition is met
+			if checkFunc(block) then
+				print("[BlockSpam] Property confirmed: " .. buttonText)
+				return true
 			end
 	
-			-- Wait a tiny bit and force UI to stay enabled
-			task.wait(0.05)
-			paintUI.Enabled = true
+			-- Spam fire the event
+			pcall(function()
+				paintEvent:FireServer(
+					block,
+					Enum.NormalId.Top,
+					block.Position,
+					buttonText,
+					TARGET_COLOR,
+					materialText,
+					""
+				)
+			end)
 	
-			-- Re-equip previous tool if there was one
-			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
-				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
-				end
-			end
-	
-			return true
+			task.wait(0.05) -- Fire every 0.05 seconds
 		end
 	
+		print("[BlockSpam] Timeout waiting for: " .. buttonText)
 		return false
 	end
 	
 	-- ============================================================
-	-- CHECK IF BLOCK NEEDS PAINTING
+	-- PAINT AND UNANCHOR BLOCK
 	-- ============================================================
-	local function needsPainting(block)
-		-- Check if block matches target properties
-		local colorMatches = (block.Color.R - TARGET_COLOR.R) < 0.01 
-			and (block.Color.G - TARGET_COLOR.G) < 0.01 
-			and (block.Color.B - TARGET_COLOR.B) < 0.01
-	
-		local materialMatches = block.Material == TARGET_MATERIAL
-		local anchorMatches = block.Anchored == TARGET_ANCHORED
-	
-		return not (colorMatches and materialMatches and anchorMatches)
-	end
-	
-	-- ============================================================
-	-- PAINT BLOCK
-	-- ============================================================
-	local function paintBlock(block)
+	local function processBlock(block)
 		if not block or not block:IsDescendantOf(workspace) then
 			return false
 		end
 	
-		-- Check if paint tool exists
-		if not hasPaintTool() then
+		-- Check paint tool exists
+		if not getPaintTool() then
 			BlockSpamButton.Text = "Paint tool not found"
 			task.wait(1)
 			BlockSpamButton.Text = TEXT_START
 			return false
 		end
 	
-		local paintUI = LocalPlayer.PlayerGui:FindFirstChild("Paint")
+		local paintUI = getPaintUI()
 		if not paintUI then
 			BlockSpamButton.Text = "Paint UI not found"
 			task.wait(1)
@@ -18548,8 +18522,8 @@ local script = G2L["17a"];
 			return false
 		end
 	
-		-- Initial refresh to activate paint tool
-		refreshPaintTool()
+		-- Enable paint UI
+		paintUI.Enabled = true
 	
 		-- Store original position
 		local originalPosition = LocalPlayer.Character.HumanoidRootPart.CFrame
@@ -18558,35 +18532,55 @@ local script = G2L["17a"];
 		local blockTop = block.Position + Vector3.new(0, block.Size.Y / 2 + 3, 0)
 		LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(blockTop)
 	
-		task.wait(0.1) -- Wait a bit to ensure teleport completes
+		print("[BlockSpam] Teleported to block")
+		task.wait(0.5) -- Wait for teleport to register
 	
-		-- Get paint event
-		local paintEvent = getPaintEvent()
-		if not paintEvent then
-			print("[BlockSpam] Paint event not found")
+		-- STEP 1: Paint the block black with neon material
+		BlockSpamButton.Text = "Painting..."
+		local paintSuccess = spamPaintUntil(
+			block,
+			function(b)
+				-- Check if color and material match
+				local colorMatches = math.abs(b.Color.R - TARGET_COLOR.R) < 0.02
+					and math.abs(b.Color.G - TARGET_COLOR.G) < 0.02
+					and math.abs(b.Color.B - TARGET_COLOR.B) < 0.02
+				local materialMatches = b.Material == TARGET_MATERIAL
+				return colorMatches and materialMatches
+			end,
+			"both 🤝", -- Paint + anchor
+			"toxic", -- Neon material
+			5 -- 5 second timeout
+		)
+	
+		if not paintSuccess then
+			print("[BlockSpam] Failed to paint block")
 			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
 			return false
 		end
 	
-		-- Paint the block with "both" (unanchor + paint black + neon)
-		pcall(function()
-			paintEvent:FireServer(
-				block,
-				Enum.NormalId.Top,
-				block.Position,
-				"both 🤝", -- both emoji (unanchor + paint)
-				TARGET_COLOR,
-				"toxic", -- Material (neon effect)
-				"" -- No spray
-			)
-		end)
+		-- STEP 2: Unanchor the block
+		BlockSpamButton.Text = "Unanchoring..."
+		local unanchorSuccess = spamPaintUntil(
+			block,
+			function(b)
+				-- Check if unanchored
+				return b.Anchored == false
+			end,
+			"both 🤝", -- This should unanchor
+			"anchor", -- Anchor mode
+			5 -- 5 second timeout
+		)
 	
-		task.wait(0.1) -- Wait for paint to apply
+		if not unanchorSuccess then
+			print("[BlockSpam] Failed to unanchor block")
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+			return false
+		end
 	
 		-- Teleport back to original position
 		LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
 	
-		print("[BlockSpam] Block painted and unanchored")
+		print("[BlockSpam] Block processed successfully!")
 		return true
 	end
 	
@@ -18601,23 +18595,17 @@ local script = G2L["17a"];
 			return
 		end
 	
-		-- Check if block needs painting
-		if not needsPainting(selectedBlock) then
-			BlockSpamButton.Text = "Block already correct"
-			task.wait(1)
-			BlockSpamButton.Text = TEXT_START
-			print("[BlockSpam] Block already has correct properties")
-			return
-		end
-	
 		isProcessing = true
 		BlockSpamButton.Text = TEXT_PROCESSING
 	
-		-- Paint the block
-		local success = paintBlock(selectedBlock)
+		-- Process the block
+		local success = processBlock(selectedBlock)
 	
 		if success then
 			BlockSpamButton.Text = "Block Updated!"
+			task.wait(1)
+		else
+			BlockSpamButton.Text = "Failed!"
 			task.wait(1)
 		end
 	
@@ -18639,8 +18627,7 @@ local script = G2L["17a"];
 	
 	BlockSpamButton.MouseLeave:Connect(function()
 		if not isProcessing then
-			-- Don't change text if it's showing a finish message
-			if not BlockSpamButton.Text:find("Block") or BlockSpamButton.Text == TEXT_NO_BLOCK then
+			if BlockSpamButton.Text == TEXT_NO_BLOCK then
 				BlockSpamButton.Text = TEXT_START
 			end
 		end
