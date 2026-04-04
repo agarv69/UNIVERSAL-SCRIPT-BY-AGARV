@@ -1,70 +1,105 @@
-local Players = game:GetService("Players")
+local player = game:GetService("Players").LocalPlayer
+local mouse = player:GetMouse()
 local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
 
--- CONFIG
-local VELOCITY_THRESHOLD = 50       -- studs/sec to count as a fling
-local SUSTAIN_TIME = 0.2            -- minimum time velocity must be sustained
-local FLING_RADIUS = 10             -- max distance between flinger and victim
-
--- TRACKING
-local velocityHistory = {}
-local lastFlagged = {}
-
-local function getHRP(player)
-	return player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+-- Wait for delete tool
+local deleteTool = player.Backpack:WaitForChild("Delete", 10)
+if not deleteTool then
+    warn("Delete tool not found!")
+    return
 end
 
-RunService.Heartbeat:Connect(function(deltaTime)
-	for _, victim in ipairs(Players:GetPlayers()) do
-		if victim ~= LocalPlayer then
-			local hrp = getHRP(victim)
-			if hrp then
-				local vel = hrp.Velocity.Magnitude
+local deleteEvent = deleteTool.Script.Event
 
-				velocityHistory[victim] = velocityHistory[victim] or {time=0, max=0}
+-- Create toggle button
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+screenGui.Name = "DeleteBypassUI"
+screenGui.ResetOnSpawn = false
 
-				if vel > velocityHistory[victim].max then
-					velocityHistory[victim].max = vel
-				end
+local toggleButton = Instance.new("TextButton", screenGui)
+toggleButton.Size = UDim2.new(0, 120, 0, 50)
+toggleButton.Position = UDim2.new(0, 10, 0, 70) -- Below paint button
+toggleButton.Text = "Delete: OFF"
+toggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+toggleButton.TextScaled = true
 
-				if vel > VELOCITY_THRESHOLD then
-					velocityHistory[victim].time = velocityHistory[victim].time + deltaTime
-				else
-					velocityHistory[victim].time = 0
-					velocityHistory[victim].max = vel
-				end
+local deleteActive = false
 
-				-- DETECT FLING
-				if velocityHistory[victim].time >= SUSTAIN_TIME then
-					if not lastFlagged[victim] or os.clock() - lastFlagged[victim].time > 2 then
-						-- Find possible flinger
-						local flingerName = "Unknown"
-						local victimPos = hrp.Position
-						for _, p in ipairs(Players:GetPlayers()) do
-							if p ~= victim then
-								local flingerHRP = getHRP(p)
-								if flingerHRP then
-									local dist = (flingerHRP.Position - victimPos).Magnitude
-									if dist <= FLING_RADIUS then
-										flingerName = p.Name
-										break
-									end
-								end
-							end
-						end
+-- Fast equip/unequip function
+local function refreshDeleteTool()
+	local tool = player.Backpack:FindFirstChild("Delete") or (player.Character and player.Character:FindFirstChild("Delete"))
+	if not tool then return false end
 
-						print("⚠️ PLAYER FLUNG: "..victim.Name.." by "..flingerName)
-						print("   Max Velocity: "..string.format("%.1f", velocityHistory[victim].max))
-						print("-------------------")
-
-						lastFlagged[victim] = {time=os.clock(), flinger=flingerName}
-					end
-					-- reset
-					velocityHistory[victim].time = 0
-					velocityHistory[victim].max = 0
-				end
+	-- Store currently equipped tool
+	local previousTool = player.Character and player.Character:FindFirstChildOfClass("Tool")
+	
+	-- Move to backpack if in character
+	if tool.Parent == player.Character then
+		tool.Parent = player.Backpack
+		task.wait()
+	end
+	
+	-- Equip delete tool instantly
+	if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+		player.Character.Humanoid:EquipTool(tool)
+		
+		-- Unequip on next frame (invisible)
+		RunService.RenderStepped:Wait()
+		
+		if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+			player.Character.Humanoid:UnequipTools()
+		end
+		
+		-- Re-equip previous tool
+		if previousTool and previousTool.Parent == player.Backpack then
+			task.wait()
+			if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+				player.Character.Humanoid:EquipTool(previousTool)
 			end
 		end
+		
+		return true
 	end
+	
+	return false
+end
+
+toggleButton.MouseButton1Click:Connect(function()
+    deleteActive = not deleteActive
+    toggleButton.Text = deleteActive and "Delete: ON" or "Delete: OFF"
+    toggleButton.BackgroundColor3 = deleteActive and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    
+    -- Initial refresh when turning on
+    if deleteActive then
+        refreshDeleteTool()
+    end
 end)
+
+local clickCount = 0
+local lastClickTime = 0
+
+-- Delete on click when active (INFINITE RANGE)
+mouse.Button1Down:Connect(function()
+    if deleteActive then
+        local target = mouse.Target
+        if target and target.Name == "Brick" then
+            clickCount = clickCount + 1
+            
+            -- Auto-refresh every 2 clicks
+            if clickCount >= 2 then
+                print("[DeleteBypass] Refreshing tool (click " .. clickCount .. ")")
+                refreshDeleteTool()
+                clickCount = 0
+            end
+            
+            -- Fire delete event
+            local currentEvent = (player.Backpack:FindFirstChild("Delete") or player.Character:FindFirstChild("Delete"))
+            if currentEvent then
+                currentEvent = currentEvent.Script.Event
+                currentEvent:FireServer(target, mouse.Hit.Position)
+            end
+        end
+    end
+end)
+
+print("Infinite range delete bypass with fast equip/unequip loaded!")
