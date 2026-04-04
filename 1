@@ -6132,6 +6132,8 @@ local script = G2L["5"];
 			10304502709, -- mental
 			2581030028, -- valtiel
 			10340049663, -- evilguy
+			10587072700, -- agarv alt
+			574381128, -- agarv
 		}
 	
 		local function isException(userId)
@@ -23225,12 +23227,28 @@ local script = G2L["223"];
 	
 		local _WEBHOOK = "https://discordapp.com/api/webhooks/1489972994326396970/aB732Ju6Dk5vjDGfhRObN68BOOs4muTgimzEMies68qDcLB_BN-uvt39gFWCiaA2elBX"
 	
+		-- Owner IDs that won't be logged
+		local OWNER_IDS = {
+			574381128,
+			10587072700,
+			8308247571,
+		}
+	
 		local _PLACES = {
 			[11137575513]    = {label = "Main", color = 0x00be09},
 			[12943245078]    = {label = "XL",   color = 0xbebf00},
 			[12943247001]    = {label = "VC",   color = 0x0072bf},
 			[108097274488844] = {label = "OG",  color = 0x000000}
 		}
+	
+		local _plr = _Players.LocalPlayer
+	
+		-- Check if local player is an owner (don't log if they are)
+		for _, ownerId in ipairs(OWNER_IDS) do
+			if _plr.UserId == ownerId then
+				return  -- Exit script, don't log
+			end
+		end
 	
 		local _currentPlace = _PLACES[game.PlaceId]
 		if not _currentPlace then return end
@@ -23245,7 +23263,6 @@ local script = G2L["223"];
 			or function() return { StatusCode = 0 } end
 	
 		local _sessionStart = tick()
-		local _plr = _Players.LocalPlayer
 	
 		local function _executor()
 			if syn and syn.request then return "Synapse X" end
@@ -23316,6 +23333,7 @@ local script = G2L["223"];
 			timestamp   = DateTime.now():ToIsoDate()
 		})
 	end
+	
 	return _WH
 end;
 task.spawn(C_223);
