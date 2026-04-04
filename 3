@@ -15389,41 +15389,209 @@ local function C_146()
 local script = G2L["146"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	local BKitBreakRow = script.Parent
-	local BKitBreakButton = BKitBreakRow.BKitBreakButton
-	local originalText = BKitBreakButton.Text
+	local RunService = game:GetService("RunService")
 	
-	BKitBreakButton.MouseButton1Click:Connect(function()
-		BKitBreakButton.Text = "BREAKING..."
-		task.spawn(function()
-			local success, err = pcall(function()
-				local character = LocalPlayer.Character
-				if not character then error("No character") end
+	local BlockSpamRow = script.Parent
+	local BkitGroup = BlockSpamRow.Parent
+	local BkitAccentColor = BkitGroup:WaitForChild("BkitAccentColor")
+	local SpamSelectButton = BlockSpamRow:WaitForChild("SpamSelectButton")
 	
-				-- Find delete tool in character or backpack, no equipping needed
-				local deleteTool = character:FindFirstChild("Delete")
-					or LocalPlayer.Backpack:FindFirstChild("Delete")
-				if not deleteTool then error("Delete tool not found") end
+	-- Shared state for other scripts to access
+	local SelectedBlockValue = BkitGroup:FindFirstChild("SelectedBlock") or Instance.new("ObjectValue")
+	SelectedBlockValue.Name = "SelectedBlock"
+	SelectedBlockValue.Parent = BkitGroup
+	SelectedBlockValue.Value = nil
 	
-				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+	-- States
+	local isSelectingBlock = false
+	local currentHighlight = nil
+	local mouseConn = nil
 	
-				local rs = game:GetService("ReplicatedStorage")
-				local brick = rs:FindFirstChild("Brick")
-				if not brick then error("No Brick in ReplicatedStorage") end
+	-- Text states
+	local TEXT_DEFAULT = "Select Block"
+	local TEXT_SELECTING = "Select a block..."
+	local TEXT_SELECTED = "Block Selected"
 	
-				event:FireServer(brick, character.HumanoidRootPart.Position)
-			end)
+	-- Initialize button text
+	SpamSelectButton.Text = TEXT_DEFAULT
 	
-			if success then
-				BKitBreakButton.Text = "BROKEN!"
-				task.wait(3)
-				BKitBreakButton.Text = originalText
-			else
-				BKitBreakButton.Text = "FAILED"
-				task.wait(3)
-				BKitBreakButton.Text = originalText
+	-- ============================================================
+	-- CLEANUP HIGHLIGHT
+	-- ============================================================
+	local function removeHighlight()
+		if currentHighlight then
+			currentHighlight:Destroy()
+			currentHighlight = nil
+		end
+	end
+	
+	-- ============================================================
+	-- CREATE HIGHLIGHT ON SELECTED BLOCK
+	-- ============================================================
+	local function highlightBlock(block)
+		removeHighlight()
+	
+		if not block or not block:IsA("BasePart") then return end
+	
+		-- Create highlight
+		local highlight = Instance.new("Highlight")
+		highlight.Adornee = block
+		highlight.FillColor = Color3.fromRGB(255, 255, 0) -- Yellow
+		highlight.OutlineColor = Color3.fromRGB(255, 200, 0)
+		highlight.FillTransparency = 0.5
+		highlight.OutlineTransparency = 0
+		highlight.Parent = block
+	
+		currentHighlight = highlight
+	end
+	
+	-- ============================================================
+	-- SELECT BLOCK
+	-- ============================================================
+	local function selectBlock(block)
+		if not block or not block:IsA("BasePart") or block.Name ~= "Brick" then
+			return false
+		end
+	
+		-- Check if it's in Workspace.Bricks.[Username]
+		local parent = block.Parent
+		if not parent or parent.Parent ~= workspace:FindFirstChild("Bricks") then
+			return false
+		end
+	
+		-- Set the selected block
+		SelectedBlockValue.Value = block
+		highlightBlock(block)
+	
+		-- Stop selecting mode
+		isSelectingBlock = false
+		SpamSelectButton.Text = TEXT_SELECTED
+	
+		print("[SelectBlock] Block selected:", block:GetFullName())
+		return true
+	end
+	
+	-- ============================================================
+	-- UNSELECT BLOCK
+	-- ============================================================
+	local function unselectBlock()
+		SelectedBlockValue.Value = nil
+		removeHighlight()
+		isSelectingBlock = false
+		SpamSelectButton.Text = TEXT_DEFAULT
+	
+		print("[SelectBlock] Block unselected")
+	end
+	
+	-- ============================================================
+	-- START SELECTING MODE
+	-- ============================================================
+	local function startSelecting()
+		isSelectingBlock = true
+		SpamSelectButton.Text = TEXT_SELECTING
+	
+		-- Disconnect any existing mouse connection
+		if mouseConn then
+			mouseConn:Disconnect()
+			mouseConn = nil
+		end
+	
+		-- Set up mouse click detection
+		local mouse = LocalPlayer:GetMouse()
+		mouseConn = mouse.Button1Down:Connect(function()
+			if not isSelectingBlock then return end
+	
+			local target = mouse.Target
+			if target then
+				-- If clicking the currently selected block, unselect it
+				if SelectedBlockValue.Value == target then
+					unselectBlock()
+				else
+					-- Try to select the new block
+					if selectBlock(target) then
+						-- Disconnect after successful selection
+						if mouseConn then
+							mouseConn:Disconnect()
+							mouseConn = nil
+						end
+					end
+				end
 			end
 		end)
+	
+		print("[SelectBlock] Selecting mode started - click a brick to select")
+	end
+	
+	-- ============================================================
+	-- STOP SELECTING MODE (CANCEL)
+	-- ============================================================
+	local function stopSelecting()
+		isSelectingBlock = false
+	
+		if mouseConn then
+			mouseConn:Disconnect()
+			mouseConn = nil
+		end
+	
+		-- Update text based on whether a block is selected
+		if SelectedBlockValue.Value then
+			SpamSelectButton.Text = TEXT_SELECTED
+		else
+			SpamSelectButton.Text = TEXT_DEFAULT
+		end
+	
+		print("[SelectBlock] Selecting mode cancelled")
+	end
+	
+	-- ============================================================
+	-- BUTTON CLICK HANDLER
+	-- ============================================================
+	SpamSelectButton.MouseButton1Click:Connect(function()
+		-- State machine based on current state
+		if isSelectingBlock then
+			-- Currently selecting -> Cancel selection mode
+			stopSelecting()
+		elseif SelectedBlockValue.Value then
+			-- Block is selected -> Start selecting again (allows re-selection)
+			startSelecting()
+		else
+			-- No block selected, not selecting -> Start selecting
+			startSelecting()
+		end
+	end)
+	
+	-- ============================================================
+	-- WATCH FOR SELECTED BLOCK DELETION
+	-- ============================================================
+	SelectedBlockValue:GetPropertyChangedSignal("Value"):Connect(function()
+		local selectedBlock = SelectedBlockValue.Value
+	
+		if selectedBlock then
+			-- Watch for block deletion
+			local ancestryConn
+			ancestryConn = selectedBlock.AncestryChanged:Connect(function()
+				if not selectedBlock:IsDescendantOf(workspace) then
+					-- Block was deleted
+					unselectBlock()
+					if ancestryConn then
+						ancestryConn:Disconnect()
+					end
+				end
+			end)
+		end
+	end)
+	
+	-- ============================================================
+	-- CLEANUP
+	-- ============================================================
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			if mouseConn then
+				mouseConn:Disconnect()
+			end
+			removeHighlight()
+			print("[SelectBlock] Cleaned up")
+		end
 	end)
 end;
 task.spawn(C_146);
@@ -15432,41 +15600,274 @@ local function C_149()
 local script = G2L["149"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	local BKitBreakRow = script.Parent
-	local BKitBreakButton = BKitBreakRow.BKitBreakButton
-	local originalText = BKitBreakButton.Text
+	local RunService = game:GetService("RunService")
 	
-	BKitBreakButton.MouseButton1Click:Connect(function()
-		BKitBreakButton.Text = "BREAKING..."
-		task.spawn(function()
-			local success, err = pcall(function()
-				local character = LocalPlayer.Character
-				if not character then error("No character") end
+	local BlockSpamRow = script.Parent
+	local BkitGroup = BlockSpamRow.Parent
+	local BkitAccentColor = BkitGroup:WaitForChild("BkitAccentColor")
+	local BlockSpamButton = BlockSpamRow:WaitForChild("BlockSpamButton")
 	
-				-- Find delete tool in character or backpack, no equipping needed
-				local deleteTool = character:FindFirstChild("Delete")
-					or LocalPlayer.Backpack:FindFirstChild("Delete")
-				if not deleteTool then error("Delete tool not found") end
+	-- Get the selected block value
+	local SelectedBlockValue = BkitGroup:WaitForChild("SelectedBlock")
 	
-				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+	-- States
+	local isSpamming = false
+	local spamLoop = nil
+	local buildTool = nil
+	local buildEvent = nil
 	
-				local rs = game:GetService("ReplicatedStorage")
-				local brick = rs:FindFirstChild("Brick")
-				if not brick then error("No Brick in ReplicatedStorage") end
+	-- Text states
+	local TEXT_DEFAULT = "Start Spam"
+	local TEXT_STOP = "Stop Spam"
+	local TEXT_NO_BLOCK = "No Block Selected"
+	local TEXT_NOT_UNANCHORED = "Block not unanchored"
 	
-				event:FireServer(brick, character.HumanoidRootPart.Position)
-			end)
+	-- Initialize button text
+	BlockSpamButton.Text = TEXT_DEFAULT
 	
-			if success then
-				BKitBreakButton.Text = "BROKEN!"
-				task.wait(3)
-				BKitBreakButton.Text = originalText
-			else
-				BKitBreakButton.Text = "FAILED"
-				task.wait(3)
-				BKitBreakButton.Text = originalText
+	-- ============================================================
+	-- HELPER FUNCTIONS
+	-- ============================================================
+	local function hasBuildTool()
+		return LocalPlayer.Backpack:FindFirstChild("Build")
+			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Build"))
+	end
+	
+	local function getBuildEvent()
+		local tool = hasBuildTool()
+		if tool then
+			return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
+		end
+		return nil
+	end
+	
+	-- INSTANT re-equip and unequip function (same as BuildBypass)
+	local function refreshBuildTool()
+		local tool = hasBuildTool()
+		if not tool then
+			return false
+		end
+	
+		local buildUI = LocalPlayer.PlayerGui:FindFirstChild("Build")
+		if not buildUI then
+			return false
+		end
+	
+		-- Store currently equipped tool to re-equip it after
+		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+		-- Move to backpack if it's in character
+		if tool.Parent == LocalPlayer.Character then
+			tool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		-- Equip build tool instantly
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:EquipTool(tool)
+	
+			-- Use RenderStepped to unequip on the very next frame (invisible to player)
+			RunService.RenderStepped:Wait()
+	
+			-- Enable UI BEFORE unequipping
+			buildUI.Enabled = true
+	
+			-- Unequip immediately
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+				LocalPlayer.Character.Humanoid:UnequipTools()
+			end
+	
+			-- Wait a tiny bit and force UI to stay enabled
+			task.wait(0.05)
+			buildUI.Enabled = true
+	
+			-- Re-equip previous tool if there was one
+			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+				end
+			end
+	
+			return true
+		end
+	
+		return false
+	end
+	
+	-- ============================================================
+	-- VALIDATION
+	-- ============================================================
+	local function validateBlock()
+		local selectedBlock = SelectedBlockValue.Value
+	
+		-- Check if block is selected
+		if not selectedBlock then
+			return false, TEXT_NO_BLOCK
+		end
+	
+		-- Check if block still exists
+		if not selectedBlock:IsDescendantOf(workspace) then
+			return false, TEXT_NO_BLOCK
+		end
+	
+		-- Check if block has Drag (is unanchored)
+		if not selectedBlock:FindFirstChild("Drag") then
+			return false, TEXT_NOT_UNANCHORED
+		end
+	
+		return true, nil
+	end
+	
+	-- ============================================================
+	-- START SPAMMING
+	-- ============================================================
+	local function startSpam()
+		-- Validate block first
+		local isValid, errorText = validateBlock()
+		if not isValid then
+			BlockSpamButton.Text = errorText
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_DEFAULT
+			return
+		end
+	
+		-- Check if build tool exists
+		if not hasBuildTool() then
+			BlockSpamButton.Text = "Build tool not found"
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_DEFAULT
+			return
+		end
+	
+		local buildUI = LocalPlayer.PlayerGui:FindFirstChild("Build")
+		if not buildUI then
+			BlockSpamButton.Text = "Build UI not found"
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_DEFAULT
+			return
+		end
+	
+		-- Initial refresh to activate build tool
+		if not refreshBuildTool() then
+			BlockSpamButton.Text = "Failed to activate"
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_DEFAULT
+			return
+		end
+	
+		isSpamming = true
+		BlockSpamButton.Text = TEXT_STOP
+	
+		print("[BlockSpam] Starting spam on block:", SelectedBlockValue.Value:GetFullName())
+	
+		-- Start the spam loop
+		spamLoop = task.spawn(function()
+			local refreshCounter = 0
+	
+			while isSpamming do
+				local selectedBlock = SelectedBlockValue.Value
+	
+				-- Validate block still exists and has Drag
+				if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) or not selectedBlock:FindFirstChild("Drag") then
+					print("[BlockSpam] Block invalid, stopping spam")
+					stopSpam()
+					break
+				end
+	
+				-- Get current build tool and event
+				local currentTool = hasBuildTool()
+				local currentEvent = getBuildEvent()
+				local currentUI = LocalPlayer.PlayerGui:FindFirstChild("Build")
+	
+				if currentEvent and currentUI then
+					-- Get the center position of the selected block
+					local blockPosition = selectedBlock.Position
+					local blockSize = selectedBlock.Size
+					local centerCFrame = CFrame.new(blockPosition)
+	
+					-- Fire build event at the center of the block
+					pcall(function()
+						currentEvent:FireServer(
+							selectedBlock,
+							Enum.NormalId.Top, -- Surface
+							centerCFrame.Position, -- Position at center
+							currentUI.Button.Text -- Block type from UI
+						)
+					end)
+				else
+					-- Event lost, try to refresh
+					print("[BlockSpam] Event lost, refreshing...")
+					refreshBuildTool()
+				end
+	
+				-- Refresh tool every 50 iterations to prevent it from breaking
+				refreshCounter = refreshCounter + 1
+				if refreshCounter >= 50 then
+					refreshBuildTool()
+					refreshCounter = 0
+				end
+	
+				task.wait(0.05) -- Spam rate (20 times per second)
 			end
 		end)
+	end
+	
+	-- ============================================================
+	-- STOP SPAMMING
+	-- ============================================================
+	local function stopSpam()
+		isSpamming = false
+		BlockSpamButton.Text = TEXT_DEFAULT
+	
+		if spamLoop then
+			task.cancel(spamLoop)
+			spamLoop = nil
+		end
+	
+		print("[BlockSpam] Spam stopped")
+	end
+	
+	-- ============================================================
+	-- BUTTON HOVER (show errors)
+	-- ============================================================
+	BlockSpamButton.MouseEnter:Connect(function()
+		if not isSpamming then
+			local isValid, errorText = validateBlock()
+			if not isValid then
+				BlockSpamButton.Text = errorText
+			end
+		end
+	end)
+	
+	BlockSpamButton.MouseLeave:Connect(function()
+		if not isSpamming then
+			BlockSpamButton.Text = TEXT_DEFAULT
+		end
+	end)
+	
+	-- ============================================================
+	-- BUTTON CLICK HANDLER
+	-- ============================================================
+	BlockSpamButton.MouseButton1Click:Connect(function()
+		if isSpamming then
+			-- Currently spamming -> Stop
+			stopSpam()
+		else
+			-- Not spamming -> Start
+			startSpam()
+		end
+	end)
+	
+	-- ============================================================
+	-- CLEANUP
+	-- ============================================================
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			if isSpamming then
+				stopSpam()
+			end
+			print("[BlockSpam] Cleaned up")
+		end
 	end)
 end;
 task.spawn(C_149);
