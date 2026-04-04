@@ -15389,41 +15389,209 @@ local function C_146()
 local script = G2L["146"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	local BKitBreakRow = script.Parent
-	local BKitBreakButton = BKitBreakRow.BKitBreakButton
-	local originalText = BKitBreakButton.Text
+	local RunService = game:GetService("RunService")
 	
-	BKitBreakButton.MouseButton1Click:Connect(function()
-		BKitBreakButton.Text = "BREAKING..."
-		task.spawn(function()
-			local success, err = pcall(function()
-				local character = LocalPlayer.Character
-				if not character then error("No character") end
+	local BlockSpamRow = script.Parent
+	local BkitGroup = BlockSpamRow.Parent
+	local BkitAccentColor = BkitGroup:WaitForChild("BkitAccentColor")
+	local SpamSelectButton = BlockSpamRow:WaitForChild("SpamSelectButton")
 	
-				-- Find delete tool in character or backpack, no equipping needed
-				local deleteTool = character:FindFirstChild("Delete")
-					or LocalPlayer.Backpack:FindFirstChild("Delete")
-				if not deleteTool then error("Delete tool not found") end
+	-- Shared state for other scripts to access
+	local SelectedBlockValue = BkitGroup:FindFirstChild("SelectedBlock") or Instance.new("ObjectValue")
+	SelectedBlockValue.Name = "SelectedBlock"
+	SelectedBlockValue.Parent = BkitGroup
+	SelectedBlockValue.Value = nil
 	
-				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+	-- States
+	local isSelectingBlock = false
+	local currentHighlight = nil
+	local mouseConn = nil
 	
-				local rs = game:GetService("ReplicatedStorage")
-				local brick = rs:FindFirstChild("Brick")
-				if not brick then error("No Brick in ReplicatedStorage") end
+	-- Text states
+	local TEXT_DEFAULT = "Select Block"
+	local TEXT_SELECTING = "Select a block..."
+	local TEXT_SELECTED = "Block Selected"
 	
-				event:FireServer(brick, character.HumanoidRootPart.Position)
-			end)
+	-- Initialize button text
+	SpamSelectButton.Text = TEXT_DEFAULT
 	
-			if success then
-				BKitBreakButton.Text = "BROKEN!"
-				task.wait(3)
-				BKitBreakButton.Text = originalText
-			else
-				BKitBreakButton.Text = "FAILED"
-				task.wait(3)
-				BKitBreakButton.Text = originalText
+	-- ============================================================
+	-- CLEANUP HIGHLIGHT
+	-- ============================================================
+	local function removeHighlight()
+		if currentHighlight then
+			currentHighlight:Destroy()
+			currentHighlight = nil
+		end
+	end
+	
+	-- ============================================================
+	-- CREATE HIGHLIGHT ON SELECTED BLOCK
+	-- ============================================================
+	local function highlightBlock(block)
+		removeHighlight()
+	
+		if not block or not block:IsA("BasePart") then return end
+	
+		-- Create highlight
+		local highlight = Instance.new("Highlight")
+		highlight.Adornee = block
+		highlight.FillColor = Color3.fromRGB(255, 255, 0) -- Yellow
+		highlight.OutlineColor = Color3.fromRGB(255, 200, 0)
+		highlight.FillTransparency = 0.5
+		highlight.OutlineTransparency = 0
+		highlight.Parent = block
+	
+		currentHighlight = highlight
+	end
+	
+	-- ============================================================
+	-- SELECT BLOCK
+	-- ============================================================
+	local function selectBlock(block)
+		if not block or not block:IsA("BasePart") or block.Name ~= "Brick" then
+			return false
+		end
+	
+		-- Check if it's in Workspace.Bricks.[Username]
+		local parent = block.Parent
+		if not parent or parent.Parent ~= workspace:FindFirstChild("Bricks") then
+			return false
+		end
+	
+		-- Set the selected block
+		SelectedBlockValue.Value = block
+		highlightBlock(block)
+	
+		-- Stop selecting mode
+		isSelectingBlock = false
+		SpamSelectButton.Text = TEXT_SELECTED
+	
+		print("[SelectBlock] Block selected:", block:GetFullName())
+		return true
+	end
+	
+	-- ============================================================
+	-- UNSELECT BLOCK
+	-- ============================================================
+	local function unselectBlock()
+		SelectedBlockValue.Value = nil
+		removeHighlight()
+		isSelectingBlock = false
+		SpamSelectButton.Text = TEXT_DEFAULT
+	
+		print("[SelectBlock] Block unselected")
+	end
+	
+	-- ============================================================
+	-- START SELECTING MODE
+	-- ============================================================
+	local function startSelecting()
+		isSelectingBlock = true
+		SpamSelectButton.Text = TEXT_SELECTING
+	
+		-- Disconnect any existing mouse connection
+		if mouseConn then
+			mouseConn:Disconnect()
+			mouseConn = nil
+		end
+	
+		-- Set up mouse click detection
+		local mouse = LocalPlayer:GetMouse()
+		mouseConn = mouse.Button1Down:Connect(function()
+			if not isSelectingBlock then return end
+	
+			local target = mouse.Target
+			if target then
+				-- If clicking the currently selected block, unselect it
+				if SelectedBlockValue.Value == target then
+					unselectBlock()
+				else
+					-- Try to select the new block
+					if selectBlock(target) then
+						-- Disconnect after successful selection
+						if mouseConn then
+							mouseConn:Disconnect()
+							mouseConn = nil
+						end
+					end
+				end
 			end
 		end)
+	
+		print("[SelectBlock] Selecting mode started - click a brick to select")
+	end
+	
+	-- ============================================================
+	-- STOP SELECTING MODE (CANCEL)
+	-- ============================================================
+	local function stopSelecting()
+		isSelectingBlock = false
+	
+		if mouseConn then
+			mouseConn:Disconnect()
+			mouseConn = nil
+		end
+	
+		-- Update text based on whether a block is selected
+		if SelectedBlockValue.Value then
+			SpamSelectButton.Text = TEXT_SELECTED
+		else
+			SpamSelectButton.Text = TEXT_DEFAULT
+		end
+	
+		print("[SelectBlock] Selecting mode cancelled")
+	end
+	
+	-- ============================================================
+	-- BUTTON CLICK HANDLER
+	-- ============================================================
+	SpamSelectButton.MouseButton1Click:Connect(function()
+		-- State machine based on current state
+		if isSelectingBlock then
+			-- Currently selecting -> Cancel selection mode
+			stopSelecting()
+		elseif SelectedBlockValue.Value then
+			-- Block is selected -> Start selecting again (allows re-selection)
+			startSelecting()
+		else
+			-- No block selected, not selecting -> Start selecting
+			startSelecting()
+		end
+	end)
+	
+	-- ============================================================
+	-- WATCH FOR SELECTED BLOCK DELETION
+	-- ============================================================
+	SelectedBlockValue:GetPropertyChangedSignal("Value"):Connect(function()
+		local selectedBlock = SelectedBlockValue.Value
+	
+		if selectedBlock then
+			-- Watch for block deletion
+			local ancestryConn
+			ancestryConn = selectedBlock.AncestryChanged:Connect(function()
+				if not selectedBlock:IsDescendantOf(workspace) then
+					-- Block was deleted
+					unselectBlock()
+					if ancestryConn then
+						ancestryConn:Disconnect()
+					end
+				end
+			end)
+		end
+	end)
+	
+	-- ============================================================
+	-- CLEANUP
+	-- ============================================================
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			if mouseConn then
+				mouseConn:Disconnect()
+			end
+			removeHighlight()
+			print("[SelectBlock] Cleaned up")
+		end
 	end)
 end;
 task.spawn(C_146);
@@ -15664,6 +15832,9 @@ local script = G2L["155"];
 	local mouseConn = nil
 	local backpackConn = nil
 	local charConn = nil
+	local lastClickTime = 0
+	local clickCount = 0
+	local AUTO_REFRESH_THRESHOLD = 5 -- Refresh after 5 rapid clicks with no painting
 	
 	local NORMAL_TEXT = "Paint"
 	local NOT_FOUND_TEXT = "Tool not found"
@@ -15696,6 +15867,62 @@ local script = G2L["155"];
 			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
 	end
 	
+	-- INSTANT re-equip and unequip function (keeps UI visible)
+	local function refreshPaintTool()
+		local paintTool = hasPaintTool()
+		if not paintTool then
+			print("[PaintBypass] Paint tool not found, cannot refresh")
+			return false
+		end
+	
+		local paintUI = LocalPlayer.PlayerGui:FindFirstChild("Paint")
+		if not paintUI then
+			print("[PaintBypass] Paint UI not found, cannot refresh")
+			return false
+		end
+	
+		-- Store currently equipped tool to re-equip it after
+		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+		-- Move to backpack if it's in character
+		if paintTool.Parent == LocalPlayer.Character then
+			paintTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		-- Equip paint tool instantly
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
+	
+			-- Use RenderStepped to unequip on the very next frame (invisible to player)
+			game:GetService("RunService").RenderStepped:Wait()
+	
+			-- Enable UI BEFORE unequipping
+			paintUI.Enabled = true
+	
+			-- Unequip immediately
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+				LocalPlayer.Character.Humanoid:UnequipTools()
+			end
+	
+			-- Wait a tiny bit and force UI to stay enabled
+			task.wait(0.05)
+			paintUI.Enabled = true
+	
+			-- Re-equip previous tool if there was one
+			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+				end
+			end
+	
+			print("[PaintBypass] Tool refreshed (invisible, UI kept)")
+			return true
+		end
+	
+		return false
+	end
+	
 	local function enable()
 		local paintUI = LocalPlayer.PlayerGui:FindFirstChild("Paint")
 		if not paintUI then
@@ -15721,36 +15948,57 @@ local script = G2L["155"];
 			return
 		end
 	
-		-- Auto-equip then unequip the tool
-		if paintTool.Parent == LocalPlayer.Backpack then
-			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
-			task.wait(0.1) -- Small delay to let the tool initialize
-			paintUI.Enabled = true -- Enable UI before unequipping
-			LocalPlayer.Character.Humanoid:UnequipTools()
-			task.wait(0.05)
-			paintUI.Enabled = true -- Keep UI visible after unequipping
-		else
-			paintUI.Enabled = true
-		end
+		-- Initial refresh (instant and invisible)
+		refreshPaintTool()
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
+	
 			if target and not paintUI.PickerUI.Visible then
+				local currentTime = tick()
+	
+				-- Track clicks to detect if painting is not working
+				if currentTime - lastClickTime < 0.5 then -- Clicks within 0.5 seconds
+					clickCount = clickCount + 1
+				else
+					clickCount = 1
+				end
+				lastClickTime = currentTime
+	
+				-- If we've clicked rapidly many times, assume the tool needs refresh
+				if clickCount >= AUTO_REFRESH_THRESHOLD then
+					print("[PaintBypass] Auto-refresh triggered (tool may have stopped working)")
+					refreshPaintTool()
+					clickCount = 0 -- Reset counter
+				end
+	
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
 				local inRange = true
 				if inRange then
-					paintEvent:FireServer(
-						target,
-						mouse.TargetSurface,
-						mouse.Hit.Position,
-						paintUI.Button.Text,
-						paintUI.Color.Value.BackgroundColor3,
-						paintUI.Mater.Value.Text,
-						paintUI.MaterUI.Spray.Input.Text
-					)
+					-- Re-find the paint tool and event in case it changed
+					local currentPaintTool = hasPaintTool()
+					if currentPaintTool then
+						local currentEvent = currentPaintTool:FindFirstChild("Script") and currentPaintTool.Script:FindFirstChild("Event")
+						local currentUI = LocalPlayer.PlayerGui:FindFirstChild("Paint")
+	
+						if currentEvent and currentUI then
+							currentEvent:FireServer(
+								target,
+								mouse.TargetSurface,
+								mouse.Hit.Position,
+								currentUI.Button.Text,
+								currentUI.Color.Value.BackgroundColor3,
+								currentUI.Mater.Value.Text,
+								currentUI.MaterUI.Spray.Input.Text
+							)
+						else
+							print("[PaintBypass] Event or UI lost, refreshing...")
+							refreshPaintTool()
+						end
+					end
 				end
 			end
 		end)
@@ -16347,6 +16595,9 @@ local script = G2L["161"];
 	local mouseConn = nil
 	local backpackConn = nil
 	local charConn = nil
+	local lastClickTime = 0
+	local clickCount = 0
+	local AUTO_REFRESH_THRESHOLD = 5 -- Refresh after 5 rapid clicks with no shaping
 	
 	local NORMAL_TEXT = "Shape"
 	local NOT_FOUND_TEXT = "Tool not found"
@@ -16379,6 +16630,62 @@ local script = G2L["161"];
 			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shape"))
 	end
 	
+	-- INSTANT re-equip and unequip function (keeps UI visible)
+	local function refreshShapeTool()
+		local shapeTool = hasShapeTool()
+		if not shapeTool then
+			print("[ShapeBypass] Shape tool not found, cannot refresh")
+			return false
+		end
+	
+		local shapeUI = LocalPlayer.PlayerGui:FindFirstChild("Shape")
+		if not shapeUI then
+			print("[ShapeBypass] Shape UI not found, cannot refresh")
+			return false
+		end
+	
+		-- Store currently equipped tool to re-equip it after
+		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+		-- Move to backpack if it's in character
+		if shapeTool.Parent == LocalPlayer.Character then
+			shapeTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		-- Equip shape tool instantly
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
+	
+			-- Use RenderStepped to unequip on the very next frame (invisible to player)
+			game:GetService("RunService").RenderStepped:Wait()
+	
+			-- Enable UI BEFORE unequipping
+			shapeUI.Enabled = true
+	
+			-- Unequip immediately
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+				LocalPlayer.Character.Humanoid:UnequipTools()
+			end
+	
+			-- Wait a tiny bit and force UI to stay enabled
+			task.wait(0.05)
+			shapeUI.Enabled = true
+	
+			-- Re-equip previous tool if there was one
+			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+				end
+			end
+	
+			print("[ShapeBypass] Tool refreshed (invisible, UI kept)")
+			return true
+		end
+	
+		return false
+	end
+	
 	local function enable()
 		local shapeUI = LocalPlayer.PlayerGui:FindFirstChild("Shape")
 		if not shapeUI then
@@ -16404,34 +16711,55 @@ local script = G2L["161"];
 			return
 		end
 	
-		-- Auto-equip then unequip the tool
-		if shapeTool.Parent == LocalPlayer.Backpack then
-			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
-			task.wait(0.1) -- Small delay to let the tool initialize
-			shapeUI.Enabled = true -- Enable UI before unequipping
-			LocalPlayer.Character.Humanoid:UnequipTools()
-			task.wait(0.05)
-			shapeUI.Enabled = true -- Keep UI visible after unequipping
-		else
-			shapeUI.Enabled = true
-		end
+		-- Initial refresh (instant and invisible)
+		refreshShapeTool()
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
+	
 			-- Only works on "Brick" objects
 			if target and target.Name == "Brick" then
+				local currentTime = tick()
+	
+				-- Track clicks to detect if shaping is not working
+				if currentTime - lastClickTime < 0.5 then -- Clicks within 0.5 seconds
+					clickCount = clickCount + 1
+				else
+					clickCount = 1
+				end
+				lastClickTime = currentTime
+	
+				-- If we've clicked rapidly many times, assume the tool needs refresh
+				if clickCount >= AUTO_REFRESH_THRESHOLD then
+					print("[ShapeBypass] Auto-refresh triggered (tool may have stopped working)")
+					refreshShapeTool()
+					clickCount = 0 -- Reset counter
+				end
+	
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
 				local inRange = true
 				if inRange then
-					shapeEvent:FireServer(
-						target,
-						mouse.TargetSurface,
-						mouse.Hit.Position,
-						shapeUI.Button.Text
-					)
+					-- Re-find the shape tool and event in case it changed
+					local currentShapeTool = hasShapeTool()
+					if currentShapeTool then
+						local currentEvent = currentShapeTool:FindFirstChild("Script") and currentShapeTool.Script:FindFirstChild("Event")
+						local currentUI = LocalPlayer.PlayerGui:FindFirstChild("Shape")
+	
+						if currentEvent and currentUI then
+							currentEvent:FireServer(
+								target,
+								mouse.TargetSurface,
+								mouse.Hit.Position,
+								currentUI.Button.Text
+							)
+						else
+							print("[ShapeBypass] Event or UI lost, refreshing...")
+							refreshShapeTool()
+						end
+					end
 				end
 			end
 		end)
@@ -16531,6 +16859,9 @@ local script = G2L["165"];
 	local mouseConn = nil
 	local backpackConn = nil
 	local charConn = nil
+	local lastClickTime = 0
+	local clickCount = 0
+	local AUTO_REFRESH_THRESHOLD = 5 -- Refresh after 5 rapid clicks with no digging
 	
 	local NORMAL_TEXT = "Shovel"
 	local NOT_FOUND_TEXT = "Tool not found"
@@ -16563,6 +16894,62 @@ local script = G2L["165"];
 			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shovel"))
 	end
 	
+	-- INSTANT re-equip and unequip function (keeps UI visible)
+	local function refreshShovelTool()
+		local shovelTool = hasShovelTool()
+		if not shovelTool then
+			print("[ShovelBypass] Shovel tool not found, cannot refresh")
+			return false
+		end
+	
+		local shovelUI = LocalPlayer.PlayerGui:FindFirstChild("Shovel")
+		if not shovelUI then
+			print("[ShovelBypass] Shovel UI not found, cannot refresh")
+			return false
+		end
+	
+		-- Store currently equipped tool to re-equip it after
+		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+		-- Move to backpack if it's in character
+		if shovelTool.Parent == LocalPlayer.Character then
+			shovelTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		-- Equip shovel tool instantly
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:EquipTool(shovelTool)
+	
+			-- Use RenderStepped to unequip on the very next frame (invisible to player)
+			game:GetService("RunService").RenderStepped:Wait()
+	
+			-- Enable UI BEFORE unequipping
+			shovelUI.Enabled = true
+	
+			-- Unequip immediately
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+				LocalPlayer.Character.Humanoid:UnequipTools()
+			end
+	
+			-- Wait a tiny bit and force UI to stay enabled
+			task.wait(0.05)
+			shovelUI.Enabled = true
+	
+			-- Re-equip previous tool if there was one
+			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+				end
+			end
+	
+			print("[ShovelBypass] Tool refreshed (invisible, UI kept)")
+			return true
+		end
+	
+		return false
+	end
+	
 	local function enable()
 		local shovelUI = LocalPlayer.PlayerGui:FindFirstChild("Shovel")
 		if not shovelUI then
@@ -16588,33 +16975,54 @@ local script = G2L["165"];
 			return
 		end
 	
-		-- Auto-equip then unequip the tool
-		if shovelTool.Parent == LocalPlayer.Backpack then
-			LocalPlayer.Character.Humanoid:EquipTool(shovelTool)
-			task.wait(0.1) -- Small delay to let the tool initialize
-			shovelUI.Enabled = true -- Enable UI before unequipping
-			LocalPlayer.Character.Humanoid:UnequipTools()
-			task.wait(0.05)
-			shovelUI.Enabled = true -- Keep UI visible after unequipping
-		else
-			shovelUI.Enabled = true
-		end
+		-- Initial refresh (instant and invisible)
+		refreshShovelTool()
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
+	
 			if target then
+				local currentTime = tick()
+	
+				-- Track clicks to detect if digging is not working
+				if currentTime - lastClickTime < 0.5 then -- Clicks within 0.5 seconds
+					clickCount = clickCount + 1
+				else
+					clickCount = 1
+				end
+				lastClickTime = currentTime
+	
+				-- If we've clicked rapidly many times, assume the tool needs refresh
+				if clickCount >= AUTO_REFRESH_THRESHOLD then
+					print("[ShovelBypass] Auto-refresh triggered (tool may have stopped working)")
+					refreshShovelTool()
+					clickCount = 0 -- Reset counter
+				end
+	
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
 				local inRange = true
 				if inRange then
-					shovelEvent:FireServer(
-						target,
-						mouse.TargetSurface,
-						mouse.Hit.Position,
-						shovelUI.Button.Text
-					)
+					-- Re-find the shovel tool and event in case it changed
+					local currentShovelTool = hasShovelTool()
+					if currentShovelTool then
+						local currentEvent = currentShovelTool:FindFirstChild("Script") and currentShovelTool.Script:FindFirstChild("Event")
+						local currentUI = LocalPlayer.PlayerGui:FindFirstChild("Shovel")
+	
+						if currentEvent and currentUI then
+							currentEvent:FireServer(
+								target,
+								mouse.TargetSurface,
+								mouse.Hit.Position,
+								currentUI.Button.Text
+							)
+						else
+							print("[ShovelBypass] Event or UI lost, refreshing...")
+							refreshShovelTool()
+						end
+					end
 				end
 			end
 		end)
@@ -16714,6 +17122,9 @@ local script = G2L["169"];
 	local mouseConn = nil
 	local backpackConn = nil
 	local charConn = nil
+	local lastClickTime = 0
+	local clickCount = 0
+	local AUTO_REFRESH_THRESHOLD = 5 -- Refresh after 5 rapid clicks with no sign placement
 	
 	local NORMAL_TEXT = "Sign"
 	local NOT_FOUND_TEXT = "Tool not found"
@@ -16743,6 +17154,50 @@ local script = G2L["169"];
 			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Sign"))
 	end
 	
+	-- INSTANT re-equip and unequip function (no UI for Sign tool)
+	local function refreshSignTool()
+		local signTool = hasSignTool()
+		if not signTool then
+			print("[SignBypass] Sign tool not found, cannot refresh")
+			return false
+		end
+	
+		-- Store currently equipped tool to re-equip it after
+		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+		-- Move to backpack if it's in character
+		if signTool.Parent == LocalPlayer.Character then
+			signTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		-- Equip sign tool instantly
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:EquipTool(signTool)
+	
+			-- Use RenderStepped to unequip on the very next frame (invisible to player)
+			game:GetService("RunService").RenderStepped:Wait()
+	
+			-- Unequip immediately
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+				LocalPlayer.Character.Humanoid:UnequipTools()
+			end
+	
+			-- Re-equip previous tool if there was one
+			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+				task.wait()
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+				end
+			end
+	
+			print("[SignBypass] Tool refreshed (invisible)")
+			return true
+		end
+	
+		return false
+	end
+	
 	local function enable()
 		local signTool = hasSignTool()
 		if not signTool then
@@ -16760,27 +17215,52 @@ local script = G2L["169"];
 			return
 		end
 	
-		-- Auto-equip then unequip the tool
-		if signTool.Parent == LocalPlayer.Backpack then
-			LocalPlayer.Character.Humanoid:EquipTool(signTool)
-			task.wait(0.1) -- Small delay to let the tool initialize
-			LocalPlayer.Character.Humanoid:UnequipTools()
-		end
+		-- Initial refresh (instant and invisible)
+		refreshSignTool()
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
+	
 			if target then
+				local currentTime = tick()
+	
+				-- Track clicks to detect if sign placement is not working
+				if currentTime - lastClickTime < 0.5 then -- Clicks within 0.5 seconds
+					clickCount = clickCount + 1
+				else
+					clickCount = 1
+				end
+				lastClickTime = currentTime
+	
+				-- If we've clicked rapidly many times, assume the tool needs refresh
+				if clickCount >= AUTO_REFRESH_THRESHOLD then
+					print("[SignBypass] Auto-refresh triggered (tool may have stopped working)")
+					refreshSignTool()
+					clickCount = 0 -- Reset counter
+				end
+	
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
 				local inRange = true
 				if inRange then
-					signEvent:FireServer(
-						target,
-						mouse.TargetSurface,
-						mouse.Hit.Position
-					)
+					-- Re-find the sign tool and event in case it changed
+					local currentSignTool = hasSignTool()
+					if currentSignTool then
+						local currentEvent = currentSignTool:FindFirstChild("Script") and currentSignTool.Script:FindFirstChild("Event")
+	
+						if currentEvent then
+							currentEvent:FireServer(
+								target,
+								mouse.TargetSurface,
+								mouse.Hit.Position
+							)
+						else
+							print("[SignBypass] Event lost, refreshing...")
+							refreshSignTool()
+						end
+					end
 				end
 			end
 		end)
