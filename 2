@@ -15934,8 +15934,13 @@ local script = G2L["14c"];
 	
 	-- State
 	local isEnabled = false
-	local attachmentWeld = nil
+	local attachmentPart = nil
+	local alignPosition = nil
+	local alignOrientation = nil
+	local attachment0 = nil
+	local attachment1 = nil
 	local updateLoop = nil
+	local originalCanCollide = nil -- Store original CanCollide state
 	
 	-- ============================================================
 	-- UPDATE VISUAL
@@ -15951,13 +15956,19 @@ local script = G2L["14c"];
 	updateVisual()
 	
 	-- ============================================================
-	-- ATTACH TO BLOCK
+	-- ATTACH TO BLOCK (invisible part method)
 	-- ============================================================
 	local function attachToBlock()
 		local selectedBlock = SelectedBlockValue.Value
 	
 		if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
 			print("[FollowBlock] No valid block selected")
+			return false
+		end
+	
+		-- Check if block is unanchored (has Drag)
+		if not selectedBlock:FindFirstChild("Drag") then
+			print("[FollowBlock] Block must be unanchored (needs Drag)")
 			return false
 		end
 	
@@ -15973,18 +15984,58 @@ local script = G2L["14c"];
 			return false
 		end
 	
-		-- Teleport to the center of the block first
-		humanoidRootPart.CFrame = CFrame.new(selectedBlock.Position)
+		-- Store original CanCollide state and disable collisions
+		originalCanCollide = selectedBlock.CanCollide
+		selectedBlock.CanCollide = false
 	
-		-- Create a weld to attach player to block
+		-- Create invisible part at the block's position
+		local part = Instance.new("Part")
+		part.Name = "FollowBlockAttachment"
+		part.Size = Vector3.new(1, 1, 1)
+		part.Position = selectedBlock.Position
+		part.Anchored = false
+		part.CanCollide = false
+		part.Transparency = 1
+		part.Parent = workspace
+	
+		-- Weld the invisible part to the selected block
 		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = humanoidRootPart
+		weld.Part0 = part
 		weld.Part1 = selectedBlock
-		weld.Parent = humanoidRootPart
+		weld.Parent = part
 	
-		attachmentWeld = weld
+		-- Create attachments
+		local att0 = Instance.new("Attachment")
+		att0.Parent = humanoidRootPart
 	
-		print("[FollowBlock] Attached to block:", selectedBlock:GetFullName())
+		local att1 = Instance.new("Attachment")
+		att1.Parent = part
+	
+		-- Create AlignPosition to "follow" the invisible part (but allow walking)
+		local alignPos = Instance.new("AlignPosition")
+		alignPos.Attachment0 = att0
+		alignPos.Attachment1 = att1
+		alignPos.MaxForce = 9e9
+		alignPos.MaxVelocity = math.huge
+		alignPos.Responsiveness = 200
+		alignPos.ApplyAtCenterOfMass = true
+		alignPos.Parent = humanoidRootPart
+	
+		-- Create AlignOrientation to keep player upright
+		local alignOri = Instance.new("AlignOrientation")
+		alignOri.Attachment0 = att0
+		alignOri.Attachment1 = att1
+		alignOri.MaxTorque = 9e9
+		alignOri.Responsiveness = 200
+		alignOri.Parent = humanoidRootPart
+	
+		attachmentPart = part
+		alignPosition = alignPos
+		alignOrientation = alignOri
+		attachment0 = att0
+		attachment1 = att1
+	
+		print("[FollowBlock] Attached to block (invisible part method):", selectedBlock:GetFullName())
 		return true
 	end
 	
@@ -15992,9 +16043,38 @@ local script = G2L["14c"];
 	-- DETACH FROM BLOCK
 	-- ============================================================
 	local function detachFromBlock()
-		if attachmentWeld then
-			attachmentWeld:Destroy()
-			attachmentWeld = nil
+		-- Restore original CanCollide state
+		if originalCanCollide ~= nil then
+			local selectedBlock = SelectedBlockValue.Value
+			if selectedBlock and selectedBlock:IsDescendantOf(workspace) then
+				selectedBlock.CanCollide = originalCanCollide
+			end
+			originalCanCollide = nil
+		end
+	
+		if alignPosition then
+			alignPosition:Destroy()
+			alignPosition = nil
+		end
+	
+		if alignOrientation then
+			alignOrientation:Destroy()
+			alignOrientation = nil
+		end
+	
+		if attachment0 then
+			attachment0:Destroy()
+			attachment0 = nil
+		end
+	
+		if attachment1 then
+			attachment1:Destroy()
+			attachment1 = nil
+		end
+	
+		if attachmentPart then
+			attachmentPart:Destroy()
+			attachmentPart = nil
 		end
 	
 		print("[FollowBlock] Detached from block")
@@ -16008,16 +16088,17 @@ local script = G2L["14c"];
 			while isEnabled do
 				local selectedBlock = SelectedBlockValue.Value
 	
-				-- If block is deleted or deselected, detach and disable
-				if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
-					print("[FollowBlock] Block lost, disabling")
+				-- If block is deleted, deselected, or becomes anchored, detach and disable
+				if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) or not selectedBlock:FindFirstChild("Drag") then
+					print("[FollowBlock] Block lost or anchored, disabling")
 					disable()
 					break
 				end
 	
-				-- If weld is missing, reattach
-				if not attachmentWeld or not attachmentWeld.Parent then
-					print("[FollowBlock] Weld lost, reattaching")
+				-- If attachment part is missing, reattach
+				if not attachmentPart or not attachmentPart.Parent then
+					print("[FollowBlock] Attachment lost, reattaching")
+					detachFromBlock()
 					attachToBlock()
 				end
 	
@@ -16034,6 +16115,11 @@ local script = G2L["14c"];
 	
 		if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
 			print("[FollowBlock] Cannot enable - no valid block selected")
+			return
+		end
+	
+		if not selectedBlock:FindFirstChild("Drag") then
+			print("[FollowBlock] Cannot enable - block must be unanchored (needs Drag)")
 			return
 		end
 	
@@ -16086,10 +16172,10 @@ local script = G2L["14c"];
 			detachFromBlock()
 	
 			local newBlock = SelectedBlockValue.Value
-			if newBlock and newBlock:IsDescendantOf(workspace) then
+			if newBlock and newBlock:IsDescendantOf(workspace) and newBlock:FindFirstChild("Drag") then
 				attachToBlock()
 			else
-				-- No new block, disable
+				-- No new block or not unanchored, disable
 				disable()
 			end
 		end
