@@ -15850,6 +15850,9 @@ local script = G2L["159"];
 	local mouseConn = nil
 	local backpackConn = nil
 	local charConn = nil
+	local lastClickTime = 0
+	local clickCount = 0
+	local AUTO_REFRESH_THRESHOLD = 5 -- Refresh after 5 rapid clicks with no building
 	
 	local NORMAL_TEXT = "Build"
 	local NOT_FOUND_TEXT = "Tool not found"
@@ -15882,6 +15885,63 @@ local script = G2L["159"];
 			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Build"))
 	end
 	
+	-- INSTANT re-equip and unequip function (keeps UI visible)
+	local function refreshBuildTool()
+		local buildTool = hasBuildTool()
+		if not buildTool then
+			print("[BuildBypass] Build tool not found, cannot refresh")
+			return false
+		end
+	
+		local buildUI = LocalPlayer.PlayerGui:FindFirstChild("Build")
+		if not buildUI then
+			print("[BuildBypass] Build UI not found, cannot refresh")
+			return false
+		end
+	
+		-- Store currently equipped tool to re-equip it after
+		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+		-- Move to backpack if it's in character
+		if buildTool.Parent == LocalPlayer.Character then
+			buildTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		-- Equip build tool instantly
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:EquipTool(buildTool)
+	
+			-- Enable UI immediately
+			buildUI.Enabled = true
+	
+			-- Use RenderStepped to unequip on the very next frame (invisible to player)
+			game:GetService("RunService").RenderStepped:Wait()
+	
+			-- Unequip immediately but KEEP UI VISIBLE
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+				LocalPlayer.Character.Humanoid:UnequipTools()
+			end
+	
+			-- Make sure UI stays enabled
+			task.wait()
+			buildUI.Enabled = true
+	
+			-- Re-equip previous tool if there was one
+			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+				task.wait()
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+				end
+			end
+	
+			print("[BuildBypass] Tool refreshed (invisible, UI kept)")
+			return true
+		end
+	
+		return false
+	end
+	
 	local function enable()
 		local buildUI = LocalPlayer.PlayerGui:FindFirstChild("Build")
 		if not buildUI then
@@ -15907,33 +15967,54 @@ local script = G2L["159"];
 			return
 		end
 	
-		-- Auto-equip then unequip the tool
-		if buildTool.Parent == LocalPlayer.Backpack then
-			LocalPlayer.Character.Humanoid:EquipTool(buildTool)
-			task.wait(0.1) -- Small delay to let the tool initialize
-			buildUI.Enabled = true -- Enable UI before unequipping
-			LocalPlayer.Character.Humanoid:UnequipTools()
-			task.wait(0.05)
-			buildUI.Enabled = true -- Keep UI visible after unequipping
-		else
-			buildUI.Enabled = true
-		end
+		-- Initial refresh (instant and invisible)
+		refreshBuildTool()
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
+	
 			if target then
+				local currentTime = tick()
+	
+				-- Track clicks to detect if building is not working
+				if currentTime - lastClickTime < 0.5 then -- Clicks within 0.5 seconds
+					clickCount = clickCount + 1
+				else
+					clickCount = 1
+				end
+				lastClickTime = currentTime
+	
+				-- If we've clicked rapidly many times, assume the tool needs refresh
+				if clickCount >= AUTO_REFRESH_THRESHOLD then
+					print("[BuildBypass] Auto-refresh triggered (tool may have stopped working)")
+					refreshBuildTool()
+					clickCount = 0 -- Reset counter
+				end
+	
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
 				local inRange = true
 				if inRange then
-					buildEvent:FireServer(
-						target,
-						mouse.TargetSurface,
-						mouse.Hit.Position,
-						buildUI.Button.Text
-					)
+					-- Re-find the build tool and event in case it changed
+					local currentBuildTool = hasBuildTool()
+					if currentBuildTool then
+						local currentEvent = currentBuildTool:FindFirstChild("Script") and currentBuildTool.Script:FindFirstChild("Event")
+						local currentUI = LocalPlayer.PlayerGui:FindFirstChild("Build")
+	
+						if currentEvent and currentUI then
+							currentEvent:FireServer(
+								target,
+								mouse.TargetSurface,
+								mouse.Hit.Position,
+								currentUI.Button.Text
+							)
+						else
+							print("[BuildBypass] Event or UI lost, refreshing...")
+							refreshBuildTool()
+						end
+					end
 				end
 			end
 		end)
@@ -16033,6 +16114,9 @@ local script = G2L["15d"];
 	local mouseConn = nil
 	local backpackConn = nil
 	local charConn = nil
+	local lastClickTime = 0
+	local clickCount = 0
+	local AUTO_REFRESH_THRESHOLD = 5 -- Refresh after 5 rapid clicks with no deletion
 	
 	local NORMAL_TEXT = "Delete"
 	local NOT_FOUND_TEXT = "Tool not found"
@@ -16062,6 +16146,50 @@ local script = G2L["15d"];
 			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
 	end
 	
+	-- INSTANT re-equip and unequip function
+	local function refreshDeleteTool()
+		local deleteTool = hasDeleteTool()
+		if not deleteTool then
+			print("[DeleteBypass] Delete tool not found, cannot refresh")
+			return false
+		end
+	
+		-- Store currently equipped tool to re-equip it after
+		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+		-- Move to backpack if it's in character
+		if deleteTool.Parent == LocalPlayer.Character then
+			deleteTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		-- Equip delete tool instantly
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:EquipTool(deleteTool)
+	
+			-- Use RenderStepped to unequip on the very next frame (invisible to player)
+			game:GetService("RunService").RenderStepped:Wait()
+	
+			-- Unequip immediately
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+				LocalPlayer.Character.Humanoid:UnequipTools()
+			end
+	
+			-- Re-equip previous tool if there was one
+			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+				task.wait()
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+				end
+			end
+	
+			print("[DeleteBypass] Tool refreshed (invisible)")
+			return true
+		end
+	
+		return false
+	end
+	
 	local function enable()
 		local deleteTool = hasDeleteTool()
 		if not deleteTool then
@@ -16079,38 +16207,48 @@ local script = G2L["15d"];
 			return
 		end
 	
-		-- INSTANT equip and unequip (so fast you can't see it)
-		if deleteTool.Parent == LocalPlayer.Backpack then
-			-- Store currently equipped tool to re-equip it after
-			local previousTool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
-	
-			-- Equip delete tool instantly
-			LocalPlayer.Character.Humanoid:EquipTool(deleteTool)
-	
-			-- Use RenderStepped to unequip on the very next frame (invisible to player)
-			game:GetService("RunService").RenderStepped:Wait()
-	
-			-- Unequip immediately
-			LocalPlayer.Character.Humanoid:UnequipTools()
-	
-			-- Re-equip previous tool if there was one
-			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
-				task.wait()
-				LocalPlayer.Character.Humanoid:EquipTool(previousTool)
-			end
-		end
+		-- Initial refresh
+		refreshDeleteTool()
 	
 		if mouseConn then mouseConn:Disconnect() end
 		mouseConn = mouse.Button1Down:Connect(function()
 			if not isEnabled then return end
 			local target = mouse.Target
+	
 			-- Only delete if target is a "Brick"
 			if target and target.Name == "Brick" then
+				local currentTime = tick()
+	
+				-- Track clicks to detect if deletion is not working
+				if currentTime - lastClickTime < 0.5 then -- Clicks within 0.5 seconds
+					clickCount = clickCount + 1
+				else
+					clickCount = 1
+				end
+				lastClickTime = currentTime
+	
+				-- If we've clicked rapidly many times, assume the tool needs refresh
+				if clickCount >= AUTO_REFRESH_THRESHOLD then
+					print("[DeleteBypass] Auto-refresh triggered (tool may have stopped working)")
+					refreshDeleteTool()
+					clickCount = 0 -- Reset counter
+				end
+	
 				-- Check if Range Bypass is enabled
 				local useInfiniteRange = RangeBypassEnabled and RangeBypassEnabled.Value
 				local inRange = true
 				if inRange then
-					deleteEvent:FireServer(target, mouse.Hit.Position)
+					-- Re-find the delete tool and event in case it changed
+					local currentDeleteTool = hasDeleteTool()
+					if currentDeleteTool then
+						local currentEvent = currentDeleteTool:FindFirstChild("Script") and currentDeleteTool.Script:FindFirstChild("Event")
+						if currentEvent then
+							currentEvent:FireServer(target, mouse.Hit.Position)
+						else
+							print("[DeleteBypass] Event lost, refreshing...")
+							refreshDeleteTool()
+						end
+					end
 				end
 			end
 		end)
