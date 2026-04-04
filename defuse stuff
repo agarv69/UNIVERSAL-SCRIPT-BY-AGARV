@@ -1,20 +1,24 @@
 -- ============================================================
--- DELETE RANGE BYPASS (STANDALONE)
--- Removes the 24 stud range limit from the Delete tool
+-- DELETE BYPASS (STANDALONE WITH INFINITE RANGE)
+-- Allows you to delete without holding the tool + infinite range
 -- ============================================================
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
 local isEnabled = false
-local originalScript = nil
-local modifiedScript = nil
+local mouseConn = nil
+local lastRefreshTime = 0
+local AUTO_REFRESH_THRESHOLD = 5
+local clickCount = 0
+local lastClickTime = 0
 
 -- ============================================================
 -- CREATE UI
 -- ============================================================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "DeleteRangeBypassUI"
+screenGui.Name = "DeleteBypassUI"
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = LocalPlayer.PlayerGui
@@ -36,7 +40,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "Delete Range Bypass"
+title.Text = "Delete Bypass (Infinite)"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.TextSize = 14
 title.Font = Enum.Font.GothamBold
@@ -89,90 +93,147 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
 end)
 
 -- ============================================================
--- FIND DELETE TOOL
+-- DELETE TOOL HELPERS
 -- ============================================================
-local function getDeleteTool()
+local function hasDeleteTool()
 	return LocalPlayer.Backpack:FindFirstChild("Delete")
 		or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
 end
 
--- ============================================================
--- PATCH DELETE SCRIPT
--- ============================================================
-local function patchDeleteScript()
-	local deleteTool = getDeleteTool()
-	if not deleteTool then
-		title.Text = "Delete tool not found!"
-		task.wait(1)
-		title.Text = "Delete Range Bypass"
-		return false
+local function getDeleteEvent()
+	local tool = hasDeleteTool()
+	if tool then
+		return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
 	end
-
-	local deleteScript = deleteTool:FindFirstChild("Script")
-	if not deleteScript then
-		title.Text = "Script not found!"
-		task.wait(1)
-		title.Text = "Delete Range Bypass"
-		return false
-	end
-
-	-- Get the source
-	local source = deleteScript.Source
-
-	-- Remove range checks (both instances)
-	-- Pattern 1: (v_u_4.Character.HumanoidRootPart.Position - v10).Magnitude < 24
-	-- Pattern 2: (v_u_4.Character.HumanoidRootPart.Position - v13).Magnitude < 24
-	
-	-- Replace the range check with true
-	local patched = source:gsub("%([%w_]+%.Character%.HumanoidRootPart%.Position %- [%w_]+%).Magnitude < %d+", "true")
-	
-	-- Apply the patch
-	deleteScript.Source = patched
-	
-	print("[DeleteRangeBypass] Patched delete tool - infinite range enabled")
-	return true
+	return nil
 end
 
--- ============================================================
--- RESTORE DELETE SCRIPT
--- ============================================================
-local function restoreDeleteScript()
-	local deleteTool = getDeleteTool()
-	if not deleteTool then return end
+-- INSTANT re-equip and unequip function
+local function refreshDeleteTool()
+	local tool = hasDeleteTool()
+	if not tool then
+		return false
+	end
 
-	local deleteScript = deleteTool:FindFirstChild("Script")
-	if not deleteScript then return end
-
-	-- The tool will reload when re-equipped, so we just need to drop and pick it up
-	if deleteTool.Parent == LocalPlayer.Character then
-		deleteTool.Parent = workspace
-		task.wait(0.1)
-		if deleteTool and deleteTool.Parent == workspace then
-			LocalPlayer.Character.Humanoid:EquipTool(deleteTool)
-		end
+	-- Store currently equipped tool to re-equip it after
+	local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+	-- Move to backpack if it's in character
+	if tool.Parent == LocalPlayer.Character then
+		tool.Parent = LocalPlayer.Backpack
+		task.wait()
 	end
 	
-	print("[DeleteRangeBypass] Delete tool restored to normal")
+	-- Equip delete tool instantly
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+		LocalPlayer.Character.Humanoid:EquipTool(tool)
+		
+		-- Use RenderStepped to unequip on the very next frame (invisible to player)
+		RunService.RenderStepped:Wait()
+		
+		-- Unequip immediately
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:UnequipTools()
+		end
+		
+		-- Re-equip previous tool if there was one
+		if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+			task.wait()
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+				LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+			end
+		end
+		
+		print("[DeleteBypass] Tool refreshed (invisible)")
+		return true
+	end
+	
+	return false
 end
 
 -- ============================================================
 -- ENABLE / DISABLE
 -- ============================================================
 local function enable()
-	if patchDeleteScript() then
-		isEnabled = true
-		toggleButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-		toggleButton.Text = "ON"
-		title.Text = "Delete Range Bypass (ON)"
+	local deleteTool = hasDeleteTool()
+	if not deleteTool then
+		title.Text = "Delete tool not found"
+		task.wait(1)
+		title.Text = "Delete Bypass (Infinite)"
+		return
 	end
+
+	local deleteEvent = deleteTool:FindFirstChild("Script") and deleteTool.Script:FindFirstChild("Event")
+	if not deleteEvent then
+		title.Text = "Event not found"
+		task.wait(1)
+		title.Text = "Delete Bypass (Infinite)"
+		return
+	end
+
+	-- Initial refresh
+	refreshDeleteTool()
+
+	isEnabled = true
+	toggleButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+	toggleButton.Text = "ON"
+	
+	local mouse = LocalPlayer:GetMouse()
+	
+	if mouseConn then mouseConn:Disconnect() end
+	mouseConn = mouse.Button1Down:Connect(function()
+		if not isEnabled then return end
+		local target = mouse.Target
+		
+		-- Only delete if target is a "Brick"
+		if target and target.Name == "Brick" then
+			local currentTime = tick()
+			
+			-- Track clicks to detect if deletion is not working
+			if currentTime - lastClickTime < 0.5 then
+				clickCount = clickCount + 1
+			else
+				clickCount = 1
+			end
+			lastClickTime = currentTime
+			
+			-- If we've clicked rapidly many times, assume the tool needs refresh
+			if clickCount >= AUTO_REFRESH_THRESHOLD then
+				print("[DeleteBypass] Auto-refresh triggered")
+				refreshDeleteTool()
+				clickCount = 0
+			end
+			
+			-- Re-find the delete tool and event in case it changed
+			local currentDeleteTool = hasDeleteTool()
+			if currentDeleteTool then
+				local currentEvent = currentDeleteTool:FindFirstChild("Script") and currentDeleteTool.Script:FindFirstChild("Event")
+				
+				if currentEvent then
+					-- Fire event with INFINITE RANGE (no distance check)
+					currentEvent:FireServer(target, mouse.Hit.Position)
+				else
+					print("[DeleteBypass] Event lost, refreshing...")
+					refreshDeleteTool()
+				end
+			end
+		end
+	end)
+
+	print("[DeleteBypass] ON - Click to delete any brick from any distance")
 end
 
 local function disable()
 	isEnabled = false
 	toggleButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 	toggleButton.Text = "OFF"
-	title.Text = "Delete Range Bypass"
-	restoreDeleteScript()
+	
+	if mouseConn then
+		mouseConn:Disconnect()
+		mouseConn = nil
+	end
+	
+	print("[DeleteBypass] OFF")
 end
 
 -- ============================================================
@@ -186,21 +247,4 @@ toggleButton.MouseButton1Click:Connect(function()
 	end
 end)
 
--- ============================================================
--- AUTO-PATCH ON TOOL EQUIP
--- ============================================================
-LocalPlayer.Character.ChildAdded:Connect(function(child)
-	if isEnabled and child.Name == "Delete" and child:IsA("Tool") then
-		task.wait(0.1)
-		patchDeleteScript()
-	end
-end)
-
-LocalPlayer.Backpack.ChildAdded:Connect(function(child)
-	if isEnabled and child.Name == "Delete" and child:IsA("Tool") then
-		task.wait(0.1)
-		patchDeleteScript()
-	end
-end)
-
-print("[DeleteRangeBypass] Loaded - Click toggle to enable infinite delete range")
+print("[DeleteBypass] Loaded - Toggle to enable infinite range delete bypass")
