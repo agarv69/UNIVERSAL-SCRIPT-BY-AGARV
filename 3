@@ -3642,7 +3642,7 @@ G2L["14e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["14e"]["BackgroundTransparency"] = 1;
 G2L["14e"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["14e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["14e"]["Text"] = [[Follow Block]];
+G2L["14e"]["Text"] = [[Weld to Block]];
 G2L["14e"]["Name"] = [[FollowBlockText]];
 G2L["14e"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -15934,12 +15934,9 @@ local script = G2L["14c"];
 	
 	-- State
 	local isEnabled = false
-	local attachmentPart = nil
-	local alignPosition = nil
-	local alignOrientation = nil
-	local attachment0 = nil
-	local attachment1 = nil
+	local attachmentWeld = nil
 	local updateLoop = nil
+	local originalCanCollide = nil -- Store original CanCollide state
 	
 	-- ============================================================
 	-- UPDATE VISUAL
@@ -15955,7 +15952,7 @@ local script = G2L["14c"];
 	updateVisual()
 	
 	-- ============================================================
-	-- ATTACH TO BLOCK (invisible part method)
+	-- ATTACH TO BLOCK
 	-- ============================================================
 	local function attachToBlock()
 		local selectedBlock = SelectedBlockValue.Value
@@ -15983,54 +15980,22 @@ local script = G2L["14c"];
 			return false
 		end
 	
-		-- Create invisible part at the block's position
-		local part = Instance.new("Part")
-		part.Name = "FollowBlockAttachment"
-		part.Size = Vector3.new(1, 1, 1)
-		part.Position = selectedBlock.Position
-		part.Anchored = false
-		part.CanCollide = false
-		part.Transparency = 1
-		part.Parent = workspace
+		-- Store original CanCollide state and disable collisions
+		originalCanCollide = selectedBlock.CanCollide
+		selectedBlock.CanCollide = false
 	
-		-- Weld the invisible part to the selected block
+		-- Teleport to the center of the block first
+		humanoidRootPart.CFrame = CFrame.new(selectedBlock.Position)
+	
+		-- Create a weld to attach player to block
 		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = part
+		weld.Part0 = humanoidRootPart
 		weld.Part1 = selectedBlock
-		weld.Parent = part
+		weld.Parent = humanoidRootPart
 	
-		-- Create attachments
-		local att0 = Instance.new("Attachment")
-		att0.Parent = humanoidRootPart
+		attachmentWeld = weld
 	
-		local att1 = Instance.new("Attachment")
-		att1.Parent = part
-	
-		-- Create AlignPosition to "follow" the invisible part (but allow walking)
-		local alignPos = Instance.new("AlignPosition")
-		alignPos.Attachment0 = att0
-		alignPos.Attachment1 = att1
-		alignPos.MaxForce = 9e9
-		alignPos.MaxVelocity = math.huge
-		alignPos.Responsiveness = 200
-		alignPos.ApplyAtCenterOfMass = true
-		alignPos.Parent = humanoidRootPart
-	
-		-- Create AlignOrientation to keep player upright
-		local alignOri = Instance.new("AlignOrientation")
-		alignOri.Attachment0 = att0
-		alignOri.Attachment1 = att1
-		alignOri.MaxTorque = 9e9
-		alignOri.Responsiveness = 200
-		alignOri.Parent = humanoidRootPart
-	
-		attachmentPart = part
-		alignPosition = alignPos
-		alignOrientation = alignOri
-		attachment0 = att0
-		attachment1 = att1
-	
-		print("[FollowBlock] Attached to block (invisible part method):", selectedBlock:GetFullName())
+		print("[FollowBlock] Attached to block:", selectedBlock:GetFullName())
 		return true
 	end
 	
@@ -16038,29 +16003,18 @@ local script = G2L["14c"];
 	-- DETACH FROM BLOCK
 	-- ============================================================
 	local function detachFromBlock()
-		if alignPosition then
-			alignPosition:Destroy()
-			alignPosition = nil
+		-- Restore original CanCollide state
+		if originalCanCollide ~= nil then
+			local selectedBlock = SelectedBlockValue.Value
+			if selectedBlock and selectedBlock:IsDescendantOf(workspace) then
+				selectedBlock.CanCollide = originalCanCollide
+			end
+			originalCanCollide = nil
 		end
 	
-		if alignOrientation then
-			alignOrientation:Destroy()
-			alignOrientation = nil
-		end
-	
-		if attachment0 then
-			attachment0:Destroy()
-			attachment0 = nil
-		end
-	
-		if attachment1 then
-			attachment1:Destroy()
-			attachment1 = nil
-		end
-	
-		if attachmentPart then
-			attachmentPart:Destroy()
-			attachmentPart = nil
+		if attachmentWeld then
+			attachmentWeld:Destroy()
+			attachmentWeld = nil
 		end
 	
 		print("[FollowBlock] Detached from block")
@@ -16081,9 +16035,9 @@ local script = G2L["14c"];
 					break
 				end
 	
-				-- If attachment part is missing, reattach
-				if not attachmentPart or not attachmentPart.Parent then
-					print("[FollowBlock] Attachment lost, reattaching")
+				-- If weld is missing, reattach
+				if not attachmentWeld or not attachmentWeld.Parent then
+					print("[FollowBlock] Weld lost, reattaching")
 					detachFromBlock()
 					attachToBlock()
 				end
