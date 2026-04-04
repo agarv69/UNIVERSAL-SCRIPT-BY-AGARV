@@ -1,17 +1,43 @@
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local player = game:GetService("Players").LocalPlayer
+local mouse = player:GetMouse()
 
-while true do
-	print("=====")
-	for _, player in ipairs(Players:GetPlayers()) do
-		local char = workspace:FindFirstChild(player.Name)
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if hrp then
-			print(player.Name .. ": " .. string.format("%.1f", hrp.Velocity.Magnitude))
-		else
-			print(player.Name .. ": N/A")
-		end
-	end
-	print("=====")
-	task.wait(0.1)
+-- Wait for delete tool
+local deleteTool = player.Backpack:WaitForChild("Delete", 10)
+if not deleteTool then
+    warn("Delete tool not found!")
+    return
 end
+
+local deleteEvent = deleteTool.Script.Event
+
+-- Create toggle button
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+screenGui.Name = "DeleteBypassUI"
+screenGui.ResetOnSpawn = false
+
+local toggleButton = Instance.new("TextButton", screenGui)
+toggleButton.Size = UDim2.new(0, 120, 0, 50)
+toggleButton.Position = UDim2.new(0, 10, 0, 70) -- Below paint button
+toggleButton.Text = "Delete: OFF"
+toggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+toggleButton.TextScaled = true
+
+local deleteActive = false
+
+toggleButton.MouseButton1Click:Connect(function()
+    deleteActive = not deleteActive
+    toggleButton.Text = deleteActive and "Delete: ON" or "Delete: OFF"
+    toggleButton.BackgroundColor3 = deleteActive and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+end)
+
+-- Delete on click when active (INFINITE RANGE)
+mouse.Button1Down:Connect(function()
+    if deleteActive then
+        local target = mouse.Target
+        if target and target.Name == "Brick" then
+            deleteEvent:FireServer(target, mouse.Hit.Position)
+        end
+    end
+end)
+
+print("Infinite range delete bypass with toggle loaded!")
