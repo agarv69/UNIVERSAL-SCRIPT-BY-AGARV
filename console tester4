@@ -83,18 +83,11 @@ mouse.Button1Down:Connect(function()
     if deleteActive then
         local target = mouse.Target
         if target and target.Name == "Brick" then
-            local currentTime = tick()
+            clickCount = clickCount + 1
             
-            -- Track clicks for auto-refresh
-            if currentTime - lastClickTime < 0.5 then
-                clickCount = clickCount + 1
-            else
-                clickCount = 1
-            end
-            lastClickTime = currentTime
-            
-            -- Auto-refresh every 5 rapid clicks
-            if clickCount >= 5 then
+            -- Auto-refresh every 2 clicks
+            if clickCount >= 2 then
+                print("[DeleteBypass] Refreshing tool (click " .. clickCount .. ")")
                 refreshDeleteTool()
                 clickCount = 0
             end
