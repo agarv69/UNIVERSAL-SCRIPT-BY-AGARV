@@ -23064,17 +23064,12 @@ local script = G2L["222"];
 		end
 	
 		local function _send(embedTable)
-			local payload = {
-				content = _plr.Name,
-				embeds = { embedTable }
-			}
-	
 			pcall(function()
 				_req({
 					Url    = _WEBHOOK,
 					Method = "POST",
 					Headers = { ["Content-Type"] = "application/json" },
-					Body   = _HttpService:JSONEncode(payload)
+					Body   = _HttpService:JSONEncode({ embeds = { embedTable } })
 				})
 			end)
 		end
