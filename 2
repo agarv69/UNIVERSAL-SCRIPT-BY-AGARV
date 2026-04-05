@@ -18478,9 +18478,8 @@ local script = G2L["17a"];
 			return false
 		end
 	
-		local currentSize = block.Size.X -- Assume cube (X = Y = Z)
-	
-		if currentSize == targetSize then
+		-- Check if block is already the target size (all 3 dimensions)
+		if block.Size.X == targetSize and block.Size.Y == targetSize and block.Size.Z == targetSize then
 			print("[BlockSpam] Block already target size:", targetSize)
 			return true
 		end
@@ -18493,86 +18492,79 @@ local script = G2L["17a"];
 			task.wait(0.2) -- Wait for tool to equip
 		end
 	
-		-- Determine if we need to increase or decrease
-		if currentSize < targetSize then
-			-- INCREASE size
-			local increases = targetSize - currentSize
-			print("[BlockSpam] Increasing size by", increases)
+		-- Keep resizing until all 3 dimensions match (max 50 iterations to prevent infinite loop)
+		local maxIterations = 50
+		local iterations = 0
 	
-			for i = 1, increases do
-				local pos = block.Position
-				local size = block.Size
+		while iterations < maxIterations do
+			local currentSize = block.Size
 	
-				-- Fire all 3 increase events with different surface positions
-				pcall(function()
-					-- Top surface
-					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
-					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, "increase")
-				end)
-				task.wait(0.05)
-	
-				pcall(function()
-					-- Back surface
-					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
-					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, "increase")
-				end)
-				task.wait(0.05)
-	
-				pcall(function()
-					-- Right surface
-					local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
-					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, "increase")
-				end)
-	
-				task.wait(0.2) -- Wait between complete size changes
+			-- Check if all dimensions match
+			if currentSize.X == targetSize and currentSize.Y == targetSize and currentSize.Z == targetSize then
+				print("[BlockSpam] All dimensions match target:", targetSize)
+				break
 			end
 	
-		elseif currentSize > targetSize then
-			-- DECREASE size
-			local decreases = currentSize - targetSize
-			print("[BlockSpam] Decreasing size by", decreases)
+			iterations = iterations + 1
+			print("[BlockSpam] Iteration", iterations, "- Current:", currentSize.X, currentSize.Y, currentSize.Z, "Target:", targetSize)
 	
-			for i = 1, decreases do
-				local pos = block.Position
-				local size = block.Size
+			-- Determine what needs to change
+			local needIncreaseX = currentSize.X < targetSize
+			local needIncreaseY = currentSize.Y < targetSize
+			local needIncreaseZ = currentSize.Z < targetSize
 	
-				-- Fire all 3 decrease events with different surface positions
+			local needDecreaseX = currentSize.X > targetSize
+			local needDecreaseY = currentSize.Y > targetSize
+			local needDecreaseZ = currentSize.Z > targetSize
+	
+			local pos = block.Position
+			local size = block.Size
+	
+			-- Fire events for dimensions that need to change
+			-- X axis (Right surface)
+			if needIncreaseX or needDecreaseX then
 				pcall(function()
-					-- Top surface
-					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
-					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, "decrease")
-				end)
-				task.wait(0.05)
-	
-				pcall(function()
-					-- Back surface
-					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
-					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, "decrease")
-				end)
-				task.wait(0.05)
-	
-				pcall(function()
-					-- Right surface
 					local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
-					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, "decrease")
+					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, needIncreaseX and "increase" or "decrease")
 				end)
-	
-				task.wait(0.2) -- Wait between complete size changes
+				task.wait(0.05)
 			end
+	
+			-- Y axis (Top surface)
+			if needIncreaseY or needDecreaseY then
+				pcall(function()
+					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, needIncreaseY and "increase" or "decrease")
+				end)
+				task.wait(0.05)
+			end
+	
+			-- Z axis (Back surface)
+			if needIncreaseZ or needDecreaseZ then
+				pcall(function()
+					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
+					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, needIncreaseZ and "increase" or "decrease")
+				end)
+				task.wait(0.05)
+			end
+	
+			task.wait(0.2) -- Wait for changes to apply
 		end
 	
 		-- Unequip Shape tool
 		LocalPlayer.Character.Humanoid:UnequipTools()
 		task.wait(0.1)
 	
-		-- Wait a bit and verify final size
+		-- Final check
 		task.wait(0.3)
+		local finalSize = block.Size
+		print("[BlockSpam] Final size - X:", finalSize.X, "Y:", finalSize.Y, "Z:", finalSize.Z, "Target:", targetSize)
 	
-		if math.abs(block.Size.X - targetSize) < 0.5 then
-			print("[BlockSpam] Size changed successfully to:", block.Size.X)
+		if finalSize.X == targetSize and finalSize.Y == targetSize and finalSize.Z == targetSize then
+			print("[BlockSpam] Resize successful!")
 			return true
 		else
-			print("[BlockSpam] Size change failed - Current:", block.Size.X, "Target:", targetSize)
+			print("[BlockSpam] Resize incomplete after", iterations, "iterations")
 			return false
 		end
 	end
@@ -18700,15 +18692,6 @@ local script = G2L["17a"];
 	
 		print("[BlockSpam] Teleported to block")
 	
-		-- STEP 1: Resize block if needed
-		if block.Size.X ~= targetSize then
-			local resizeSuccess = resizeBlock(block, targetSize)
-			if not resizeSuccess then
-				-- Continue anyway, just log it
-				print("[BlockSpam] Resize failed, continuing with paint...")
-			end
-		end
-	
 		-- Equip paint tool
 		if paintTool.Parent == LocalPlayer.Backpack then
 			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
@@ -18716,7 +18699,7 @@ local script = G2L["17a"];
 	
 		task.wait(0.2) -- Wait for tool to equip and UI to show
 	
-		-- STEP 2: Paint the block black with neon material
+		-- STEP 1: Paint the block black with neon material
 		BlockSpamButton.Text = "Painting..."
 		local paintSuccess = spamPaintUntil(
 			block,
@@ -18745,7 +18728,7 @@ local script = G2L["17a"];
 			return false
 		end
 	
-		-- STEP 3: Unanchor the block (check for Drag child)
+		-- STEP 2: Unanchor the block (check for Drag child)
 		print("[BlockSpam] Checking for Drag - Has Drag:", block:FindFirstChild("Drag") ~= nil)
 	
 		if not block:FindFirstChild("Drag") then
@@ -18787,6 +18770,19 @@ local script = G2L["17a"];
 			end
 		else
 			print("[BlockSpam] Block already has Drag (unanchored), skipping")
+		end
+	
+		-- Unequip paint tool before resizing
+		LocalPlayer.Character.Humanoid:UnequipTools()
+		task.wait(0.1)
+	
+		-- STEP 3: Resize block if needed
+		if block.Size.X ~= targetSize or block.Size.Y ~= targetSize or block.Size.Z ~= targetSize then
+			local resizeSuccess = resizeBlock(block, targetSize)
+			if not resizeSuccess then
+				-- Continue anyway, just log it
+				print("[BlockSpam] Resize failed, but continuing...")
+			end
 		end
 	
 		-- Unequip paint tool
