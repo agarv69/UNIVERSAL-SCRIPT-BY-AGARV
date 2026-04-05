@@ -18269,6 +18269,7 @@ local script = G2L["176"];
 			currentHighlight:Destroy()
 			currentHighlight = nil
 		end
+		_G.SpamSelectHighlight = nil
 	end
 	
 	-- ============================================================
@@ -18289,6 +18290,9 @@ local script = G2L["176"];
 		highlight.Parent = block
 	
 		currentHighlight = highlight
+	
+		-- Store globally so BlockSpam can update it during recovery
+		_G.SpamSelectHighlight = highlight
 	end
 	
 	-- ============================================================
@@ -18796,8 +18800,8 @@ local script = G2L["17a"];
 					break
 				end
 	
-				if not block or not block:IsDescendantOf(workspace) or not block:FindFirstChild("Drag") then
-					print("[BlockSpam] Block invalid or deleted")
+				if not block or not block:IsDescendantOf(workspace) then
+					print("[BlockSpam] Block deleted or invalid")
 	
 					-- Check if SavePos feature is enabled
 					local saveEnabled = false
@@ -18817,7 +18821,7 @@ local script = G2L["17a"];
 	
 						if playerFolder then
 							for _, child in ipairs(playerFolder:GetChildren()) do
-								if child.Name == "Brick" and child:IsA("BasePart") and child:GetAttribute("IsSpamBlock") then
+								if child.Name == "Brick" and child:IsA("BasePart") and child:GetAttribute("IsSpamBlock") and child:FindFirstChild("Drag") then
 									foundBlock = child
 									print("[BlockSpam] Found spam block to recover:", foundBlock)
 									break
@@ -18826,31 +18830,27 @@ local script = G2L["17a"];
 						end
 	
 						if foundBlock then
+							print("[BlockSpam] Auto-recovering with new block:", foundBlock)
+	
 							-- Stop current spam
 							isSpamming = false
-							if _G.BlockAmountTracker and _G.BlockAmountTracker.StopWatching then
-								_G.BlockAmountTracker.StopWatching()
-							end
 	
 							-- Update selected block
 							SelectedBlockValue.Value = foundBlock
 	
-							-- Wait a moment
-							task.wait(0.5)
-	
-							-- Start processing the new block
-							print("[BlockSpam] Auto-recovering with new block")
-							BlockSpamButton.Text = "Recovering..."
-	
-							-- Call processBlock on the new block (this will start spam again)
-							task.spawn(function()
-								local success = processBlock(foundBlock)
-								if not success then
-									print("[BlockSpam] Recovery failed")
-									stopSpam()
+							-- Update yellow highlight if it exists
+							if _G.SpamSelectHighlight then
+								if _G.SpamSelectHighlight.Parent then
+									_G.SpamSelectHighlight.Parent = nil
 								end
-							end)
+								_G.SpamSelectHighlight.Adornee = foundBlock
+								_G.SpamSelectHighlight.Parent = foundBlock
+							end
 	
+							-- Set recovery flag
+							local needsRecovery = true
+	
+							-- Exit spam loop
 							break
 						else
 							print("[BlockSpam] No spam blocks found to recover")
@@ -18859,9 +18859,15 @@ local script = G2L["17a"];
 						end
 					else
 						-- SavePos disabled, just stop
+						print("[BlockSpam] SavePos disabled, stopping")
 						stopSpam()
 						break
 					end
+				elseif not block:FindFirstChild("Drag") then
+					-- Block exists but lost Drag (got anchored somehow)
+					print("[BlockSpam] Block lost Drag, stopping")
+					stopSpam()
+					break
 				end
 	
 				local currentEvent = getBuildEvent()
@@ -18882,6 +18888,23 @@ local script = G2L["17a"];
 				end
 	
 				task.wait(0.05)
+			end
+	
+			-- Check if we need to recover (SelectedBlock changed while spamming)
+			local currentSelected = SelectedBlockValue.Value
+			if currentSelected and currentSelected ~= block and currentSelected:IsDescendantOf(workspace) then
+				print("[BlockSpam] Recovery needed - selected block changed to:", currentSelected)
+	
+				-- Wait a moment for cleanup
+				task.wait(0.3)
+	
+				-- Trigger recovery by calling startSpam again
+				-- This will process the new block
+				if not isSpamming then -- Make sure we're not already spamming
+					task.spawn(function()
+						startSpam()
+					end)
+				end
 			end
 		end)
 	
