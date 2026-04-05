@@ -3395,7 +3395,6 @@ G2L["135"]["Name"] = [[DetectionTCOPG]];
 G2L["136"] = Instance.new("ScrollingFrame", G2L["14"]);
 G2L["136"]["Active"] = true;
 G2L["136"]["BorderSizePixel"] = 0;
-G2L["136"]["CanvasPosition"] = Vector2.new(0, 99);
 G2L["136"]["Name"] = [[TCOTrollPage]];
 G2L["136"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["136"]["Size"] = UDim2.new(0, 349, 0, 233);
@@ -4217,7 +4216,6 @@ G2L["181"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.BlockSizeRow.BlockSizeChanger
 G2L["182"] = Instance.new("TextBox", G2L["180"]);
-G2L["182"]["CursorPosition"] = -1;
 G2L["182"]["Name"] = [[BlockSizeChanger]];
 G2L["182"]["PlaceholderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["182"]["TextWrapped"] = true;
@@ -18439,6 +18437,139 @@ local script = G2L["17a"];
 	local TARGET_MATERIAL = Enum.Material.Neon
 	
 	-- ============================================================
+	-- SHAPE TOOL HELPERS
+	-- ============================================================
+	local function getShapeTool()
+		return LocalPlayer.Backpack:FindFirstChild("Shape")
+			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shape"))
+	end
+	
+	local function getShapeEvent()
+		local tool = getShapeTool()
+		if tool then
+			return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
+		end
+		return nil
+	end
+	
+	-- ============================================================
+	-- VALIDATE BLOCK SIZE (no decimals allowed)
+	-- ============================================================
+	local function isValidBlockSize(block)
+		local size = block.Size
+	
+		-- Check if any dimension has decimals
+		if size.X % 1 ~= 0 or size.Y % 1 ~= 0 or size.Z % 1 ~= 0 then
+			return false, "Block has decimal size: " .. tostring(size)
+		end
+	
+		return true, nil
+	end
+	
+	-- ============================================================
+	-- RESIZE BLOCK
+	-- ============================================================
+	local function resizeBlock(block, targetSize)
+		local shapeTool = getShapeTool()
+		local shapeEvent = getShapeEvent()
+	
+		if not shapeTool or not shapeEvent then
+			print("[BlockSpam] Shape tool not found")
+			return false
+		end
+	
+		local currentSize = block.Size.X -- Assume cube (X = Y = Z)
+	
+		if currentSize == targetSize then
+			print("[BlockSpam] Block already target size:", targetSize)
+			return true
+		end
+	
+		BlockSpamButton.Text = "Resizing..."
+	
+		-- Equip Shape tool
+		if shapeTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
+			task.wait(0.2) -- Wait for tool to equip
+		end
+	
+		-- Determine if we need to increase or decrease
+		if currentSize < targetSize then
+			-- INCREASE size
+			local increases = targetSize - currentSize
+			print("[BlockSpam] Increasing size by", increases)
+	
+			for i = 1, increases do
+				local pos = block.Position
+				local size = block.Size
+	
+				-- Fire all 3 increase events with different surface positions
+				pcall(function()
+					-- Top surface
+					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, "increase")
+				end)
+				pcall(function()
+					-- Back surface
+					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
+					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, "increase")
+				end)
+				pcall(function()
+					-- Right surface
+					local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, "increase")
+				end)
+	
+				task.wait(0.15) -- Wait between size changes
+			end
+	
+		elseif currentSize > targetSize then
+			-- DECREASE size
+			local decreases = currentSize - targetSize
+			print("[BlockSpam] Decreasing size by", decreases)
+	
+			for i = 1, decreases do
+				local pos = block.Position
+				local size = block.Size
+	
+				-- Fire all 3 decrease events with different surface positions
+				pcall(function()
+					-- Top surface
+					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, "decrease")
+				end)
+				pcall(function()
+					-- Back surface
+					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
+					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, "decrease")
+				end)
+				pcall(function()
+					-- Right surface
+					local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, "decrease")
+				end)
+	
+				task.wait(0.15) -- Wait between size changes
+			end
+		end
+	
+		-- Unequip Shape tool
+		LocalPlayer.Character.Humanoid:UnequipTools()
+		task.wait(0.1)
+	
+		-- Wait a bit and verify final size
+		task.wait(0.3)
+	
+		if math.abs(block.Size.X - targetSize) < 0.5 then
+			print("[BlockSpam] Size changed successfully to:", block.Size.X)
+			return true
+		else
+			print("[BlockSpam] Size change failed - Current:", block.Size.X, "Target:", targetSize)
+			return false
+		end
+	end
+	
+	-- ============================================================
 	-- PAINT TOOL HELPERS
 	-- ============================================================
 	local function getPaintTool()
@@ -18506,10 +18637,36 @@ local script = G2L["17a"];
 			return false
 		end
 	
+		-- STEP 0: Validate block size (no decimals)
+		local isValid, errorMsg = isValidBlockSize(block)
+		if not isValid then
+			BlockSpamButton.Text = "Invalid Block!"
+			print("[BlockSpam] " .. errorMsg)
+			task.wait(2)
+			BlockSpamButton.Text = TEXT_START
+			return false
+		end
+	
+		-- Get target size from BlockSizeChanger
+		local targetSize = LagGroup:FindFirstChild("TargetBlockSize")
+		if targetSize then
+			targetSize = targetSize.Value
+		else
+			targetSize = 1 -- Default
+		end
+	
 		-- Check paint tool exists
 		local paintTool = getPaintTool()
 		if not paintTool then
 			BlockSpamButton.Text = "Paint tool not found"
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_START
+			return false
+		end
+	
+		-- Check shape tool exists
+		if not getShapeTool() then
+			BlockSpamButton.Text = "Shape tool not found"
 			task.wait(1)
 			BlockSpamButton.Text = TEXT_START
 			return false
@@ -18535,14 +18692,23 @@ local script = G2L["17a"];
 	
 		print("[BlockSpam] Teleported to block")
 	
-		-- Equip paint tool immediately
+		-- STEP 1: Resize block if needed
+		if block.Size.X ~= targetSize then
+			local resizeSuccess = resizeBlock(block, targetSize)
+			if not resizeSuccess then
+				-- Continue anyway, just log it
+				print("[BlockSpam] Resize failed, continuing with paint...")
+			end
+		end
+	
+		-- Equip paint tool
 		if paintTool.Parent == LocalPlayer.Backpack then
 			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
 		end
 	
 		task.wait(0.2) -- Wait for tool to equip and UI to show
 	
-		-- STEP 1: Paint the block black with neon material
+		-- STEP 2: Paint the block black with neon material
 		BlockSpamButton.Text = "Painting..."
 		local paintSuccess = spamPaintUntil(
 			block,
@@ -18571,30 +18737,45 @@ local script = G2L["17a"];
 			return false
 		end
 	
-		-- STEP 2: Unanchor the block (check for Drag child)
+		-- STEP 3: Unanchor the block (check for Drag child)
 		print("[BlockSpam] Checking for Drag - Has Drag:", block:FindFirstChild("Drag") ~= nil)
 	
 		if not block:FindFirstChild("Drag") then
 			BlockSpamButton.Text = "Unanchoring..."
-			print("[BlockSpam] Starting unanchor spam...")
+			print("[BlockSpam] Firing unanchor event once...")
 	
-			local unanchorSuccess = spamPaintUntil(
-				block,
-				function(b)
-					-- Check if Drag exists (means unanchored)
-					local hasDrag = b:FindFirstChild("Drag") ~= nil
-					print("[BlockSpam] Drag check - Has Drag:", hasDrag)
-					return hasDrag
-				end,
-				"material", -- Material mode (for anchor toggle)
-				"anchor", -- Anchor toggle
-				10 -- 10 second timeout
-			)
+			local paintEvent = getPaintEvent()
+			if paintEvent then
+				-- Fire the unanchor event ONCE
+				pcall(function()
+					paintEvent:FireServer(
+						block,
+						Enum.NormalId.Top,
+						block.Position,
+						"material",
+						TARGET_COLOR,
+						"anchor",
+						""
+					)
+				end)
 	
-			if not unanchorSuccess then
-				print("[BlockSpam] Failed to unanchor block - Has Drag:", block:FindFirstChild("Drag") ~= nil)
-			else
-				print("[BlockSpam] Successfully unanchored - Has Drag:", block:FindFirstChild("Drag") ~= nil)
+				-- Wait and check if Drag appeared (max 3 seconds)
+				local startTime = tick()
+				local timeout = 3
+				local success = false
+	
+				while tick() - startTime < timeout do
+					if block:FindFirstChild("Drag") then
+						success = true
+						print("[BlockSpam] Drag appeared - Successfully unanchored!")
+						break
+					end
+					task.wait(0.1)
+				end
+	
+				if not success then
+					print("[BlockSpam] Drag didn't appear - Block might still be anchored")
+				end
 			end
 		else
 			print("[BlockSpam] Block already has Drag (unanchored), skipping")
@@ -18919,32 +19100,85 @@ task.spawn(C_17d);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.BlockSizeRow.BlockSizeChanger.BlockSizeScript
 local function C_183()
 local script = G2L["183"];
-	local textBox = script.Parent -- TimeFilterChanger TextBox
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
 	
-	-- Show current filter on load and print it
-	shared.GriefTimeFilter = shared.GriefTimeFilter or 0
-	textBox.Text = tostring(shared.GriefTimeFilter)
+	local BlockSizeChanger = script.Parent
+	local BlockSizeRow = BlockSizeChanger.Parent
+	local LagGroup = BlockSizeRow.Parent
 	
-	if shared.GriefTimeFilter == 0 then
-		print("[Time Filter] Set to 0 - detecting everyone")
-	else
-		print("[Time Filter] Set to", shared.GriefTimeFilter, "- detecting players under", shared.GriefTimeFilter, "seconds playtime")
+	-- Store target size in LagGroup so StartSpam can access it
+	local TargetSizeValue = LagGroup:FindFirstChild("TargetBlockSize") or Instance.new("IntValue")
+	TargetSizeValue.Name = "TargetBlockSize"
+	TargetSizeValue.Parent = LagGroup
+	TargetSizeValue.Value = 1 -- Default
+	
+	-- ============================================================
+	-- VALIDATE INPUT
+	-- ============================================================
+	local function validateInput(input)
+		-- Remove any non-digit characters
+		local cleaned = input:gsub("%D", "")
+	
+		-- If empty, default to 1
+		if cleaned == "" then
+			cleaned = "1"
+		end
+	
+		-- Convert to number
+		local num = tonumber(cleaned)
+	
+		-- Ensure it's at least 1
+		if num and num < 1 then
+			num = 1
+		end
+	
+		return num
 	end
 	
-	textBox.FocusLost:Connect(function()
-		local num = tonumber(textBox.Text)
-		if num and num >= 0 then
-			shared.GriefTimeFilter = num
-			if num == 0 then
-				print("[Time Filter] Set to 0 - detecting everyone")
-			else
-				print("[Time Filter] Updated to", num, "- detecting players under", num, "seconds playtime")
-			end
-		else
-			textBox.Text = tostring(shared.GriefTimeFilter)
-			print("[Time Filter] Invalid input, keeping", shared.GriefTimeFilter)
+	-- ============================================================
+	-- UPDATE TARGET SIZE
+	-- ============================================================
+	local function updateTargetSize()
+		local input = BlockSizeChanger.Text
+		local validSize = validateInput(input)
+	
+		-- Update the value
+		TargetSizeValue.Value = validSize
+	
+		-- Update textbox to show valid value
+		BlockSizeChanger.Text = tostring(validSize)
+	
+		print("[BlockSize] Target size set to:", validSize)
+	end
+	
+	-- ============================================================
+	-- INPUT EVENTS
+	-- ============================================================
+	-- When user finishes typing (presses Enter or unfocuses)
+	BlockSizeChanger.FocusLost:Connect(function(enterPressed)
+		updateTargetSize()
+	end)
+	
+	-- Prevent decimals while typing
+	BlockSizeChanger:GetPropertyChangedSignal("Text"):Connect(function()
+		local text = BlockSizeChanger.Text
+	
+		-- Remove decimals and non-digits immediately
+		local cleaned = text:gsub("[^%d]", "")
+	
+		if cleaned ~= text then
+			BlockSizeChanger.Text = cleaned
 		end
 	end)
+	
+	-- ============================================================
+	-- INITIALIZE
+	-- ============================================================
+	-- Set initial value
+	updateTargetSize()
+	
+	print("[BlockSize] Size changer loaded - Default: 1")
 end;
 task.spawn(C_183);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableScript
