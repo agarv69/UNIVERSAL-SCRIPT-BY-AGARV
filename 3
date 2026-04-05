@@ -18881,6 +18881,8 @@ local script = G2L["17a"];
 		weldedBlock = block
 	
 		-- STEP 6: Start spamming blocks on it
+		BlockSpamButton.Text = "Starting spam..."
+	
 		if not startSpamBuilding(block) then
 			-- Failed to start spamming, cleanup
 			cleanupWeld()
@@ -18894,7 +18896,7 @@ local script = G2L["17a"];
 			LocalPlayer.Character.Humanoid:EquipTool(previousTool)
 		end
 	
-		print("[BlockSpam] Block processed successfully!")
+		print("[BlockSpam] Block processed and spamming started!")
 		return true
 	end
 	
@@ -19001,6 +19003,7 @@ local script = G2L["17a"];
 	-- ============================================================
 	local function stopSpam()
 		isSpamming = false
+		isProcessing = false
 		BlockSpamButton.Text = TEXT_START
 	
 		if spamLoop then
@@ -19027,32 +19030,34 @@ local script = G2L["17a"];
 	end
 	
 	-- ============================================================
-	-- START PROCESSING
+	-- START SPAM (full workflow)
 	-- ============================================================
 	local function startSpam()
 		local selectedBlock = SelectedBlockValue.Value
 	
 		if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
-			print("[BlockSpam] No valid block selected")
+			BlockSpamButton.Text = TEXT_NO_BLOCK
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_START
 			return
 		end
 	
 		isProcessing = true
 		BlockSpamButton.Text = TEXT_PROCESSING
 	
-		-- Process the block
+		-- Process the block (paint, resize, weld, TP back)
 		local success = processBlock(selectedBlock)
 	
-		if success then
-			BlockSpamButton.Text = "Block Updated!"
-			task.wait(1)
-		else
+		if not success then
 			BlockSpamButton.Text = "Failed!"
 			task.wait(1)
+			isProcessing = false
+			BlockSpamButton.Text = TEXT_START
+			return
 		end
 	
-		isProcessing = false
-		BlockSpamButton.Text = TEXT_START
+		-- Processing succeeded, now spam
+		print("[BlockSpam] Processing complete, now spamming")
 	end
 	
 	-- ============================================================
@@ -19082,8 +19087,8 @@ local script = G2L["17a"];
 		if isSpamming then
 			-- Currently spamming -> Stop
 			stopSpam()
-		elseif not isProcessing then
-			-- Not processing -> Start
+		else
+			-- Not spamming -> Start
 			startSpam()
 		end
 	end)
