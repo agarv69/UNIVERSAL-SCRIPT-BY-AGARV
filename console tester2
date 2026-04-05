@@ -18432,6 +18432,7 @@ local script = G2L["17a"];
 	local currentWeld = nil
 	local weldedBlock = nil
 	local positionBeforeStop = nil
+	local blockOriginalPosition = nil -- Save where block was before we moved it
 	
 	-- Text states
 	local TEXT_START = "Start Spam"
@@ -18645,16 +18646,58 @@ local script = G2L["17a"];
 	-- CLEANUP & SPAM CONTROL (DEFINE BEFORE processBlock)
 	-- ============================================================
 	local function cleanupWeld()
-		if weldedBlock and weldedBlock:IsDescendantOf(workspace) then
-			weldedBlock.CanCollide = true
+		print("[BlockSpam] Starting cleanup")
+	
+		-- Find and destroy ALL welds on HumanoidRootPart
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			local hrp = LocalPlayer.Character.HumanoidRootPart
+	
+			-- Destroy the specific weld we created
+			if currentWeld and currentWeld.Parent then
+				currentWeld:Destroy()
+				print("[BlockSpam] Destroyed currentWeld")
+			end
+	
+			-- Also find any BlockSpamWeld that might exist
+			local foundWeld = hrp:FindFirstChild("BlockSpamWeld")
+			if foundWeld then
+				foundWeld:Destroy()
+				print("[BlockSpam] Found and destroyed BlockSpamWeld")
+			end
+	
+			-- Destroy ANY WeldConstraint connecting to our block
+			for _, child in ipairs(hrp:GetChildren()) do
+				if child:IsA("WeldConstraint") then
+					if weldedBlock and (child.Part0 == weldedBlock or child.Part1 == weldedBlock) then
+						child:Destroy()
+						print("[BlockSpam] Destroyed weld connecting to block")
+					end
+				end
+			end
 		end
 	
-		if currentWeld then
-			currentWeld:Destroy()
-			currentWeld = nil
+		currentWeld = nil
+	
+		-- Wait for physics to settle
+		task.wait(0.15)
+	
+		-- Restore CanCollide and TP block back
+		if weldedBlock and weldedBlock:IsDescendantOf(workspace) then
+			weldedBlock.CanCollide = true
+			print("[BlockSpam] Restored CanCollide")
+	
+			-- Force TP block back to original position
+			if blockOriginalPosition then
+				weldedBlock.CFrame = blockOriginalPosition
+				weldedBlock.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+				weldedBlock.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+				print("[BlockSpam] Block teleported back and velocity zeroed")
+			end
 		end
 	
 		weldedBlock = nil
+		blockOriginalPosition = nil
+		print("[BlockSpam] Cleanup complete")
 	end
 	
 	local function stopSpam()
@@ -18662,21 +18705,16 @@ local script = G2L["17a"];
 		isProcessing = false
 		BlockSpamButton.Text = TEXT_START
 	
-		if spamLoop then
-			task.cancel(spamLoop)
-			spamLoop = nil
-		end
+		-- Don't cancel loop - just let it exit naturally when it checks isSpamming
+		spamLoop = nil
 	
-		local savePos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.CFrame
-	
+		-- Only cleanup weld and TP block back - DON'T TP player back
 		cleanupWeld()
 	
-		if savePos and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-			task.wait(0.1)
-			LocalPlayer.Character.HumanoidRootPart.CFrame = savePos
-		end
+		-- Clear saved position
+		positionBeforeStop = nil
 	
-		print("[BlockSpam] Spam stopped")
+		print("[BlockSpam] Spam stopped and cleaned up")
 	end
 	
 	-- ============================================================
@@ -18778,6 +18816,12 @@ local script = G2L["17a"];
 	
 		local previousTool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
 		local originalPosition = LocalPlayer.Character.HumanoidRootPart.CFrame
+	
+		-- SAVE position for stopSpam to use later
+		positionBeforeStop = originalPosition
+	
+		-- SAVE block's original position
+		blockOriginalPosition = block.CFrame
 	
 		-- Position 20 studs UNDER the block center
 		local underBlockPos = block.Position - Vector3.new(0, 20, 0)
