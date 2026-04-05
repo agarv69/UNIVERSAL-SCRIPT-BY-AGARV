@@ -18432,6 +18432,7 @@ local script = G2L["17a"];
 	local currentWeld = nil
 	local weldedBlock = nil
 	local positionBeforeStop = nil
+	local blockOriginalPosition = nil -- Save where block was before we moved it
 	
 	-- Text states
 	local TEXT_START = "Start Spam"
@@ -18645,16 +18646,58 @@ local script = G2L["17a"];
 	-- CLEANUP & SPAM CONTROL (DEFINE BEFORE processBlock)
 	-- ============================================================
 	local function cleanupWeld()
-		if weldedBlock and weldedBlock:IsDescendantOf(workspace) then
-			weldedBlock.CanCollide = true
+		print("[BlockSpam] Starting cleanup")
+	
+		-- Find and destroy ALL welds on HumanoidRootPart
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			local hrp = LocalPlayer.Character.HumanoidRootPart
+	
+			-- Destroy the specific weld we created
+			if currentWeld and currentWeld.Parent then
+				currentWeld:Destroy()
+				print("[BlockSpam] Destroyed currentWeld")
+			end
+	
+			-- Also find any BlockSpamWeld that might exist
+			local foundWeld = hrp:FindFirstChild("BlockSpamWeld")
+			if foundWeld then
+				foundWeld:Destroy()
+				print("[BlockSpam] Found and destroyed BlockSpamWeld")
+			end
+	
+			-- Destroy ANY WeldConstraint connecting to our block
+			for _, child in ipairs(hrp:GetChildren()) do
+				if child:IsA("WeldConstraint") then
+					if weldedBlock and (child.Part0 == weldedBlock or child.Part1 == weldedBlock) then
+						child:Destroy()
+						print("[BlockSpam] Destroyed weld connecting to block")
+					end
+				end
+			end
 		end
 	
-		if currentWeld then
-			currentWeld:Destroy()
-			currentWeld = nil
+		currentWeld = nil
+	
+		-- Wait for physics to settle
+		task.wait(0.15)
+	
+		-- Restore CanCollide and TP block back
+		if weldedBlock and weldedBlock:IsDescendantOf(workspace) then
+			weldedBlock.CanCollide = true
+			print("[BlockSpam] Restored CanCollide")
+	
+			-- Force TP block back to original position
+			if blockOriginalPosition then
+				weldedBlock.CFrame = blockOriginalPosition
+				weldedBlock.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+				weldedBlock.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+				print("[BlockSpam] Block teleported back and velocity zeroed")
+			end
 		end
 	
 		weldedBlock = nil
+		blockOriginalPosition = nil
+		print("[BlockSpam] Cleanup complete")
 	end
 	
 	local function stopSpam()
@@ -18667,16 +18710,13 @@ local script = G2L["17a"];
 			spamLoop = nil
 		end
 	
-		local savePos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.CFrame
-	
+		-- Only cleanup weld and TP block back - DON'T TP player back
 		cleanupWeld()
 	
-		if savePos and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-			task.wait(0.1)
-			LocalPlayer.Character.HumanoidRootPart.CFrame = savePos
-		end
+		-- Clear saved position
+		positionBeforeStop = nil
 	
-		print("[BlockSpam] Spam stopped")
+		print("[BlockSpam] Spam stopped and cleaned up")
 	end
 	
 	-- ============================================================
@@ -18713,10 +18753,10 @@ local script = G2L["17a"];
 			local refreshCounter = 0
 	
 			while isSpamming do
-				-- Check if Build tool still exists
+				-- Check if Build tool still exists - if not, do FULL cleanup
 				if not getBuildTool() then
-					print("[BlockSpam] Build tool disappeared, stopping")
-					stopSpam()
+					print("[BlockSpam] Build tool disappeared, stopping and cleaning up")
+					stopSpam() -- This will unweld and TP back
 					break
 				end
 	
@@ -18779,12 +18819,27 @@ local script = G2L["17a"];
 		local previousTool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
 		local originalPosition = LocalPlayer.Character.HumanoidRootPart.CFrame
 	
+		-- SAVE position for stopSpam to use later
+		positionBeforeStop = originalPosition
+	
+		-- SAVE block's original position
+		blockOriginalPosition = block.CFrame
+	
 		-- Position 20 studs UNDER the block center
 		local underBlockPos = block.Position - Vector3.new(0, 20, 0)
 		LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(underBlockPos)
 	
 		-- STOP FALLING - zero velocity immediately
 		LocalPlayer.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+	
+		-- START POSITION LOCK - keep player 20 studs under block
+		local positionLock = RunService.RenderStepped:Connect(function()
+			if block and block:IsDescendantOf(workspace) and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				local targetPos = block.Position - Vector3.new(0, 20, 0)
+				LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+				LocalPlayer.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+			end
+		end)
 	
 		local paintTool = getPaintTool()
 		if paintTool.Parent == LocalPlayer.Backpack then
@@ -18809,6 +18864,7 @@ local script = G2L["17a"];
 		)
 	
 		if not paintSuccess then
+			positionLock:Disconnect() -- Stop position lock
 			LocalPlayer.Character.Humanoid:UnequipTools()
 			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
 				LocalPlayer.Character.Humanoid:EquipTool(previousTool)
@@ -18839,23 +18895,14 @@ local script = G2L["17a"];
 		LocalPlayer.Character.Humanoid:UnequipTools()
 		task.wait(0.1)
 	
-		-- Resize (keep player 20 studs under block during resize)
+		-- Resize (position lock still active, keeping player 20 studs under)
 		if block.Size.X ~= targetSize or block.Size.Y ~= targetSize or block.Size.Z ~= targetSize then
 			BlockSpamButton.Text = "Resizing..."
-	
-			-- Start tracking block position
-			local trackingLoop = RunService.RenderStepped:Connect(function()
-				if block and block:IsDescendantOf(workspace) then
-					local underPos = block.Position - Vector3.new(0, 20, 0)
-					LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(underPos)
-				end
-			end)
-	
 			resizeBlock(block, targetSize)
-	
-			-- Stop tracking
-			trackingLoop:Disconnect()
 		end
+	
+		-- STOP POSITION LOCK after resize
+		positionLock:Disconnect()
 	
 		-- Weld
 		BlockSpamButton.Text = "Welding..."
