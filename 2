@@ -18504,14 +18504,16 @@ local script = G2L["17b"];
 		local buildUI = getBuildUI()
 		if not buildUI then return false end
 	
-		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+		-- Save what tool is currently equipped
+		local currentlyEquipped = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
 	
-		-- Force unequip everything first
+		-- Unequip everything
 		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
 			LocalPlayer.Character.Humanoid:UnequipTools()
-			task.wait(0.02)
+			task.wait(0.03)
 		end
 	
+		-- Equip Build tool briefly
 		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
 			LocalPlayer.Character.Humanoid:EquipTool(tool)
 			RunService.RenderStepped:Wait()
@@ -18522,8 +18524,9 @@ local script = G2L["17b"];
 			task.wait(0.05)
 			buildUI.Enabled = true
 	
-			if previousTool and previousTool.Parent == LocalPlayer.Backpack and previousTool ~= tool then
-				LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+			-- Re-equip whatever was equipped before (including Build if that's what was held)
+			if currentlyEquipped and currentlyEquipped.Parent == LocalPlayer.Backpack then
+				LocalPlayer.Character.Humanoid:EquipTool(currentlyEquipped)
 			end
 	
 			return true
@@ -18713,6 +18716,18 @@ local script = G2L["17b"];
 		-- Only cleanup weld and TP block back - DON'T TP player back
 		cleanupWeld()
 	
+		-- Show yellow highlight again
+		if _G.SpamSelectHighlight and SelectedBlockValue.Value and SelectedBlockValue.Value:IsDescendantOf(workspace) then
+			_G.SpamSelectHighlight.Adornee = SelectedBlockValue.Value
+			_G.SpamSelectHighlight.Parent = SelectedBlockValue.Value
+		end
+	
+		-- Show Build UI again
+		local buildUI = getBuildUI()
+		if buildUI then
+			buildUI.Enabled = true
+		end
+	
 		-- Clear saved position
 		positionBeforeStop = nil
 	
@@ -18746,6 +18761,17 @@ local script = G2L["17b"];
 	
 		isSpamming = true
 		BlockSpamButton.Text = TEXT_STOP
+	
+		-- Hide yellow highlight during spam
+		if _G.SpamSelectHighlight and _G.SpamSelectHighlight.Parent then
+			_G.SpamSelectHighlight.Parent = nil
+		end
+	
+		-- Hide Build UI during spam
+		local buildUI = getBuildUI()
+		if buildUI then
+			buildUI.Enabled = false
+		end
 	
 		print("[BlockSpam] Starting spam on block")
 	
@@ -18856,16 +18882,17 @@ local script = G2L["17b"];
 			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
 		end
 	
-		task.wait(0.05)
+		task.wait(0.1)
 	
 		if shapeTool and shapeTool.Parent == LocalPlayer.Backpack then
 			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
 		end
 	
-		task.wait(0.2)
+		task.wait(0.3) -- Give more time for tools to fully equip
 	
 		-- Paint
 		BlockSpamButton.Text = "Painting..."
+		print("[BlockSpam] Starting paint - Paint tool equipped:", LocalPlayer.Character:FindFirstChild("Paint") ~= nil)
 		local paintSuccess = spamPaintUntil(
 			block,
 			function(b)
@@ -18988,10 +19015,9 @@ local script = G2L["17b"];
 			return false
 		end
 	
-		if previousTool and previousTool.Parent == LocalPlayer.Backpack then
-			task.wait(0.1)
-			LocalPlayer.Character.Humanoid:EquipTool(previousTool)
-		end
+		-- Unequip ALL tools (don't re-equip Paint or Shape)
+		LocalPlayer.Character.Humanoid:UnequipTools()
+		task.wait(0.1)
 	
 		print("[BlockSpam] Complete!")
 		return true
@@ -19014,7 +19040,7 @@ local script = G2L["17b"];
 		BlockSpamButton.Text = TEXT_PROCESSING
 	
 		if not processBlock(selectedBlock) then
-			BlockSpamButton.Text = "Failed!"
+			BlockSpamButton.Text = "Failed, Press Again."
 			task.wait(1)
 			isProcessing = false
 			BlockSpamButton.Text = TEXT_START
@@ -19181,8 +19207,6 @@ local script = G2L["184"];
 		spamBlockCount = spamBlockCount + 1
 		updateDisplay()
 	
-		print("[BlockAmount] Spam block added, total:", spamBlockCount)
-	
 		-- Watch for deletion
 		block.AncestryChanged:Connect(function()
 			if not block:IsDescendantOf(workspace) then
@@ -19190,7 +19214,6 @@ local script = G2L["184"];
 					spamBlockCount = spamBlockCount - 1
 					if spamBlockCount < 0 then spamBlockCount = 0 end
 					updateDisplay()
-					print("[BlockAmount] Spam block deleted, total:", spamBlockCount)
 				end
 			end
 		end)
