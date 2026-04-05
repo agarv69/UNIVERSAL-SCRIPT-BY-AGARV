@@ -4183,7 +4183,7 @@ G2L["17f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["17f"]["BackgroundTransparency"] = 1;
 G2L["17f"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["17f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["17f"]["Text"] = [[Prevent Delcubes]];
+G2L["17f"]["Text"] = [[Auto Recover]];
 G2L["17f"]["Name"] = [[SavePosText]];
 G2L["17f"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -18590,10 +18590,7 @@ local script = G2L["17a"];
 	
 		BlockSpamButton.Text = "Resizing..."
 	
-		if shapeTool.Parent == LocalPlayer.Backpack then
-			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
-			task.wait(0.2)
-		end
+		-- Tool should already be equipped, no need to equip again
 	
 		local maxIterations = 50
 		local iterations = 0
@@ -18638,7 +18635,7 @@ local script = G2L["17a"];
 			task.wait(0.2)
 		end
 	
-		LocalPlayer.Character.Humanoid:UnequipTools()
+		-- Don't unequip - caller will handle that
 		task.wait(0.4)
 	
 		local finalSize = block.Size
@@ -18739,6 +18736,11 @@ local script = G2L["17a"];
 		-- Don't cancel loop - just let it exit naturally when it checks isSpamming
 		spamLoop = nil
 	
+		-- Stop watching for new spam blocks
+		if _G.BlockAmountTracker and _G.BlockAmountTracker.StopWatching then
+			_G.BlockAmountTracker.StopWatching()
+		end
+	
 		-- Only cleanup weld and TP block back - DON'T TP player back
 		cleanupWeld()
 	
@@ -18778,19 +18780,9 @@ local script = G2L["17a"];
 	
 		print("[BlockSpam] Starting spam on block")
 	
-		-- Watch for new blocks being created while spamming
-		local blockAddedConnection
-		local playerBricksFolder = workspace:WaitForChild("Bricks"):FindFirstChild(LocalPlayer.Name)
-	
-		if playerBricksFolder then
-			blockAddedConnection = playerBricksFolder.ChildAdded:Connect(function(newBlock)
-				if isSpamming and newBlock:IsA("BasePart") and newBlock.Name == "Brick" then
-					-- Notify the block counter
-					if _G.BlockAmountTracker and _G.BlockAmountTracker.OnBlockSpammed then
-						_G.BlockAmountTracker.OnBlockSpammed(newBlock)
-					end
-				end
-			end)
+		-- Start watching for spam blocks
+		if _G.BlockAmountTracker and _G.BlockAmountTracker.StartWatching then
+			_G.BlockAmountTracker.StartWatching()
 		end
 	
 		spamLoop = task.spawn(function()
@@ -18800,16 +18792,76 @@ local script = G2L["17a"];
 				-- Check if Build tool still exists - if not, do FULL cleanup
 				if not getBuildTool() then
 					print("[BlockSpam] Build tool disappeared, stopping and cleaning up")
-					if blockAddedConnection then blockAddedConnection:Disconnect() end
 					stopSpam() -- This will unweld and TP back
 					break
 				end
 	
 				if not block or not block:IsDescendantOf(workspace) or not block:FindFirstChild("Drag") then
-					print("[BlockSpam] Block invalid, stopping")
-					if blockAddedConnection then blockAddedConnection:Disconnect() end
-					stopSpam()
-					break
+					print("[BlockSpam] Block invalid or deleted")
+	
+					-- Check if SavePos feature is enabled
+					local saveEnabled = false
+					local saveRow = LagGroup:FindFirstChild("SavePosRow")
+					if saveRow then
+						local saveTickBox = saveRow:FindFirstChild("SavePosTickBox")
+						if saveTickBox and saveTickBox:GetAttribute("Enabled") then
+							saveEnabled = true
+						end
+					end
+	
+					if saveEnabled then
+						-- Try to find a spam block that still exists
+						print("[BlockSpam] SavePos enabled - searching for spam block to recover...")
+						local playerFolder = workspace:WaitForChild("Bricks"):FindFirstChild(LocalPlayer.Name)
+						local foundBlock = nil
+	
+						if playerFolder then
+							for _, child in ipairs(playerFolder:GetChildren()) do
+								if child.Name == "Brick" and child:IsA("BasePart") and child:GetAttribute("IsSpamBlock") then
+									foundBlock = child
+									print("[BlockSpam] Found spam block to recover:", foundBlock)
+									break
+								end
+							end
+						end
+	
+						if foundBlock then
+							-- Stop current spam
+							isSpamming = false
+							if _G.BlockAmountTracker and _G.BlockAmountTracker.StopWatching then
+								_G.BlockAmountTracker.StopWatching()
+							end
+	
+							-- Update selected block
+							SelectedBlockValue.Value = foundBlock
+	
+							-- Wait a moment
+							task.wait(0.5)
+	
+							-- Start processing the new block
+							print("[BlockSpam] Auto-recovering with new block")
+							BlockSpamButton.Text = "Recovering..."
+	
+							-- Call processBlock on the new block (this will start spam again)
+							task.spawn(function()
+								local success = processBlock(foundBlock)
+								if not success then
+									print("[BlockSpam] Recovery failed")
+									stopSpam()
+								end
+							end)
+	
+							break
+						else
+							print("[BlockSpam] No spam blocks found to recover")
+							stopSpam()
+							break
+						end
+					else
+						-- SavePos disabled, just stop
+						stopSpam()
+						break
+					end
 				end
 	
 				local currentEvent = getBuildEvent()
@@ -18830,11 +18882,6 @@ local script = G2L["17a"];
 				end
 	
 				task.wait(0.05)
-			end
-	
-			-- Disconnect listener when spam stops
-			if blockAddedConnection then
-				blockAddedConnection:Disconnect()
 			end
 		end)
 	
@@ -18892,9 +18939,18 @@ local script = G2L["17a"];
 			end
 		end)
 	
+		-- EQUIP BOTH PAINT AND SHAPE TOOLS AT ONCE
 		local paintTool = getPaintTool()
-		if paintTool.Parent == LocalPlayer.Backpack then
+		local shapeTool = getShapeTool()
+	
+		if paintTool and paintTool.Parent == LocalPlayer.Backpack then
 			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
+		end
+	
+		task.wait(0.05)
+	
+		if shapeTool and shapeTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
 		end
 	
 		task.wait(0.2)
@@ -18943,17 +18999,16 @@ local script = G2L["17a"];
 			end
 		end
 	
-		LocalPlayer.Character.Humanoid:UnequipTools()
-		task.wait(0.1)
-	
-		-- Resize (position lock still active, keeping player 20 studs under)
+		-- Resize (both tools still equipped, position lock still active)
 		if block.Size.X ~= targetSize or block.Size.Y ~= targetSize or block.Size.Z ~= targetSize then
 			BlockSpamButton.Text = "Resizing..."
 			resizeBlock(block, targetSize)
 		end
 	
-		-- STOP POSITION LOCK after resize
+		-- UNEQUIP BOTH TOOLS and stop position lock
+		LocalPlayer.Character.Humanoid:UnequipTools()
 		positionLock:Disconnect()
+		task.wait(0.1)
 	
 		-- Weld
 		BlockSpamButton.Text = "Welding..."
@@ -19094,231 +19149,51 @@ local function C_17d()
 local script = G2L["17d"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	local RunService = game:GetService("RunService")
 	
-	local FollowBlockRow = script.Parent
-	local BkitGroup = FollowBlockRow.Parent
-	local BkitAccentColor = BkitGroup:WaitForChild("BkitAccentColor")
-	local FollowBlockTickBox = FollowBlockRow:WaitForChild("FollowBlockTickBox")
+	local SavePosRow = script.Parent
+	local SavePosTickBox = SavePosRow:WaitForChild("SavePosTickBox")
+	local LagGroup = SavePosRow.Parent
 	
-	-- Get the selected block value
-	local SelectedBlockValue = BkitGroup:WaitForChild("SelectedBlock")
+	local function getAccentColor()
+		local a = LagGroup:FindFirstChild("LagAccentColor")
+		return a and a.BackgroundColor3 or Color3.new(1, 1, 1)
+	end
 	
 	-- State
 	local isEnabled = false
-	local attachmentWeld = nil
-	local updateLoop = nil
-	local originalCanCollide = nil -- Store original CanCollide state
 	
 	-- ============================================================
-	-- UPDATE VISUAL
+	-- TOGGLE
 	-- ============================================================
-	local function updateVisual()
+	local function toggle()
+		isEnabled = not isEnabled
+	
+		-- Update visual
 		if isEnabled then
-			FollowBlockTickBox.BackgroundColor3 = BkitAccentColor.BackgroundColor3
+			SavePosTickBox.BackgroundColor3 = getAccentColor()
 		else
-			FollowBlockTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		end
-	end
-	
-	updateVisual()
-	
-	-- ============================================================
-	-- ATTACH TO BLOCK
-	-- ============================================================
-	local function attachToBlock()
-		local selectedBlock = SelectedBlockValue.Value
-	
-		if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
-			print("[FollowBlock] No valid block selected")
-			return false
+			SavePosTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 		end
 	
-		-- Check if block is unanchored (has Drag)
-		if not selectedBlock:FindFirstChild("Drag") then
-			print("[FollowBlock] Block must be unanchored (needs Drag)")
-			return false
-		end
+		-- Store state in attribute so BlockSpam can check it
+		SavePosTickBox:SetAttribute("Enabled", isEnabled)
 	
-		local character = LocalPlayer.Character
-		if not character then
-			print("[FollowBlock] No character found")
-			return false
-		end
-	
-		local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-		if not humanoidRootPart then
-			print("[FollowBlock] No HumanoidRootPart found")
-			return false
-		end
-	
-		-- Store original CanCollide state and disable collisions
-		originalCanCollide = selectedBlock.CanCollide
-		selectedBlock.CanCollide = false
-	
-		-- Teleport to the center of the block first
-		humanoidRootPart.CFrame = CFrame.new(selectedBlock.Position)
-	
-		-- Create a weld to attach player to block
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = humanoidRootPart
-		weld.Part1 = selectedBlock
-		weld.Parent = humanoidRootPart
-	
-		attachmentWeld = weld
-	
-		print("[FollowBlock] Attached to block:", selectedBlock:GetFullName())
-		return true
+		print("[SavePos] Auto-recovery:", isEnabled and "ON" or "OFF")
 	end
 	
 	-- ============================================================
-	-- DETACH FROM BLOCK
+	-- CLICK HANDLER
 	-- ============================================================
-	local function detachFromBlock()
-		-- Restore original CanCollide state
-		if originalCanCollide ~= nil then
-			local selectedBlock = SelectedBlockValue.Value
-			if selectedBlock and selectedBlock:IsDescendantOf(workspace) then
-				selectedBlock.CanCollide = originalCanCollide
-			end
-			originalCanCollide = nil
-		end
-	
-		if attachmentWeld then
-			attachmentWeld:Destroy()
-			attachmentWeld = nil
-		end
-	
-		print("[FollowBlock] Detached from block")
-	end
+	SavePosTickBox.MouseButton1Click:Connect(toggle)
 	
 	-- ============================================================
-	-- MONITOR BLOCK EXISTENCE
+	-- INITIALIZE
 	-- ============================================================
-	local function startMonitoring()
-		updateLoop = task.spawn(function()
-			while isEnabled do
-				local selectedBlock = SelectedBlockValue.Value
+	-- Start disabled
+	SavePosTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	SavePosTickBox:SetAttribute("Enabled", false)
 	
-				-- If block is deleted, deselected, or becomes anchored, detach and disable
-				if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) or not selectedBlock:FindFirstChild("Drag") then
-					print("[FollowBlock] Block lost or anchored, disabling")
-					disable()
-					break
-				end
-	
-				-- If weld is missing, reattach
-				if not attachmentWeld or not attachmentWeld.Parent then
-					print("[FollowBlock] Weld lost, reattaching")
-					detachFromBlock()
-					attachToBlock()
-				end
-	
-				task.wait(0.5) -- Check every 0.5 seconds
-			end
-		end)
-	end
-	
-	-- ============================================================
-	-- ENABLE
-	-- ============================================================
-	local function enable()
-		local selectedBlock = SelectedBlockValue.Value
-	
-		if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
-			print("[FollowBlock] Cannot enable - no valid block selected")
-			return
-		end
-	
-		if not selectedBlock:FindFirstChild("Drag") then
-			print("[FollowBlock] Cannot enable - block must be unanchored (needs Drag)")
-			return
-		end
-	
-		isEnabled = true
-		updateVisual()
-	
-		if attachToBlock() then
-			startMonitoring()
-			print("[FollowBlock] ON")
-		else
-			isEnabled = false
-			updateVisual()
-		end
-	end
-	
-	-- ============================================================
-	-- DISABLE
-	-- ============================================================
-	function disable()
-		isEnabled = false
-		updateVisual()
-	
-		detachFromBlock()
-	
-		if updateLoop then
-			task.cancel(updateLoop)
-			updateLoop = nil
-		end
-	
-		print("[FollowBlock] OFF")
-	end
-	
-	-- ============================================================
-	-- TICKBOX TOGGLE
-	-- ============================================================
-	FollowBlockTickBox.MouseButton1Click:Connect(function()
-		if isEnabled then
-			disable()
-		else
-			enable()
-		end
-	end)
-	
-	-- ============================================================
-	-- WATCH FOR BLOCK CHANGES
-	-- ============================================================
-	SelectedBlockValue:GetPropertyChangedSignal("Value"):Connect(function()
-		if isEnabled then
-			-- Block changed, reattach to new block
-			detachFromBlock()
-	
-			local newBlock = SelectedBlockValue.Value
-			if newBlock and newBlock:IsDescendantOf(workspace) and newBlock:FindFirstChild("Drag") then
-				attachToBlock()
-			else
-				-- No new block or not unanchored, disable
-				disable()
-			end
-		end
-	end)
-	
-	-- ============================================================
-	-- WATCH FOR CHARACTER RESPAWN
-	-- ============================================================
-	LocalPlayer.CharacterAdded:Connect(function(character)
-		if isEnabled then
-			-- Wait for HumanoidRootPart to be added
-			character:WaitForChild("HumanoidRootPart", 5)
-			task.wait(0.5) -- Wait a bit for character to fully load
-	
-			-- Reattach to block after respawn
-			detachFromBlock()
-			attachToBlock()
-		end
-	end)
-	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
-	script.AncestryChanged:Connect(function()
-		if not script:IsDescendantOf(game) then
-			if isEnabled then
-				disable()
-			end
-			print("[FollowBlock] Cleaned up")
-		end
-	end)
+	print("[SavePos] Script loaded - Auto-recovery OFF by default")
 end;
 task.spawn(C_17d);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.BlockSizeRow.BlockSizeChanger.BlockSizeScript
@@ -19417,106 +19292,105 @@ local script = G2L["187"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local BlockAmountRow = script.Parent
-	local BlockAmountView = BlockAmountRow:WaitForChild("BlockAmountView")
+	local BlockAmountView = script.Parent
+	local BlockAmountRow = BlockAmountView.Parent
 	local LagGroup = BlockAmountRow.Parent
 	
-	-- Track spam blocks
+	-- Track spam blocks count
 	local spamBlockCount = 0
-	
-	-- Store reference to all spam blocks we create
-	local spamBlocks = {}
 	
 	-- ============================================================
 	-- UPDATE DISPLAY
 	-- ============================================================
 	local function updateDisplay()
-		BlockAmountView.Text = "Block Spam Amount: " .. spamBlockCount
+		BlockAmountView.Text = "Spam Blocks: " .. spamBlockCount
 	end
 	
 	-- ============================================================
-	-- MONITOR SPAM BLOCKS
+	-- MARK BLOCK AS SPAM AND TRACK IT
 	-- ============================================================
-	-- Listen for new spam blocks being created
-	-- The BlockSpam script should fire this event when it creates a block
-	local function onBlockSpammed(block)
-		if not block or not block:IsDescendantOf(workspace) then
+	local function markAndTrackBlock(block)
+		if not block or not block:IsA("BasePart") then
 			return
 		end
 	
-		-- Check if we're already tracking this block
-		if spamBlocks[block] then
+		-- Check if already marked
+		if block:GetAttribute("IsSpamBlock") then
 			return
 		end
 	
-		-- Add to tracking
-		spamBlocks[block] = true
+		-- Mark this block as a spam block
+		block:SetAttribute("IsSpamBlock", true)
 		spamBlockCount = spamBlockCount + 1
 		updateDisplay()
 	
-		print("[BlockAmount] Block spammed, total:", spamBlockCount)
+		print("[BlockAmount] Spam block added, total:", spamBlockCount)
 	
 		-- Watch for deletion
 		block.AncestryChanged:Connect(function()
-			if not block:IsDescendantOf(workspace) and spamBlocks[block] then
-				spamBlocks[block] = nil
-				spamBlockCount = spamBlockCount - 1
-				if spamBlockCount < 0 then spamBlockCount = 0 end
-				updateDisplay()
-				print("[BlockAmount] Block deleted, total:", spamBlockCount)
+			if not block:IsDescendantOf(workspace) then
+				if block:GetAttribute("IsSpamBlock") then
+					spamBlockCount = spamBlockCount - 1
+					if spamBlockCount < 0 then spamBlockCount = 0 end
+					updateDisplay()
+					print("[BlockAmount] Spam block deleted, total:", spamBlockCount)
+				end
 			end
 		end)
 	end
 	
 	-- ============================================================
-	-- SHARED EVENT SYSTEM
+	-- WATCH SPAM BLOCKS
 	-- ============================================================
-	-- Create shared function for BlockSpam to call
-	_G.BlockAmountTracker = _G.BlockAmountTracker or {}
-	_G.BlockAmountTracker.OnBlockSpammed = onBlockSpammed
+	local activeWatcher = nil
 	
-	-- ============================================================
-	-- RESET ON DECUBE
-	-- ============================================================
-	-- Watch for decube (all blocks removed)
-	-- This happens when workspace.Bricks.[PlayerName] is cleared
-	local function watchForDecube()
-		local bricksFolder = workspace:WaitForChild("Bricks")
-		local playerFolder = bricksFolder:FindFirstChild(LocalPlayer.Name)
+	local function startWatching()
+		if activeWatcher then
+			return -- Already watching
+		end
 	
-		if playerFolder then
-			playerFolder.ChildRemoved:Connect(function(child)
-				-- Check if a spam block was removed
-				if spamBlocks[child] then
-					spamBlocks[child] = nil
-					spamBlockCount = spamBlockCount - 1
-					if spamBlockCount < 0 then spamBlockCount = 0 end
-					updateDisplay()
-				end
-			end)
+		local playerFolder = workspace:WaitForChild("Bricks"):FindFirstChild(LocalPlayer.Name)
+		if not playerFolder then
+			warn("[BlockAmount] Player brick folder not found")
+			return
+		end
+	
+		print("[BlockAmount] Started watching for spam blocks")
+	
+		activeWatcher = playerFolder.ChildAdded:Connect(function(child)
+			if child.Name == "Brick" and child:IsA("BasePart") then
+				-- Mark and track this spam block
+				markAndTrackBlock(child)
+			end
+		end)
+	end
+	
+	local function stopWatching()
+		if activeWatcher then
+			activeWatcher:Disconnect()
+			activeWatcher = nil
+			print("[BlockAmount] Stopped watching for spam blocks")
 		end
 	end
 	
 	-- ============================================================
-	-- SCAN EXISTING BLOCKS (on script load)
+	-- GLOBAL API FOR BLOCKSPAM SCRIPT
 	-- ============================================================
-	local function scanExistingBlocks()
-		-- Clear tracking on load
-		spamBlocks = {}
-		spamBlockCount = 0
-		updateDisplay()
-	
-		print("[BlockAmount] Block counter loaded")
-	end
+	_G.BlockAmountTracker = {
+		StartWatching = startWatching,
+		StopWatching = stopWatching,
+		Reset = function()
+			spamBlockCount = 0
+			updateDisplay()
+		end
+	}
 	
 	-- ============================================================
 	-- INITIALIZE
 	-- ============================================================
 	updateDisplay()
-	scanExistingBlocks()
-	watchForDecube()
 	
-	print("[BlockAmount] Counter initialized")
+	print("[BlockAmount] Block counter initialized - waiting for spam to start")
 end;
 task.spawn(C_187);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableScript
