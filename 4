@@ -18426,11 +18426,18 @@ local script = G2L["17a"];
 	
 	-- State
 	local isProcessing = false
+	local isSpamming = false
+	local spamLoop = nil
+	local currentWeld = nil
+	local weldedBlock = nil
+	local positionBeforeStop = nil
 	
 	-- Text states
 	local TEXT_START = "Start Spam"
+	local TEXT_STOP = "Stop Spam"
 	local TEXT_NO_BLOCK = "No Block Selected"
 	local TEXT_PROCESSING = "Processing..."
+	local TEXT_SPAMMING = "Spamming..."
 	
 	-- Target properties
 	local TARGET_COLOR = Color3.new(0.01, 0.01, 0.005) -- Really black
@@ -18450,6 +18457,65 @@ local script = G2L["17a"];
 			return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
 		end
 		return nil
+	end
+	
+	-- ============================================================
+	-- BUILD TOOL HELPERS
+	-- ============================================================
+	local function getBuildTool()
+		return LocalPlayer.Backpack:FindFirstChild("Build")
+			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Build"))
+	end
+	
+	local function getBuildEvent()
+		local tool = getBuildTool()
+		if tool then
+			return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
+		end
+		return nil
+	end
+	
+	local function getBuildUI()
+		return LocalPlayer.PlayerGui:FindFirstChild("Build")
+	end
+	
+	-- Refresh build tool (fast equip/unequip to keep UI visible)
+	local function refreshBuildTool()
+		local tool = getBuildTool()
+		if not tool then return false end
+	
+		local buildUI = getBuildUI()
+		if not buildUI then return false end
+	
+		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+		if tool.Parent == LocalPlayer.Character then
+			tool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:EquipTool(tool)
+			RunService.RenderStepped:Wait()
+			buildUI.Enabled = true
+	
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+				LocalPlayer.Character.Humanoid:UnequipTools()
+			end
+	
+			task.wait(0.05)
+			buildUI.Enabled = true
+	
+			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+				end
+			end
+	
+			return true
+		end
+	
+		return false
 	end
 	
 	-- ============================================================
@@ -18810,6 +18876,18 @@ local script = G2L["17a"];
 	
 		print("[BlockSpam] Teleported back with block attached")
 	
+		-- Store weld and block for later cleanup
+		currentWeld = weld
+		weldedBlock = block
+	
+		-- STEP 6: Start spamming blocks on it
+		if not startSpamBuilding(block) then
+			-- Failed to start spamming, cleanup
+			cleanupWeld()
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+			return false
+		end
+	
 		-- Re-equip previous tool if any
 		if previousTool and previousTool.Parent == LocalPlayer.Backpack then
 			task.wait(0.1)
@@ -18821,32 +18899,201 @@ local script = G2L["17a"];
 	end
 	
 	-- ============================================================
-	-- START PROCESSING
+	-- START SPAM BUILDING
+	-- ============================================================
+	local function startSpamBuilding(block)
+		-- Check if build tool exists
+		if not getBuildTool() then
+			BlockSpamButton.Text = "Build tool not found"
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_START
+			return false
+		end
+	
+		local buildUI = getBuildUI()
+		if not buildUI then
+			BlockSpamButton.Text = "Build UI not found"
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_START
+			return false
+		end
+	
+		-- Initial refresh to activate build tool
+		if not refreshBuildTool() then
+			BlockSpamButton.Text = "Failed to activate"
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_START
+			return false
+		end
+	
+		isSpamming = true
+		BlockSpamButton.Text = TEXT_STOP
+	
+		print("[BlockSpam] Starting spam on block")
+	
+		-- Start the spam loop
+		spamLoop = task.spawn(function()
+			local refreshCounter = 0
+	
+			while isSpamming do
+				-- Check if block still exists and has Drag
+				if not block or not block:IsDescendantOf(workspace) or not block:FindFirstChild("Drag") then
+					print("[BlockSpam] Block invalid, stopping spam")
+					stopSpam()
+					break
+				end
+	
+				-- Get current build event
+				local currentEvent = getBuildEvent()
+				local currentUI = getBuildUI()
+	
+				if currentEvent and currentUI then
+					-- Fire build event at the center of the block
+					pcall(function()
+						currentEvent:FireServer(
+							block,
+							Enum.NormalId.Top,
+							block.Position,
+							currentUI.Button.Text
+						)
+					end)
+				else
+					-- Event lost, try to refresh
+					refreshBuildTool()
+				end
+	
+				-- Refresh tool every 50 iterations
+				refreshCounter = refreshCounter + 1
+				if refreshCounter >= 50 then
+					refreshBuildTool()
+					refreshCounter = 0
+				end
+	
+				task.wait(0.05) -- Spam 20 times per second
+			end
+		end)
+	
+		return true
+	end
+	
+	-- ============================================================
+	-- CLEANUP WELD
+	-- ============================================================
+	local function cleanupWeld()
+		-- Restore CanCollide
+		if weldedBlock and weldedBlock:IsDescendantOf(workspace) then
+			weldedBlock.CanCollide = true
+			print("[BlockSpam] Restored CanCollide")
+		end
+	
+		-- Destroy weld
+		if currentWeld then
+			currentWeld:Destroy()
+			currentWeld = nil
+			print("[BlockSpam] Unwelded block")
+		end
+	
+		weldedBlock = nil
+	end
+	
+	-- ============================================================
+	-- STOP SPAM
+	-- ============================================================
+	local function stopSpam()
+		isSpamming = false
+		BlockSpamButton.Text = TEXT_START
+	
+		if spamLoop then
+			task.cancel(spamLoop)
+			spamLoop = nil
+		end
+	
+		print("[BlockSpam] Spam stopped")
+	end
+	
+	-- ============================================================
+	-- START SPAM (just spam, no processing)
 	-- ============================================================
 	local function startSpam()
 		local selectedBlock = SelectedBlockValue.Value
 	
 		if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
-			print("[BlockSpam] No valid block selected")
+			BlockSpamButton.Text = TEXT_NO_BLOCK
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_START
 			return
 		end
 	
-		isProcessing = true
-		BlockSpamButton.Text = TEXT_PROCESSING
-	
-		-- Process the block
-		local success = processBlock(selectedBlock)
-	
-		if success then
-			BlockSpamButton.Text = "Block Updated!"
+		-- Check if build tool exists
+		if not getBuildTool() then
+			BlockSpamButton.Text = "Build tool not found"
 			task.wait(1)
-		else
-			BlockSpamButton.Text = "Failed!"
-			task.wait(1)
+			BlockSpamButton.Text = TEXT_START
+			return
 		end
 	
-		isProcessing = false
-		BlockSpamButton.Text = TEXT_START
+		local buildUI = getBuildUI()
+		if not buildUI then
+			BlockSpamButton.Text = "Build UI not found"
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_START
+			return
+		end
+	
+		-- Initial refresh to activate build tool
+		if not refreshBuildTool() then
+			BlockSpamButton.Text = "Failed to activate"
+			task.wait(1)
+			BlockSpamButton.Text = TEXT_START
+			return
+		end
+	
+		isSpamming = true
+		BlockSpamButton.Text = TEXT_STOP
+	
+		print("[BlockSpam] Starting spam on block")
+	
+		-- Start the spam loop
+		spamLoop = task.spawn(function()
+			local refreshCounter = 0
+	
+			while isSpamming do
+				-- Check if block still exists
+				if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
+					print("[BlockSpam] Block invalid, stopping spam")
+					stopSpam()
+					break
+				end
+	
+				-- Get current build event
+				local currentEvent = getBuildEvent()
+				local currentUI = getBuildUI()
+	
+				if currentEvent and currentUI then
+					-- Fire build event at the center of the block
+					pcall(function()
+						currentEvent:FireServer(
+							selectedBlock,
+							Enum.NormalId.Top,
+							selectedBlock.Position,
+							currentUI.Button.Text
+						)
+					end)
+				else
+					-- Event lost, try to refresh
+					refreshBuildTool()
+				end
+	
+				-- Refresh tool every 50 iterations
+				refreshCounter = refreshCounter + 1
+				if refreshCounter >= 50 then
+					refreshBuildTool()
+					refreshCounter = 0
+				end
+	
+				task.wait(0.05) -- Spam 20 times per second
+			end
+		end)
 	end
 	
 	-- ============================================================
@@ -18873,7 +19120,11 @@ local script = G2L["17a"];
 	-- BUTTON CLICK HANDLER
 	-- ============================================================
 	BlockSpamButton.MouseButton1Click:Connect(function()
-		if not isProcessing then
+		if isSpamming then
+			-- Currently spamming -> Stop
+			stopSpam()
+		else
+			-- Not spamming -> Start
 			startSpam()
 		end
 	end)
@@ -18883,6 +19134,9 @@ local script = G2L["17a"];
 	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
+			if isSpamming then
+				stopSpam()
+			end
 			print("[BlockSpam] Cleaned up")
 		end
 	end)
