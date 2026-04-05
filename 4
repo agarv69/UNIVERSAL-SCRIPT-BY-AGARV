@@ -18478,9 +18478,8 @@ local script = G2L["17a"];
 			return false
 		end
 	
-		local currentSize = block.Size.X -- Assume cube (X = Y = Z)
-	
-		if currentSize == targetSize then
+		-- Check if block is already the target size (all 3 dimensions)
+		if block.Size.X == targetSize and block.Size.Y == targetSize and block.Size.Z == targetSize then
 			print("[BlockSpam] Block already target size:", targetSize)
 			return true
 		end
@@ -18493,45 +18492,73 @@ local script = G2L["17a"];
 			task.wait(0.2) -- Wait for tool to equip
 		end
 	
+		local currentSize = math.floor(block.Size.X + 0.5) -- Round to nearest integer
+	
 		-- Determine if we need to increase or decrease
 		if currentSize < targetSize then
 			-- INCREASE size
 			local increases = targetSize - currentSize
-			print("[BlockSpam] Increasing size by", increases)
+			print("[BlockSpam] Increasing size by", increases, "from", currentSize, "to", targetSize)
 	
 			for i = 1, increases do
-				-- Fire all 3 increase events (Top, Back, Right)
+				-- Recalculate position and size each iteration
+				local pos = block.Position
+				local size = block.Size
+	
+				print("[BlockSpam] Iteration", i, "- Current size:", size)
+	
+				-- Fire all 3 increase events with UPDATED surface positions
 				pcall(function()
-					shapeEvent:FireServer(block, Enum.NormalId.Top, block.Position, "increase")
+					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, "increase")
 				end)
+				task.wait(0.05)
+	
 				pcall(function()
-					shapeEvent:FireServer(block, Enum.NormalId.Back, block.Position, "increase")
+					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
+					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, "increase")
 				end)
+				task.wait(0.05)
+	
 				pcall(function()
-					shapeEvent:FireServer(block, Enum.NormalId.Right, block.Position, "increase")
+					local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, "increase")
 				end)
 	
-				task.wait(0.1) -- Wait between size changes
+				task.wait(0.2) -- Wait for size to update
 			end
 	
 		elseif currentSize > targetSize then
 			-- DECREASE size
 			local decreases = currentSize - targetSize
-			print("[BlockSpam] Decreasing size by", decreases)
+			print("[BlockSpam] Decreasing size by", decreases, "from", currentSize, "to", targetSize)
 	
 			for i = 1, decreases do
-				-- Fire all 3 decrease events (Top, Back, Right)
+				-- Recalculate position and size each iteration
+				local pos = block.Position
+				local size = block.Size
+	
+				print("[BlockSpam] Iteration", i, "- Current size:", size)
+	
+				-- Fire all 3 decrease events with UPDATED surface positions
 				pcall(function()
-					shapeEvent:FireServer(block, Enum.NormalId.Top, block.Position, "decrease")
+					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, "decrease")
 				end)
+				task.wait(0.05)
+	
 				pcall(function()
-					shapeEvent:FireServer(block, Enum.NormalId.Back, block.Position, "decrease")
+					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
+					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, "decrease")
 				end)
+				task.wait(0.05)
+	
 				pcall(function()
-					shapeEvent:FireServer(block, Enum.NormalId.Right, block.Position, "decrease")
+					local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, "decrease")
 				end)
 	
-				task.wait(0.1) -- Wait between size changes
+				task.wait(0.2) -- Wait for size to update
 			end
 		end
 	
@@ -18539,14 +18566,17 @@ local script = G2L["17a"];
 		LocalPlayer.Character.Humanoid:UnequipTools()
 		task.wait(0.1)
 	
-		-- Wait a bit and verify final size
-		task.wait(0.3)
+		-- Wait a bit and verify final size (ALL 3 DIMENSIONS)
+		task.wait(0.5)
 	
-		if math.abs(block.Size.X - targetSize) < 0.1 then
-			print("[BlockSpam] Size changed successfully to:", targetSize)
+		local finalSize = block.Size
+		print("[BlockSpam] Final size check - X:", finalSize.X, "Y:", finalSize.Y, "Z:", finalSize.Z, "Target:", targetSize)
+	
+		if finalSize.X == targetSize and finalSize.Y == targetSize and finalSize.Z == targetSize then
+			print("[BlockSpam] Size changed successfully to:", targetSize, "x", targetSize, "x", targetSize)
 			return true
 		else
-			print("[BlockSpam] Size change failed - Current:", block.Size.X, "Target:", targetSize)
+			print("[BlockSpam] Size change incomplete - Got:", finalSize.X, finalSize.Y, finalSize.Z, "Expected:", targetSize, targetSize, targetSize)
 			return false
 		end
 	end
