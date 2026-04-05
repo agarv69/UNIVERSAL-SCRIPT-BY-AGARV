@@ -4183,7 +4183,7 @@ G2L["17f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["17f"]["BackgroundTransparency"] = 1;
 G2L["17f"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["17f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["17f"]["Text"] = [[Prevent Delcubes]];
+G2L["17f"]["Text"] = [[Auto Recover]];
 G2L["17f"]["Name"] = [[SavePosText]];
 G2L["17f"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -18269,6 +18269,7 @@ local script = G2L["176"];
 			currentHighlight:Destroy()
 			currentHighlight = nil
 		end
+		_G.SpamSelectHighlight = nil
 	end
 	
 	-- ============================================================
@@ -18289,6 +18290,9 @@ local script = G2L["176"];
 		highlight.Parent = block
 	
 		currentHighlight = highlight
+	
+		-- Store globally so BlockSpam can update it during recovery
+		_G.SpamSelectHighlight = highlight
 	end
 	
 	-- ============================================================
@@ -18796,8 +18800,83 @@ local script = G2L["17a"];
 					break
 				end
 	
-				if not block or not block:IsDescendantOf(workspace) or not block:FindFirstChild("Drag") then
-					print("[BlockSpam] Block invalid, stopping")
+				if not block or not block:IsDescendantOf(workspace) then
+					print("[BlockSpam] Block deleted or invalid")
+	
+					-- Check if SavePos feature is enabled
+					local saveEnabled = false
+					local saveRow = LagGroup:FindFirstChild("SavePosRow")
+					if saveRow then
+						local saveTickBox = saveRow:FindFirstChild("SavePosTickBox")
+						if saveTickBox and saveTickBox:GetAttribute("Enabled") then
+							saveEnabled = true
+						end
+					end
+	
+					if saveEnabled then
+						-- Try to find a spam block that still exists
+						print("[BlockSpam] SavePos enabled - searching for spam block to recover...")
+						local playerFolder = workspace:WaitForChild("Bricks"):FindFirstChild(LocalPlayer.Name)
+						local foundBlock = nil
+	
+						if playerFolder then
+							for _, child in ipairs(playerFolder:GetChildren()) do
+								if child.Name == "Brick" and child:IsA("BasePart") and child:GetAttribute("IsSpamBlock") and child:FindFirstChild("Drag") then
+									foundBlock = child
+									print("[BlockSpam] Found spam block to recover:", foundBlock)
+									break
+								end
+							end
+						end
+	
+						if foundBlock then
+							print("[BlockSpam] Auto-recovering with new block:", foundBlock)
+	
+							-- Stop current spam temporarily
+							isSpamming = false
+	
+							-- Update selected block
+							SelectedBlockValue.Value = foundBlock
+	
+							-- Update yellow highlight if it exists
+							if _G.SpamSelectHighlight then
+								if _G.SpamSelectHighlight.Parent then
+									_G.SpamSelectHighlight.Parent = nil
+								end
+								_G.SpamSelectHighlight.Adornee = foundBlock
+								_G.SpamSelectHighlight.Parent = foundBlock
+							end
+	
+							-- Wait for spam to fully stop
+							task.wait(0.5)
+	
+							-- Re-process the new block (paint, resize, weld, then spam)
+							BlockSpamButton.Text = "Recovering..."
+	
+							task.spawn(function()
+								local success = processBlock(foundBlock)
+								if not success then
+									print("[BlockSpam] Recovery failed")
+									stopSpam()
+								end
+							end)
+	
+							-- Exit this spam loop - processBlock will start a new one
+							break
+						else
+							print("[BlockSpam] No spam blocks found to recover")
+							stopSpam()
+							break
+						end
+					else
+						-- SavePos disabled, just stop
+						print("[BlockSpam] SavePos disabled, stopping")
+						stopSpam()
+						break
+					end
+				elseif not block:FindFirstChild("Drag") then
+					-- Block exists but lost Drag (got anchored somehow)
+					print("[BlockSpam] Block lost Drag, stopping")
 					stopSpam()
 					break
 				end
@@ -19087,231 +19166,51 @@ local function C_17d()
 local script = G2L["17d"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	local RunService = game:GetService("RunService")
 	
-	local FollowBlockRow = script.Parent
-	local BkitGroup = FollowBlockRow.Parent
-	local BkitAccentColor = BkitGroup:WaitForChild("BkitAccentColor")
-	local FollowBlockTickBox = FollowBlockRow:WaitForChild("FollowBlockTickBox")
+	local SavePosRow = script.Parent
+	local SavePosTickBox = SavePosRow:WaitForChild("SavePosTickBox")
+	local LagGroup = SavePosRow.Parent
 	
-	-- Get the selected block value
-	local SelectedBlockValue = BkitGroup:WaitForChild("SelectedBlock")
+	local function getAccentColor()
+		local a = LagGroup:FindFirstChild("LagAccentColor")
+		return a and a.BackgroundColor3 or Color3.new(1, 1, 1)
+	end
 	
 	-- State
 	local isEnabled = false
-	local attachmentWeld = nil
-	local updateLoop = nil
-	local originalCanCollide = nil -- Store original CanCollide state
 	
 	-- ============================================================
-	-- UPDATE VISUAL
+	-- TOGGLE
 	-- ============================================================
-	local function updateVisual()
+	local function toggle()
+		isEnabled = not isEnabled
+	
+		-- Update visual
 		if isEnabled then
-			FollowBlockTickBox.BackgroundColor3 = BkitAccentColor.BackgroundColor3
+			SavePosTickBox.BackgroundColor3 = getAccentColor()
 		else
-			FollowBlockTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		end
-	end
-	
-	updateVisual()
-	
-	-- ============================================================
-	-- ATTACH TO BLOCK
-	-- ============================================================
-	local function attachToBlock()
-		local selectedBlock = SelectedBlockValue.Value
-	
-		if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
-			print("[FollowBlock] No valid block selected")
-			return false
+			SavePosTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 		end
 	
-		-- Check if block is unanchored (has Drag)
-		if not selectedBlock:FindFirstChild("Drag") then
-			print("[FollowBlock] Block must be unanchored (needs Drag)")
-			return false
-		end
+		-- Store state in attribute so BlockSpam can check it
+		SavePosTickBox:SetAttribute("Enabled", isEnabled)
 	
-		local character = LocalPlayer.Character
-		if not character then
-			print("[FollowBlock] No character found")
-			return false
-		end
-	
-		local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-		if not humanoidRootPart then
-			print("[FollowBlock] No HumanoidRootPart found")
-			return false
-		end
-	
-		-- Store original CanCollide state and disable collisions
-		originalCanCollide = selectedBlock.CanCollide
-		selectedBlock.CanCollide = false
-	
-		-- Teleport to the center of the block first
-		humanoidRootPart.CFrame = CFrame.new(selectedBlock.Position)
-	
-		-- Create a weld to attach player to block
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = humanoidRootPart
-		weld.Part1 = selectedBlock
-		weld.Parent = humanoidRootPart
-	
-		attachmentWeld = weld
-	
-		print("[FollowBlock] Attached to block:", selectedBlock:GetFullName())
-		return true
+		print("[SavePos] Auto-recovery:", isEnabled and "ON" or "OFF")
 	end
 	
 	-- ============================================================
-	-- DETACH FROM BLOCK
+	-- CLICK HANDLER
 	-- ============================================================
-	local function detachFromBlock()
-		-- Restore original CanCollide state
-		if originalCanCollide ~= nil then
-			local selectedBlock = SelectedBlockValue.Value
-			if selectedBlock and selectedBlock:IsDescendantOf(workspace) then
-				selectedBlock.CanCollide = originalCanCollide
-			end
-			originalCanCollide = nil
-		end
-	
-		if attachmentWeld then
-			attachmentWeld:Destroy()
-			attachmentWeld = nil
-		end
-	
-		print("[FollowBlock] Detached from block")
-	end
+	SavePosTickBox.MouseButton1Click:Connect(toggle)
 	
 	-- ============================================================
-	-- MONITOR BLOCK EXISTENCE
+	-- INITIALIZE
 	-- ============================================================
-	local function startMonitoring()
-		updateLoop = task.spawn(function()
-			while isEnabled do
-				local selectedBlock = SelectedBlockValue.Value
+	-- Start disabled
+	SavePosTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	SavePosTickBox:SetAttribute("Enabled", false)
 	
-				-- If block is deleted, deselected, or becomes anchored, detach and disable
-				if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) or not selectedBlock:FindFirstChild("Drag") then
-					print("[FollowBlock] Block lost or anchored, disabling")
-					disable()
-					break
-				end
-	
-				-- If weld is missing, reattach
-				if not attachmentWeld or not attachmentWeld.Parent then
-					print("[FollowBlock] Weld lost, reattaching")
-					detachFromBlock()
-					attachToBlock()
-				end
-	
-				task.wait(0.5) -- Check every 0.5 seconds
-			end
-		end)
-	end
-	
-	-- ============================================================
-	-- ENABLE
-	-- ============================================================
-	local function enable()
-		local selectedBlock = SelectedBlockValue.Value
-	
-		if not selectedBlock or not selectedBlock:IsDescendantOf(workspace) then
-			print("[FollowBlock] Cannot enable - no valid block selected")
-			return
-		end
-	
-		if not selectedBlock:FindFirstChild("Drag") then
-			print("[FollowBlock] Cannot enable - block must be unanchored (needs Drag)")
-			return
-		end
-	
-		isEnabled = true
-		updateVisual()
-	
-		if attachToBlock() then
-			startMonitoring()
-			print("[FollowBlock] ON")
-		else
-			isEnabled = false
-			updateVisual()
-		end
-	end
-	
-	-- ============================================================
-	-- DISABLE
-	-- ============================================================
-	function disable()
-		isEnabled = false
-		updateVisual()
-	
-		detachFromBlock()
-	
-		if updateLoop then
-			task.cancel(updateLoop)
-			updateLoop = nil
-		end
-	
-		print("[FollowBlock] OFF")
-	end
-	
-	-- ============================================================
-	-- TICKBOX TOGGLE
-	-- ============================================================
-	FollowBlockTickBox.MouseButton1Click:Connect(function()
-		if isEnabled then
-			disable()
-		else
-			enable()
-		end
-	end)
-	
-	-- ============================================================
-	-- WATCH FOR BLOCK CHANGES
-	-- ============================================================
-	SelectedBlockValue:GetPropertyChangedSignal("Value"):Connect(function()
-		if isEnabled then
-			-- Block changed, reattach to new block
-			detachFromBlock()
-	
-			local newBlock = SelectedBlockValue.Value
-			if newBlock and newBlock:IsDescendantOf(workspace) and newBlock:FindFirstChild("Drag") then
-				attachToBlock()
-			else
-				-- No new block or not unanchored, disable
-				disable()
-			end
-		end
-	end)
-	
-	-- ============================================================
-	-- WATCH FOR CHARACTER RESPAWN
-	-- ============================================================
-	LocalPlayer.CharacterAdded:Connect(function(character)
-		if isEnabled then
-			-- Wait for HumanoidRootPart to be added
-			character:WaitForChild("HumanoidRootPart", 5)
-			task.wait(0.5) -- Wait a bit for character to fully load
-	
-			-- Reattach to block after respawn
-			detachFromBlock()
-			attachToBlock()
-		end
-	end)
-	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
-	script.AncestryChanged:Connect(function()
-		if not script:IsDescendantOf(game) then
-			if isEnabled then
-				disable()
-			end
-			print("[FollowBlock] Cleaned up")
-		end
-	end)
+	print("[SavePos] Script loaded - Auto-recovery OFF by default")
 end;
 task.spawn(C_17d);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.BlockSizeRow.BlockSizeChanger.BlockSizeScript
