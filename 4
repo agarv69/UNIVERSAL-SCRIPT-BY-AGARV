@@ -18492,91 +18492,79 @@ local script = G2L["17a"];
 			task.wait(0.2) -- Wait for tool to equip
 		end
 	
-		local currentSize = math.floor(block.Size.X + 0.5) -- Round to nearest integer
+		-- Keep resizing until all 3 dimensions match (max 50 iterations to prevent infinite loop)
+		local maxIterations = 50
+		local iterations = 0
 	
-		-- Determine if we need to increase or decrease
-		if currentSize < targetSize then
-			-- INCREASE size
-			local increases = targetSize - currentSize
-			print("[BlockSpam] Increasing size by", increases, "from", currentSize, "to", targetSize)
+		while iterations < maxIterations do
+			local currentSize = block.Size
 	
-			for i = 1, increases do
-				-- Recalculate position and size each iteration
-				local pos = block.Position
-				local size = block.Size
-	
-				print("[BlockSpam] Iteration", i, "- Current size:", size)
-	
-				-- Fire all 3 increase events with UPDATED surface positions
-				pcall(function()
-					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
-					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, "increase")
-				end)
-				task.wait(0.05)
-	
-				pcall(function()
-					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
-					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, "increase")
-				end)
-				task.wait(0.05)
-	
-				pcall(function()
-					local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
-					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, "increase")
-				end)
-	
-				task.wait(0.2) -- Wait for size to update
+			-- Check if all dimensions match
+			if currentSize.X == targetSize and currentSize.Y == targetSize and currentSize.Z == targetSize then
+				print("[BlockSpam] All dimensions match target:", targetSize)
+				break
 			end
 	
-		elseif currentSize > targetSize then
-			-- DECREASE size
-			local decreases = currentSize - targetSize
-			print("[BlockSpam] Decreasing size by", decreases, "from", currentSize, "to", targetSize)
+			iterations = iterations + 1
+			print("[BlockSpam] Iteration", iterations, "- Current:", currentSize.X, currentSize.Y, currentSize.Z, "Target:", targetSize)
 	
-			for i = 1, decreases do
-				-- Recalculate position and size each iteration
-				local pos = block.Position
-				local size = block.Size
+			-- Determine what needs to change
+			local needIncreaseX = currentSize.X < targetSize
+			local needIncreaseY = currentSize.Y < targetSize
+			local needIncreaseZ = currentSize.Z < targetSize
 	
-				print("[BlockSpam] Iteration", i, "- Current size:", size)
+			local needDecreaseX = currentSize.X > targetSize
+			local needDecreaseY = currentSize.Y > targetSize
+			local needDecreaseZ = currentSize.Z > targetSize
 	
-				-- Fire all 3 decrease events with UPDATED surface positions
-				pcall(function()
-					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
-					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, "decrease")
-				end)
-				task.wait(0.05)
+			local pos = block.Position
+			local size = block.Size
 	
-				pcall(function()
-					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
-					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, "decrease")
-				end)
-				task.wait(0.05)
-	
+			-- Fire events for dimensions that need to change
+			-- X axis (Right surface)
+			if needIncreaseX or needDecreaseX then
 				pcall(function()
 					local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
-					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, "decrease")
+					shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, needIncreaseX and "increase" or "decrease")
 				end)
-	
-				task.wait(0.2) -- Wait for size to update
+				task.wait(0.05)
 			end
+	
+			-- Y axis (Top surface)
+			if needIncreaseY or needDecreaseY then
+				pcall(function()
+					local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
+					shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, needIncreaseY and "increase" or "decrease")
+				end)
+				task.wait(0.05)
+			end
+	
+			-- Z axis (Back surface)
+			if needIncreaseZ or needDecreaseZ then
+				pcall(function()
+					local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
+					shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, needIncreaseZ and "increase" or "decrease")
+				end)
+				task.wait(0.05)
+			end
+	
+			task.wait(0.2) -- Wait for changes to apply
 		end
 	
 		-- Unequip Shape tool
 		LocalPlayer.Character.Humanoid:UnequipTools()
 		task.wait(0.1)
 	
-		-- Wait a bit and verify final size (ALL 3 DIMENSIONS)
-		task.wait(0.5)
-	
+		-- Final check
+		task.wait(0.3)
 		local finalSize = block.Size
-		print("[BlockSpam] Final size check - X:", finalSize.X, "Y:", finalSize.Y, "Z:", finalSize.Z, "Target:", targetSize)
+		print("[BlockSpam] Final size - X:", finalSize.X, "Y:", finalSize.Y, "Z:", finalSize.Z, "Target:", targetSize)
 	
 		if finalSize.X == targetSize and finalSize.Y == targetSize and finalSize.Z == targetSize then
-			print("[BlockSpam] Size changed successfully to:", targetSize, "x", targetSize, "x", targetSize)
+			print("[BlockSpam] Resize successful!")
 			return true
 		else
-			print("[BlockSpam] Size change incomplete - Got:", finalSize.X, finalSize.Y, finalSize.Z, "Expected:", targetSize, targetSize, targetSize)
+			print("[BlockSpam] Resize incomplete after", iterations, "iterations")
 			return false
 		end
 	end
@@ -18704,15 +18692,6 @@ local script = G2L["17a"];
 	
 		print("[BlockSpam] Teleported to block")
 	
-		-- STEP 1: Resize block if needed
-		if block.Size.X ~= targetSize then
-			local resizeSuccess = resizeBlock(block, targetSize)
-			if not resizeSuccess then
-				-- Continue anyway, just log it
-				print("[BlockSpam] Resize failed, continuing with paint...")
-			end
-		end
-	
 		-- Equip paint tool
 		if paintTool.Parent == LocalPlayer.Backpack then
 			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
@@ -18720,7 +18699,7 @@ local script = G2L["17a"];
 	
 		task.wait(0.2) -- Wait for tool to equip and UI to show
 	
-		-- STEP 2: Paint the block black with neon material
+		-- STEP 1: Paint the block black with neon material
 		BlockSpamButton.Text = "Painting..."
 		local paintSuccess = spamPaintUntil(
 			block,
@@ -18749,7 +18728,7 @@ local script = G2L["17a"];
 			return false
 		end
 	
-		-- STEP 3: Unanchor the block (check for Drag child)
+		-- STEP 2: Unanchor the block (check for Drag child)
 		print("[BlockSpam] Checking for Drag - Has Drag:", block:FindFirstChild("Drag") ~= nil)
 	
 		if not block:FindFirstChild("Drag") then
@@ -18793,17 +18772,49 @@ local script = G2L["17a"];
 			print("[BlockSpam] Block already has Drag (unanchored), skipping")
 		end
 	
-		-- Unequip paint tool
+		-- STEP 3: Unequip Paint tool before resizing
 		LocalPlayer.Character.Humanoid:UnequipTools()
+		task.wait(0.1)
+	
+		-- STEP 4: Resize block if needed
+		if block.Size.X ~= targetSize or block.Size.Y ~= targetSize or block.Size.Z ~= targetSize then
+			local resizeSuccess = resizeBlock(block, targetSize)
+			if not resizeSuccess then
+				-- Continue anyway, just log it
+				print("[BlockSpam] Resize failed, but continuing...")
+			end
+		end
+	
+		-- STEP 5: Weld to block and disable collision
+		BlockSpamButton.Text = "Welding..."
+	
+		-- Disable collision
+		block.CanCollide = false
+	
+		-- Teleport to center of block
+		LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(block.Position)
+		task.wait(0.1)
+	
+		-- Create weld to attach player to block
+		local weld = Instance.new("WeldConstraint")
+		weld.Name = "BlockSpamWeld"
+		weld.Part0 = LocalPlayer.Character.HumanoidRootPart
+		weld.Part1 = block
+		weld.Parent = LocalPlayer.Character.HumanoidRootPart
+	
+		print("[BlockSpam] Welded to block")
+		task.wait(0.2)
+	
+		-- Teleport back to original position (block comes with us!)
+		LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+	
+		print("[BlockSpam] Teleported back with block attached")
 	
 		-- Re-equip previous tool if any
 		if previousTool and previousTool.Parent == LocalPlayer.Backpack then
 			task.wait(0.1)
 			LocalPlayer.Character.Humanoid:EquipTool(previousTool)
 		end
-	
-		-- Teleport back to original position
-		LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
 	
 		print("[BlockSpam] Block processed successfully!")
 		return true
