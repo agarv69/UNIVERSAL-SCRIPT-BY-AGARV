@@ -3,13 +3,14 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local DELETE_SOUND_ID = "rbxassetid://9117183621"
-local WINDOW = 0.3  -- seconds either side of brick disappear to check
+local WINDOW = 0.3
 
 local brickTemplate = ReplicatedStorage:WaitForChild("Brick")
-local recentDeleteSound = {}  -- userId -> tick() of last delete sound
+local recentDeleteSound = {}
+local lastBrickDisappear = 0
 
 --------------------------------------------------
--- TRACK SOUNDS FOR ALL PLAYERS
+-- TRACK SOUNDS
 --------------------------------------------------
 
 local function hookHRP(player, hrp)
@@ -24,6 +25,7 @@ local function hookHRP(player, hrp)
 					if not lastTime[obj] then lastTime[obj] = t end
 					if t < lastTime[obj] and t < 0.1 then
 						recentDeleteSound[player.UserId] = tick()
+						print("[SOUND] Detected delete sound for", player.Name, "at", recentDeleteSound[player.UserId])
 					end
 					lastTime[obj] = t
 				else
@@ -40,7 +42,6 @@ local function watchPlayer(player)
 		local hrp = char:FindFirstChild("HumanoidRootPart")
 		if hrp then hookHRP(player, hrp) end
 	end
-
 	player.CharacterAdded:Connect(setup)
 	if player.Character then setup(player.Character) end
 end
@@ -57,11 +58,14 @@ Players.PlayerAdded:Connect(watchPlayer)
 brickTemplate.AncestryChanged:Connect(function()
 	if brickTemplate:IsDescendantOf(ReplicatedStorage) then return end
 
-	local disappearedAt = tick()
-	print(string.format("[BKIT] Brick disappeared at %.5f — checking sounds...", disappearedAt))
+	-- Debounce
+	if tick() - lastBrickDisappear < 0.5 then return end
+	lastBrickDisappear = tick()
 
-	-- Wait a tiny bit to let any late sounds register
-	task.wait(0.1)
+	local disappearedAt = tick()
+	print(string.format("[BKIT] Brick disappeared at %.5f", disappearedAt))
+
+	task.wait(0.15)
 
 	local best = nil
 	local bestDiff = math.huge
@@ -70,6 +74,7 @@ brickTemplate.AncestryChanged:Connect(function()
 		local soundTime = recentDeleteSound[player.UserId]
 		if soundTime then
 			local diff = math.abs(disappearedAt - soundTime)
+			print(string.format("[BKIT] %s sound diff: %.4fs", player.Name, diff))
 			if diff < WINDOW and diff < bestDiff then
 				best = player
 				bestDiff = diff
@@ -78,9 +83,9 @@ brickTemplate.AncestryChanged:Connect(function()
 	end
 
 	if best then
-		print(string.format("[BKIT EXPLOIT] %s (%s) broke BKit! (sound diff: %.4fs)", best.DisplayName, best.Name, bestDiff))
+		print(string.format("[BKIT EXPLOIT] %s (%s) broke BKit! (diff: %.4fs)", best.DisplayName, best.Name, bestDiff))
 	else
-		print("[BKIT] No candidate found within window")
+		print("[BKIT] No candidate found")
 	end
 end)
 
