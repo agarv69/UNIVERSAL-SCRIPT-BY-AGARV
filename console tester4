@@ -1,19 +1,171 @@
-local paintEvent = game.Players.LocalPlayer.Character.Paint.Script.Event
-local brick = game.ReplicatedStorage.Brick
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Spray all 6 sides with # symbols
-local sides = {
-    Enum.NormalId.Front,
-    Enum.NormalId.Right,
-    Enum.NormalId.Back,
-    Enum.NormalId.Left,
-    Enum.NormalId.Top,
-    Enum.NormalId.Bottom
-}
+local BRICK_SOUND_ID = "rbxassetid://9117183621"
+local PAINT_SOUND_ID = "rbxassetid://18473826"
 
-for _, side in ipairs(sides) do
-    paintEvent:FireServer(brick, side, brick.Position, "both 🤝", Color3.new(0.01, 0.01, 0.005), "spray", string.rep("#", 132))
-    task.wait(0.1)
+local WINDOW = 0.3
+
+local brickTemplate = ReplicatedStorage:WaitForChild("Brick")
+
+local recentDeleteSound = {}
+local recentPaintSound = {}
+
+local lastBrickDisappear = 0
+
+--------------------------------------------------
+-- SOUND TRACKING
+--------------------------------------------------
+
+local function hookHRP(player, hrp)
+	local function trackSound(obj)
+		if not obj:IsA("Sound") then return end
+
+		local isDelete = obj.SoundId == BRICK_SOUND_ID
+		local isPaint = obj.SoundId == PAINT_SOUND_ID
+
+		if not isDelete and not isPaint then return end
+
+		local lastTime = 0
+		local wasPlaying = false
+
+		RunService.Heartbeat:Connect(function()
+			if not obj.Parent then return end
+
+			local t = obj.TimePosition
+			local playing = obj.IsPlaying
+
+			if playing then
+				if not wasPlaying or (lastTime > 0.05 and t < 0.05) then
+					local now = tick()
+
+					if isDelete then
+						recentDeleteSound[player.UserId] = now
+						print("[SOUND-DELETE] " .. player.Name .. " at " .. string.format("%.5f", now))
+					elseif isPaint then
+						recentPaintSound[player.UserId] = now
+						print("[SOUND-PAINT] " .. player.Name .. " at " .. string.format("%.5f", now))
+					end
+				end
+			end
+
+			lastTime = t
+			wasPlaying = playing
+		end)
+	end
+
+	for _, obj in pairs(hrp:GetDescendants()) do
+		trackSound(obj)
+	end
+
+	hrp.DescendantAdded:Connect(trackSound)
 end
 
-print("ReplicatedStorage.Brick sprayed!")
+local function watchPlayer(player)
+	local char = player.Character
+	if char then
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if hrp then hookHRP(player, hrp) end
+	end
+
+	player.CharacterAdded:Connect(function(newChar)
+		local hrp = newChar:WaitForChild("HumanoidRootPart", 10)
+		if hrp then hookHRP(player, hrp) end
+	end)
+end
+
+for _, p in pairs(Players:GetPlayers()) do
+	watchPlayer(p)
+end
+
+Players.PlayerAdded:Connect(watchPlayer)
+
+--------------------------------------------------
+-- DELETE DETECTION (YOUR ORIGINAL)
+--------------------------------------------------
+
+brickTemplate.AncestryChanged:Connect(function()
+	if brickTemplate:IsDescendantOf(ReplicatedStorage) then return end
+	if tick() - lastBrickDisappear < 0.5 then return end
+
+	lastBrickDisappear = tick()
+	local disappearedAt = tick()
+
+	print(string.format("[BKIT] Brick disappeared at %.5f", disappearedAt))
+
+	task.wait(0.15)
+
+	local best, bestDiff = nil, math.huge
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		local soundTime = recentDeleteSound[player.UserId]
+		if soundTime then
+			local diff = math.abs(disappearedAt - soundTime)
+
+			print(string.format("[BKIT-DELETE] %s diff: %.4fs", player.Name, diff))
+
+			if diff < WINDOW and diff < bestDiff then
+				best = player
+				bestDiff = diff
+			end
+		end
+	end
+
+	if best then
+		print(string.format("[BKIT DELETE] %s (%s) broke BKit! (diff: %.4fs)", best.DisplayName, best.Name, bestDiff))
+	else
+		print("[BKIT DELETE] No candidate found")
+	end
+end)
+
+--------------------------------------------------
+-- PAINT DETECTION (NEW)
+--------------------------------------------------
+
+local function watchRepBrick()
+	local repBrick = ReplicatedStorage:FindFirstChild("Brick")
+	if not repBrick then return end
+
+	local lastPaintChange = 0
+
+	local function detectPaint()
+		if tick() - lastPaintChange < 0.2 then return end
+		lastPaintChange = tick()
+
+		local changedAt = tick()
+		print(string.format("[PAINT] Brick changed at %.5f", changedAt))
+
+		task.wait(0.1)
+
+		local best, bestDiff = nil, math.huge
+
+		for _, player in ipairs(Players:GetPlayers()) do
+			local soundTime = recentPaintSound[player.UserId]
+			if soundTime then
+				local diff = math.abs(changedAt - soundTime)
+
+				print(string.format("[BKIT-PAINT] %s diff: %.4fs", player.Name, diff))
+
+				if diff < WINDOW and diff < bestDiff then
+					best = player
+					bestDiff = diff
+				end
+			end
+		end
+
+		if best then
+			print(string.format("[BKIT PAINT] %s (%s) painted RepBrick! (diff: %.4fs)", best.DisplayName, best.Name, bestDiff))
+		else
+			print("[BKIT PAINT] No candidate found")
+		end
+	end
+
+	repBrick:GetPropertyChangedSignal("Color"):Connect(detectPaint)
+	repBrick:GetPropertyChangedSignal("Material"):Connect(detectPaint)
+	repBrick:GetPropertyChangedSignal("BrickColor"):Connect(detectPaint)
+end
+
+watchRepBrick()
+
+print("[BKIT EXPLOIT DETECTOR] Loaded (Delete + Paint)")
