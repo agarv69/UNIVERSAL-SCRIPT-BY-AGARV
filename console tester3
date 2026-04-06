@@ -1,105 +1,89 @@
-local player = game:GetService("Players").LocalPlayer
-local mouse = player:GetMouse()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
--- Wait for delete tool
-local deleteTool = player.Backpack:WaitForChild("Delete", 10)
-if not deleteTool then
-    warn("Delete tool not found!")
-    return
-end
+local DELETE_SOUND_ID = "rbxassetid://9117183621"
+local brickTemplate = ReplicatedStorage:WaitForChild("Brick")
 
-local deleteEvent = deleteTool.Script.Event
+local pendingBrickDisappear = nil
 
--- Create toggle button
-local screenGui = Instance.new("ScreenGui", player.PlayerGui)
-screenGui.Name = "DeleteBypassUI"
-screenGui.ResetOnSpawn = false
-
-local toggleButton = Instance.new("TextButton", screenGui)
-toggleButton.Size = UDim2.new(0, 120, 0, 50)
-toggleButton.Position = UDim2.new(0, 10, 0, 70) -- Below paint button
-toggleButton.Text = "Delete: OFF"
-toggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-toggleButton.TextScaled = true
-
-local deleteActive = false
-
--- Fast equip/unequip function
-local function refreshDeleteTool()
-	local tool = player.Backpack:FindFirstChild("Delete") or (player.Character and player.Character:FindFirstChild("Delete"))
-	if not tool then return false end
-
-	-- Store currently equipped tool
-	local previousTool = player.Character and player.Character:FindFirstChildOfClass("Tool")
-	
-	-- Move to backpack if in character
-	if tool.Parent == player.Character then
-		tool.Parent = player.Backpack
-		task.wait()
-	end
-	
-	-- Equip delete tool instantly
-	if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-		player.Character.Humanoid:EquipTool(tool)
-		
-		-- Unequip on next frame (invisible)
-		RunService.RenderStepped:Wait()
-		
-		if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-			player.Character.Humanoid:UnequipTools()
-		end
-		
-		-- Re-equip previous tool
-		if previousTool and previousTool.Parent == player.Backpack then
-			task.wait()
-			if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-				player.Character.Humanoid:EquipTool(previousTool)
-			end
-		end
-		
-		return true
-	end
-	
-	return false
-end
-
-toggleButton.MouseButton1Click:Connect(function()
-    deleteActive = not deleteActive
-    toggleButton.Text = deleteActive and "Delete: ON" or "Delete: OFF"
-    toggleButton.BackgroundColor3 = deleteActive and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-    
-    -- Initial refresh when turning on
-    if deleteActive then
-        refreshDeleteTool()
-    end
-end)
-
-local clickCount = 0
-local lastClickTime = 0
-
--- Delete on click when active (INFINITE RANGE)
-mouse.Button1Down:Connect(function()
-    if deleteActive then
-        local target = mouse.Target
-        if target and target.Name == "Brick" then
-            clickCount = clickCount + 1
-            
-            -- Auto-refresh every 2 clicks
-            if clickCount >= 2 then
-                print("[DeleteBypass] Refreshing tool (click " .. clickCount .. ")")
-                refreshDeleteTool()
-                clickCount = 0
-            end
-            
-            -- Fire delete event
-            local currentEvent = (player.Backpack:FindFirstChild("Delete") or player.Character:FindFirstChild("Delete"))
-            if currentEvent then
-                currentEvent = currentEvent.Script.Event
-                currentEvent:FireServer(target, mouse.Hit.Position)
-            end
+-- Monitor brick template for ANY property change or removal
+local function watchBrick()
+    -- Watch for the brick being removed/nil parented
+    local connection1 = brickTemplate.AncestryChanged:Connect(function()
+        if not brickTemplate:IsDescendantOf(ReplicatedStorage) then
+            pendingBrickDisappear = tick()
+            print(string.format("[BRICK DISAPPEARED at %.5f] Watching for delete sounds...", pendingBrickDisappear))
         end
-    end
-end)
+    end)
+    
+    local connection2 = brickTemplate:GetPropertyChangedSignal("Parent"):Connect(function()
+        if brickTemplate.Parent == nil or not brickTemplate:IsDescendantOf(ReplicatedStorage) then
+            pendingBrickDisappear = tick()
+            print(string.format("[BRICK DISAPPEARED at %.5f] Watching for delete sounds...", pendingBrickDisappear))
+        end
+    end)
+end
 
-print("Infinite range delete bypass with fast equip/unequip loaded!")
+watchBrick()
+
+-- Track sound playing on each player
+local function monitorPlayer(player)
+    local function setupCharacter(character)
+        task.wait(0.5) -- Give character time to load
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        
+        local lastTimePosition = {}
+        
+        local heartbeat = RunService.Heartbeat:Connect(function()
+            -- Always check for sounds, even when not pending
+            for _, child in pairs(hrp:GetChildren()) do
+                if child:IsA("Sound") and child.SoundId == DELETE_SOUND_ID then
+                    if not lastTimePosition[child] then
+                        lastTimePosition[child] = child.TimePosition
+                    end
+                    
+                    if child.IsPlaying then
+                        -- Detect sound restart (TimePosition reset near 0)
+                        if child.TimePosition < lastTimePosition[child] and child.TimePosition < 0.1 then
+                            local soundTime = tick()
+                            print(string.format("[SOUND RESTART] %s delete sound restarted at %.5f", player.Name, soundTime))
+                            
+                            -- Check if we have a pending brick disappear
+                            if pendingBrickDisappear then
+                                local delay = soundTime - pendingBrickDisappear
+                                print(string.format("[DETECTED] %s played delete sound %.5f seconds after brick disappeared", 
+                                    player.Name, delay))
+                                pendingBrickDisappear = nil
+                            end
+                        end
+                        lastTimePosition[child] = child.TimePosition
+                    else
+                        lastTimePosition[child] = 0
+                    end
+                end
+            end
+        end)
+        
+        character.AncestryChanged:Connect(function()
+            if not character:IsDescendantOf(workspace) then
+                heartbeat:Disconnect()
+            end
+        end)
+    end
+    
+    player.CharacterAdded:Connect(setupCharacter)
+    if player.Character then
+        setupCharacter(player.Character)
+    end
+end
+
+-- Monitor all current and future players
+for _, player in pairs(Players:GetPlayers()) do
+    monitorPlayer(player)
+end
+
+Players.PlayerAdded:Connect(monitorPlayer)
+
+print("[BKIT EXPLOIT DETECTOR] Loaded - monitoring ReplicatedStorage.Brick and all player sounds")
