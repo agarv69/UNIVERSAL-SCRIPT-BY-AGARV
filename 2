@@ -2298,6 +2298,7 @@ G2L["d3"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 G2L["d4"] = Instance.new("ScrollingFrame", G2L["14"]);
 G2L["d4"]["Active"] = true;
 G2L["d4"]["BorderSizePixel"] = 0;
+G2L["d4"]["CanvasPosition"] = Vector2.new(0, 100);
 G2L["d4"]["Name"] = [[TCOMainPage]];
 G2L["d4"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["d4"]["Size"] = UDim2.new(0, 349, 0, 233);
@@ -2760,24 +2761,24 @@ G2L["fd"] = Instance.new("LocalScript", G2L["fc"]);
 G2L["fd"]["Name"] = [[SprayRepScript]];
 
 
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.ApplyRepRow
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.APPLYCHANGESRow
 G2L["fe"] = Instance.new("Frame", G2L["ed"]);
 G2L["fe"]["BorderSizePixel"] = 0;
 G2L["fe"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["fe"]["Size"] = UDim2.new(0, 169, 0, 20);
 G2L["fe"]["Position"] = UDim2.new(0.00294, 0, 0.175, 0);
 G2L["fe"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["fe"]["Name"] = [[ApplyRepRow]];
+G2L["fe"]["Name"] = [[APPLYCHANGESRow]];
 G2L["fe"]["LayoutOrder"] = 6;
 G2L["fe"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.ApplyRepRow.ApplyRepScript
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.APPLYCHANGESRow.APPLYCHANGESScript
 G2L["ff"] = Instance.new("LocalScript", G2L["fe"]);
-G2L["ff"]["Name"] = [[ApplyRepScript]];
+G2L["ff"]["Name"] = [[APPLYCHANGESScript]];
 
 
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.ApplyRepRow.ApplyRepButton
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.APPLYCHANGESRow.APPLYCHANGESButton
 G2L["100"] = Instance.new("TextButton", G2L["fe"]);
 G2L["100"]["TextSize"] = 14;
 G2L["100"]["TextColor3"] = Color3.fromRGB(0, 124, 255);
@@ -2786,7 +2787,7 @@ G2L["100"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["100"]["Size"] = UDim2.new(0, 161, 0, 16);
 G2L["100"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["100"]["Text"] = [[Apply Changes]];
-G2L["100"]["Name"] = [[ApplyRepButton]];
+G2L["100"]["Name"] = [[APPLYCHANGESButton]];
 G2L["100"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
 
@@ -6361,6 +6362,7 @@ G2L["242"]["Name"] = [[PealzLog]];
 
 -- StarterGui.ScreenGui.ColorPicker
 G2L["243"] = Instance.new("Frame", G2L["1"]);
+G2L["243"]["Visible"] = false;
 G2L["243"]["ZIndex"] = 999999999;
 G2L["243"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
 G2L["243"]["Size"] = UDim2.new(0, 215, 0, 291);
@@ -14232,72 +14234,157 @@ local script = G2L["fd"];
 	
 end;
 task.spawn(C_fd);
--- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.ApplyRepRow.ApplyRepScript
+-- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.APPLYCHANGESRow.APPLYCHANGESScript
 local function C_ff()
 local script = G2L["ff"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local BKitBreakRow = script.Parent
-	local BKitBreakButton = BKitBreakRow.BKitBreakButton
-	local originalText = BKitBreakButton.Text
+	local APPLYCHANGESRow = script.Parent
+	local APPLYCHANGESButton = APPLYCHANGESRow:WaitForChild("APPLYCHANGESButton")
+	local RepGroup = APPLYCHANGESRow.Parent
+	local ColorRepRow = RepGroup:FindFirstChild("ColorRepRow")
 	
-	BKitBreakButton.MouseButton1Click:Connect(function()
-		BKitBreakButton.Text = "BREAKING..."
+	local originalText = APPLYCHANGESButton.Text
+	local isPainting = false
+	local cancelPainting = false
+	
+	-- ============================================================
+	-- GET TOOLS AND EVENTS
+	-- ============================================================
+	local function getPaintTool()
+		return LocalPlayer.Backpack:FindFirstChild("Paint") 
+			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
+	end
+	
+	local function getPaintEvent()
+		local tool = getPaintTool()
+		if tool then
+			return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
+		end
+		return nil
+	end
+	
+	local function getRepBrick()
+		local repStorage = game:GetService("ReplicatedStorage")
+		return repStorage:FindFirstChild("Brick")
+	end
+	
+	-- ============================================================
+	-- EQUIP PAINT TOOL
+	-- ============================================================
+	local function equipPaintTool()
+		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
+		if not paintTool then
+			return false, "Paint tool not found in backpack"
+		end
+	
+		local character = LocalPlayer.Character
+		if not character then
+			return false, "No character"
+		end
+	
+		local humanoid = character:FindFirstChild("Humanoid")
+		if not humanoid then
+			return false, "No humanoid"
+		end
+	
+		-- Equip Paint tool if not already equipped
+		if not character:FindFirstChild("Paint") then
+			humanoid:EquipTool(paintTool)
+			task.wait(0.1)
+		end
+	
+		return true
+	end
+	
+	-- ============================================================
+	-- PAINT REP BRICK
+	-- ============================================================
+	local function paintRepBrick()
+		if isPainting then
+			-- Cancel current painting
+			cancelPainting = true
+			return
+		end
+	
+		isPainting = true
+		cancelPainting = false
+		APPLYCHANGESButton.Text = "Painting Block..."
 	
 		task.spawn(function()
-			local success, err = pcall(function()
-				local character = LocalPlayer.Character
-				if not character then error("No character") end
+			local success, errorMsg = pcall(function()
+				-- Get selected color
+				local selectedColor = ColorRepRow and ColorRepRow:GetAttribute("SelectedColor")
+				if not selectedColor then
+					selectedColor = Color3.fromRGB(192, 192, 192) -- Default gray
+				end
 	
-				local humanoid = character:FindFirstChild("Humanoid")
-				if not humanoid then error("No humanoid") end
+				-- Get rep brick
+				local repBrick = getRepBrick()
+				if not repBrick then
+					error("Rep brick not found in ReplicatedStorage")
+				end
 	
-				-- Find delete tool in backpack
-				local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
-				if not deleteTool then error("Delete tool not found in backpack") end
+				-- Equip paint tool
+				local equipped, equipError = equipPaintTool()
+				if not equipped then
+					error(equipError)
+				end
 	
-				-- Save currently equipped tool
-				local previousTool = character:FindFirstChildOfClass("Tool")
+				-- Get paint event
+				local paintEvent = getPaintEvent()
+				if not paintEvent then
+					error("Paint event not found")
+				end
 	
-				-- Equip Delete tool
-				humanoid:EquipTool(deleteTool)
-				task.wait(0.1) -- Wait for tool to equip
+				-- Paint all 6 sides
+				local sides = {
+					Enum.NormalId.Front,
+					Enum.NormalId.Right,
+					Enum.NormalId.Back,
+					Enum.NormalId.Left,
+					Enum.NormalId.Top,
+					Enum.NormalId.Bottom
+				}
 	
-				-- Get the event from the equipped tool
-				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+				for i, side in ipairs(sides) do
+					-- Check if cancelled
+					if cancelPainting then
+						error("Cancelled")
+					end
 	
-				-- Get Brick from ReplicatedStorage
-				local rs = game:GetService("ReplicatedStorage")
-				local brick = rs:FindFirstChild("Brick")
-				if not brick then error("No Brick in ReplicatedStorage") end
+					pcall(function()
+						paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", selectedColor, "toxic", "")
+					end)
 	
-				-- Fire delete event
-				event:FireServer(brick, character.HumanoidRootPart.Position)
-	
-				task.wait(0.1)
-	
-				-- Unequip Delete tool
-				humanoid:UnequipTools()
-	
-				-- Re-equip previous tool if there was one
-				if previousTool and previousTool.Parent == LocalPlayer.Backpack then
-					humanoid:EquipTool(previousTool)
+					task.wait(0.05)
 				end
 			end)
 	
-			if success then
-				BKitBreakButton.Text = "BROKEN!"
-				task.wait(3)
-				BKitBreakButton.Text = originalText
+			isPainting = false
+	
+			if cancelPainting then
+				APPLYCHANGESButton.Text = "Cancelled"
+				task.wait(1)
+			elseif success then
+				APPLYCHANGESButton.Text = "Applied!"
+				task.wait(2)
 			else
-				BKitBreakButton.Text = "FAILED"
-				warn("[BKitBreak] Error:", err)
-				task.wait(3)
-				BKitBreakButton.Text = originalText
+				APPLYCHANGESButton.Text = "Failed"
+				warn("[ApplyChanges] Error:", errorMsg)
+				task.wait(2)
 			end
+	
+			APPLYCHANGESButton.Text = originalText
+			cancelPainting = false
 		end)
-	end)
+	end
+	
+	-- ============================================================
+	-- BUTTON CLICK
+	-- ============================================================
+	APPLYCHANGESButton.MouseButton1Click:Connect(paintRepBrick)
 end;
 task.spawn(C_ff);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.UnanchorRepRow.UnanchorRepScript
@@ -26024,29 +26111,27 @@ local script = G2L["24b"];
 	local dragStart = nil
 	local startPos = nil
 	
-	-- Check if mouse is over HueSlider or Canvas
-	local function isOverColorControls(input)
-		local mousePos = input.Position
-	
+	-- Check if mouse/touch is over HueSlider or Canvas
+	local function isOverColorControls(position)
 		-- Check HueSlider
 		local huePos = HueSlider.AbsolutePosition
 		local hueSize = HueSlider.AbsoluteSize
-		local overHue = mousePos.X >= huePos.X and mousePos.X <= huePos.X + hueSize.X
-			and mousePos.Y >= huePos.Y and mousePos.Y <= huePos.Y + hueSize.Y
+		local overHue = position.X >= huePos.X and position.X <= huePos.X + hueSize.X
+			and position.Y >= huePos.Y and position.Y <= huePos.Y + hueSize.Y
 	
 		-- Check Canvas
 		local canvasPos = SaturationValueCanvas.AbsolutePosition
 		local canvasSize = SaturationValueCanvas.AbsoluteSize
-		local overCanvas = mousePos.X >= canvasPos.X and mousePos.X <= canvasPos.X + canvasSize.X
-			and mousePos.Y >= canvasPos.Y and mousePos.Y <= canvasPos.Y + canvasSize.Y
+		local overCanvas = position.X >= canvasPos.X and position.X <= canvasPos.X + canvasSize.X
+			and position.Y >= canvasPos.Y and position.Y <= canvasPos.Y + canvasSize.Y
 	
 		return overHue or overCanvas
 	end
 	
 	ColorPicker.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			-- Don't start dragging if over color controls
-			if not isOverColorControls(input) then
+			if not isOverColorControls(input.Position) then
 				dragging = true
 				dragStart = input.Position
 				startPos = ColorPicker.Position
@@ -26055,13 +26140,13 @@ local script = G2L["24b"];
 	end)
 	
 	ColorPicker.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = false
 		end
 	end)
 	
 	UserInputService.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+		if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
 			local delta = input.Position - dragStart
 			ColorPicker.Position = UDim2.new(
 				startPos.X.Scale,
@@ -26114,6 +26199,7 @@ local script = G2L["24c"];
 	-- ============================================================
 	HueSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Set to white so gradient shows
 	HueSlider.BorderColor3 = Color3.fromRGB(58, 58, 58) -- Original border
+	HueSlider.Active = true -- Sink input to prevent camera movement on mobile
 	
 	local hueGradient = Instance.new("UIGradient")
 	hueGradient.Color = ColorSequence.new({
@@ -26133,6 +26219,7 @@ local script = G2L["24c"];
 	-- ============================================================
 	SaturationValueCanvas.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Set to white
 	SaturationValueCanvas.BorderColor3 = Color3.fromRGB(58, 58, 58) -- Original border
+	SaturationValueCanvas.Active = true -- Sink input to prevent camera movement on mobile
 	
 	local satGradient = Instance.new("UIGradient")
 	satGradient.Color = ColorSequence.new({
@@ -26277,7 +26364,7 @@ local script = G2L["24c"];
 	local canvasDragging = false -- Declare both here
 	
 	HueSlider.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			hueDragging = true
 			local relativeX = (input.Position.X - HueSlider.AbsolutePosition.X) / HueSlider.AbsoluteSize.X
 			updateHueCursor(relativeX)
@@ -26285,14 +26372,14 @@ local script = G2L["24c"];
 	end)
 	
 	UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			hueDragging = false
 			canvasDragging = false
 		end
 	end)
 	
 	UserInputService.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 			if hueDragging then
 				local relativeX = (input.Position.X - HueSlider.AbsolutePosition.X) / HueSlider.AbsoluteSize.X
 				updateHueCursor(relativeX)
@@ -26309,7 +26396,7 @@ local script = G2L["24c"];
 	-- CANVAS INTERACTION (CLICK ANYWHERE AND DRAG)
 	-- ============================================================
 	SaturationValueCanvas.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			canvasDragging = true
 			local relativeX = (input.Position.X - SaturationValueCanvas.AbsolutePosition.X) / SaturationValueCanvas.AbsoluteSize.X
 			local relativeY = (input.Position.Y - SaturationValueCanvas.AbsolutePosition.Y) / SaturationValueCanvas.AbsoluteSize.Y
