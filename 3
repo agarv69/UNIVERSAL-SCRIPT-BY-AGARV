@@ -21636,58 +21636,26 @@ local script = G2L["1c3"];
 	
 	updateVisual()
 	
-	-- ============================================================
-	-- TOOLTIP
-	-- ============================================================
+	--------------------------------------------------
+	-- SHARED STATE
+	--------------------------------------------------
+	shared.IsRestoringBKit = false
+	shared.AutoPaintDebounce = nil
 	
-	local tooltipFrame = Instance.new("Frame")
-	tooltipFrame.Name = "AutoPaintRepTooltip"
-	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
-	tooltipFrame.BorderSizePixel = 0
-	tooltipFrame.ZIndex = 100
-	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
-	tooltipFrame.Visible = false
-	tooltipFrame.Parent = script.Parent.Parent:FindFirstAncestorWhichIsA("ScreenGui")
-	tooltipFrame.ClipsDescendants = true
-	tooltipFrame.Active = false
-	tooltipFrame.Selectable = false
+	--------------------------------------------------
+	-- BRICK DEFAULTS
+	--------------------------------------------------
+	local DEFAULT_COLOR    = Color3.fromRGB(192, 192, 192)
+	local DEFAULT_MATERIAL = "Plastic"
 	
-	local tooltipStroke = Instance.new("UIStroke")
-	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
-	tooltipStroke.Thickness = 1
-	tooltipStroke.Parent = tooltipFrame
-	
-	local tooltipPadding = Instance.new("UIPadding")
-	tooltipPadding.PaddingTop = UDim.new(0, 6)
-	tooltipPadding.PaddingBottom = UDim.new(0, 6)
-	tooltipPadding.PaddingLeft = UDim.new(0, 6)
-	tooltipPadding.PaddingRight = UDim.new(0, 6)
-	tooltipPadding.Parent = tooltipFrame
-	
-	local tooltipText = Instance.new("TextLabel")
-	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Automatically restores bkit when a player using exploits to paint the ReplicatedStorage.Brick."
-	tooltipText.TextColor3 = Color3.new(1, 1, 1)
-	tooltipText.TextSize = 14
-	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
-	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
-	tooltipText.Font = Enum.Font.GothamSemibold
-	tooltipText.TextWrapped = true
-	tooltipText.Size = UDim2.new(0, 200, 0, 0)
-	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipText.ZIndex = 101
-	tooltipText.Parent = tooltipFrame
-	
-	AutoPaintRepTickBox.MouseEnter:Connect(function()
-		local abs = AutoPaintRepTickBox.AbsolutePosition
-		local size = AutoPaintRepTickBox.AbsoluteSize
-		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
-		tooltipFrame.Visible = true
-	end)
-	AutoPaintRepTickBox.MouseLeave:Connect(function()
-		tooltipFrame.Visible = false
-	end)
+	local SIDES = {
+		Enum.NormalId.Front,
+		Enum.NormalId.Right,
+		Enum.NormalId.Back,
+		Enum.NormalId.Left,
+		Enum.NormalId.Top,
+		Enum.NormalId.Bottom,
+	}
 	
 	--------------------------------------------------
 	-- HELPERS
@@ -21712,15 +21680,11 @@ local script = G2L["1c3"];
 	-- RESTORE
 	--------------------------------------------------
 	local repBrick = ReplicatedStorage:WaitForChild("Brick")
-	local IGNORE_MATERIALS = {
-		SmoothPlastic = true,
-		CeramicTiles = true,
-		Plastic = true,
-	}
 	
-	local function restoreBrick()
+	local function restoreBrick(repBrick)
 		local character = LocalPlayer.Character
 		if not character then return false end
+	
 		local previousTool = character:FindFirstChildOfClass("Tool")
 		local wasPaintEquipped = previousTool and previousTool.Name == "Paint"
 	
@@ -21784,22 +21748,21 @@ local script = G2L["1c3"];
 	local connections = {}
 	
 	local function onChangeConfirmed()
-		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
 		if shared.IsRestoringBKit then return end
-		if IGNORE_MATERIALS[repBrick.Material.Name] then return end
+		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
 	
 		task.wait(0.5)
 		shared.IsRestoringBKit = true
-		local ok = restoreBrick()
+	
+		local ok = restoreBrick(repBrick)
 	
 		if ok then
-			task.wait(0.1)
 			local repPaintsTickBox = script:FindFirstAncestorOfClass("ScreenGui") and
 				script:FindFirstAncestorOfClass("ScreenGui"):FindFirstChild("RepPaintsTickBox", true)
 			local repPaintsOn = repPaintsTickBox and repPaintsTickBox:GetAttribute("Enabled") == true
 	
 			if repPaintsOn then
-				sendChat("✅Bkit has been restored back to normal")
+				sendChat("✅Block has been restored back to normal")
 			end
 		end
 	
@@ -21808,22 +21771,8 @@ local script = G2L["1c3"];
 	end
 	
 	local function onBrickChanged()
-		if not repBrick then return end
 		if shared.IsRestoringBKit then return end
 		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
-	
-		-- Ignore these materials
-		local ignoredMaterials = {
-			Enum.Material.SmoothPlastic,
-			Enum.Material.CeramicTiles,
-			Enum.Material.Plastic,
-		}
-	
-		for _, mat in ipairs(ignoredMaterials) do
-			if repBrick.Material == mat then
-				return -- exit early, don't alert or restore
-			end
-		end
 	
 		if shared.AutoPaintDebounce then
 			task.cancel(shared.AutoPaintDebounce)
@@ -24661,7 +24610,6 @@ task.spawn(C_221);
 local function C_225()
 local script = G2L["225"];
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local repBrick = ReplicatedStorage:WaitForChild("Brick")
 	
 	--------------------------------------------------
 	-- GUI REFERENCES
@@ -24693,59 +24641,6 @@ local script = G2L["225"];
 	
 	updateVisual()
 	
-	-- ============================================================
-	-- TOOLTIP
-	-- ============================================================
-	
-	local tooltipFrame = Instance.new("Frame")
-	tooltipFrame.Name = "RepPaintsTooltip"
-	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
-	tooltipFrame.BorderSizePixel = 0
-	tooltipFrame.ZIndex = 100
-	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
-	tooltipFrame.Visible = false
-	tooltipFrame.Parent = script.Parent.Parent:FindFirstAncestorWhichIsA("ScreenGui")
-	tooltipFrame.ClipsDescendants = true
-	tooltipFrame.Active = false
-	tooltipFrame.Selectable = false
-	
-	local tooltipStroke = Instance.new("UIStroke")
-	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
-	tooltipStroke.Thickness = 1
-	tooltipStroke.Parent = tooltipFrame
-	
-	local tooltipPadding = Instance.new("UIPadding")
-	tooltipPadding.PaddingTop = UDim.new(0, 6)
-	tooltipPadding.PaddingBottom = UDim.new(0, 6)
-	tooltipPadding.PaddingLeft = UDim.new(0, 6)
-	tooltipPadding.PaddingRight = UDim.new(0, 6)
-	tooltipPadding.Parent = tooltipFrame
-	
-	local tooltipText = Instance.new("TextLabel")
-	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Sends an alert in chat when someone exploits to paint the ReplicatedStorage.Brick."
-	tooltipText.TextColor3 = Color3.new(1, 1, 1)
-	tooltipText.TextSize = 14
-	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
-	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
-	tooltipText.Font = Enum.Font.GothamSemibold
-	tooltipText.TextWrapped = true
-	tooltipText.Size = UDim2.new(0, 200, 0, 0)
-	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipText.ZIndex = 101
-	tooltipText.Parent = tooltipFrame
-	
-	RepPaintsTickBox.MouseEnter:Connect(function()
-		local abs = RepPaintsTickBox.AbsolutePosition
-		local size = RepPaintsTickBox.AbsoluteSize
-		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
-		tooltipFrame.Visible = true
-	end)
-	RepPaintsTickBox.MouseLeave:Connect(function()
-		tooltipFrame.Visible = false
-	end)
-	
 	--------------------------------------------------
 	-- SHARED STATE
 	--------------------------------------------------
@@ -24765,44 +24660,20 @@ local script = G2L["225"];
 	local repBrick = ReplicatedStorage:WaitForChild("Brick")
 	local connections = {}
 	
-	local IGNORE_MATERIALS = {
-		SmoothPlastic = true,
-		CeramicTiles = true,
-		Plastic = true,
-	}
-	
 	local function onChangeConfirmed()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
-		if shared.IsRestoringBKit then return end
-	
 		sendChat("🚨A player exploited/painted bkit")
 	end
 	
 	local function onBrickChanged()
-		if not repBrick then return end
-		if shared.IsRestoringBKit then return end
-		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
+		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
 	
-		-- Ignore these materials
-		local ignoredMaterials = {
-			Enum.Material.SmoothPlastic,
-			Enum.Material.CeramicTiles,
-			Enum.Material.Plastic,
-		}
-	
-		for _, mat in ipairs(ignoredMaterials) do
-			if repBrick.Material == mat then
-				return -- exit early, don't alert or restore
-			end
+		if shared.RepPaintsDebounce then
+			task.cancel(shared.RepPaintsDebounce)
 		end
 	
-		if shared.AutoPaintDebounce then
-			task.cancel(shared.AutoPaintDebounce)
-			shared.AutoPaintDebounce = nil
-		end
-	
-		shared.AutoPaintDebounce = task.delay(1, function()
-			shared.AutoPaintDebounce = nil
+		shared.RepPaintsDebounce = task.delay(1, function()
+			shared.RepPaintsDebounce = nil
 			onChangeConfirmed()
 		end)
 	end
