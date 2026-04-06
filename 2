@@ -14231,7 +14231,64 @@ task.spawn(C_f8);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.SprayRepRow.SprayRepChanger.SprayRepScript
 local function C_fd()
 local script = G2L["fd"];
+	local SprayRepRow = script.Parent.Parent
+	local SprayRepChanger = SprayRepRow:WaitForChild("SprayRepChanger")
 	
+	-- Store spray text
+	local sprayText = ""
+	
+	-- ============================================================
+	-- TEXT BYPASS (made by Normalxsx/2AreYouMental110)
+	-- ============================================================
+	local function bypassText(txt)
+		if txt == nil or txt == "" then
+			return ""
+		end
+	
+		local bypassmarkups = {}
+		local alphabet = "acdefghjklmnopqrtvwxyz"
+		for i = 1, string.len(alphabet) do
+			table.insert(bypassmarkups, string.sub(alphabet, i, i))
+		end
+	
+		local returntxt = ""
+		for i = 1, string.len(txt) do
+			local char = string.sub(txt, i, i)
+			if i % 2 == 0 then
+				returntxt = returntxt .. char
+			else
+				local selectedmarkup = bypassmarkups[math.random(1, #bypassmarkups)]
+				returntxt = returntxt .. "<" .. selectedmarkup .. ">" .. char .. "</" .. selectedmarkup .. ">"
+			end
+		end
+	
+		return returntxt
+	end
+	
+	-- ============================================================
+	-- TEXT CHANGED
+	-- ============================================================
+	SprayRepChanger:GetPropertyChangedSignal("Text"):Connect(function()
+		local text = SprayRepChanger.Text
+	
+		-- If empty or placeholder, set to empty
+		if text == "" or text == SprayRepChanger.PlaceholderText then
+			sprayText = ""
+		else
+			-- Apply bypass to the text
+			sprayText = bypassText(text)
+		end
+	
+		-- Store in attribute for ApplyChanges to read
+		SprayRepRow:SetAttribute("SprayText", sprayText)
+	end)
+	
+	-- ============================================================
+	-- INITIALIZE
+	-- ============================================================
+	SprayRepRow:SetAttribute("SprayText", "")
+	
+	print("[SprayRep] Initialized - Empty by default")
 end;
 task.spawn(C_fd);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.APPLYCHANGESRow.APPLYCHANGESScript
@@ -14244,6 +14301,8 @@ local script = G2L["ff"];
 	local APPLYCHANGESButton = APPLYCHANGESRow:WaitForChild("APPLYCHANGESButton")
 	local RepGroup = APPLYCHANGESRow.Parent
 	local ColorRepRow = RepGroup:FindFirstChild("ColorRepRow")
+	local UnanchorRepRow = RepGroup:FindFirstChild("UnanchorRepRow")
+	local SprayRepRow = RepGroup:FindFirstChild("SprayRepRow")
 	
 	local originalText = APPLYCHANGESButton.Text
 	local isPainting = false
@@ -14326,10 +14385,21 @@ local script = G2L["ff"];
 					error("Rep brick not found in ReplicatedStorage")
 				end
 	
-				-- Equip paint tool
-				local equipped, equipError = equipPaintTool()
-				if not equipped then
-					error(equipError)
+				-- Save currently equipped tool
+				local character = LocalPlayer.Character
+				if not character then
+					error("No character")
+				end
+	
+				local previousTool = character:FindFirstChildOfClass("Tool")
+				local wasPaintEquipped = previousTool and previousTool.Name == "Paint"
+	
+				-- Equip paint tool if not already equipped
+				if not wasPaintEquipped then
+					local equipped, equipError = equipPaintTool()
+					if not equipped then
+						error(equipError)
+					end
 				end
 	
 				-- Get paint event
@@ -14338,7 +14408,7 @@ local script = G2L["ff"];
 					error("Paint event not found")
 				end
 	
-				-- Paint all 6 sides
+				-- Paint all 6 sides (just color, no toxify)
 				local sides = {
 					Enum.NormalId.Front,
 					Enum.NormalId.Right,
@@ -14355,10 +14425,93 @@ local script = G2L["ff"];
 					end
 	
 					pcall(function()
-						paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", selectedColor, "toxic", "")
+						paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", selectedColor, "", "")
 					end)
 	
 					task.wait(0.05)
+				end
+	
+				-- Spray text on all sides
+				local sprayText = SprayRepRow and SprayRepRow:GetAttribute("SprayText")
+	
+				if sprayText and sprayText ~= "" then
+					-- Spray text on all 6 sides with white color
+					for i, side in ipairs(sides) do
+						-- Check if cancelled
+						if cancelPainting then
+							error("Cancelled")
+						end
+	
+						pcall(function()
+							paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", Color3.new(1, 1, 1), "spray", sprayText)
+						end)
+	
+						task.wait(0.05)
+					end
+				end
+	
+				-- Handle anchoring/unanchoring
+				local shouldUnanchor = UnanchorRepRow and UnanchorRepRow:GetAttribute("UnanchorEnabled")
+	
+				if shouldUnanchor ~= nil then
+					-- Check current anchor state
+					local isCurrentlyAnchored = repBrick.Anchored
+	
+					if shouldUnanchor and isCurrentlyAnchored then
+						-- Clear spray on Top side first (so anchor event works)
+						pcall(function()
+							paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "both 🤝", selectedColor, "spray", "")
+						end)
+						task.wait(0.1)
+	
+						-- Unanchor the brick
+						pcall(function()
+							paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
+						end)
+						task.wait(0.1)
+	
+						-- Re-apply spray on Top side if there was text
+						if sprayText and sprayText ~= "" then
+							pcall(function()
+								paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "both 🤝", Color3.new(1, 1, 1), "spray", sprayText)
+							end)
+							task.wait(0.05)
+						end
+					elseif not shouldUnanchor and not isCurrentlyAnchored then
+						-- Clear spray on Top side first (so anchor event works)
+						pcall(function()
+							paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "both 🤝", selectedColor, "spray", "")
+						end)
+						task.wait(0.1)
+	
+						-- Anchor the brick
+						pcall(function()
+							paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
+						end)
+						task.wait(0.1)
+	
+						-- Re-apply spray on Top side if there was text
+						if sprayText and sprayText ~= "" then
+							pcall(function()
+								paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "both 🤝", Color3.new(1, 1, 1), "spray", sprayText)
+							end)
+							task.wait(0.05)
+						end
+					end
+				end
+	
+				-- Restore previous tool or unequip
+				if not wasPaintEquipped then
+					local humanoid = character:FindFirstChild("Humanoid")
+					if humanoid then
+						humanoid:UnequipTools()
+						task.wait(0.1)
+	
+						-- Re-equip previous tool if there was one
+						if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+							humanoid:EquipTool(previousTool)
+						end
+					end
 				end
 			end)
 	
@@ -14390,207 +14543,46 @@ task.spawn(C_ff);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.UnanchorRepRow.UnanchorRepScript
 local function C_102()
 local script = G2L["102"];
-	-- ============================================================
-	-- AUTO DROP ON DEATH SCRIPT
-	-- Drops ALL tools (including Enlighten) on death.
-	-- Picks them back up as fast as possible on respawn.
-	-- ============================================================
+	local UnanchorRepRow = script.Parent
+	local UnanchorRepTickBox = UnanchorRepRow:WaitForChild("UnanchorRepTickBox")
 	
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	local ADODeathRow = script.Parent
-	local ADODeathTickBox = ADODeathRow.ADODeathTickBox
-	local ADODeathText = ADODeathRow.ADODeathText
-	local MainGroup = ADODeathRow.Parent
-	local MainAccentColor = MainGroup.MainAccentColor
-	
-	-- ============================================================
-	-- SCREENGUI HELPER
-	-- ============================================================
-	local function getScreenGui()
-		local p = script.Parent
-		while p do
-			if p:IsA("ScreenGui") then return p end
-			p = p.Parent
-		end
+	local function getAccentColor()
+		local RepGroup = UnanchorRepRow.Parent
+		local a = RepGroup:FindFirstChild("RepAccentColor")
+		return a and a.BackgroundColor3 or Color3.new(1, 1, 1)
 	end
 	
-	-- ============================================================
-	-- TOOLTIP
-	-- ============================================================
-	local tooltipFrame = Instance.new("Frame")
-	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
-	tooltipFrame.BorderSizePixel = 0
-	tooltipFrame.ZIndex = 100
-	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
-	tooltipFrame.Visible = false
-	tooltipFrame.Parent = getScreenGui()
-	
-	local tooltipStroke = Instance.new("UIStroke", tooltipFrame)
-	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
-	
-	local tooltipPadding = Instance.new("UIPadding", tooltipFrame)
-	tooltipPadding.PaddingTop = UDim.new(0, 6)
-	tooltipPadding.PaddingBottom = UDim.new(0, 6)
-	tooltipPadding.PaddingLeft = UDim.new(0, 6)
-	tooltipPadding.PaddingRight = UDim.new(0, 6)
-	
-	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
-	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Auto drops ALL tools (including Enlighten) on death and picks them back up instantly on respawn"
-	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
-	tooltipLabel.TextSize = 14
-	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
-	tooltipLabel.TextYAlignment = Enum.TextYAlignment.Top
-	tooltipLabel.Font = Enum.Font.GothamSemibold
-	tooltipLabel.TextWrapped = true
-	tooltipLabel.Size = UDim2.new(0, 200, 0, 0)
-	tooltipLabel.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipLabel.ZIndex = 101
-	
-	ADODeathTickBox.MouseEnter:Connect(function()
-		local abs = ADODeathTickBox.AbsolutePosition
-		local size = ADODeathTickBox.AbsoluteSize
-		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
-		tooltipFrame.Visible = true
-	end)
-	ADODeathTickBox.MouseLeave:Connect(function()
-		tooltipFrame.Visible = false
-	end)
+	-- State
+	local isEnabled = false
 	
 	-- ============================================================
-	-- STATE
+	-- TOGGLE
 	-- ============================================================
-	local isEnabled  = false
-	local charConn   = nil
-	local TAG        = "ADODeathDropped"
+	local function toggle()
+		isEnabled = not isEnabled
 	
-	-- ============================================================
-	-- DROP ALL TOOLS (death)
-	-- ============================================================
-	local function dropAllTools()
-		local char = LocalPlayer.Character
-		if not char then return end
-	
-		-- Pull backpack into character so everything is in one place
-		for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
-			if tool:IsA("Tool") then
-				tool.Parent = char
-			end
-		end
-	
-		task.wait(0.05)
-	
-		-- Drop every tool into workspace, Enlighten included
-		for _, tool in ipairs(char:GetChildren()) do
-			if tool:IsA("Tool") then
-				tool:AddTag(TAG)
-				tool.Parent = workspace
-			end
-		end
-	end
-	
-	-- ============================================================
-	-- PICKUP TOOLS (respawn)
-	-- Tries immediately, then retries every 0.1s for up to 3s
-	-- so tools are grabbed the moment the humanoid is ready,
-	-- before other players can snatch them.
-	-- ============================================================
-	local function pickupDroppedTools(char)
-		local deadline = tick() + 3  -- give up after 3 seconds
-	
-		repeat
-			local hum = char:FindFirstChildWhichIsA("Humanoid")
-			if hum and hum.Health > 0 then
-				for _, obj in ipairs(workspace:GetChildren()) do
-					if obj:IsA("Tool") and obj:HasTag(TAG) and obj:FindFirstChild("Handle") then
-						hum:EquipTool(obj)
-					end
-				end
-				-- Check if any tagged tools are still in workspace
-				local remaining = false
-				for _, obj in ipairs(workspace:GetChildren()) do
-					if obj:IsA("Tool") and obj:HasTag(TAG) then
-						remaining = true
-						break
-					end
-				end
-				if not remaining then break end  -- all picked up, done
-			end
-			task.wait(0.1)
-		until tick() > deadline or not isEnabled
-	end
-	
-	-- ============================================================
-	-- CHARACTER SETUP
-	-- ============================================================
-	local function setupCharacter(char)
-		-- Start pickup attempt immediately — don't wait for humanoid first
-		task.spawn(function()
-			pickupDroppedTools(char)
-		end)
-	
-		-- Watch for death on this character
-		local hum = char:FindFirstChildWhichIsA("Humanoid")
-			or char:WaitForChild("Humanoid", 10)
-		if not hum then return end
-	
-		hum.Died:Connect(function()
-			if not isEnabled then return end
-			task.wait(0.05)
-			dropAllTools()
-		end)
-	end
-	
-	-- ============================================================
-	-- ENABLE / DISABLE
-	-- ============================================================
-	local function enable()
-		isEnabled = true
-		ADODeathTickBox.BackgroundColor3 = MainAccentColor.BackgroundColor3
-	
-		if LocalPlayer.Character then
-			setupCharacter(LocalPlayer.Character)
-		end
-	
-		charConn = LocalPlayer.CharacterAdded:Connect(function(char)
-			if isEnabled then
-				setupCharacter(char)
-			end
-		end)
-	end
-	
-	local function disable()
-		isEnabled = false
-		ADODeathTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-	
-		if charConn then
-			charConn:Disconnect()
-			charConn = nil
-		end
-	end
-	
-	-- ============================================================
-	-- TICKBOX TOGGLE
-	-- ============================================================
-	ADODeathTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then
-			disable()
+			UnanchorRepTickBox.BackgroundColor3 = getAccentColor()
 		else
-			enable()
+			UnanchorRepTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 		end
-	end)
+	
+		-- Store in attribute for ApplyChanges to read
+		UnanchorRepRow:SetAttribute("UnanchorEnabled", isEnabled)
+	end
 	
 	-- ============================================================
-	-- CLEANUP
+	-- CLICK HANDLER
 	-- ============================================================
-	script.AncestryChanged:Connect(function()
-		if not script:IsDescendantOf(game) then
-			if isEnabled then disable() end
-			tooltipFrame:Destroy()
-		end
-	end)
+	UnanchorRepTickBox.MouseButton1Click:Connect(toggle)
+	
+	-- ============================================================
+	-- INITIALIZE
+	-- ============================================================
+	UnanchorRepTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	UnanchorRepRow:SetAttribute("UnanchorEnabled", false)
+	
+	print("[UnanchorRep] OFF by default")
 end;
 task.spawn(C_102);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOMainPage.TCOMainLeftSide.RepGroup.MaterialRepRow.MaterialRepScript
