@@ -21633,9 +21633,6 @@ local script = G2L["1c3"];
 		end
 	end
 	
-	-- ============================================================
-	-- CLICK HANDLER
-	-- ============================================================
 	AutoPaintRepTickBox.MouseButton1Click:Connect(toggle)
 	
 	-- ============================================================
@@ -21669,7 +21666,7 @@ local script = G2L["1c3"];
 	
 	local label = Instance.new("TextLabel", tooltipFrame)
 	label.BackgroundTransparency = 1
-	label.Text = "Automatically restores the rep brick back to default when someone changes it. Waits for changes to stop before restoring."
+	label.Text = "Automatically restores the rep brick back to default when someone changes it."
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.TextSize = 14
 	label.TextXAlignment = Enum.TextXAlignment.Left
@@ -21703,26 +21700,14 @@ local script = G2L["1c3"];
 	AutoPaintRepTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
 	-- ============================================================
-	-- SETTINGS
-	-- ============================================================
-	local CHANGE_COOLDOWN = 0.6  -- Seconds to wait after last change before restoring
-	
-	-- ============================================================
-	-- REP BRICK AUTO-RESTORE
+	-- AUTO RESTORE SYSTEM
 	-- ============================================================
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
 	local DEFAULT_COLOR = Color3.fromRGB(192, 192, 192)
-	local DEFAULT_MATERIAL = Enum.Material.Plastic
-	local DEFAULT_ANCHORED = true
 	
-	local changeDebounce = nil
-	local pendingRestore = false
-	local isRestoring = false
-	
-	-- Get paint tool functions
 	local function getPaintTool()
 		return LocalPlayer.Backpack:FindFirstChild("Paint") 
 			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
@@ -21738,19 +21723,13 @@ local script = G2L["1c3"];
 	
 	local function equipPaintTool()
 		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
-		if not paintTool then
-			return false
-		end
+		if not paintTool then return false end
 	
 		local character = LocalPlayer.Character
-		if not character then
-			return false
-		end
+		if not character then return false end
 	
 		local humanoid = character:FindFirstChild("Humanoid")
-		if not humanoid then
-			return false
-		end
+		if not humanoid then return false end
 	
 		if not character:FindFirstChild("Paint") then
 			humanoid:EquipTool(paintTool)
@@ -21760,70 +21739,54 @@ local script = G2L["1c3"];
 		return true
 	end
 	
-	local function restoreToDefault()
-		if not isEnabled then return end
-	
-		isRestoring = true
-	
-		-- Tell RepPaints we're restoring so it doesn't alert
+	local function restoreBrick()
 		local RepGroup = AutoPaintRepRow.Parent
 		local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
+	
+		-- Block RepPaints from sending alerts
 		if RepPaintsRow then
-			RepPaintsRow:SetAttribute("IsAutoRestoring", true)
+			RepPaintsRow:SetAttribute("BlockMonitoring", true)
 		end
 	
 		task.spawn(function()
-			local success, errorMsg = pcall(function()
+			local success = pcall(function()
 				local repBrick = ReplicatedStorage:FindFirstChild("Brick")
-				if not repBrick then
-					error("Rep brick not found")
-				end
+				if not repBrick then return end
 	
 				local character = LocalPlayer.Character
-				if not character then
-					error("No character")
-				end
+				if not character then return end
 	
 				local previousTool = character:FindFirstChildOfClass("Tool")
 				local wasPaintEquipped = previousTool and previousTool.Name == "Paint"
 	
 				if not wasPaintEquipped then
-					local equipped = equipPaintTool()
-					if not equipped then
-						error("Could not equip Paint tool")
-					end
+					if not equipPaintTool() then return end
 				end
 	
 				local paintEvent = getPaintEvent()
-				if not paintEvent then
-					error("Paint event not found")
-				end
+				if not paintEvent then return end
 	
 				local sides = {
-					Enum.NormalId.Front,
-					Enum.NormalId.Right,
-					Enum.NormalId.Back,
-					Enum.NormalId.Left,
-					Enum.NormalId.Top,
-					Enum.NormalId.Bottom
+					Enum.NormalId.Front, Enum.NormalId.Right, Enum.NormalId.Back,
+					Enum.NormalId.Left, Enum.NormalId.Top, Enum.NormalId.Bottom
 				}
 	
-				-- Paint all sides with default color
-				for i, side in ipairs(sides) do
+				-- Paint all sides
+				for _, side in ipairs(sides) do
 					pcall(function()
 						paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "", "")
 					end)
 					task.wait(0.05)
 				end
 	
-				-- Apply default material
+				-- Apply material
 				pcall(function()
 					paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", DEFAULT_COLOR, "plastic", "")
 				end)
 				task.wait(0.1)
 	
-				-- Clear all sprays
-				for i, side in ipairs(sides) do
+				-- Clear sprays
+				for _, side in ipairs(sides) do
 					for retry = 1, 2 do
 						pcall(function()
 							paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "spray", "")
@@ -21832,9 +21795,8 @@ local script = G2L["1c3"];
 					end
 				end
 	
-				-- Anchor if not already anchored
-				local isCurrentlyAnchored = repBrick.Anchored
-				if not isCurrentlyAnchored then
+				-- Anchor
+				if not repBrick.Anchored then
 					pcall(function()
 						paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "both 🤝", DEFAULT_COLOR, "spray", "")
 					end)
@@ -21846,7 +21808,7 @@ local script = G2L["1c3"];
 					task.wait(0.1)
 				end
 	
-				-- Restore previous tool
+				-- Restore tool
 				if not wasPaintEquipped then
 					local humanoid = character:FindFirstChild("Humanoid")
 					if humanoid then
@@ -21861,101 +21823,93 @@ local script = G2L["1c3"];
 			end)
 	
 			if success then
-				-- Check if RepPaints is enabled before sending chat
-				local RepGroup = AutoPaintRepRow.Parent
-				local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
-				local shouldAnnounce = RepPaintsRow and RepPaintsRow:GetAttribute("RepPaintsEnabled") == true
+				-- Send message if both enabled
+				local repPaintsEnabled = RepPaintsRow and RepPaintsRow:GetAttribute("RepPaintsEnabled") == true
 	
-				if shouldAnnounce and shared.sendChat then
+				if repPaintsEnabled and shared.sendChat then
 					shared.sendChat("✅Block has been restored back to normal")
 				end
-			else
-				warn("[AutoPaintRep] Error:", errorMsg)
 			end
 	
-			-- Clear the restoration flag
-			local RepGroup = AutoPaintRepRow.Parent
-			local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
+			-- Wait 0.5s before allowing RepPaints to monitor again
+			task.wait(0.5)
+	
 			if RepPaintsRow then
-				RepPaintsRow:SetAttribute("IsAutoRestoring", false)
-			end
-	
-			isRestoring = false
-		end)
-	end
-	
-	local function scheduleRestore()
-		if not isEnabled then return end
-		if isRestoring then return end
-	
-		pendingRestore = true
-	
-		-- Cancel previous debounce
-		if changeDebounce then
-			task.cancel(changeDebounce)
-		end
-	
-		-- Wait for changes to stop
-		changeDebounce = task.delay(CHANGE_COOLDOWN, function()
-			if pendingRestore then
-				restoreToDefault()
-				pendingRestore = false
+				RepPaintsRow:SetAttribute("BlockMonitoring", false)
 			end
 		end)
 	end
 	
-	local function monitorBrick()
-		local repBrick = ReplicatedStorage:WaitForChild("Brick", 30)
-		if not repBrick then
-			warn("[AutoPaintRep] Could not find ReplicatedStorage.Brick")
+	-- Watch for change detection from RepPaints
+	local function watchForChanges()
+		local RepGroup = AutoPaintRepRow.Parent
+		local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
+	
+		if not RepPaintsRow then
+			warn("[AutoPaintRep] Could not find RepPaintsRow")
 			return
 		end
 	
-		-- Monitor Color changes
-		repBrick:GetPropertyChangedSignal("Color"):Connect(function()
-			if isRestoring then return end  -- Don't trigger during our own restore
-			local currentColor = repBrick.Color
-			if currentColor ~= DEFAULT_COLOR then
-				scheduleRestore()
+		local lastChange = 0
+	
+		-- Watch for ChangeDetected attribute
+		RepPaintsRow:GetAttributeChangedSignal("ChangeDetected"):Connect(function()
+			if not isEnabled then return end
+	
+			local changeTime = RepPaintsRow:GetAttribute("ChangeDetected")
+			if changeTime and changeTime ~= lastChange then
+				lastChange = changeTime
+	
+				print("[AutoPaintRep] Change detected, waiting 0.5s before restoring")
+	
+				-- Wait 0.5s then restore
+				task.wait(0.5)
+	
+				print("[AutoPaintRep] Starting restoration")
+				restoreBrick()
 			end
 		end)
 	
-		-- Monitor Anchored changes
-		repBrick:GetPropertyChangedSignal("Anchored"):Connect(function()
-			if isRestoring then return end
-			local currentAnchored = repBrick.Anchored
-			if currentAnchored ~= DEFAULT_ANCHORED then
-				scheduleRestore()
-			end
-		end)
-	
-		-- Monitor Material changes
-		repBrick:GetPropertyChangedSignal("Material"):Connect(function()
-			if isRestoring then return end
-			local currentMaterial = repBrick.Material
-			if currentMaterial ~= DEFAULT_MATERIAL then
-				scheduleRestore()
-			end
-		end)
-	
-		-- Monitor new children added
-		repBrick.ChildAdded:Connect(function(child)
-			if isRestoring then return end
-			scheduleRestore()
-		end)
-	
-		-- Monitor children removed
-		repBrick.ChildRemoved:Connect(function(child)
-			if isRestoring then return end
-			scheduleRestore()
-		end)
-	
-		print("[AutoPaintRep] Monitoring ReplicatedStorage.Brick for changes")
+		print("[AutoPaintRep] Watching for changes")
 	end
 	
-	-- Start monitoring
-	task.spawn(monitorBrick)
+	-- Also watch brick directly as backup
+	local function monitorBrickDirectly()
+		local repBrick = ReplicatedStorage:WaitForChild("Brick", 30)
+		if not repBrick then return end
 	
+		local changeTimer = nil
+	
+		local function onDirectChange()
+			if not isEnabled then return end
+	
+			-- Cancel previous timer
+			if changeTimer then
+				task.cancel(changeTimer)
+			end
+	
+			-- Start 1 second timer
+			changeTimer = task.delay(1.0, function()
+				print("[AutoPaintRep] Direct change detected, waiting 0.5s before restoring")
+				task.wait(0.5)
+	
+				print("[AutoPaintRep] Starting restoration")
+				restoreBrick()
+			end)
+		end
+	
+		-- Monitor all changes
+		repBrick:GetPropertyChangedSignal("Color"):Connect(onDirectChange)
+		repBrick:GetPropertyChangedSignal("Anchored"):Connect(onDirectChange)
+		repBrick:GetPropertyChangedSignal("Material"):Connect(onDirectChange)
+		repBrick.ChildAdded:Connect(onDirectChange)
+		repBrick.ChildRemoved:Connect(onDirectChange)
+	
+		print("[AutoPaintRep] Monitoring brick directly")
+	end
+	
+	task.spawn(watchForChanges)
+	task.spawn(monitorBrickDirectly)
 	print("[AutoPaintRep] OFF by default")
 end;
 task.spawn(C_1c3);
@@ -24762,7 +24716,6 @@ local script = G2L["225"];
 		if a then
 			return a.BackgroundColor3
 		else
-			warn("[RepPaints] AlertAccentColor not found in RepGroup, using white")
 			return Color3.new(1, 1, 1)
 		end
 	end
@@ -24782,13 +24735,9 @@ local script = G2L["225"];
 			RepPaintsTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 		end
 	
-		-- Store state for AutoPaintRep to check
 		RepPaintsRow:SetAttribute("RepPaintsEnabled", isEnabled)
 	end
 	
-	-- ============================================================
-	-- CLICK HANDLER
-	-- ============================================================
 	RepPaintsTickBox.MouseButton1Click:Connect(toggle)
 	
 	-- ============================================================
@@ -24822,7 +24771,7 @@ local script = G2L["225"];
 	
 	local label = Instance.new("TextLabel", tooltipFrame)
 	label.BackgroundTransparency = 1
-	label.Text = "Detects and announces when a player changes the rep brick properties (color, material, anchored) or adds/removes children (Spray, Drag, Light)."
+	label.Text = "Alerts in chat when a player exploits/painted bkit. (ReplicatedStorage.Brick)"
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.TextSize = 14
 	label.TextXAlignment = Enum.TextXAlignment.Left
@@ -24855,52 +24804,41 @@ local script = G2L["225"];
 	-- ============================================================
 	RepPaintsTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	RepPaintsRow:SetAttribute("RepPaintsEnabled", false)
+	RepPaintsRow:SetAttribute("BlockMonitoring", false)  -- Used to pause monitoring
 	
 	-- ============================================================
-	-- SETTINGS
-	-- ============================================================
-	local CHANGE_COOLDOWN = 0.3  -- Seconds to wait after last change before announcing
-	
-	-- ============================================================
-	-- REP BRICK MONITORING
+	-- MONITORING SYSTEM
 	-- ============================================================
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	
 	local DEFAULT_COLOR = Color3.fromRGB(192, 192, 192)
 	local DEFAULT_MATERIAL = Enum.Material.Plastic
 	local DEFAULT_ANCHORED = true
 	
-	local changeDebounce = nil
-	local pendingAnnounce = false
+	local changeTimer = nil
+	local CHANGE_DELAY = 1.0  -- Wait 1 second after last change
 	
-	local function announceChange()
-		if not isEnabled then return end
-		if shared.sendChat then
-			shared.sendChat("🚨A player exploited/painted bkit")
-		end
-	end
-	
-	local function scheduleAnnounce()
-		if not isEnabled then return end
-	
-		-- Don't announce if AutoPaint is restoring
-		if RepPaintsRow:GetAttribute("IsAutoRestoring") == true then return end
-	
-		pendingAnnounce = true
-	
-		-- Cancel previous debounce
-		if changeDebounce then
-			task.cancel(changeDebounce)
+	local function onChangeDetected()
+		-- If monitoring is blocked, don't do anything
+		if RepPaintsRow:GetAttribute("BlockMonitoring") == true then
+			return
 		end
 	
-		-- Wait 0.3 seconds, if another change happens it will restart this
-		changeDebounce = task.delay(CHANGE_COOLDOWN, function()
-			if pendingAnnounce then
-				announceChange()
-				pendingAnnounce = false
+		-- Cancel previous timer
+		if changeTimer then
+			task.cancel(changeTimer)
+		end
+	
+		-- Start new 1 second timer
+		changeTimer = task.delay(CHANGE_DELAY, function()
+			-- Check if still enabled and not blocked
+			if isEnabled and RepPaintsRow:GetAttribute("BlockMonitoring") ~= true then
+				if shared.sendChat then
+					shared.sendChat("🚨A player exploited/painted bkit")
+				end
 			end
+	
+			-- Notify AutoPaint that a change was confirmed
+			RepPaintsRow:SetAttribute("ChangeDetected", tick())
 		end)
 	end
 	
@@ -24911,51 +24849,44 @@ local script = G2L["225"];
 			return
 		end
 	
-		-- Monitor Color changes
+		-- Monitor Color
 		repBrick:GetPropertyChangedSignal("Color"):Connect(function()
-			if not isEnabled then return end
 			local currentColor = repBrick.Color
 			if currentColor ~= DEFAULT_COLOR then
-				scheduleAnnounce()
+				onChangeDetected()
 			end
 		end)
 	
-		-- Monitor Anchored changes
+		-- Monitor Anchored
 		repBrick:GetPropertyChangedSignal("Anchored"):Connect(function()
-			if not isEnabled then return end
 			local currentAnchored = repBrick.Anchored
 			if currentAnchored ~= DEFAULT_ANCHORED then
-				scheduleAnnounce()
+				onChangeDetected()
 			end
 		end)
 	
-		-- Monitor Material changes
+		-- Monitor Material
 		repBrick:GetPropertyChangedSignal("Material"):Connect(function()
-			if not isEnabled then return end
 			local currentMaterial = repBrick.Material
 			if currentMaterial ~= DEFAULT_MATERIAL then
-				scheduleAnnounce()
+				onChangeDetected()
 			end
 		end)
 	
-		-- Monitor new children added (Drag, Spray, Light, etc.)
+		-- Monitor children added
 		repBrick.ChildAdded:Connect(function(child)
-			if not isEnabled then return end
-			scheduleAnnounce()
+			onChangeDetected()
 		end)
 	
 		-- Monitor children removed
 		repBrick.ChildRemoved:Connect(function(child)
-			if not isEnabled then return end
-			scheduleAnnounce()
+			onChangeDetected()
 		end)
 	
-		print("[RepPaints] Monitoring ReplicatedStorage.Brick for changes")
+		print("[RepPaints] Monitoring ReplicatedStorage.Brick")
 	end
 	
-	-- Start monitoring
 	task.spawn(monitorBrick)
-	
 	print("[RepPaints] OFF by default")
 end;
 task.spawn(C_225);
