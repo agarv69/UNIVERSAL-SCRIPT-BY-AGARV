@@ -24611,7 +24611,6 @@ local function C_225()
 local script = G2L["225"];
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local repBrick = ReplicatedStorage:WaitForChild("Brick")
-	local lastMaterial = repBrick.Material
 	
 	--------------------------------------------------
 	-- GUI REFERENCES
@@ -24647,7 +24646,7 @@ local script = G2L["225"];
 	-- SHARED STATE
 	--------------------------------------------------
 	shared.IsRestoringBKit = shared.IsRestoringBKit or false
-	shared.BKitDebounceTimer = shared.BKitDebounceTimer or nil
+	shared.RepPaintsDebounce = shared.RepPaintsDebounce or nil
 	
 	--------------------------------------------------
 	-- HELPERS
@@ -24657,39 +24656,45 @@ local script = G2L["225"];
 	end
 	
 	--------------------------------------------------
-	-- MONITOR
+	-- MATERIAL WHITELIST
 	--------------------------------------------------
-	local repBrick = ReplicatedStorage:WaitForChild("Brick")
-	local connections = {}
-	
 	local IGNORED_MATERIALS = {
 		["SmoothPlastic"] = true,
 		["CeramicTiles"] = true,
 		["Plastic"] = true,
 	}
 	
+	local lastMaterial = repBrick.Material
+	
+	--------------------------------------------------
+	-- ALERT HANDLER
+	--------------------------------------------------
 	local function onChangeConfirmed()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
 		if shared.IsRestoringBKit then return end
 	
-		local newMaterial = repBrick.Material
-	
-		-- Only alert if the new material is NOT whitelisted
-		if lastMaterial ~= newMaterial and IGNORED_MATERIALS[newMaterial.Name] then
-			lastMaterial = newMaterial -- update for next time
-			return -- skip alert
-		end
-	
-		lastMaterial = newMaterial -- update for next time
 		sendChat("🚨A player exploited/painted bkit")
 	end
 	
 	local function onBrickChanged()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
-	
-		-- 🚫 Ignore changes during restore
 		if shared.IsRestoringBKit then return end
 	
+		local newMaterial = repBrick.Material
+	
+		-- Ignore debounce for two cases:
+		-- 1️⃣ Whitelist -> Whitelist
+		-- 2️⃣ Non-whitelist -> Whitelist
+		if (IGNORED_MATERIALS[lastMaterial.Name] and IGNORED_MATERIALS[newMaterial.Name]) or
+			(not IGNORED_MATERIALS[lastMaterial.Name] and IGNORED_MATERIALS[newMaterial.Name]) then
+			lastMaterial = newMaterial -- update tracker
+			return
+		end
+	
+		-- update lastMaterial for next comparison
+		lastMaterial = newMaterial
+	
+		-- debounce alert
 		if shared.RepPaintsDebounce then
 			task.cancel(shared.RepPaintsDebounce)
 		end
@@ -24699,6 +24704,11 @@ local script = G2L["225"];
 			onChangeConfirmed()
 		end)
 	end
+	
+	--------------------------------------------------
+	-- MONITOR
+	--------------------------------------------------
+	local connections = {}
 	
 	local function startWatching()
 		table.insert(connections, repBrick:GetPropertyChangedSignal("Color"):Connect(onBrickChanged))
@@ -24715,6 +24725,11 @@ local script = G2L["225"];
 			pcall(function() c:Disconnect() end)
 		end
 		connections = {}
+	
+		if shared.RepPaintsDebounce then
+			task.cancel(shared.RepPaintsDebounce)
+			shared.RepPaintsDebounce = nil
+		end
 	end
 	
 	startWatching()
