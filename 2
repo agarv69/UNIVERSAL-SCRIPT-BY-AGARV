@@ -22430,8 +22430,11 @@ local script = G2L["1e1"];
 	
 	local cam = workspace.CurrentCamera
 	
-	local function spectatePlayer(player)
-		if player and player.Character then
+	task.delay(0.1, function()
+		if isShowing and currentTarget == player then
+			spectatePlayer(player)
+		end
+	end)	if player and player.Character then
 			local hum = player.Character:FindFirstChildOfClass("Humanoid")
 			if hum then cam.CameraSubject = hum end
 		end
@@ -22709,8 +22712,11 @@ local script = G2L["1e1"];
 		local label = griefTypeLabels[griefType] or "GRIEFING"
 		ConfirmGriefFrame.Visible = true
 		GriefTargetLabel.Text = "POSSIBLE GRIEF: " .. player.DisplayName .. " | " .. label
-		spectatePlayer(player)
-	
+		task.delay(0.1, function()
+			if isShowing and currentTarget == player then
+				spectatePlayer(player)
+			end
+		end)
 		-- Boombox gets 10 second timer, grief gets 20
 		local timeLeft = currentIsBoombox and 10 or 20
 		ConfirmTimer.Text = "(" .. timeLeft .. ".0)"
