@@ -24672,10 +24672,13 @@ local script = G2L["225"];
 	-- MONITOR
 	--------------------------------------------------
 	
+	local repBrick = ReplicatedStorage:WaitForChild("Brick")
+	local connections = {}
+	
 	local function onChangeConfirmed()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
 	
-		-- Block only during restore (prevents restore spam)
+		-- 🚫 Block alerts caused by restoring
 		if shared.IsRestoringBKit then return end
 	
 		sendChat("🚨A player exploited/painted bkit")
@@ -24683,6 +24686,9 @@ local script = G2L["225"];
 	
 	local function onBrickChanged()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
+	
+		-- 🚫 Ignore changes during restore
+		if shared.IsRestoringBKit then return end
 	
 		if shared.RepPaintsDebounce then
 			task.cancel(shared.RepPaintsDebounce)
