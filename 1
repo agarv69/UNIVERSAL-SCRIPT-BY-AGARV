@@ -20380,7 +20380,7 @@ local script = G2L["1a5"];
 	local AURA_MAX_DELAY       = 0.15
 	local COUNT_WINDOW         = 6.5
 	local AURA_COUNT_THRESHOLD = 25
-	local AURA_MAG_THRESHOLD   = 30
+	local AURA_MAG_THRESHOLD   = 40
 	
 	local BRICK_SOUND_ID = "rbxassetid://9117183621"
 	local PAINT_SOUND_ID = "rbxassetid://18473826"
@@ -20623,8 +20623,16 @@ local script = G2L["1a5"];
 			if child.Name ~= "Brick" then return end
 			local removedAt = tick()
 			local brickPos = child.Position
+	
+			-- Snapshot all player positions NOW before the delay
+			local playerPositions = {}
+			for _, p in ipairs(Players:GetPlayers()) do
+				local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+				if hrp then playerPositions[p.UserId] = hrp.Position end
+			end
+	
 			task.delay(AURA_MAX_DELAY, function()
-				checkAuraExploit(recentDeleteSound, brickPos, "delete", removedAt, ownerName)
+				checkAuraExploit(recentDeleteSound, brickPos, "delete", removedAt, ownerName, playerPositions)
 			end)
 		end)
 		table.insert(connections, c1)
