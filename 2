@@ -21745,6 +21745,8 @@ local script = G2L["1c3"];
 	
 		print("[AutoPaintRep] Starting restoration - blocking RepPaints")
 	
+		isCurrentlyRestoring = true
+	
 		-- Block RepPaints IMMEDIATELY before making any changes
 		if RepPaintsRow then
 			RepPaintsRow:SetAttribute("BlockMonitoring", true)
@@ -21851,6 +21853,9 @@ local script = G2L["1c3"];
 				RepPaintsRow:SetAttribute("BlockMonitoring", false)
 				print("[AutoPaintRep] RepPaints unblocked")
 			end
+	
+			isCurrentlyRestoring = false
+			print("[AutoPaintRep] Restoration complete - ready for new changes")
 		end)
 	end
 	
@@ -21887,7 +21892,62 @@ local script = G2L["1c3"];
 		print("[AutoPaintRep] Watching for RepPaints signals")
 	end
 	
+	-- ALSO watch brick directly when RepPaints is OFF
+	local isCurrentlyRestoring = false
+	
+	local function monitorBrickWhenRepPaintsOff()
+		local repBrick = ReplicatedStorage:WaitForChild("Brick", 30)
+		if not repBrick then return end
+	
+		local RepGroup = AutoPaintRepRow.Parent
+		local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
+	
+		local changeTimer = nil
+	
+		local function onDirectChange()
+			if not isEnabled then return end
+			if isCurrentlyRestoring then 
+				print("[AutoPaintRep] Ignoring change - we're currently restoring")
+				return 
+			end
+	
+			-- Only monitor directly if RepPaints is OFF
+			local repPaintsEnabled = RepPaintsRow and RepPaintsRow:GetAttribute("RepPaintsEnabled") == true
+			if repPaintsEnabled then return end  -- Let RepPaints handle it
+	
+			print("[AutoPaintRep] Direct change detected (RepPaints OFF), starting 1s timer")
+	
+			-- Cancel previous timer
+			if changeTimer then
+				task.cancel(changeTimer)
+			end
+	
+			-- Start 1 second timer
+			changeTimer = task.delay(1.0, function()
+				if isCurrentlyRestoring then return end
+	
+				print("[AutoPaintRep] 1s passed, waiting 0.5s before restoring")
+				task.wait(0.5)
+	
+				if isCurrentlyRestoring then return end
+	
+				print("[AutoPaintRep] Starting restoration")
+				restoreBrick()
+			end)
+		end
+	
+		-- Monitor all changes
+		repBrick:GetPropertyChangedSignal("Color"):Connect(onDirectChange)
+		repBrick:GetPropertyChangedSignal("Anchored"):Connect(onDirectChange)
+		repBrick:GetPropertyChangedSignal("Material"):Connect(onDirectChange)
+		repBrick.ChildAdded:Connect(onDirectChange)
+		repBrick.ChildRemoved:Connect(onDirectChange)
+	
+		print("[AutoPaintRep] Also monitoring brick directly (for when RepPaints is OFF)")
+	end
+	
 	task.spawn(watchForChanges)
+	task.spawn(monitorBrickWhenRepPaintsOff)
 	print("[AutoPaintRep] OFF by default")
 end;
 task.spawn(C_1c3);
@@ -24796,9 +24856,9 @@ local script = G2L["225"];
 	local CHANGE_DELAY = 1.0  -- Wait 1 second after last change
 	
 	local function onChangeDetected()
-		-- If monitoring is blocked, don't do anything
+		-- If monitoring is blocked, don't do anything AT ALL
 		if RepPaintsRow:GetAttribute("BlockMonitoring") == true then
-			print("[RepPaints] Change detected but monitoring is BLOCKED")
+			print("[RepPaints] Change detected but monitoring is BLOCKED - not setting ChangeDetected")
 			return
 		end
 	
@@ -24811,17 +24871,22 @@ local script = G2L["225"];
 	
 		-- Start new 1 second timer
 		changeTimer = task.delay(CHANGE_DELAY, function()
-			-- Check if still enabled and not blocked
-			if isEnabled and RepPaintsRow:GetAttribute("BlockMonitoring") ~= true then
+			-- Double check not blocked when timer fires
+			if RepPaintsRow:GetAttribute("BlockMonitoring") == true then
+				print("[RepPaints] Timer finished but NOW blocked - cancelling")
+				return
+			end
+	
+			-- Check if still enabled
+			if isEnabled then
 				print("[RepPaints] Sending alert")
 				if shared.sendChat then
 					shared.sendChat("🚨A player exploited/painted bkit")
 				end
-			else
-				print("[RepPaints] Timer finished but monitoring blocked or disabled")
 			end
 	
-			-- Notify AutoPaint that a change was confirmed
+			-- Notify AutoPaint that a change was confirmed (ONLY if not blocked)
+			print("[RepPaints] Setting ChangeDetected attribute")
 			RepPaintsRow:SetAttribute("ChangeDetected", tick())
 		end)
 	end
