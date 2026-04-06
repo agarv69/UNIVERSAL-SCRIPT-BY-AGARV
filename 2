@@ -3545,7 +3545,7 @@ G2L["143"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["143"]["BackgroundTransparency"] = 1;
 G2L["143"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["143"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["143"]["Text"] = [[Unanchor]];
+G2L["143"]["Text"] = [[Unanchor Block]];
 G2L["143"]["Name"] = [[UnanchorRepText]];
 G2L["143"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -13078,7 +13078,7 @@ local script = G2L["de"];
 	-- ============================================================
 	-- BUILD TOOLTIPS
 	-- ============================================================
-	local chatSpyTooltip = makeTooltip(ScreenGui, "Reveals hidden commands, muted players, and IQ chat with emoji labels")
+	local chatSpyTooltip = makeTooltip(ScreenGui, "Reveals hidden commands, muted players, and IQ chat.")
 	hookTooltip(ChatSpyTickBox, chatSpyTooltip)
 	
 	local arkSpyTooltip = makeTooltip(ScreenGui, "Announces and reveals hidden commands used by admins and enlightened players. Spy chat must be enabled")
@@ -13474,7 +13474,7 @@ local script = G2L["e2"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Auto drops ALL tools (including Enlighten) on death and picks them back up instantly on respawn"
+	tooltipLabel.Text = "Auto drops all of your tools on death. Instantly picks it back up after respawn."
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -13682,7 +13682,7 @@ local script = G2L["e6"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Stealthily picks up all dropped tools and hides them in backpack (manually equip stolen tools to use them)"
+	tooltipLabel.Text = "Automatically picks up all tools that players drop."
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -13862,7 +13862,7 @@ local script = G2L["ea"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Prevents you from dropping Enlighten (The Arkenstone) - instantly picks it back up"
+	tooltipLabel.Text = "Prevents you from dropping enlighten on drop."
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -21445,10 +21445,8 @@ local script = G2L["1bf"];
 	local function updateVisual()
 		if Enabled then
 			LBoomboxTickBox.BackgroundColor3 = MiscAccentColor.BackgroundColor3
-			print("Boombox Detection ON")
 		else
 			LBoomboxTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-			print("Boombox Detection OFF")
 		end
 	end
 	
@@ -21463,7 +21461,7 @@ local script = G2L["1bf"];
 	-- SETTINGS
 	--------------------------------------------------
 	local LOUD_THRESHOLD = 700
-	local CHECK_INTERVAL = 15       -- seconds between loudness checks per player
+	local CHECK_INTERVAL = 1       -- seconds between loudness checks per player
 	local FAR_DISTANCE = 100        -- studs — if farther than this, snap camera to measure
 	
 	--------------------------------------------------
@@ -21473,7 +21471,7 @@ local script = G2L["1bf"];
 	local detectedIDs = {}  -- store detected AudioIds per player to prevent repeats
 	
 	--------------------------------------------------
-	-- ENSURE EVENTS
+	-- EVENTS
 	--------------------------------------------------
 	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
 	shared.BoomboxLoudEvent = shared.BoomboxLoudEvent or Instance.new("BindableEvent")
@@ -21493,7 +21491,7 @@ local script = G2L["1bf"];
 	end
 	
 	--------------------------------------------------
-	-- GET LOUDNESS (snap camera if far away)
+	-- GET LOUDNESS (optimized)
 	--------------------------------------------------
 	local function getLoudness(player, sound)
 		local myChar = LocalPlayer.Character
@@ -21507,10 +21505,12 @@ local script = G2L["1bf"];
 	
 		local dist = (myHRP.Position - theirHRP.Position).Magnitude
 	
+		-- Only snap camera if far away
 		if dist <= FAR_DISTANCE then
 			return sound.PlaybackLoudness
 		end
 	
+		-- Far-away: just approximate loudness without snapping every frame
 		local cam = workspace.CurrentCamera
 		local savedCFrame = cam.CFrame
 		cam.CFrame = CFrame.new(theirHRP.Position)
@@ -21556,15 +21556,10 @@ local script = G2L["1bf"];
 		end
 	
 		local audioId = sound.SoundId
-		-- only alert if this audio ID hasn't been detected for this player yet
-		if detectedIDs[player.UserId][audioId] then
-			return
-		end
-	
+		if detectedIDs[player.UserId][audioId] then return end
 		detectedIDs[player.UserId][audioId] = true
 	
 		print("[BOOMBOX] " .. player.Name .. " is too loud: AudioID=" .. audioId)
-	
 		sendAlertChat(player)
 		playSFX()
 	
@@ -21576,27 +21571,30 @@ local script = G2L["1bf"];
 	end
 	
 	--------------------------------------------------
-	-- DETECTION LOOP
+	-- DETECTION LOOP (optimized)
 	--------------------------------------------------
-	RunService.Heartbeat:Connect(function()
-		if not Enabled then return end
+	task.spawn(function()
+		while true do
+			if Enabled then
+				local now = tick()
+				for _, player in ipairs(Players:GetPlayers()) do
+					if player == LocalPlayer then continue end
 	
-		local now = tick()
+					local userId = player.UserId
+					if not lastCheck[userId] or now - lastCheck[userId] >= CHECK_INTERVAL then
+						lastCheck[userId] = now
 	
-		for _, player in ipairs(Players:GetPlayers()) do
-			if player == LocalPlayer then continue end
-	
-			local userId = player.UserId
-			if lastCheck[userId] and now - lastCheck[userId] < CHECK_INTERVAL then continue end
-			lastCheck[userId] = now
-	
-			local sound = getBoomboxSound(player)
-			if not sound or not sound.IsPlaying then continue end
-	
-			local loudness = getLoudness(player, sound)
-			if loudness > LOUD_THRESHOLD then
-				onBoomboxLoud(player, sound)
+						local sound = getBoomboxSound(player)
+						if sound and sound.IsPlaying then
+							local loudness = getLoudness(player, sound)
+							if loudness > LOUD_THRESHOLD then
+								onBoomboxLoud(player, sound)
+							end
+						end
+					end
+				end
 			end
+			task.wait(0.2) -- small delay to prevent tight loop
 		end
 	end)
 end;
@@ -21611,7 +21609,6 @@ local script = G2L["1c3"];
 	--------------------------------------------------
 	-- GUI REFERENCES
 	--------------------------------------------------
-	
 	local AutoPaintRepRow = script.Parent
 	local MiscGroup = AutoPaintRepRow.Parent
 	local MiscAccentColor = MiscGroup:WaitForChild("MiscAccentColor")
@@ -21620,7 +21617,6 @@ local script = G2L["1c3"];
 	--------------------------------------------------
 	-- ENABLE STATE
 	--------------------------------------------------
-	
 	AutoPaintRepTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	AutoPaintRepTickBox:SetAttribute("Enabled", false)
 	
@@ -21640,33 +21636,62 @@ local script = G2L["1c3"];
 	
 	updateVisual()
 	
-	--------------------------------------------------
-	-- SHARED STATE
-	--------------------------------------------------
+	-- ============================================================
+	-- TOOLTIP
+	-- ============================================================
 	
-	shared.IsRestoringBKit = false
-	shared.AutoPaintDebounce = nil
+	local tooltipFrame = Instance.new("Frame")
+	tooltipFrame.Name = "AutoPaintRepTooltip"
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	tooltipFrame.BorderSizePixel = 0
+	tooltipFrame.ZIndex = 100
+	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
+	tooltipFrame.Visible = false
+	tooltipFrame.Parent = script.Parent.Parent:FindFirstAncestorWhichIsA("ScreenGui")
+	tooltipFrame.ClipsDescendants = true
+	tooltipFrame.Active = false
+	tooltipFrame.Selectable = false
 	
-	--------------------------------------------------
-	-- BRICK DEFAULTS
-	--------------------------------------------------
+	local tooltipStroke = Instance.new("UIStroke")
+	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
+	tooltipStroke.Thickness = 1
+	tooltipStroke.Parent = tooltipFrame
 	
-	local DEFAULT_COLOR    = Color3.fromRGB(192, 192, 192)
-	local DEFAULT_MATERIAL = "plastic"
+	local tooltipPadding = Instance.new("UIPadding")
+	tooltipPadding.PaddingTop = UDim.new(0, 6)
+	tooltipPadding.PaddingBottom = UDim.new(0, 6)
+	tooltipPadding.PaddingLeft = UDim.new(0, 6)
+	tooltipPadding.PaddingRight = UDim.new(0, 6)
+	tooltipPadding.Parent = tooltipFrame
 	
-	local SIDES = {
-		Enum.NormalId.Front,
-		Enum.NormalId.Right,
-		Enum.NormalId.Back,
-		Enum.NormalId.Left,
-		Enum.NormalId.Top,
-		Enum.NormalId.Bottom,
-	}
+	local tooltipText = Instance.new("TextLabel")
+	tooltipText.BackgroundTransparency = 1
+	tooltipText.Text = "Automatically restores bkit when a player using exploits to paint the ReplicatedStorage.Brick."
+	tooltipText.TextColor3 = Color3.new(1, 1, 1)
+	tooltipText.TextSize = 14
+	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
+	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
+	tooltipText.Font = Enum.Font.GothamSemibold
+	tooltipText.TextWrapped = true
+	tooltipText.Size = UDim2.new(0, 200, 0, 0)
+	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipText.ZIndex = 101
+	tooltipText.Parent = tooltipFrame
+	
+	AutoPaintRepTickBox.MouseEnter:Connect(function()
+		local abs = AutoPaintRepTickBox.AbsolutePosition
+		local size = AutoPaintRepTickBox.AbsoluteSize
+		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+		tooltipFrame.Visible = true
+	end)
+	AutoPaintRepTickBox.MouseLeave:Connect(function()
+		tooltipFrame.Visible = false
+	end)
 	
 	--------------------------------------------------
 	-- HELPERS
 	--------------------------------------------------
-	
 	local function sendChat(msg)
 		if shared.sendChat then shared.sendChat(msg) end
 	end
@@ -21686,11 +21711,16 @@ local script = G2L["1c3"];
 	--------------------------------------------------
 	-- RESTORE
 	--------------------------------------------------
+	local repBrick = ReplicatedStorage:WaitForChild("Brick")
+	local IGNORE_MATERIALS = {
+		SmoothPlastic = true,
+		CeramicTiles = true,
+		Plastic = true,
+	}
 	
-	local function restoreBrick(repBrick)
+	local function restoreBrick()
 		local character = LocalPlayer.Character
 		if not character then return false end
-	
 		local previousTool = character:FindFirstChildOfClass("Tool")
 		local wasPaintEquipped = previousTool and previousTool.Name == "Paint"
 	
@@ -21751,28 +21781,25 @@ local script = G2L["1c3"];
 	--------------------------------------------------
 	-- MONITOR
 	--------------------------------------------------
-	
-	local repBrick = ReplicatedStorage:WaitForChild("Brick")
 	local connections = {}
 	
 	local function onChangeConfirmed()
-		if shared.IsRestoringBKit then return end
 		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
+		if shared.IsRestoringBKit then return end
+		if IGNORE_MATERIALS[repBrick.Material.Name] then return end
 	
 		task.wait(0.5)
 		shared.IsRestoringBKit = true
-	
-		local ok = restoreBrick(repBrick)
+		local ok = restoreBrick()
 	
 		if ok then
-			-- Check if RepPaints is also on — if so send the restored message
 			task.wait(0.1)
 			local repPaintsTickBox = script:FindFirstAncestorOfClass("ScreenGui") and
 				script:FindFirstAncestorOfClass("ScreenGui"):FindFirstChild("RepPaintsTickBox", true)
 			local repPaintsOn = repPaintsTickBox and repPaintsTickBox:GetAttribute("Enabled") == true
 	
 			if repPaintsOn then
-				sendChat("✅Block has been restored back to normal")
+				sendChat("✅Bkit has been restored back to normal")
 			end
 		end
 	
@@ -21783,6 +21810,19 @@ local script = G2L["1c3"];
 	local function onBrickChanged()
 		if shared.IsRestoringBKit then return end
 		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
+	
+		-- Ignore these materials
+		local ignoredMaterials = {
+			Enum.Material.SmoothPlastic,
+			Enum.Material.Ceramic,
+			Enum.Material.Plastic,
+			Enum.Material.CeramicTiles,
+		}
+		for _, m in ipairs(ignoredMaterials) do
+			if repBrick.Material == m then
+				return -- exit early, don't alert or restore
+			end
+		end
 	
 		if shared.AutoPaintDebounce then
 			task.cancel(shared.AutoPaintDebounce)
@@ -24624,7 +24664,6 @@ local script = G2L["225"];
 	--------------------------------------------------
 	-- GUI REFERENCES
 	--------------------------------------------------
-	
 	local RepPaintsRow = script.Parent
 	local AlertGroup = RepPaintsRow.Parent
 	local AlertAccentColor = AlertGroup:WaitForChild("AlertAccentColor")
@@ -24633,7 +24672,6 @@ local script = G2L["225"];
 	--------------------------------------------------
 	-- ENABLE STATE
 	--------------------------------------------------
-	
 	RepPaintsTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	RepPaintsTickBox:SetAttribute("Enabled", false)
 	
@@ -24653,17 +24691,68 @@ local script = G2L["225"];
 	
 	updateVisual()
 	
+	-- ============================================================
+	-- TOOLTIP
+	-- ============================================================
+	
+	local tooltipFrame = Instance.new("Frame")
+	tooltipFrame.Name = "RepPaintsTooltip"
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	tooltipFrame.BorderSizePixel = 0
+	tooltipFrame.ZIndex = 100
+	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
+	tooltipFrame.Visible = false
+	tooltipFrame.Parent = script.Parent.Parent:FindFirstAncestorWhichIsA("ScreenGui")
+	tooltipFrame.ClipsDescendants = true
+	tooltipFrame.Active = false
+	tooltipFrame.Selectable = false
+	
+	local tooltipStroke = Instance.new("UIStroke")
+	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
+	tooltipStroke.Thickness = 1
+	tooltipStroke.Parent = tooltipFrame
+	
+	local tooltipPadding = Instance.new("UIPadding")
+	tooltipPadding.PaddingTop = UDim.new(0, 6)
+	tooltipPadding.PaddingBottom = UDim.new(0, 6)
+	tooltipPadding.PaddingLeft = UDim.new(0, 6)
+	tooltipPadding.PaddingRight = UDim.new(0, 6)
+	tooltipPadding.Parent = tooltipFrame
+	
+	local tooltipText = Instance.new("TextLabel")
+	tooltipText.BackgroundTransparency = 1
+	tooltipText.Text = "Sends an alert in chat when someone exploits to paint the ReplicatedStorage.Brick."
+	tooltipText.TextColor3 = Color3.new(1, 1, 1)
+	tooltipText.TextSize = 14
+	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
+	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
+	tooltipText.Font = Enum.Font.GothamSemibold
+	tooltipText.TextWrapped = true
+	tooltipText.Size = UDim2.new(0, 200, 0, 0)
+	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipText.ZIndex = 101
+	tooltipText.Parent = tooltipFrame
+	
+	RepPaintsTickBox.MouseEnter:Connect(function()
+		local abs = RepPaintsTickBox.AbsolutePosition
+		local size = RepPaintsTickBox.AbsoluteSize
+		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+		tooltipFrame.Visible = true
+	end)
+	RepPaintsTickBox.MouseLeave:Connect(function()
+		tooltipFrame.Visible = false
+	end)
+	
 	--------------------------------------------------
 	-- SHARED STATE
 	--------------------------------------------------
-	
 	shared.IsRestoringBKit = shared.IsRestoringBKit or false
 	shared.BKitDebounceTimer = shared.BKitDebounceTimer or nil
 	
 	--------------------------------------------------
 	-- HELPERS
 	--------------------------------------------------
-	
 	local function sendChat(msg)
 		if shared.sendChat then shared.sendChat(msg) end
 	end
@@ -24671,22 +24760,46 @@ local script = G2L["225"];
 	--------------------------------------------------
 	-- MONITOR
 	--------------------------------------------------
+	local repBrick = ReplicatedStorage:WaitForChild("Brick")
+	local connections = {}
+	
+	local IGNORE_MATERIALS = {
+		SmoothPlastic = true,
+		CeramicTiles = true,
+		Plastic = true,
+	}
 	
 	local function onChangeConfirmed()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
+		if shared.IsRestoringBKit then return end
 	
 		sendChat("🚨A player exploited/painted bkit")
 	end
 	
 	local function onBrickChanged()
-		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
+		if shared.IsRestoringBKit then return end
+		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
 	
-		if shared.RepPaintsDebounce then
-			task.cancel(shared.RepPaintsDebounce)
+		-- Ignore these materials
+		local ignoredMaterials = {
+			Enum.Material.SmoothPlastic,
+			Enum.Material.Ceramic,
+			Enum.Material.Plastic,
+			Enum.Material.CeramicTiles,
+		}
+		for _, m in ipairs(ignoredMaterials) do
+			if repBrick.Material == m then
+				return -- exit early, don't alert or restore
+			end
 		end
 	
-		shared.RepPaintsDebounce = task.delay(1, function()
-			shared.RepPaintsDebounce = nil
+		if shared.AutoPaintDebounce then
+			task.cancel(shared.AutoPaintDebounce)
+			shared.AutoPaintDebounce = nil
+		end
+	
+		shared.AutoPaintDebounce = task.delay(1, function()
+			shared.AutoPaintDebounce = nil
 			onChangeConfirmed()
 		end)
 	end
