@@ -18164,7 +18164,7 @@ local script = G2L["170"];
 	local BlockSizeHelp = findDescendant("BlockSizeHelp")
 	local SpamSelectHelp = findDescendant("SpamSelectHelp")
 	local LagHelp = findDescendant("LagHelp")
-	local ReduceLagHelp = findDescendant("ReduceLagHelp")
+	local ReduceLagTickBox = findDescendant("ReduceLagTickBox")
 	
 	-- ============================================================
 	-- TOOLTIP BUILDER
@@ -18231,7 +18231,7 @@ local script = G2L["170"];
 	
 	local lagHelpTooltip = makeTooltip("Allows you to make a lag machine automatically using toxified blocks without having to stand near it.\nThe block you selected hovers over your head. (No one can see it, don't worry)")
 	
-	local reduceLagTooltip = makeTooltip("Disables visual effects on spam blocks to reduce lag on your end. Turns off neon material, sprays, lights, and shadows. Only affects blocks created by the lag machine. Other players still see the full effects.")
+	local reduceLagTooltip = makeTooltip("Disables visual effects on your own lag machine to reduce lag just for you. Other players still see the full effects.")
 	
 	-- ============================================================
 	-- HOOK THEM
@@ -18239,7 +18239,7 @@ local script = G2L["170"];
 	hookTooltip(BlockSizeHelp, blockSizeTooltip)
 	hookTooltip(SpamSelectHelp, spamSelectTooltip)
 	hookTooltip(LagHelp, lagHelpTooltip)
-	hookTooltip(ReduceLagHelp, reduceLagTooltip)
+	hookTooltip(ReduceLagTickBox, reduceLagTooltip)
 	
 	-- ============================================================
 	-- CLEANUP
@@ -19352,130 +19352,254 @@ task.spawn(C_184);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.ReduceLagRow.ReduceLag
 local function C_188()
 local script = G2L["188"];
-	-- ============================================================
-	-- LAG GROUP TOOLTIP SCRIPT
-	-- Tooltips for LagGroup features
-	-- ============================================================
-	local LagGroup = script.Parent
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local ReduceLagRow = script.Parent
+	local ReduceLagTickBox = ReduceLagRow:WaitForChild("ReduceLagTickBox")
+	local LagGroup = ReduceLagRow.Parent
+	
+	local function getAccentColor()
+		local a = LagGroup:FindFirstChild("LagAccentColor")
+		return a and a.BackgroundColor3 or Color3.new(1, 1, 1)
+	end
+	
+	-- State
+	local isEnabled = false
+	local trackedBlocks = {} -- Store original properties
 	
 	-- ============================================================
-	-- SCREENGUI HELPER
+	-- DISABLE EFFECTS ON A BLOCK
 	-- ============================================================
-	local function getScreenGui()
-		local p = script.Parent
-		while p do
-			if p:IsA("ScreenGui") then
-				return p
+	local function disableEffects(block)
+		if not block or not block:IsA("BasePart") then return end
+		if not block:GetAttribute("IsSpamBlock") then return end
+	
+		-- Store original properties (don't skip if already tracked - force update)
+		if not trackedBlocks[block] then
+			trackedBlocks[block] = {
+				Material = block.Material,
+				CastShadow = block.CastShadow,
+				Sprays = {},
+				Light = nil
+			}
+		end
+	
+		-- FORCE disable Material (Neon -> Air)
+		if block.Material == Enum.Material.Neon then
+			trackedBlocks[block].Material = Enum.Material.Neon
+		end
+		block.Material = Enum.Material.Air
+	
+		-- FORCE disable CastShadow
+		block.CastShadow = false
+	
+		-- FORCE disable all Spray effects
+		for _, child in ipairs(block:GetChildren()) do
+			if child.Name == "Spray" then
+				-- Handle Texture, Decal, or SurfaceGui
+				if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceGui") then
+					if child.Enabled then
+						trackedBlocks[block].Sprays[child] = true
+					end
+					child.Enabled = false
+				end
 			end
-			p = p.Parent
+		end
+	
+		-- FORCE disable Light
+		local light = block:FindFirstChild("Light")
+		if light and light:IsA("Light") then
+			if light.Enabled then
+				trackedBlocks[block].Light = true
+			end
+			light.Enabled = false
 		end
 	end
 	
-	local ScreenGui = getScreenGui()
-	if not ScreenGui then return end
+	-- ============================================================
+	-- RESTORE EFFECTS ON A BLOCK
+	-- ============================================================
+	local function restoreEffects(block)
+		if not block or not block:IsA("BasePart") then return end
+		if not block:GetAttribute("IsSpamBlock") then return end
+	
+		local original = trackedBlocks[block]
+	
+		-- FORCE restore Material (even if not tracked)
+		if block.Material == Enum.Material.Air then
+			if original and original.Material then
+				block.Material = original.Material
+			else
+				block.Material = Enum.Material.Neon -- Default to Neon if not tracked
+			end
+		end
+	
+		-- FORCE restore CastShadow
+		if original and original.CastShadow ~= nil then
+			block.CastShadow = original.CastShadow
+		else
+			block.CastShadow = true -- Default to true
+		end
+	
+		-- FORCE restore Sprays
+		for _, child in ipairs(block:GetChildren()) do
+			if child.Name == "Spray" then
+				if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceGui") then
+					if original and original.Sprays[child] ~= nil then
+						child.Enabled = original.Sprays[child]
+					else
+						child.Enabled = true -- Default to enabled
+					end
+				end
+			end
+		end
+	
+		-- FORCE restore Light
+		local light = block:FindFirstChild("Light")
+		if light and light:IsA("Light") then
+			if original and original.Light ~= nil then
+				light.Enabled = original.Light
+			else
+				light.Enabled = true -- Default to enabled
+			end
+		end
+	
+		-- Remove from tracking
+		if original then
+			trackedBlocks[block] = nil
+		end
+	end
 	
 	-- ============================================================
-	-- FIND ELEMENTS IN LAGGROUP
+	-- PROCESS ALL EXISTING SPAM BLOCKS
 	-- ============================================================
-	local function findDescendant(name)
-		for _, v in pairs(LagGroup:GetDescendants()) do
-			if v.Name == name then
-				return v
+	local function processAllBlocks()
+		local playerFolder = workspace:WaitForChild("Bricks"):FindFirstChild(LocalPlayer.Name)
+		if not playerFolder then return end
+	
+		for _, block in ipairs(playerFolder:GetChildren()) do
+			if block.Name == "Brick" and block:GetAttribute("IsSpamBlock") then
+				if isEnabled then
+					disableEffects(block)
+				else
+					restoreEffects(block)
+				end
 			end
 		end
 	end
 	
-	local BlockSizeHelp = findDescendant("BlockSizeHelp")
-	local SpamSelectHelp = findDescendant("SpamSelectHelp")
-	local LagHelp = findDescendant("LagHelp")
-	local ReduceLagTickBox = findDescendant("ReduceLagTickBox")
-	
 	-- ============================================================
-	-- TOOLTIP BUILDER
+	-- WATCH FOR NEW SPAM BLOCKS
 	-- ============================================================
-	local function makeTooltip(text)
-		local frame = Instance.new("Frame")
-		frame.BackgroundColor3 = Color3.fromRGB(16,16,16)
-		frame.BorderSizePixel = 0
-		frame.ZIndex = 100
-		frame.AutomaticSize = Enum.AutomaticSize.Y
-		frame.Size = UDim2.new(0, 212, 0, 0)
-		frame.Visible = false
-		frame.Parent = ScreenGui
+	local blockAddedConnection
 	
-		local stroke = Instance.new("UIStroke")
-		stroke.Color = Color3.fromRGB(57,57,57)
-		stroke.Parent = frame
-	
-		local padding = Instance.new("UIPadding")
-		padding.PaddingTop = UDim.new(0,6)
-		padding.PaddingBottom = UDim.new(0,6)
-		padding.PaddingLeft = UDim.new(0,6)
-		padding.PaddingRight = UDim.new(0,6)
-		padding.Parent = frame
-	
-		local label = Instance.new("TextLabel")
-		label.BackgroundTransparency = 1
-		label.Text = text
-		label.TextColor3 = Color3.new(1,1,1)
-		label.TextSize = 14
-		label.TextXAlignment = Enum.TextXAlignment.Left
-		label.TextYAlignment = Enum.TextYAlignment.Top
-		label.Font = Enum.Font.GothamSemibold
-		label.TextWrapped = true
-		label.Size = UDim2.new(0,200,0,0)
-		label.AutomaticSize = Enum.AutomaticSize.Y
-		label.ZIndex = 101
-		label.Parent = frame
-	
-		return frame
-	end
-	
-	local function hookTooltip(button, tooltipFrame)
-		if not button then return end
-	
-		button.MouseEnter:Connect(function()
-			local abs = button.AbsolutePosition
-			local size = button.AbsoluteSize
-			tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
-			tooltipFrame.Visible = true
-		end)
-	
-		button.MouseLeave:Connect(function()
-			tooltipFrame.Visible = false
-		end)
-	end
-	
-	-- ============================================================
-	-- CREATE TOOLTIPS
-	-- ============================================================
-	local blockSizeTooltip = makeTooltip("Changes the size of the blocks the lag machine uses. (Recommended: 1, Max size: 6)")
-	
-	local spamSelectTooltip = makeTooltip("How to Use:\nPress Select Block and click on a block you want the lag machine to start. Then press Start Spam and it would auto paint and shape and begin to start placing blocks.\n\nBuild mode must be set to normal, not detailed. You can change how big the blocks are set to in Block Size.")
-	
-	local lagHelpTooltip = makeTooltip("Allows you to make a lag machine automatically using toxified blocks without having to stand near it.\nThe block you selected hovers over your head. (No one can see it, don't worry)")
-	
-	local reduceLagTooltip = makeTooltip("Disables visual effects on your own lag machine to reduce lag on your end. Other players still see the full effects.")
-	
-	-- ============================================================
-	-- HOOK THEM
-	-- ============================================================
-	hookTooltip(BlockSizeHelp, blockSizeTooltip)
-	hookTooltip(SpamSelectHelp, spamSelectTooltip)
-	hookTooltip(LagHelp, lagHelpTooltip)
-	hookTooltip(ReduceLagTickBox, reduceLagTooltip)
-	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
-	script.AncestryChanged:Connect(function()
-		if not script:IsDescendantOf(game) then
-			if blockSizeTooltip then blockSizeTooltip:Destroy() end
-			if spamSelectTooltip then spamSelectTooltip:Destroy() end
-			if lagHelpTooltip then lagHelpTooltip:Destroy() end
-			if reduceLagTooltip then reduceLagTooltip:Destroy() end
+	local function startWatching()
+		if blockAddedConnection then
+			blockAddedConnection:Disconnect()
 		end
-	end)
+	
+		local playerFolder = workspace:WaitForChild("Bricks"):FindFirstChild(LocalPlayer.Name)
+		if not playerFolder then return end
+	
+		blockAddedConnection = playerFolder.ChildAdded:Connect(function(child)
+			if child.Name == "Brick" then
+				-- Wait for IsSpamBlock attribute to be set
+				task.wait(0.1)
+	
+				if child:GetAttribute("IsSpamBlock") then
+					if isEnabled then
+						-- Wait a bit more for sprays/light to be added
+						task.wait(0.2)
+	
+						-- FORCE disable effects on new block
+						disableEffects(child)
+						print("[ReduceLag] Applied to new block:", child)
+					end
+				end
+			end
+		end)
+	end
+	
+	local function stopWatching()
+		if blockAddedConnection then
+			blockAddedConnection:Disconnect()
+			blockAddedConnection = nil
+		end
+	end
+	
+	-- ============================================================
+	-- WATCH FOR BLOCK DELETION
+	-- ============================================================
+	local function watchBlockDeletion(block)
+		block.AncestryChanged:Connect(function()
+			if not block:IsDescendantOf(workspace) then
+				-- Block deleted, remove from tracking
+				trackedBlocks[block] = nil
+			end
+		end)
+	end
+	
+	-- ============================================================
+	-- ENABLE/DISABLE
+	-- ============================================================
+	local function enable()
+		isEnabled = true
+		ReduceLagTickBox.BackgroundColor3 = getAccentColor()
+	
+		-- Process all existing blocks
+		processAllBlocks()
+	
+		print("[ReduceLag] Enabled - effects disabled on spam blocks")
+	end
+	
+	local function disable()
+		isEnabled = false
+		ReduceLagTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	
+		-- Restore all blocks
+		processAllBlocks()
+	
+		print("[ReduceLag] Disabled - effects restored on spam blocks")
+	end
+	
+	-- ============================================================
+	-- TOGGLE
+	-- ============================================================
+	local function toggle()
+		if isEnabled then
+			disable()
+		else
+			enable()
+		end
+	end
+	
+	-- ============================================================
+	-- CLICK HANDLER
+	-- ============================================================
+	ReduceLagTickBox.MouseButton1Click:Connect(toggle)
+	
+	-- ============================================================
+	-- WATCH FOR NEW BLOCKS ALWAYS (to track deletions)
+	-- ============================================================
+	local playerFolder = workspace:WaitForChild("Bricks"):FindFirstChild(LocalPlayer.Name)
+	if playerFolder then
+		playerFolder.ChildAdded:Connect(function(child)
+			if child.Name == "Brick" and child:GetAttribute("IsSpamBlock") then
+				watchBlockDeletion(child)
+			end
+		end)
+	end
+	
+	-- ============================================================
+	-- INITIALIZE
+	-- ============================================================
+	ReduceLagTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	
+	-- Start watching for new blocks immediately (even when disabled)
+	startWatching()
+	
+	print("[ReduceLag] Script loaded - OFF by default")
 end;
 task.spawn(C_188);
 -- StarterGui.ScreenGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableScript
