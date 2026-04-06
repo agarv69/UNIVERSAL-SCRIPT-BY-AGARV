@@ -21645,7 +21645,7 @@ local script = G2L["1c3"];
 	--------------------------------------------------
 	
 	shared.IsRestoringBKit = false
-	shared.BKitDebounceTimer = nil
+	shared.AutoPaintDebounce = nil
 	
 	--------------------------------------------------
 	-- BRICK DEFAULTS
@@ -21759,8 +21759,8 @@ local script = G2L["1c3"];
 		if shared.IsRestoringBKit then return end
 		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
 	
-		shared.IsRestoringBKit = true
 		task.wait(0.5)
+		shared.IsRestoringBKit = true
 	
 		local ok = restoreBrick(repBrick)
 	
@@ -21784,13 +21784,13 @@ local script = G2L["1c3"];
 		if shared.IsRestoringBKit then return end
 		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
 	
-		if shared.BKitDebounceTimer then
-			task.cancel(shared.BKitDebounceTimer)
-			shared.BKitDebounceTimer = nil
+		if shared.AutoPaintDebounce then
+			task.cancel(shared.AutoPaintDebounce)
+			shared.AutoPaintDebounce = nil
 		end
 	
-		shared.BKitDebounceTimer = task.delay(1, function()
-			shared.BKitDebounceTimer = nil
+		shared.AutoPaintDebounce = task.delay(1, function()
+			shared.AutoPaintDebounce = nil
 			onChangeConfirmed()
 		end)
 	end
@@ -21810,9 +21810,9 @@ local script = G2L["1c3"];
 			pcall(function() c:Disconnect() end)
 		end
 		connections = {}
-		if shared.BKitDebounceTimer then
-			task.cancel(shared.BKitDebounceTimer)
-			shared.BKitDebounceTimer = nil
+		if shared.AutoPaintDebounce then
+			task.cancel(shared.AutoPaintDebounce)
+			shared.AutoPaintDebounce = nil
 		end
 	end
 	
@@ -24672,43 +24672,24 @@ local script = G2L["225"];
 	-- MONITOR
 	--------------------------------------------------
 	
-	local repBrick = ReplicatedStorage:WaitForChild("Brick")
-	local connections = {}
-	
 	local function onChangeConfirmed()
-		if shared.IsRestoringBKit then return end
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
 	
-		-- Check if AutoPaintRep is also on — if so don't send alert, it handles messaging
-		local autoPaintTickBox = script:FindFirstAncestorOfClass("ScreenGui") and
-			script:FindFirstAncestorOfClass("ScreenGui"):FindFirstChild("AutoPaintRepTickBox", true)
-		local autoPaintOn = autoPaintTickBox and autoPaintTickBox:GetAttribute("Enabled") == true
+		-- Block only during restore (prevents restore spam)
+		if shared.IsRestoringBKit then return end
 	
-		if autoPaintOn then return end
-	
-		-- Only RepPaints is on, send alert
 		sendChat("🚨A player exploited/painted bkit")
 	end
 	
 	local function onBrickChanged()
-		if shared.IsRestoringBKit then return end
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
 	
-		-- Check if AutoPaintRep is handling the debounce already
-		local autoPaintTickBox = script:FindFirstAncestorOfClass("ScreenGui") and
-			script:FindFirstAncestorOfClass("ScreenGui"):FindFirstChild("AutoPaintRepTickBox", true)
-		local autoPaintOn = autoPaintTickBox and autoPaintTickBox:GetAttribute("Enabled") == true
-	
-		-- If AutoPaintRep is on it handles the debounce timer, don't double up
-		if autoPaintOn then return end
-	
-		if shared.BKitDebounceTimer then
-			task.cancel(shared.BKitDebounceTimer)
-			shared.BKitDebounceTimer = nil
+		if shared.RepPaintsDebounce then
+			task.cancel(shared.RepPaintsDebounce)
 		end
 	
-		shared.BKitDebounceTimer = task.delay(1, function()
-			shared.BKitDebounceTimer = nil
+		shared.RepPaintsDebounce = task.delay(1, function()
+			shared.RepPaintsDebounce = nil
 			onChangeConfirmed()
 		end)
 	end
