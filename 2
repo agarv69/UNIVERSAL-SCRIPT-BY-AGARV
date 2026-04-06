@@ -19370,35 +19370,44 @@ local script = G2L["188"];
 		if not block or not block:IsA("BasePart") then return end
 		if not block:GetAttribute("IsSpamBlock") then return end
 	
-		-- Don't process if already processed
-		if trackedBlocks[block] then return end
+		-- Store original properties (don't skip if already tracked - force update)
+		if not trackedBlocks[block] then
+			trackedBlocks[block] = {
+				Material = block.Material,
+				CastShadow = block.CastShadow,
+				Sprays = {},
+				Light = nil
+			}
+		end
 	
-		-- Store original properties
-		trackedBlocks[block] = {
-			Material = block.Material,
-			CastShadow = block.CastShadow,
-			Sprays = {},
-			Light = nil
-		}
-	
-		-- Disable Material (Neon -> Air)
+		-- FORCE disable Material (Neon -> Air)
+		if block.Material == Enum.Material.Neon then
+			trackedBlocks[block].Material = Enum.Material.Neon
+		end
 		block.Material = Enum.Material.Air
 	
-		-- Disable CastShadow
+		-- FORCE disable CastShadow
 		block.CastShadow = false
 	
-		-- Disable all Spray effects
+		-- FORCE disable all Spray effects
 		for _, child in ipairs(block:GetChildren()) do
-			if child.Name == "Spray" and child:IsA("Texture") then
-				trackedBlocks[block].Sprays[child] = child.Enabled
-				child.Enabled = false
+			if child.Name == "Spray" then
+				-- Handle Texture, Decal, or SurfaceGui
+				if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceGui") then
+					if child.Enabled then
+						trackedBlocks[block].Sprays[child] = true
+					end
+					child.Enabled = false
+				end
 			end
 		end
 	
-		-- Disable Light
+		-- FORCE disable Light
 		local light = block:FindFirstChild("Light")
 		if light and light:IsA("Light") then
-			trackedBlocks[block].Light = light.Enabled
+			if light.Enabled then
+				trackedBlocks[block].Light = true
+			end
 			light.Enabled = false
 		end
 	end
@@ -19407,33 +19416,54 @@ local script = G2L["188"];
 	-- RESTORE EFFECTS ON A BLOCK
 	-- ============================================================
 	local function restoreEffects(block)
-		if not block or not trackedBlocks[block] then return end
+		if not block or not block:IsA("BasePart") then return end
+		if not block:GetAttribute("IsSpamBlock") then return end
 	
 		local original = trackedBlocks[block]
 	
-		-- Restore Material
-		block.Material = original.Material
-	
-		-- Restore CastShadow
-		block.CastShadow = original.CastShadow
-	
-		-- Restore Sprays
-		for spray, wasEnabled in pairs(original.Sprays) do
-			if spray and spray.Parent then
-				spray.Enabled = wasEnabled
+		-- FORCE restore Material (even if not tracked)
+		if block.Material == Enum.Material.Air then
+			if original and original.Material then
+				block.Material = original.Material
+			else
+				block.Material = Enum.Material.Neon -- Default to Neon if not tracked
 			end
 		end
 	
-		-- Restore Light
-		if original.Light ~= nil then
-			local light = block:FindFirstChild("Light")
-			if light and light:IsA("Light") then
+		-- FORCE restore CastShadow
+		if original and original.CastShadow ~= nil then
+			block.CastShadow = original.CastShadow
+		else
+			block.CastShadow = true -- Default to true
+		end
+	
+		-- FORCE restore Sprays
+		for _, child in ipairs(block:GetChildren()) do
+			if child.Name == "Spray" then
+				if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceGui") then
+					if original and original.Sprays[child] ~= nil then
+						child.Enabled = original.Sprays[child]
+					else
+						child.Enabled = true -- Default to enabled
+					end
+				end
+			end
+		end
+	
+		-- FORCE restore Light
+		local light = block:FindFirstChild("Light")
+		if light and light:IsA("Light") then
+			if original and original.Light ~= nil then
 				light.Enabled = original.Light
+			else
+				light.Enabled = true -- Default to enabled
 			end
 		end
 	
 		-- Remove from tracking
-		trackedBlocks[block] = nil
+		if original then
+			trackedBlocks[block] = nil
+		end
 	end
 	
 	-- ============================================================
@@ -19460,16 +19490,28 @@ local script = G2L["188"];
 	local blockAddedConnection
 	
 	local function startWatching()
-		if blockAddedConnection then return end
+		if blockAddedConnection then
+			blockAddedConnection:Disconnect()
+		end
 	
 		local playerFolder = workspace:WaitForChild("Bricks"):FindFirstChild(LocalPlayer.Name)
 		if not playerFolder then return end
 	
 		blockAddedConnection = playerFolder.ChildAdded:Connect(function(child)
-			if isEnabled and child.Name == "Brick" and child:GetAttribute("IsSpamBlock") then
-				-- Wait a bit for sprays/light to be added
-				task.wait(0.2)
-				disableEffects(child)
+			if child.Name == "Brick" then
+				-- Wait for IsSpamBlock attribute to be set
+				task.wait(0.1)
+	
+				if child:GetAttribute("IsSpamBlock") then
+					if isEnabled then
+						-- Wait a bit more for sprays/light to be added
+						task.wait(0.2)
+	
+						-- FORCE disable effects on new block
+						disableEffects(child)
+						print("[ReduceLag] Applied to new block:", child)
+					end
+				end
 			end
 		end)
 	end
@@ -19503,9 +19545,6 @@ local script = G2L["188"];
 		-- Process all existing blocks
 		processAllBlocks()
 	
-		-- Watch for new blocks
-		startWatching()
-	
 		print("[ReduceLag] Enabled - effects disabled on spam blocks")
 	end
 	
@@ -19515,9 +19554,6 @@ local script = G2L["188"];
 	
 		-- Restore all blocks
 		processAllBlocks()
-	
-		-- Stop watching
-		stopWatching()
 	
 		print("[ReduceLag] Disabled - effects restored on spam blocks")
 	end
@@ -19554,6 +19590,9 @@ local script = G2L["188"];
 	-- INITIALIZE
 	-- ============================================================
 	ReduceLagTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	
+	-- Start watching for new blocks immediately (even when disabled)
+	startWatching()
 	
 	print("[ReduceLag] Script loaded - OFF by default")
 end;
