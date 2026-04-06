@@ -21743,10 +21743,15 @@ local script = G2L["1c3"];
 		local RepGroup = AutoPaintRepRow.Parent
 		local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
 	
-		-- Block RepPaints from sending alerts
+		print("[AutoPaintRep] Starting restoration - blocking RepPaints")
+	
+		-- Block RepPaints IMMEDIATELY before making any changes
 		if RepPaintsRow then
 			RepPaintsRow:SetAttribute("BlockMonitoring", true)
 		end
+	
+		-- Small delay to ensure attribute is set
+		task.wait(0.1)
 	
 		task.spawn(function()
 			local success = pcall(function()
@@ -21770,6 +21775,8 @@ local script = G2L["1c3"];
 					Enum.NormalId.Front, Enum.NormalId.Right, Enum.NormalId.Back,
 					Enum.NormalId.Left, Enum.NormalId.Top, Enum.NormalId.Bottom
 				}
+	
+				print("[AutoPaintRep] Painting all sides")
 	
 				-- Paint all sides
 				for _, side in ipairs(sides) do
@@ -21820,6 +21827,8 @@ local script = G2L["1c3"];
 						end
 					end
 				end
+	
+				print("[AutoPaintRep] Restoration complete")
 			end)
 	
 			if success then
@@ -21827,20 +21836,25 @@ local script = G2L["1c3"];
 				local repPaintsEnabled = RepPaintsRow and RepPaintsRow:GetAttribute("RepPaintsEnabled") == true
 	
 				if repPaintsEnabled and shared.sendChat then
+					print("[AutoPaintRep] Sending restoration message")
 					shared.sendChat("✅Block has been restored back to normal")
 				end
+			else
+				warn("[AutoPaintRep] Restoration failed")
 			end
 	
 			-- Wait 0.5s before allowing RepPaints to monitor again
+			print("[AutoPaintRep] Waiting 0.5s before unblocking")
 			task.wait(0.5)
 	
 			if RepPaintsRow then
 				RepPaintsRow:SetAttribute("BlockMonitoring", false)
+				print("[AutoPaintRep] RepPaints unblocked")
 			end
 		end)
 	end
 	
-	-- Watch for change detection from RepPaints
+	-- Watch for change detection from RepPaints ONLY
 	local function watchForChanges()
 		local RepGroup = AutoPaintRepRow.Parent
 		local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
@@ -21852,6 +21866,7 @@ local script = G2L["1c3"];
 	
 		local lastChange = 0
 	
+		-- Watch for ChangeDetected attribute from RepPaints
 		RepPaintsRow:GetAttributeChangedSignal("ChangeDetected"):Connect(function()
 			if not isEnabled then return end
 	
@@ -21859,13 +21874,17 @@ local script = G2L["1c3"];
 			if changeTime and changeTime ~= lastChange then
 				lastChange = changeTime
 	
+				print("[AutoPaintRep] RepPaints detected change, waiting 0.5s before restoring")
+	
 				-- Wait 0.5s then restore
 				task.wait(0.5)
+	
+				print("[AutoPaintRep] Starting restoration")
 				restoreBrick()
 			end
 		end)
 	
-		print("[AutoPaintRep] Watching for changes")
+		print("[AutoPaintRep] Watching for RepPaints signals")
 	end
 	
 	task.spawn(watchForChanges)
@@ -24779,8 +24798,11 @@ local script = G2L["225"];
 	local function onChangeDetected()
 		-- If monitoring is blocked, don't do anything
 		if RepPaintsRow:GetAttribute("BlockMonitoring") == true then
+			print("[RepPaints] Change detected but monitoring is BLOCKED")
 			return
 		end
+	
+		print("[RepPaints] Change detected, starting 1s timer")
 	
 		-- Cancel previous timer
 		if changeTimer then
@@ -24791,9 +24813,12 @@ local script = G2L["225"];
 		changeTimer = task.delay(CHANGE_DELAY, function()
 			-- Check if still enabled and not blocked
 			if isEnabled and RepPaintsRow:GetAttribute("BlockMonitoring") ~= true then
+				print("[RepPaints] Sending alert")
 				if shared.sendChat then
 					shared.sendChat("🚨A player exploited/painted bkit")
 				end
+			else
+				print("[RepPaints] Timer finished but monitoring blocked or disabled")
 			end
 	
 			-- Notify AutoPaint that a change was confirmed
