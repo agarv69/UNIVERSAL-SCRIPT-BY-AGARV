@@ -21669,7 +21669,7 @@ local script = G2L["1c3"];
 	
 	local label = Instance.new("TextLabel", tooltipFrame)
 	label.BackgroundTransparency = 1
-	label.Text = "Automatically restores the rep brick back to default when someone changes it."
+	label.Text = "Automatically restores the rep brick back to default when someone changes it. Waits for changes to stop before restoring."
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.TextSize = 14
 	label.TextXAlignment = Enum.TextXAlignment.Left
@@ -21765,6 +21765,14 @@ local script = G2L["1c3"];
 	
 		isRestoring = true
 	
+		-- Tell RepPaints we're restoring AND cancel any pending alerts
+		local RepGroup = AutoPaintRepRow.Parent
+		local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
+		if RepPaintsRow then
+			RepPaintsRow:SetAttribute("IsAutoRestoring", true)
+			RepPaintsRow:SetAttribute("CancelPendingAlert", true)
+		end
+	
 		task.spawn(function()
 			local success, errorMsg = pcall(function()
 				local repBrick = ReplicatedStorage:FindFirstChild("Brick")
@@ -21854,25 +21862,33 @@ local script = G2L["1c3"];
 			end)
 	
 			if success then
-				-- Check if RepPaints is enabled before sending chat
+				-- Check if RepPaints is enabled
 				local RepGroup = AutoPaintRepRow.Parent
 				local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
-				local shouldAnnounce = false
+				local shouldAnnounce = RepPaintsRow and RepPaintsRow:GetAttribute("RepPaintsEnabled") == true
 	
-				if RepPaintsRow then
-					-- Check if RepPaints script has set this attribute
-					local repPaintsScript = RepPaintsRow:FindFirstChildOfClass("LocalScript")
-					if repPaintsScript then
-						-- Access the isEnabled variable through a shared variable
-						shouldAnnounce = RepPaintsRow:GetAttribute("RepPaintsEnabled") == true
-					end
-				end
-	
+				-- Send restoration message
 				if shouldAnnounce and shared.sendChat then
 					shared.sendChat("✅Block has been restored back to normal")
 				end
+	
+				-- Wait 0.5s then clear the restoration flag
+				task.wait(0.5)
+	
+				if RepPaintsRow then
+					RepPaintsRow:SetAttribute("IsAutoRestoring", false)
+					RepPaintsRow:SetAttribute("CancelPendingAlert", false)
+				end
 			else
 				warn("[AutoPaintRep] Error:", errorMsg)
+	
+				-- Clear flags even on error
+				local RepGroup = AutoPaintRepRow.Parent
+				local RepPaintsRow = RepGroup:FindFirstChild("RepPaintsRow")
+				if RepPaintsRow then
+					RepPaintsRow:SetAttribute("IsAutoRestoring", false)
+					RepPaintsRow:SetAttribute("CancelPendingAlert", false)
+				end
 			end
 	
 			isRestoring = false
@@ -24880,16 +24896,42 @@ local script = G2L["225"];
 	local function scheduleAnnounce()
 		if not isEnabled then return end
 	
-		pendingAnnounce = true
-	
-		-- Cancel previous debounce
-		if changeDebounce then
-			task.cancel(changeDebounce)
+		-- Don't announce if AutoPaint is restoring
+		if RepPaintsRow:GetAttribute("IsAutoRestoring") == true then 
+			return 
 		end
 	
-		-- Wait 0.3 seconds, if another change happens it will restart this
+		-- Cancel if told to
+		if RepPaintsRow:GetAttribute("CancelPendingAlert") == true then
+			pendingAnnounce = false
+			if changeDebounce then
+				task.cancel(changeDebounce)
+			end
+			return
+		end
+	
+		-- If already pending, just restart the timer (don't set pending again)
+		if pendingAnnounce then
+			-- Cancel previous debounce
+			if changeDebounce then
+				task.cancel(changeDebounce)
+			end
+	
+			-- Restart timer
+			changeDebounce = task.delay(CHANGE_COOLDOWN, function()
+				if pendingAnnounce and not RepPaintsRow:GetAttribute("CancelPendingAlert") then
+					announceChange()
+					pendingAnnounce = false
+				end
+			end)
+			return
+		end
+	
+		pendingAnnounce = true
+	
+		-- Start timer
 		changeDebounce = task.delay(CHANGE_COOLDOWN, function()
-			if pendingAnnounce then
+			if pendingAnnounce and not RepPaintsRow:GetAttribute("CancelPendingAlert") then
 				announceChange()
 				pendingAnnounce = false
 			end
