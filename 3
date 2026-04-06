@@ -21605,6 +21605,7 @@ local script = G2L["1c3"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local repBrick = ReplicatedStorage:WaitForChild("Brick")
 	
 	--------------------------------------------------
 	-- GUI REFERENCES
@@ -21643,19 +21644,15 @@ local script = G2L["1c3"];
 	shared.AutoPaintDebounce = nil
 	
 	--------------------------------------------------
-	-- BRICK DEFAULTS
+	-- CLEAN MATERIALS
 	--------------------------------------------------
-	local DEFAULT_COLOR    = Color3.fromRGB(192, 192, 192)
-	local DEFAULT_MATERIAL = "Plastic"
-	
-	local SIDES = {
-		Enum.NormalId.Front,
-		Enum.NormalId.Right,
-		Enum.NormalId.Back,
-		Enum.NormalId.Left,
-		Enum.NormalId.Top,
-		Enum.NormalId.Bottom,
+	local CLEAN_MATERIALS = {
+		["SmoothPlastic"] = true,
+		["CeramicTiles"] = true,
+		["Plastic"] = true,
 	}
+	
+	local lastMaterial = repBrick.Material
 	
 	--------------------------------------------------
 	-- HELPERS
@@ -21676,11 +21673,21 @@ local script = G2L["1c3"];
 		return s and s:FindFirstChild("Event")
 	end
 	
-	--------------------------------------------------
-	-- RESTORE
-	--------------------------------------------------
-	local repBrick = ReplicatedStorage:WaitForChild("Brick")
+	local SIDES = {
+		Enum.NormalId.Front,
+		Enum.NormalId.Right,
+		Enum.NormalId.Back,
+		Enum.NormalId.Left,
+		Enum.NormalId.Top,
+		Enum.NormalId.Bottom,
+	}
 	
+	local DEFAULT_COLOR    = Color3.fromRGB(192, 192, 192)
+	local DEFAULT_MATERIAL = "Plastic"
+	
+	--------------------------------------------------
+	-- RESTORE FUNCTION USING PAINT TOOL
+	--------------------------------------------------
 	local function restoreBrick(repBrick)
 		local character = LocalPlayer.Character
 		if not character then return false end
@@ -21700,6 +21707,7 @@ local script = G2L["1c3"];
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
 	
+		-- Repaint all sides
 		for _, side in ipairs(SIDES) do
 			pcall(function()
 				paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "", "")
@@ -21707,11 +21715,13 @@ local script = G2L["1c3"];
 			task.wait(0.05)
 		end
 	
+		-- Reset material
 		pcall(function()
 			paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", DEFAULT_COLOR, DEFAULT_MATERIAL, "")
 		end)
 		task.wait(0.1)
 	
+		-- Spray two times on all sides to clean
 		for _, side in ipairs(SIDES) do
 			for _ = 1, 2 do
 				pcall(function()
@@ -21721,6 +21731,7 @@ local script = G2L["1c3"];
 			end
 		end
 	
+		-- Anchor if unanchored
 		if not repBrick.Anchored then
 			pcall(function()
 				paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
@@ -21728,6 +21739,7 @@ local script = G2L["1c3"];
 			task.wait(0.1)
 		end
 	
+		-- Re-equip previous tool
 		if not wasPaintEquipped then
 			local hum = character:FindFirstChild("Humanoid")
 			if hum then
@@ -21743,47 +21755,55 @@ local script = G2L["1c3"];
 	end
 	
 	--------------------------------------------------
+	-- CHANGE COUNTING
+	--------------------------------------------------
+	local function isChangeCounted()
+		local mat = repBrick.Material
+		local color = repBrick.Color
+		local anchored = repBrick.Anchored
+		local hasChildren = #repBrick:GetChildren() > 0
+	
+		-- Only ignore material-change itself if Clean→Clean or Normal→Clean
+		local materialChangeIgnored = (CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name])
+			or (not CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name])
+	
+		lastMaterial = mat -- always update tracker
+	
+		-- Count change if ANY of these is true (OR logic)
+		if materialChangeIgnored then
+			-- ignore only material-change itself
+			return hasChildren or anchored == false or color ~= DEFAULT_COLOR or not CLEAN_MATERIALS[mat.Name]
+		else
+			return true
+		end
+	end
+	
+	--------------------------------------------------
+	-- BRICK CHANGE HANDLER
+	--------------------------------------------------
+	local function onBrickChanged()
+		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
+		if shared.IsRestoringBKit then return end
+	
+		if isChangeCounted() then
+			if shared.AutoPaintDebounce then
+				task.cancel(shared.AutoPaintDebounce)
+			end
+	
+			shared.AutoPaintDebounce = task.delay(1, function()
+				shared.AutoPaintDebounce = nil
+				shared.IsRestoringBKit = true
+				restoreBrick(repBrick)
+				sendChat("✅Block has been restored back to normal")
+				shared.IsRestoringBKit = false
+			end)
+		end
+	end
+	
+	--------------------------------------------------
 	-- MONITOR
 	--------------------------------------------------
 	local connections = {}
-	
-	local function onChangeConfirmed()
-		if shared.IsRestoringBKit then return end
-		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
-	
-		task.wait(0.5)
-		shared.IsRestoringBKit = true
-	
-		local ok = restoreBrick(repBrick)
-	
-		if ok then
-			local repPaintsTickBox = script:FindFirstAncestorOfClass("ScreenGui") and
-				script:FindFirstAncestorOfClass("ScreenGui"):FindFirstChild("RepPaintsTickBox", true)
-			local repPaintsOn = repPaintsTickBox and repPaintsTickBox:GetAttribute("Enabled") == true
-	
-			if repPaintsOn then
-				sendChat("✅Block has been restored back to normal")
-			end
-		end
-	
-		task.wait(0.5)
-		shared.IsRestoringBKit = false
-	end
-	
-	local function onBrickChanged()
-		if shared.IsRestoringBKit then return end
-		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
-	
-		if shared.AutoPaintDebounce then
-			task.cancel(shared.AutoPaintDebounce)
-			shared.AutoPaintDebounce = nil
-		end
-	
-		shared.AutoPaintDebounce = task.delay(1, function()
-			shared.AutoPaintDebounce = nil
-			onChangeConfirmed()
-		end)
-	end
 	
 	local function startWatching()
 		table.insert(connections, repBrick:GetPropertyChangedSignal("Color"):Connect(onBrickChanged))
@@ -21800,6 +21820,7 @@ local script = G2L["1c3"];
 			pcall(function() c:Disconnect() end)
 		end
 		connections = {}
+	
 		if shared.AutoPaintDebounce then
 			task.cancel(shared.AutoPaintDebounce)
 			shared.AutoPaintDebounce = nil
@@ -24642,6 +24663,59 @@ local script = G2L["225"];
 	
 	updateVisual()
 	
+	-- ============================================================
+	-- TOOLTIP
+	-- ============================================================
+	
+	local tooltipFrame = Instance.new("Frame")
+	tooltipFrame.Name = "RepPaintsTooltip"
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	tooltipFrame.BorderSizePixel = 0
+	tooltipFrame.ZIndex = 100
+	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
+	tooltipFrame.Visible = false
+	tooltipFrame.Parent = script.Parent.Parent:FindFirstAncestorWhichIsA("ScreenGui")
+	tooltipFrame.ClipsDescendants = true
+	tooltipFrame.Active = false
+	tooltipFrame.Selectable = false
+	
+	local tooltipStroke = Instance.new("UIStroke")
+	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
+	tooltipStroke.Thickness = 1
+	tooltipStroke.Parent = tooltipFrame
+	
+	local tooltipPadding = Instance.new("UIPadding")
+	tooltipPadding.PaddingTop = UDim.new(0, 6)
+	tooltipPadding.PaddingBottom = UDim.new(0, 6)
+	tooltipPadding.PaddingLeft = UDim.new(0, 6)
+	tooltipPadding.PaddingRight = UDim.new(0, 6)
+	tooltipPadding.Parent = tooltipFrame
+	
+	local tooltipText = Instance.new("TextLabel")
+	tooltipText.BackgroundTransparency = 1
+	tooltipText.Text = "Sends an alert in chat when someone exploits to paint the ReplicatedStorage.Brick."
+	tooltipText.TextColor3 = Color3.new(1, 1, 1)
+	tooltipText.TextSize = 14
+	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
+	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
+	tooltipText.Font = Enum.Font.GothamSemibold
+	tooltipText.TextWrapped = true
+	tooltipText.Size = UDim2.new(0, 200, 0, 0)
+	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipText.ZIndex = 101
+	tooltipText.Parent = tooltipFrame
+	
+	RepPaintsTickBox.MouseEnter:Connect(function()
+		local abs = RepPaintsTickBox.AbsolutePosition
+		local size = RepPaintsTickBox.AbsoluteSize
+		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+		tooltipFrame.Visible = true
+	end)
+	RepPaintsTickBox.MouseLeave:Connect(function()
+		tooltipFrame.Visible = false
+	end)
+	
 	--------------------------------------------------
 	-- SHARED STATE
 	--------------------------------------------------
@@ -24676,50 +24750,44 @@ local script = G2L["225"];
 		sendChat("🚨A player exploited/painted bkit")
 	end
 	
+	--------------------------------------------------
+	-- DETERMINE IF CHANGE COUNTS
+	--------------------------------------------------
 	local function isChangeCounted()
 		local mat = repBrick.Material
 		local color = repBrick.Color
 		local anchored = repBrick.Anchored
 		local hasChildren = #repBrick:GetChildren() > 0
 	
-		-- Only ignore changes if:
-		-- 1️⃣ Clean → Clean
-		-- 2️⃣ Normal → Clean
-		if (CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name]) or
-			(not CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name]) then
-			return false
-		end
+		-- ONLY ignore material change itself if Clean→Clean or Normal→Clean
+		local materialChangeIgnored = (CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name]) 
+			or (not CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name])
 	
-		-- Count as change if any of these:
-		if not CLEAN_MATERIALS[mat.Name] then return true
-		elseif anchored == false then return true
-		elseif color ~= Color3.fromRGB(192, 192, 192) then return true
-		elseif hasChildren then return true
-		end
+		lastMaterial = mat -- always update lastMaterial
 	
-		return false
+		-- COUNT a change if ANY of these is true (OR logic)
+		if materialChangeIgnored then
+			return hasChildren or anchored == false or color ~= Color3.fromRGB(192,192,192) or not CLEAN_MATERIALS[mat.Name]
+		else
+			return true
+		end
 	end
 	
 	local function onBrickChanged()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
 		if shared.IsRestoringBKit then return end
 	
-		local counted = isChangeCounted()
-		lastMaterial = repBrick.Material
+		if isChangeCounted() then
+			-- debounce alert
+			if shared.RepPaintsDebounce then
+				task.cancel(shared.RepPaintsDebounce)
+			end
 	
-		if not counted then
-			return -- do not trigger debounce if this change is ignored
+			shared.RepPaintsDebounce = task.delay(1, function()
+				shared.RepPaintsDebounce = nil
+				onChangeConfirmed()
+			end)
 		end
-	
-		-- debounce alert
-		if shared.RepPaintsDebounce then
-			task.cancel(shared.RepPaintsDebounce)
-		end
-	
-		shared.RepPaintsDebounce = task.delay(1, function()
-			shared.RepPaintsDebounce = nil
-			onChangeConfirmed()
-		end)
 	end
 	
 	--------------------------------------------------
