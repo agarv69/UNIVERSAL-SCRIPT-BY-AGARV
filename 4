@@ -21639,8 +21639,8 @@ local script = G2L["1c3"];
 	--------------------------------------------------
 	-- SHARED STATE
 	--------------------------------------------------
-	shared.IsRestoringBKit = shared.IsRestoringBKit or false
-	shared.AutoPaintDebounce = shared.AutoPaintDebounce or nil
+	shared.IsRestoringBKit = false
+	shared.AutoPaintDebounce = nil
 	
 	--------------------------------------------------
 	-- BRICK DEFAULTS
@@ -21757,10 +21757,11 @@ local script = G2L["1c3"];
 		local ok = restoreBrick(repBrick)
 	
 		if ok then
-			-- Only send restored message if RepPaints is on too
 			local repPaintsTickBox = script:FindFirstAncestorOfClass("ScreenGui") and
 				script:FindFirstAncestorOfClass("ScreenGui"):FindFirstChild("RepPaintsTickBox", true)
-			if repPaintsTickBox and repPaintsTickBox:GetAttribute("Enabled") then
+			local repPaintsOn = repPaintsTickBox and repPaintsTickBox:GetAttribute("Enabled") == true
+	
+			if repPaintsOn then
 				sendChat("✅Block has been restored back to normal")
 			end
 		end
@@ -21775,6 +21776,7 @@ local script = G2L["1c3"];
 	
 		if shared.AutoPaintDebounce then
 			task.cancel(shared.AutoPaintDebounce)
+			shared.AutoPaintDebounce = nil
 		end
 	
 		shared.AutoPaintDebounce = task.delay(1, function()
@@ -24609,6 +24611,8 @@ local function C_225()
 local script = G2L["225"];
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	
+	local lastMaterial = repBrick.Material
+	
 	--------------------------------------------------
 	-- GUI REFERENCES
 	--------------------------------------------------
@@ -24658,13 +24662,33 @@ local script = G2L["225"];
 	local repBrick = ReplicatedStorage:WaitForChild("Brick")
 	local connections = {}
 	
+	local IGNORED_MATERIALS = {
+		["SmoothPlastic"] = true,
+		["CeramicTiles"] = true,
+		["Plastic"] = true,
+	}
+	
 	local function onChangeConfirmed()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
+		if shared.IsRestoringBKit then return end
+	
+		local newMaterial = repBrick.Material
+	
+		-- Only alert if the new material is NOT whitelisted
+		if lastMaterial ~= newMaterial and IGNORED_MATERIALS[newMaterial.Name] then
+			lastMaterial = newMaterial -- update for next time
+			return -- skip alert
+		end
+	
+		lastMaterial = newMaterial -- update for next time
 		sendChat("🚨A player exploited/painted bkit")
 	end
 	
 	local function onBrickChanged()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
+	
+		-- 🚫 Ignore changes during restore
+		if shared.IsRestoringBKit then return end
 	
 		if shared.RepPaintsDebounce then
 			task.cancel(shared.RepPaintsDebounce)
