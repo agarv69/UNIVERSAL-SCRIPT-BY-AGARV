@@ -21645,7 +21645,7 @@ local script = G2L["1c3"];
 	--------------------------------------------------
 	
 	shared.IsRestoringBKit = false
-	shared.BKitDebounceTimer = nil
+	shared.AutoPaintDebounce = nil
 	
 	--------------------------------------------------
 	-- BRICK DEFAULTS
@@ -21784,13 +21784,13 @@ local script = G2L["1c3"];
 		if shared.IsRestoringBKit then return end
 		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
 	
-		if shared.BKitDebounceTimer then
-			task.cancel(shared.BKitDebounceTimer)
-			shared.BKitDebounceTimer = nil
+		if shared.AutoPaintDebounce then
+			task.cancel(shared.AutoPaintDebounce)
+			shared.AutoPaintDebounce = nil
 		end
 	
-		shared.BKitDebounceTimer = task.delay(1, function()
-			shared.BKitDebounceTimer = nil
+		shared.AutoPaintDebounce = task.delay(1, function()
+			shared.AutoPaintDebounce = nil
 			onChangeConfirmed()
 		end)
 	end
@@ -21810,9 +21810,9 @@ local script = G2L["1c3"];
 			pcall(function() c:Disconnect() end)
 		end
 		connections = {}
-		if shared.BKitDebounceTimer then
-			task.cancel(shared.BKitDebounceTimer)
-			shared.BKitDebounceTimer = nil
+		if shared.AutoPaintDebounce then
+			task.cancel(shared.AutoPaintDebounce)
+			shared.AutoPaintDebounce = nil
 		end
 	end
 	
@@ -24672,11 +24672,11 @@ local script = G2L["225"];
 	-- MONITOR
 	--------------------------------------------------
 	
+	local repBrick = ReplicatedStorage:WaitForChild("Brick")
+	local connections = {}
+	
 	local function onChangeConfirmed()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
-	
-		-- ONLY block if we are CURRENTLY restoring (prevents restore spam)
-		if shared.IsRestoringBKit then return end
 	
 		sendChat("🚨A player exploited/painted bkit")
 	end
@@ -24684,13 +24684,12 @@ local script = G2L["225"];
 	local function onBrickChanged()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
 	
-		if shared.BKitDebounceTimer then
-			task.cancel(shared.BKitDebounceTimer)
-			shared.BKitDebounceTimer = nil
+		if shared.RepPaintsDebounce then
+			task.cancel(shared.RepPaintsDebounce)
 		end
 	
-		shared.BKitDebounceTimer = task.delay(1, function()
-			shared.BKitDebounceTimer = nil
+		shared.RepPaintsDebounce = task.delay(1, function()
+			shared.RepPaintsDebounce = nil
 			onChangeConfirmed()
 		end)
 	end
