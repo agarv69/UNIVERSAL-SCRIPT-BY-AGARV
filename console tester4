@@ -1,94 +1,19 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local paintEvent = game.Players.LocalPlayer.Character.Paint.Script.Event
+local brick = game.ReplicatedStorage.Brick
 
-local BRICK_SOUND_ID = "rbxassetid://9117183621"
-local WINDOW = 0.3
+-- Spray all 6 sides with # symbols
+local sides = {
+    Enum.NormalId.Front,
+    Enum.NormalId.Right,
+    Enum.NormalId.Back,
+    Enum.NormalId.Left,
+    Enum.NormalId.Top,
+    Enum.NormalId.Bottom
+}
 
-local brickTemplate = ReplicatedStorage:WaitForChild("Brick")
-local recentDeleteSound = {}
-local lastBrickDisappear = 0
-
---------------------------------------------------
--- SOUND TRACKING (working method)
---------------------------------------------------
-
-local function hookHRP(player, hrp)
-	local function trackSound(obj)
-		if not obj:IsA("Sound") or obj.SoundId ~= BRICK_SOUND_ID then return end
-		local lastTime = 0
-		local wasPlaying = false
-		RunService.Heartbeat:Connect(function()
-			if not obj.Parent then return end
-			local t = obj.TimePosition
-			local playing = obj.IsPlaying
-			if playing then
-				if not wasPlaying or (lastTime > 0.05 and t < 0.05) then
-					recentDeleteSound[player.UserId] = tick()
-					print("[SOUND] " .. player.Name .. " played delete sound at " .. string.format("%.5f", recentDeleteSound[player.UserId]))
-				end
-			end
-			lastTime = t
-			wasPlaying = playing
-		end)
-	end
-	for _, obj in pairs(hrp:GetDescendants()) do
-		trackSound(obj)
-	end
-	hrp.DescendantAdded:Connect(trackSound)
+for _, side in ipairs(sides) do
+    paintEvent:FireServer(brick, side, brick.Position, "both 🤝", Color3.new(0.01, 0.01, 0.005), "spray", string.rep("#", 132))
+    task.wait(0.1)
 end
 
-local function watchPlayer(player)
-	local char = player.Character
-	if char then
-		local hrp = char:FindFirstChild("HumanoidRootPart")
-		if hrp then hookHRP(player, hrp) end
-	end
-	player.CharacterAdded:Connect(function(newChar)
-		local hrp = newChar:WaitForChild("HumanoidRootPart", 10)
-		if hrp then hookHRP(player, hrp) end
-	end)
-end
-
-for _, p in pairs(Players:GetPlayers()) do
-	watchPlayer(p)
-end
-Players.PlayerAdded:Connect(watchPlayer)
-
---------------------------------------------------
--- WATCH BRICK TEMPLATE
---------------------------------------------------
-
-brickTemplate.AncestryChanged:Connect(function()
-	if brickTemplate:IsDescendantOf(ReplicatedStorage) then return end
-	if tick() - lastBrickDisappear < 0.5 then return end
-	lastBrickDisappear = tick()
-
-	local disappearedAt = tick()
-	print(string.format("[BKIT] Brick disappeared at %.5f", disappearedAt))
-
-	task.wait(0.15)
-
-	local best = nil
-	local bestDiff = math.huge
-
-	for _, player in ipairs(Players:GetPlayers()) do
-		local soundTime = recentDeleteSound[player.UserId]
-		if soundTime then
-			local diff = math.abs(disappearedAt - soundTime)
-			print(string.format("[BKIT] %s diff: %.4fs", player.Name, diff))
-			if diff < WINDOW and diff < bestDiff then
-				best = player
-				bestDiff = diff
-			end
-		end
-	end
-
-	if best then
-		print(string.format("[BKIT EXPLOIT] %s (%s) broke BKit! (diff: %.4fs)", best.DisplayName, best.Name, bestDiff))
-	else
-		print("[BKIT] No candidate found")
-	end
-end)
-
-print("[BKIT EXPLOIT DETECTOR] Loaded")
+print("ReplicatedStorage.Brick sprayed!")
