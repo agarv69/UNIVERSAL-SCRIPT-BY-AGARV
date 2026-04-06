@@ -24610,6 +24610,8 @@ task.spawn(C_221);
 local function C_225()
 local script = G2L["225"];
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local repBrick = ReplicatedStorage:WaitForChild("Brick")
+	local lastMaterial = repBrick.Material
 	
 	--------------------------------------------------
 	-- GUI REFERENCES
@@ -24660,7 +24662,6 @@ local script = G2L["225"];
 	local repBrick = ReplicatedStorage:WaitForChild("Brick")
 	local connections = {}
 	
-	-- Whitelisted materials (won't trigger alert)
 	local IGNORED_MATERIALS = {
 		["SmoothPlastic"] = true,
 		["CeramicTiles"] = true,
@@ -24671,11 +24672,23 @@ local script = G2L["225"];
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
 		if shared.IsRestoringBKit then return end
 	
-		-- Ignore if the brick's material is whitelisted
-		if IGNORED_MATERIALS[repBrick.Material.Name] then
-			return -- skip alert
+		local newMaterial = repBrick.Material
+	
+		-- Skip alert if new material is whitelisted
+		if IGNORED_MATERIALS[newMaterial.Name] then
+			lastMaterial = newMaterial
+			return
 		end
 	
+		-- Skip alert if material hasn't really changed
+		if lastMaterial == newMaterial then
+			return
+		end
+	
+		-- Update lastMaterial for next check
+		lastMaterial = newMaterial
+	
+		-- Now fire alert
 		sendChat("🚨A player exploited/painted bkit")
 	end
 	
