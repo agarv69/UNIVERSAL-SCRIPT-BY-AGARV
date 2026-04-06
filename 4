@@ -21613,7 +21613,6 @@ local script = G2L["1c3"];
 	local MiscGroup = AutoPaintRepRow.Parent
 	local MiscAccentColor = MiscGroup:WaitForChild("MiscAccentColor")
 	local AutoPaintRepTickBox = AutoPaintRepRow:WaitForChild("AutoPaintRepTickBox")
-	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
 	
 	--------------------------------------------------
 	-- ENABLE STATE
@@ -21677,17 +21676,26 @@ local script = G2L["1c3"];
 		return s and s:FindFirstChild("Event")
 	end
 	
+	--------------------------------------------------
+	-- RESTORE
+	--------------------------------------------------
 	local repBrick = ReplicatedStorage:WaitForChild("Brick")
-	local connections = {}
 	
-	--------------------------------------------------
-	-- RESTORE FUNCTION
-	--------------------------------------------------
-	local function restoreBrick()
-		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return false end
+	local function restoreBrick(repBrick)
+		local character = LocalPlayer.Character
+		if not character then return false end
 	
-		shared.IsRestoringBKit = true
-		local ok = true
+		local previousTool = character:FindFirstChildOfClass("Tool")
+		local wasPaintEquipped = previousTool and previousTool.Name == "Paint"
+	
+		if not wasPaintEquipped then
+			local paintInBackpack = LocalPlayer.Backpack:FindFirstChild("Paint")
+			if not paintInBackpack then return false end
+			local hum = character:FindFirstChild("Humanoid")
+			if not hum then return false end
+			hum:EquipTool(paintInBackpack)
+			task.wait(0.1)
+		end
 	
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
@@ -21702,49 +21710,71 @@ local script = G2L["1c3"];
 		pcall(function()
 			paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", DEFAULT_COLOR, DEFAULT_MATERIAL, "")
 		end)
-	
 		task.wait(0.1)
-		shared.IsRestoringBKit = false
 	
-		return ok
+		for _, side in ipairs(SIDES) do
+			for _ = 1, 2 do
+				pcall(function()
+					paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "spray", "")
+				end)
+				task.wait(0.03)
+			end
+		end
+	
+		if not repBrick.Anchored then
+			pcall(function()
+				paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
+			end)
+			task.wait(0.1)
+		end
+	
+		if not wasPaintEquipped then
+			local hum = character:FindFirstChild("Humanoid")
+			if hum then
+				hum:UnequipTools()
+				task.wait(0.1)
+				if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+					hum:EquipTool(previousTool)
+				end
+			end
+		end
+	
+		return true
 	end
 	
 	--------------------------------------------------
 	-- MONITOR
 	--------------------------------------------------
+	local connections = {}
+	
 	local function onChangeConfirmed()
 		if shared.IsRestoringBKit then return end
+		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
 	
-		local ok = restoreBrick()
+		task.wait(0.5)
+		shared.IsRestoringBKit = true
+	
+		local ok = restoreBrick(repBrick)
 	
 		if ok then
-			local repPaintsTickBox = ScreenGui:FindFirstChild("RepPaintsTickBox", true)
+			-- Only send restored message if RepPaints is on too
+			local repPaintsTickBox = script:FindFirstAncestorOfClass("ScreenGui") and
+				script:FindFirstAncestorOfClass("ScreenGui"):FindFirstChild("RepPaintsTickBox", true)
 			if repPaintsTickBox and repPaintsTickBox:GetAttribute("Enabled") then
 				sendChat("✅Block has been restored back to normal")
 			end
 		end
+	
+		task.wait(0.5)
+		shared.IsRestoringBKit = false
 	end
 	
 	local function onBrickChanged()
 		if shared.IsRestoringBKit then return end
 		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
 	
-		-- Ignore these materials
-		local ignoredMaterials = {
-			Enum.Material.SmoothPlastic,
-			Enum.Material.CeramicTiles,
-			Enum.Material.Plastic,
-		}
-	
-		for _, mat in ipairs(ignoredMaterials) do
-			if repBrick.Material == mat then
-				return
-			end
-		end
-	
 		if shared.AutoPaintDebounce then
 			task.cancel(shared.AutoPaintDebounce)
-			shared.AutoPaintDebounce = nil
 		end
 	
 		shared.AutoPaintDebounce = task.delay(1, function()
@@ -24586,7 +24616,6 @@ local script = G2L["225"];
 	local AlertGroup = RepPaintsRow.Parent
 	local AlertAccentColor = AlertGroup:WaitForChild("AlertAccentColor")
 	local RepPaintsTickBox = RepPaintsRow:WaitForChild("RepPaintsTickBox")
-	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
 	
 	--------------------------------------------------
 	-- ENABLE STATE
@@ -24614,7 +24643,7 @@ local script = G2L["225"];
 	-- SHARED STATE
 	--------------------------------------------------
 	shared.IsRestoringBKit = shared.IsRestoringBKit or false
-	shared.RepPaintsDebounce = shared.RepPaintsDebounce or nil
+	shared.BKitDebounceTimer = shared.BKitDebounceTimer or nil
 	
 	--------------------------------------------------
 	-- HELPERS
@@ -24623,40 +24652,22 @@ local script = G2L["225"];
 		if shared.sendChat then shared.sendChat(msg) end
 	end
 	
+	--------------------------------------------------
+	-- MONITOR
+	--------------------------------------------------
 	local repBrick = ReplicatedStorage:WaitForChild("Brick")
 	local connections = {}
 	
 	local function onChangeConfirmed()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
-		if shared.IsRestoringBKit then return end
-	
 		sendChat("🚨A player exploited/painted bkit")
 	end
 	
-	--------------------------------------------------
-	-- MONITOR
-	--------------------------------------------------
 	local function onBrickChanged()
-		if shared.IsRestoringBKit then return end
-		if not RepPaintsTickBox then return end
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
-	
-		-- Ignore these materials
-		local ignoredMaterials = {
-			Enum.Material.SmoothPlastic,
-			Enum.Material.CeramicTiles,
-			Enum.Material.Plastic,
-		}
-	
-		for _, mat in ipairs(ignoredMaterials) do
-			if repBrick.Material == mat then
-				return
-			end
-		end
 	
 		if shared.RepPaintsDebounce then
 			task.cancel(shared.RepPaintsDebounce)
-			shared.RepPaintsDebounce = nil
 		end
 	
 		shared.RepPaintsDebounce = task.delay(1, function()
@@ -24680,10 +24691,6 @@ local script = G2L["225"];
 			pcall(function() c:Disconnect() end)
 		end
 		connections = {}
-		if shared.RepPaintsDebounce then
-			task.cancel(shared.RepPaintsDebounce)
-			shared.RepPaintsDebounce = nil
-		end
 	end
 	
 	startWatching()
