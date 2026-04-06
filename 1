@@ -21668,7 +21668,7 @@ local script = G2L["1c3"];
 	
 	local tooltipText = Instance.new("TextLabel")
 	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Automatically restores bkit when a player using exploits to paint the ReplicatedStorage.Brick."
+	tooltipText.Text = "Automatically restores bkit when a player using exploits to paint the ReplicatedStorage.Brick. You must have Paint tool."
 	tooltipText.TextColor3 = Color3.new(1, 1, 1)
 	tooltipText.TextSize = 14
 	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
@@ -21714,20 +21714,102 @@ local script = G2L["1c3"];
 		if shared.sendChat then shared.sendChat(msg) end
 	end
 	
-	local function restoreBrick()
-		-- Reset to normal state
-		repBrick.Color = Color3.fromRGB(192,192,192)
-		repBrick.Anchored = true
-		if not CLEAN_MATERIALS[repBrick.Material.Name] then
-			repBrick.Material = "Plastic"
-		end
-	
-		-- Remove any children
-		for _, child in ipairs(repBrick:GetChildren()) do
-			child:Destroy()
-		end
+	local function getPaintTool()
+		return LocalPlayer.Backpack:FindFirstChild("Paint")
+			or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
 	end
 	
+	local function getPaintEvent()
+		local tool = getPaintTool()
+		if not tool then return nil end
+		local s = tool:FindFirstChild("Script")
+		return s and s:FindFirstChild("Event")
+	end
+	
+	local SIDES = {
+		Enum.NormalId.Front,
+		Enum.NormalId.Right,
+		Enum.NormalId.Back,
+		Enum.NormalId.Left,
+		Enum.NormalId.Top,
+		Enum.NormalId.Bottom,
+	}
+	
+	local DEFAULT_COLOR    = Color3.fromRGB(192, 192, 192)
+	local DEFAULT_MATERIAL = "Plastic"
+	
+	--------------------------------------------------
+	-- RESTORE FUNCTION USING PAINT TOOL
+	--------------------------------------------------
+	local function restoreBrick(repBrick)
+		local character = LocalPlayer.Character
+		if not character then return false end
+	
+		local previousTool = character:FindFirstChildOfClass("Tool")
+		local wasPaintEquipped = previousTool and previousTool.Name == "Paint"
+	
+		if not wasPaintEquipped then
+			local paintInBackpack = LocalPlayer.Backpack:FindFirstChild("Paint")
+			if not paintInBackpack then return false end
+			local hum = character:FindFirstChild("Humanoid")
+			if not hum then return false end
+			hum:EquipTool(paintInBackpack)
+			task.wait(0.1)
+		end
+	
+		local paintEvent = getPaintEvent()
+		if not paintEvent then return false end
+	
+		-- Repaint all sides
+		for _, side in ipairs(SIDES) do
+			pcall(function()
+				paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "", "")
+			end)
+			task.wait(0.05)
+		end
+	
+		-- Reset material
+		pcall(function()
+			paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", DEFAULT_COLOR, DEFAULT_MATERIAL, "")
+		end)
+		task.wait(0.1)
+	
+		-- Spray two times on all sides to clean
+		for _, side in ipairs(SIDES) do
+			for _ = 1, 2 do
+				pcall(function()
+					paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "spray", "")
+				end)
+				task.wait(0.03)
+			end
+		end
+	
+		-- Anchor if unanchored
+		if not repBrick.Anchored then
+			pcall(function()
+				paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
+			end)
+			task.wait(0.1)
+		end
+	
+		-- Re-equip previous tool
+		if not wasPaintEquipped then
+			local hum = character:FindFirstChild("Humanoid")
+			if hum then
+				hum:UnequipTools()
+				task.wait(0.1)
+				if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+					hum:EquipTool(previousTool)
+				end
+			end
+		end
+	
+		return true
+	end
+	
+	--------------------------------------------------
+	-- CHANGE COUNTING
+	--------------------------------------------------
 	local function isChangeCounted()
 		local mat = repBrick.Material
 		local color = repBrick.Color
@@ -21735,25 +21817,28 @@ local script = G2L["1c3"];
 		local hasChildren = #repBrick:GetChildren() > 0
 	
 		-- Only ignore material-change itself if Clean→Clean or Normal→Clean
-		local materialChangeIgnored = (CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name]) 
+		local materialChangeIgnored = (CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name])
 			or (not CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name])
 	
 		lastMaterial = mat -- always update tracker
 	
 		-- Count change if ANY of these is true (OR logic)
 		if materialChangeIgnored then
-			return hasChildren or anchored == false or color ~= Color3.fromRGB(192,192,192) or not CLEAN_MATERIALS[mat.Name]
+			-- ignore only material-change itself
+			return hasChildren or anchored == false or color ~= DEFAULT_COLOR or not CLEAN_MATERIALS[mat.Name]
 		else
 			return true
 		end
 	end
 	
+	--------------------------------------------------
+	-- BRICK CHANGE HANDLER
+	--------------------------------------------------
 	local function onBrickChanged()
 		if not AutoPaintRepTickBox:GetAttribute("Enabled") then return end
 		if shared.IsRestoringBKit then return end
 	
 		if isChangeCounted() then
-			-- debounce restore
 			if shared.AutoPaintDebounce then
 				task.cancel(shared.AutoPaintDebounce)
 			end
@@ -21761,7 +21846,7 @@ local script = G2L["1c3"];
 			shared.AutoPaintDebounce = task.delay(1, function()
 				shared.AutoPaintDebounce = nil
 				shared.IsRestoringBKit = true
-				restoreBrick()
+				restoreBrick(repBrick)
 				sendChat("✅Block has been restored back to normal")
 				shared.IsRestoringBKit = false
 			end)
