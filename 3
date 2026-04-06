@@ -24611,7 +24611,6 @@ local function C_225()
 local script = G2L["225"];
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local repBrick = ReplicatedStorage:WaitForChild("Brick")
-	local lastMaterial = repBrick.Material
 	
 	--------------------------------------------------
 	-- GUI REFERENCES
@@ -24647,7 +24646,7 @@ local script = G2L["225"];
 	-- SHARED STATE
 	--------------------------------------------------
 	shared.IsRestoringBKit = shared.IsRestoringBKit or false
-	shared.BKitDebounceTimer = shared.BKitDebounceTimer or nil
+	shared.RepPaintsDebounce = shared.RepPaintsDebounce or nil
 	
 	--------------------------------------------------
 	-- HELPERS
@@ -24657,47 +24656,62 @@ local script = G2L["225"];
 	end
 	
 	--------------------------------------------------
-	-- MONITOR
+	-- CLEAN MATERIALS
 	--------------------------------------------------
-	local repBrick = ReplicatedStorage:WaitForChild("Brick")
-	local connections = {}
-	
-	local IGNORED_MATERIALS = {
+	local CLEAN_MATERIALS = {
 		["SmoothPlastic"] = true,
 		["CeramicTiles"] = true,
 		["Plastic"] = true,
 	}
 	
+	local lastMaterial = repBrick.Material
+	
+	--------------------------------------------------
+	-- ALERT HANDLER
+	--------------------------------------------------
 	local function onChangeConfirmed()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
 		if shared.IsRestoringBKit then return end
 	
-		local newMaterial = repBrick.Material
-	
-		-- Skip alert if new material is whitelisted
-		if IGNORED_MATERIALS[newMaterial.Name] then
-			lastMaterial = newMaterial
-			return
-		end
-	
-		-- Skip alert if material hasn't really changed
-		if lastMaterial == newMaterial then
-			return
-		end
-	
-		-- Update lastMaterial for next check
-		lastMaterial = newMaterial
-	
-		-- Now fire alert
 		sendChat("🚨A player exploited/painted bkit")
+	end
+	
+	local function isChangeCounted()
+		local mat = repBrick.Material
+		local color = repBrick.Color
+		local anchored = repBrick.Anchored
+		local hasChildren = #repBrick:GetChildren() > 0
+	
+		-- Only ignore changes if:
+		-- 1️⃣ Clean → Clean
+		-- 2️⃣ Normal → Clean
+		if (CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name]) or
+			(not CLEAN_MATERIALS[lastMaterial.Name] and CLEAN_MATERIALS[mat.Name]) then
+			return false
+		end
+	
+		-- Count as change if any of these:
+		if not CLEAN_MATERIALS[mat.Name] then return true
+		elseif anchored == false then return true
+		elseif color ~= Color3.fromRGB(192, 192, 192) then return true
+		elseif hasChildren then return true
+		end
+	
+		return false
 	end
 	
 	local function onBrickChanged()
 		if not RepPaintsTickBox:GetAttribute("Enabled") then return end
-	
-		-- 🚫 Ignore changes during restore
 		if shared.IsRestoringBKit then return end
 	
+		local counted = isChangeCounted()
+		lastMaterial = repBrick.Material
+	
+		if not counted then
+			return -- do not trigger debounce if this change is ignored
+		end
+	
+		-- debounce alert
 		if shared.RepPaintsDebounce then
 			task.cancel(shared.RepPaintsDebounce)
 		end
@@ -24707,6 +24721,11 @@ local script = G2L["225"];
 			onChangeConfirmed()
 		end)
 	end
+	
+	--------------------------------------------------
+	-- MONITOR
+	--------------------------------------------------
+	local connections = {}
 	
 	local function startWatching()
 		table.insert(connections, repBrick:GetPropertyChangedSignal("Color"):Connect(onBrickChanged))
@@ -24723,6 +24742,11 @@ local script = G2L["225"];
 			pcall(function() c:Disconnect() end)
 		end
 		connections = {}
+	
+		if shared.RepPaintsDebounce then
+			task.cancel(shared.RepPaintsDebounce)
+			shared.RepPaintsDebounce = nil
+		end
 	end
 	
 	startWatching()
