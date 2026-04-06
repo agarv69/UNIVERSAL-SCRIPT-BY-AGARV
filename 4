@@ -24610,8 +24610,14 @@ task.spawn(C_221);
 local function C_225()
 local script = G2L["225"];
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local repBrick = ReplicatedStorage:WaitForChild("Brick")
+	local IGNORED_MATERIALS = {
+		["SmoothPlastic"] = true,
+		["CeramicTiles"] = true,
+		["Plastic"] = true,
+	}
 	
-	local lastMaterial = repBrick.Material
+	local lastMaterial = repBrick.Material -- keep tracking the last material
 	
 	--------------------------------------------------
 	-- GUI REFERENCES
@@ -24674,13 +24680,19 @@ local script = G2L["225"];
 	
 		local newMaterial = repBrick.Material
 	
-		-- Only alert if the new material is NOT whitelisted
-		if lastMaterial ~= newMaterial and IGNORED_MATERIALS[newMaterial.Name] then
-			lastMaterial = newMaterial -- update for next time
-			return -- skip alert
+		-- Skip alert if the new material is whitelisted
+		if IGNORED_MATERIALS[newMaterial.Name] then
+			lastMaterial = newMaterial -- just update tracker
+			return
 		end
 	
-		lastMaterial = newMaterial -- update for next time
+		-- Skip if nothing actually changed
+		if lastMaterial == newMaterial then
+			return
+		end
+	
+		lastMaterial = newMaterial
+	
 		sendChat("🚨A player exploited/painted bkit")
 	end
 	
