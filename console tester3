@@ -3,87 +3,85 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local DELETE_SOUND_ID = "rbxassetid://9117183621"
+local WINDOW = 0.3  -- seconds either side of brick disappear to check
+
 local brickTemplate = ReplicatedStorage:WaitForChild("Brick")
+local recentDeleteSound = {}  -- userId -> tick() of last delete sound
 
-local pendingBrickDisappear = nil
+--------------------------------------------------
+-- TRACK SOUNDS FOR ALL PLAYERS
+--------------------------------------------------
 
--- Monitor brick template for ANY property change or removal
-local function watchBrick()
-    -- Watch for the brick being removed/nil parented
-    local connection1 = brickTemplate.AncestryChanged:Connect(function()
-        if not brickTemplate:IsDescendantOf(ReplicatedStorage) then
-            pendingBrickDisappear = tick()
-            print(string.format("[BRICK DISAPPEARED at %.5f] Watching for delete sounds...", pendingBrickDisappear))
-        end
-    end)
-    
-    local connection2 = brickTemplate:GetPropertyChangedSignal("Parent"):Connect(function()
-        if brickTemplate.Parent == nil or not brickTemplate:IsDescendantOf(ReplicatedStorage) then
-            pendingBrickDisappear = tick()
-            print(string.format("[BRICK DISAPPEARED at %.5f] Watching for delete sounds...", pendingBrickDisappear))
-        end
-    end)
+local function hookHRP(player, hrp)
+	local lastTime = {}
+
+	RunService.Heartbeat:Connect(function()
+		if not hrp.Parent then return end
+		for _, obj in pairs(hrp:GetDescendants()) do
+			if obj:IsA("Sound") and obj.SoundId == DELETE_SOUND_ID then
+				if obj.IsPlaying then
+					local t = obj.TimePosition
+					if not lastTime[obj] then lastTime[obj] = t end
+					if t < lastTime[obj] and t < 0.1 then
+						recentDeleteSound[player.UserId] = tick()
+					end
+					lastTime[obj] = t
+				else
+					lastTime[obj] = 0
+				end
+			end
+		end
+	end)
 end
 
-watchBrick()
+local function watchPlayer(player)
+	local function setup(char)
+		task.wait(0.5)
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if hrp then hookHRP(player, hrp) end
+	end
 
--- Track sound playing on each player
-local function monitorPlayer(player)
-    local function setupCharacter(character)
-        task.wait(0.5) -- Give character time to load
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        
-        local lastTimePosition = {}
-        
-        local heartbeat = RunService.Heartbeat:Connect(function()
-            -- Always check for sounds, even when not pending
-            for _, child in pairs(hrp:GetChildren()) do
-                if child:IsA("Sound") and child.SoundId == DELETE_SOUND_ID then
-                    if not lastTimePosition[child] then
-                        lastTimePosition[child] = child.TimePosition
-                    end
-                    
-                    if child.IsPlaying then
-                        -- Detect sound restart (TimePosition reset near 0)
-                        if child.TimePosition < lastTimePosition[child] and child.TimePosition < 0.1 then
-                            local soundTime = tick()
-                            print(string.format("[SOUND RESTART] %s delete sound restarted at %.5f", player.Name, soundTime))
-                            
-                            -- Check if we have a pending brick disappear
-                            if pendingBrickDisappear then
-                                local delay = soundTime - pendingBrickDisappear
-                                print(string.format("[DETECTED] %s played delete sound %.5f seconds after brick disappeared", 
-                                    player.Name, delay))
-                                pendingBrickDisappear = nil
-                            end
-                        end
-                        lastTimePosition[child] = child.TimePosition
-                    else
-                        lastTimePosition[child] = 0
-                    end
-                end
-            end
-        end)
-        
-        character.AncestryChanged:Connect(function()
-            if not character:IsDescendantOf(workspace) then
-                heartbeat:Disconnect()
-            end
-        end)
-    end
-    
-    player.CharacterAdded:Connect(setupCharacter)
-    if player.Character then
-        setupCharacter(player.Character)
-    end
+	player.CharacterAdded:Connect(setup)
+	if player.Character then setup(player.Character) end
 end
 
--- Monitor all current and future players
-for _, player in pairs(Players:GetPlayers()) do
-    monitorPlayer(player)
+for _, p in ipairs(Players:GetPlayers()) do
+	watchPlayer(p)
 end
+Players.PlayerAdded:Connect(watchPlayer)
 
-Players.PlayerAdded:Connect(monitorPlayer)
+--------------------------------------------------
+-- WATCH BRICK TEMPLATE
+--------------------------------------------------
 
-print("[BKIT EXPLOIT DETECTOR] Loaded - monitoring ReplicatedStorage.Brick and all player sounds")
+brickTemplate.AncestryChanged:Connect(function()
+	if brickTemplate:IsDescendantOf(ReplicatedStorage) then return end
+
+	local disappearedAt = tick()
+	print(string.format("[BKIT] Brick disappeared at %.5f — checking sounds...", disappearedAt))
+
+	-- Wait a tiny bit to let any late sounds register
+	task.wait(0.1)
+
+	local best = nil
+	local bestDiff = math.huge
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		local soundTime = recentDeleteSound[player.UserId]
+		if soundTime then
+			local diff = math.abs(disappearedAt - soundTime)
+			if diff < WINDOW and diff < bestDiff then
+				best = player
+				bestDiff = diff
+			end
+		end
+	end
+
+	if best then
+		print(string.format("[BKIT EXPLOIT] %s (%s) broke BKit! (sound diff: %.4fs)", best.DisplayName, best.Name, bestDiff))
+	else
+		print("[BKIT] No candidate found within window")
+	end
+end)
+
+print("[BKIT EXPLOIT DETECTOR] Loaded")
