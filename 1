@@ -20193,8 +20193,8 @@ local script = G2L["1a1"];
 	-- SETTINGS
 	--------------------------------------------------
 	
-	local SPAM_COUNT = 30
-	local SPAM_TIME  = 5
+	local SPAM_COUNT = 60
+	local SPAM_TIME  = 10
 	local COOLDOWN   = 30
 	
 	--------------------------------------------------
@@ -22709,8 +22709,11 @@ local script = G2L["1e1"];
 		local label = griefTypeLabels[griefType] or "GRIEFING"
 		ConfirmGriefFrame.Visible = true
 		GriefTargetLabel.Text = "POSSIBLE GRIEF: " .. player.DisplayName .. " | " .. label
-		spectatePlayer(player)
-	
+		task.delay(0.1, function()
+			if isShowing and currentTarget == player then
+				spectatePlayer(player)
+			end
+		end)
 		-- Boombox gets 10 second timer, grief gets 20
 		local timeLeft = currentIsBoombox and 10 or 20
 		ConfirmTimer.Text = "(" .. timeLeft .. ".0)"
@@ -23682,6 +23685,58 @@ local script = G2L["20e"];
 	BkitDeleteTickBox.MouseButton1Click:Connect(function()
 		isEnabled = not isEnabled
 		updateVisual()
+	end)
+	
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then return p end
+			p = p.Parent
+		end
+	end
+	
+	local tooltipFrame = Instance.new("Frame")
+	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	tooltipFrame.BorderSizePixel = 0
+	tooltipFrame.ZIndex = 100
+	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
+	tooltipFrame.Visible = false
+	tooltipFrame.Parent = getScreenGui()
+	local stroke = Instance.new("UIStroke", tooltipFrame)
+	stroke.Color = Color3.fromRGB(57, 57, 57)
+	local padding = Instance.new("UIPadding", tooltipFrame)
+	padding.PaddingTop = UDim.new(0, 6)
+	padding.PaddingBottom = UDim.new(0, 6)
+	padding.PaddingLeft = UDim.new(0, 6)
+	padding.PaddingRight = UDim.new(0, 6)
+	local label = Instance.new("TextLabel", tooltipFrame)
+	label.BackgroundTransparency = 1
+	label.Text = "Detects and announces when a player disables bkit using exploits."
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextSize = 14
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.TextYAlignment = Enum.TextYAlignment.Top
+	label.Font = Enum.Font.GothamSemibold
+	label.TextWrapped = true
+	label.Size = UDim2.new(0, 200, 0, 0)
+	label.AutomaticSize = Enum.AutomaticSize.Y
+	label.ZIndex = 101
+	
+	BkitDeleteTickBox.MouseEnter:Connect(function()
+		local abs = BkitDeleteTickBox.AbsolutePosition
+		local size = BkitDeleteTickBox.AbsoluteSize
+		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+		tooltipFrame.Visible = true
+	end)
+	BkitDeleteTickBox.MouseLeave:Connect(function()
+		tooltipFrame.Visible = false
+	end)
+	
+	script.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			tooltipFrame:Destroy()
+		end
 	end)
 	
 	--------------------------------------------------
