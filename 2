@@ -14431,9 +14431,26 @@ local script = G2L["ff"];
 					task.wait(0.05)
 				end
 	
-				-- Spray text on all sides
+				-- Get spray text
 				local sprayText = SprayRepRow and SprayRepRow:GetAttribute("SprayText")
 	
+				-- Always clear spray first (whether adding new text or removing it)
+				for i, side in ipairs(sides) do
+					-- Check if cancelled
+					if cancelPainting then
+						error("Cancelled")
+					end
+	
+					-- Retry clearing spray on each side
+					for retry = 1, 2 do
+						pcall(function()
+							paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", selectedColor, "spray", "")
+						end)
+						task.wait(0.03)
+					end
+				end
+	
+				-- Then apply new spray text if it exists
 				if sprayText and sprayText ~= "" then
 					-- Spray text on all 6 sides with white color
 					for i, side in ipairs(sides) do
@@ -14442,11 +14459,13 @@ local script = G2L["ff"];
 							error("Cancelled")
 						end
 	
-						pcall(function()
-							paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", Color3.new(1, 1, 1), "spray", sprayText)
-						end)
-	
-						task.wait(0.05)
+						-- Retry spraying on each side to ensure it shows
+						for retry = 1, 2 do
+							pcall(function()
+								paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", Color3.new(1, 1, 1), "spray", sprayText)
+							end)
+							task.wait(0.03)
+						end
 					end
 				end
 	
