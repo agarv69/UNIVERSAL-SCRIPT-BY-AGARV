@@ -21730,6 +21730,33 @@ local script = G2L["1c3"];
 		return shared.RepPaintsEnabled == true
 	end
 	
+	-- NEW: Force equip Paint tool if it gets unequipped during restoration
+	local function ensurePaintEquipped()
+		local character = LocalPlayer.Character
+		if not character then return false end
+	
+		-- Check if Paint is already equipped
+		if character:FindFirstChild("Paint") then
+			return true
+		end
+	
+		-- Paint is not equipped, force equip it
+		local paintInBackpack = LocalPlayer.Backpack:FindFirstChild("Paint")
+		if not paintInBackpack then
+			return false -- Paint tool doesn't exist
+		end
+	
+		local hum = character:FindFirstChild("Humanoid")
+		if not hum then return false end
+	
+		-- Force equip
+		hum:EquipTool(paintInBackpack)
+		task.wait(0.15)
+	
+		-- Verify it's equipped
+		return character:FindFirstChild("Paint") ~= nil
+	end
+	
 	local SIDES = {
 		Enum.NormalId.Front,
 		Enum.NormalId.Right,
@@ -21740,7 +21767,7 @@ local script = G2L["1c3"];
 	}
 	
 	local DEFAULT_COLOR    = Color3.fromRGB(192, 192, 192)
-	local DEFAULT_MATERIAL = "Plastic"
+	local DEFAULT_MATERIAL = "plastic"
 	
 	--------------------------------------------------
 	-- RESTORE FUNCTION USING PAINT TOOL
@@ -21764,32 +21791,82 @@ local script = G2L["1c3"];
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
 	
-		-- Repaint all sides
+		-- Step 1: Repaint all sides with default color
 		for _, side in ipairs(SIDES) do
+			-- Ensure Paint is still equipped
+			if not ensurePaintEquipped() then
+				return false
+			end
+	
 			pcall(function()
 				paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "", "")
 			end)
 			task.wait(0.05)
 		end
 	
-		-- Reset material
-		pcall(function()
-			paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", DEFAULT_COLOR, DEFAULT_MATERIAL, "")
-		end)
-		task.wait(0.1)
+		-- Step 2: Apply default material - KEEP TRYING UNTIL IT'S A CLEAN MATERIAL
+		local maxMaterialAttempts = 10
+		for attempt = 1, maxMaterialAttempts do
+			-- Ensure Paint is still equipped before each attempt
+			if not ensurePaintEquipped() then
+				return false
+			end
 	
-		-- Spray two times on all sides to clean
-		for _, side in ipairs(SIDES) do
-			for _ = 1, 2 do
+			-- Check if material is already clean
+			if CLEAN_MATERIALS[repBrick.Material.Name] then
+				break
+			end
+	
+			-- Apply plastic material
+			pcall(function()
+				paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", DEFAULT_COLOR, DEFAULT_MATERIAL, "")
+			end)
+			task.wait(0.15)
+		end
+	
+		-- Step 3: Clear ALL sprays - KEEP SPRAYING UNTIL NO CHILDREN REMAIN
+		local maxSprayAttempts = 20
+		for attempt = 1, maxSprayAttempts do
+			-- Ensure Paint is still equipped before each spray cycle
+			if not ensurePaintEquipped() then
+				return false
+			end
+	
+			-- Check if all sprays are gone
+			if #repBrick:GetChildren() == 0 then
+				break
+			end
+	
+			-- Spray all sides
+			for _, side in ipairs(SIDES) do
+				-- Check Paint tool is equipped before each side
+				if not ensurePaintEquipped() then
+					return false
+				end
+	
 				pcall(function()
 					paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "spray", "")
 				end)
 				task.wait(0.03)
 			end
+	
+			task.wait(0.05)
 		end
 	
-		-- Anchor if unanchored
+		-- Step 4: Anchor if unanchored
 		if not repBrick.Anchored then
+			-- Ensure Paint is equipped
+			if not ensurePaintEquipped() then
+				return false
+			end
+	
+			-- Clear spray on Top side first
+			pcall(function()
+				paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "both 🤝", DEFAULT_COLOR, "spray", "")
+			end)
+			task.wait(0.1)
+	
+			-- Anchor it
 			pcall(function()
 				paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
 			end)
