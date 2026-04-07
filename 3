@@ -21728,16 +21728,49 @@ local script = G2L["1c3"];
 	
 	-- NEW: Function to check if RepPaints is enabled
 	local function isRepPaintsEnabled()
-		local AlertGroup = script.Parent.Parent.Parent:FindFirstChild("AlertGroup")
-		if not AlertGroup then return false end
+		-- Go up to the ScreenGui (common ancestor of both pages)
+		local screenGui = script:FindFirstAncestorWhichIsA("ScreenGui")
+		if not screenGui then 
+			print("Could not find ScreenGui")
+			return false 
+		end
+	
+		-- Find TCOMiscPage
+		local TCOMiscPage = screenGui:FindFirstChild("TCOMiscPage")
+		if not TCOMiscPage then 
+			print("Could not find TCOMiscPage")
+			return false 
+		end
+	
+		-- Find TCOMiscRightSide
+		local TCOMiscRightSide = TCOMiscPage:FindFirstChild("TCOMiscRightSide")
+		if not TCOMiscRightSide then 
+			print("Could not find TCOMiscRightSide")
+			return false 
+		end
+	
+		-- Find AlertGroup
+		local AlertGroup = TCOMiscRightSide:FindFirstChild("AlertGroup")
+		if not AlertGroup then 
+			print("Could not find AlertGroup")
+			return false 
+		end
 	
 		local RepPaintsRow = AlertGroup:FindFirstChild("RepPaintsRow")
-		if not RepPaintsRow then return false end
+		if not RepPaintsRow then 
+			print("Could not find RepPaintsRow")
+			return false 
+		end
 	
 		local RepPaintsTickBox = RepPaintsRow:FindFirstChild("RepPaintsTickBox")
-		if not RepPaintsTickBox then return false end
+		if not RepPaintsTickBox then 
+			print("Could not find RepPaintsTickBox")
+			return false 
+		end
 	
-		return RepPaintsTickBox:GetAttribute("Enabled") == true
+		local isEnabled = RepPaintsTickBox:GetAttribute("Enabled") == true
+		print("Found RepPaintsTickBox! Enabled =", isEnabled)
+		return isEnabled
 	end
 	
 	local SIDES = {
@@ -24740,6 +24773,13 @@ local script = G2L["225"];
 	end)
 	
 	updateVisual()
+	
+	-- Share the enabled state globally
+	shared.RepPaintsEnabled = RepPaintsTickBox:GetAttribute("Enabled")
+	
+	RepPaintsTickBox:GetAttributeChangedSignal("Enabled"):Connect(function()
+		shared.RepPaintsEnabled = RepPaintsTickBox:GetAttribute("Enabled")
+	end)
 	
 	-- ============================================================
 	-- TOOLTIP
