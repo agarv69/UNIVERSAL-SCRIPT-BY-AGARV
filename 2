@@ -20743,7 +20743,7 @@ local script = G2L["1b0"];
 	--------------------------------------------------
 	
 	local SPAM_COUNT = 60
-	local SPAM_TIME  = 10
+	local SPAM_TIME  = 13
 	local COOLDOWN   = 30
 	
 	--------------------------------------------------
@@ -20931,8 +20931,18 @@ local script = G2L["1b4"];
 	local AURA_COUNT_THRESHOLD = 25
 	local AURA_MAG_THRESHOLD   = 40
 	
-	local BRICK_SOUND_ID = "rbxassetid://9117183621"
-	local PAINT_SOUND_ID = "rbxassetid://18473826"
+	local BRICK_SOUND_ID  = "rbxassetid://9117183621"
+	local PAINT_SOUND_ID  = "rbxassetid://18473826"
+	local DELETE_ANIM_ID  = "17755760862"
+	local SLASH_IMMUNITY  = 1  -- seconds after slash anim to ignore aura
+	
+	--------------------------------------------------
+	-- DECUBE DETECTION SETTINGS
+	--------------------------------------------------
+	
+	local DECUBE_COUNT  = 10
+	local DECUBE_WINDOW = 0.1
+	local DECUBE_IGNORE = 2
 	
 	--------------------------------------------------
 	-- GRIEF SETTINGS
@@ -20981,13 +20991,15 @@ local script = G2L["1b4"];
 	-- STATE
 	--------------------------------------------------
 	
-	local Enabled   = false
-	local isRunning = false
-	local connections       = {}
+	local Enabled         = false
+	local isRunning       = false
+	local connections     = {}
 	local recentDeleteSound = {}
 	local recentPaintSound  = {}
-	local auraCounters      = {}
-	local auraAlerted       = {}
+	local recentSlashAnim   = {}  -- userId -> tick() of last slash anim play
+	local auraCounters    = {}
+	local auraAlerted     = {}
+	local decubeTracker   = {}
 	
 	--------------------------------------------------
 	-- HELPERS
@@ -21008,6 +21020,38 @@ local script = G2L["1b4"];
 			end
 		end
 		return nil
+	end
+	
+	local function isDecubing(ownerName)
+		local data = decubeTracker[ownerName]
+		if not data then return false end
+		if data.ignoreUntil and tick() < data.ignoreUntil then return true end
+		return false
+	end
+	
+	local function trackRemoval(ownerName)
+		decubeTracker[ownerName] = decubeTracker[ownerName] or {times = {}, ignoreUntil = 0}
+		local data = decubeTracker[ownerName]
+		local now = tick()
+	
+		table.insert(data.times, now)
+		for i = #data.times, 1, -1 do
+			if now - data.times[i] > DECUBE_WINDOW then
+				table.remove(data.times, i)
+			end
+		end
+	
+		if #data.times >= DECUBE_COUNT then
+			data.ignoreUntil = tick() + DECUBE_IGNORE
+			data.times = {}
+			print("[ExploitsDetection] Decube detected for", ownerName, "- ignoring aura for", DECUBE_IGNORE, "seconds")
+		end
+	end
+	
+	local function playedSlashRecently(userId)
+		local t = recentSlashAnim[userId]
+		if not t then return false end
+		return tick() - t <= SLASH_IMMUNITY
 	end
 	
 	--------------------------------------------------
@@ -21044,6 +21088,12 @@ local script = G2L["1b4"];
 		local magNum = hrp and (hrp.Position - brickPos).Magnitude or 0
 	
 		if magNum <= AURA_MAG_THRESHOLD then return end
+	
+		-- Skip if player played slash anim within last 1 second
+		if playedSlashRecently(player.UserId) then
+			print("[EXPLOIT DEBUG]", player.Name, "| skipped - played slash anim recently")
+			return
+		end
 	
 		local now = tick()
 		local count = getAuraCount(player.UserId, actionType, now)
@@ -21123,6 +21173,40 @@ local script = G2L["1b4"];
 		table.insert(connections, c)
 	end
 	
+	--------------------------------------------------
+	-- SLASH ANIM TRACKING
+	--------------------------------------------------
+	
+	local function watchPlayerAnim(player)
+		local lastTime = 0
+		local wasPlaying = false
+		local c = RunService.Heartbeat:Connect(function()
+			local char = player.Character
+			if not char then return end
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if not humanoid then return end
+			local animator = humanoid:FindFirstChildOfClass("Animator")
+			if not animator then return end
+			local track = nil
+			for _, t in pairs(animator:GetPlayingAnimationTracks()) do
+				if t.Animation and t.Animation.AnimationId:find(DELETE_ANIM_ID) then
+					track = t
+					break
+				end
+			end
+			local playing = track ~= nil
+			local t = track and track.TimePosition or 0
+			if playing then
+				if not wasPlaying or (lastTime > 0.05 and t < 0.05) then
+					recentSlashAnim[player.UserId] = tick()
+				end
+			end
+			lastTime = t
+			wasPlaying = playing
+		end)
+		table.insert(connections, c)
+	end
+	
 	local function watchPlayer(player)
 		local c = player.CharacterAdded:Connect(function(char)
 			local hrp = char:WaitForChild("HumanoidRootPart", 10)
@@ -21133,6 +21217,7 @@ local script = G2L["1b4"];
 			local hrp = player.Character:FindFirstChild("HumanoidRootPart")
 			if hrp then hookHRP(player, hrp) end
 		end
+		watchPlayerAnim(player)
 	end
 	
 	--------------------------------------------------
@@ -21143,9 +21228,11 @@ local script = G2L["1b4"];
 		if not brick:FindFirstChild("Light") then
 			local c = brick.ChildAdded:Connect(function(child)
 				if child.Name ~= "Light" then return end
+				if isDecubing(ownerName) then return end
 				local paintedAt = tick()
 				local brickPos = brick.Position
 				task.delay(AURA_MAX_DELAY, function()
+					if isDecubing(ownerName) then return end
 					checkAuraExploit(recentPaintSound, brickPos, "toxify", paintedAt, ownerName)
 				end)
 			end)
@@ -21155,9 +21242,11 @@ local script = G2L["1b4"];
 		if not brick:FindFirstChild("Drag") then
 			local c = brick.ChildAdded:Connect(function(child)
 				if child.Name ~= "Drag" then return end
+				if isDecubing(ownerName) then return end
 				local unanchoredAt = tick()
 				local brickPos = brick.Position
 				task.delay(AURA_MAX_DELAY, function()
+					if isDecubing(ownerName) then return end
 					checkAuraExploit(recentPaintSound, brickPos, "unanchor", unanchoredAt, ownerName)
 				end)
 			end)
@@ -21170,18 +21259,17 @@ local script = G2L["1b4"];
 	
 		local c1 = folder.ChildRemoved:Connect(function(child)
 			if child.Name ~= "Brick" then return end
+	
+			trackRemoval(ownerName)
+	
+			if isDecubing(ownerName) then return end
+	
 			local removedAt = tick()
 			local brickPos = child.Position
 	
-			-- Snapshot all player positions NOW before the delay
-			local playerPositions = {}
-			for _, p in ipairs(Players:GetPlayers()) do
-				local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
-				if hrp then playerPositions[p.UserId] = hrp.Position end
-			end
-	
 			task.delay(AURA_MAX_DELAY, function()
-				checkAuraExploit(recentDeleteSound, brickPos, "delete", removedAt, ownerName, playerPositions)
+				if isDecubing(ownerName) then return end
+				checkAuraExploit(recentDeleteSound, brickPos, "delete", removedAt, ownerName)
 			end)
 		end)
 		table.insert(connections, c1)
@@ -21234,8 +21322,10 @@ local script = G2L["1b4"];
 		connections       = {}
 		recentDeleteSound = {}
 		recentPaintSound  = {}
+		recentSlashAnim   = {}
 		auraCounters      = {}
 		auraAlerted       = {}
+		decubeTracker     = {}
 	end
 	
 	--------------------------------------------------
@@ -23420,10 +23510,18 @@ local script = G2L["1f4"];
 	local cam = workspace.CurrentCamera
 	
 	local function spectatePlayer(player)
-		if player and player.Character then
-			local hum = player.Character:FindFirstChildOfClass("Humanoid")
-			if hum then cam.CameraSubject = hum end
-		end
+		task.spawn(function()
+			for i = 1, 10 do
+				if player and player.Character then
+					local hum = player.Character:FindFirstChildOfClass("Humanoid")
+					if hum then
+						cam.CameraSubject = hum
+						return
+					end
+				end
+				task.wait(0.1)
+			end
+		end)
 	end
 	
 	local function spectateBack()
@@ -23594,11 +23692,11 @@ local script = G2L["1f4"];
 	--------------------------------------------------
 	
 	local griefTypeLabels = {
-		["delete"]   = "DELETING BLOCKS",
-		["toxify"]   = "TOXIFYING BLOCKS",
-		["unanchor"] = "UNANCHORING BLOCKS",
-		["build"]    = "SPAM BUILDING",
-		["exploit"]  = "GRIEF AURA",
+		["delete"]   = "DELETE DETECTION",
+		["toxify"]   = "PAINT DETECTION",
+		["unanchor"] = "PAINT DETECTION",
+		["build"]    = "BUILD SPAM",
+		["exploit"]  = "EXPLOIT DETECTION",
 		["boombox"]  = "LOUD BOOMBOX",
 	}
 	
@@ -23616,7 +23714,6 @@ local script = G2L["1f4"];
 		["unanchor"] = "⚠️%s was spamming unanchor and got flung",
 		["build"]    = "⚠️%s was spamming blocks and got flung",
 		["exploit"]  = "⚠️%s was using grief aura and got flung",
-		-- boombox has no fling message intentionally
 	}
 	
 	--------------------------------------------------
@@ -23646,10 +23743,13 @@ local script = G2L["1f4"];
 		currentGriefType = nil
 		currentIsBoombox = false
 		ConfirmGriefFrame.Visible = false
-		setButtonsForBoombox(false) -- restore buttons
+		setButtonsForBoombox(false)
 		spectateBack()
 	
-		-- Stop SFX when confirm closes
+		-- Reset pause button text
+		PauseConfirm.Text = "PAUSE TIMER"
+	
+		-- Stop SFX
 		if shared.StopGriefSFX then shared.StopGriefSFX() end
 	
 		if timerConn then
@@ -23692,18 +23792,22 @@ local script = G2L["1f4"];
 		currentGriefType = griefType
 		currentIsBoombox = isBoombox or false
 	
-		-- Hide/show buttons based on type
+		-- Reset pause state cleanly
+		timerPaused = false
+		PauseConfirm.Text = "PAUSE TIMER"
+	
 		setButtonsForBoombox(currentIsBoombox)
 	
 		local label = griefTypeLabels[griefType] or "GRIEFING"
 		ConfirmGriefFrame.Visible = true
 		GriefTargetLabel.Text = "POSSIBLE GRIEF: " .. player.DisplayName .. " | " .. label
+	
 		task.delay(0.1, function()
 			if isShowing and currentTarget == player then
 				spectatePlayer(player)
 			end
 		end)
-		-- Boombox gets 10 second timer, grief gets 20
+	
 		local timeLeft = currentIsBoombox and 10 or 20
 		ConfirmTimer.Text = "(" .. timeLeft .. ".0)"
 	
@@ -23760,7 +23864,6 @@ local script = G2L["1f4"];
 	
 			hideConfirm(false)
 	
-			-- No fling message for boombox
 			if success and not isBoombox and shared.sendChat then
 				local template = flingMessages[griefType]
 				if template then
@@ -23786,7 +23889,7 @@ local script = G2L["1f4"];
 		if shared.sendChat then
 			shared.sendChat("❌False Alert")
 		end
-		hideConfirm(true)
+		hideConfirm(false)
 	end)
 	
 	CancelConfirm.MouseButton1Click:Connect(function()
@@ -23794,7 +23897,7 @@ local script = G2L["1f4"];
 			flingCancelled = true
 			task.wait(0.1)
 		end
-		hideConfirm(true)
+		hideConfirm(false)
 	end)
 	
 	PauseConfirm.MouseButton1Click:Connect(function()
@@ -23806,13 +23909,13 @@ local script = G2L["1f4"];
 	-- ENSURE EVENTS EXIST
 	--------------------------------------------------
 	
-	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
-	shared.DeleteGriefEvent = shared.DeleteGriefEvent or Instance.new("BindableEvent")
-	shared.ToxifyGriefEvent = shared.ToxifyGriefEvent or Instance.new("BindableEvent")
+	shared.GriefEvent         = shared.GriefEvent         or Instance.new("BindableEvent")
+	shared.DeleteGriefEvent   = shared.DeleteGriefEvent   or Instance.new("BindableEvent")
+	shared.ToxifyGriefEvent   = shared.ToxifyGriefEvent   or Instance.new("BindableEvent")
 	shared.UnanchorGriefEvent = shared.UnanchorGriefEvent or Instance.new("BindableEvent")
-	shared.BuildGriefEvent = shared.BuildGriefEvent or Instance.new("BindableEvent")
-	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
-	shared.BoomboxLoudEvent = shared.BoomboxLoudEvent or Instance.new("BindableEvent")
+	shared.BuildGriefEvent    = shared.BuildGriefEvent    or Instance.new("BindableEvent")
+	shared.ExploitGriefEvent  = shared.ExploitGriefEvent  or Instance.new("BindableEvent")
+	shared.BoomboxLoudEvent   = shared.BoomboxLoudEvent   or Instance.new("BindableEvent")
 	
 	--------------------------------------------------
 	-- LISTEN FOR GRIEF EVENT
@@ -23820,7 +23923,7 @@ local script = G2L["1f4"];
 	
 	shared.GriefEvent.Event:Connect(function(player, griefType)
 		if not ConfirmGriefTickBox:GetAttribute("Enabled") then return end
-		if not player then return end -- ignore boombox sfx fires with nil player
+		if not player then return end
 		showConfirm(player, griefType, false)
 	end)
 	
@@ -25915,9 +26018,17 @@ local script = G2L["246"];
 	local _PLACE_LABEL = _currentPlace and _currentPlace.label or "Other"
 	
 	-- Get block count display
-	local BlockAmountView = script.Parent.Parent:FindFirstChild("BlockAmountRow")
-	if BlockAmountView then
-		BlockAmountView = BlockAmountView:FindFirstChild("BlockAmountView")
+	-- Path: ScreenGui > Webhook > LagMachine (this script)
+	-- Need to find: ScreenGui > [MainFrame] > LagGroup > BlockAmountRow > BlockAmountView
+	local screenGui = script.Parent.Parent.Parent -- Go up to ScreenGui
+	local BlockAmountView = nil
+	
+	-- Search for BlockAmountView in the ScreenGui
+	for _, descendant in ipairs(screenGui:GetDescendants()) do
+		if descendant.Name == "BlockAmountView" then
+			BlockAmountView = descendant
+			break
+		end
 	end
 	
 	local function getBlockCount()
@@ -25945,7 +26056,7 @@ local script = G2L["246"];
 		local contentMessage = string.format("%s started a lag machine, <@%s>", _plr.DisplayName, _DISCORD_USER_ID)
 	
 		_send({
-			title       = string.format("Lag Machine Started  |  Display / %s", _plr.Name),
+			title       = string.format("Lag Machine Started  |  %s / %s", _plr.DisplayName, _plr.Name),
 			description = _joinLink(),
 			color       = _EMBED_COLOR_START,
 			footer      = { text = _executor() .. "  •  " .. _platform() },
@@ -25957,9 +26068,11 @@ local script = G2L["246"];
 	
 	-- Function to send lag machine ended notification
 	local function sendLagMachineEnded()
-		-- Check if owner is in game when it ends
-		if not _isOwnerInGame() then
-			return -- Don't send if no owner in game
+		-- Send if: executor is owner OR another owner is in game
+		local shouldSend = _isExecutorOwner() or _isOwnerInGame()
+	
+		if not shouldSend then
+			return -- Don't send if no owner involved
 		end
 	
 		local finalBlockCount = getBlockCount()
@@ -25974,7 +26087,8 @@ local script = G2L["246"];
 	
 		_send({
 			title       = string.format("Lag Machine Ended  |  Blocks: %d", finalBlockCount),
-			description = string.format("Display / %s\n%d/%d %s\n%s", 
+			description = string.format("%s / %s\n%d/%d %s\n%s", 
+				_plr.DisplayName,
 				_plr.Name,
 				_playerCount,
 				_maxPlayers,
