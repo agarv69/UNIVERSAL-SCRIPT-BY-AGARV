@@ -21726,18 +21726,8 @@ local script = G2L["1c3"];
 		return s and s:FindFirstChild("Event")
 	end
 	
-	-- NEW: Function to check if RepPaints is enabled
 	local function isRepPaintsEnabled()
-		local AlertGroup = script.Parent.Parent.Parent:FindFirstChild("AlertGroup")
-		if not AlertGroup then return false end
-	
-		local RepPaintsRow = AlertGroup:FindFirstChild("RepPaintsRow")
-		if not RepPaintsRow then return false end
-	
-		local RepPaintsTickBox = RepPaintsRow:FindFirstChild("RepPaintsTickBox")
-		if not RepPaintsTickBox then return false end
-	
-		return RepPaintsTickBox:GetAttribute("Enabled") == true
+		return shared.RepPaintsEnabled == true
 	end
 	
 	local SIDES = {
@@ -21864,24 +21854,13 @@ local script = G2L["1c3"];
 				-- Check if Paint tool exists before restoring
 				local hasPaintTool = getPaintTool() ~= nil
 	
-				print("Has Paint Tool:", hasPaintTool)
-	
 				if hasPaintTool then
 					restoreBrick(repBrick)
 	
-					local repPaintsEnabled = isRepPaintsEnabled()
-					print("RepPaints Enabled:", repPaintsEnabled)
-					print("About to check if should send message...")
-	
 					-- Only send message if RepPaints is also enabled
-					if repPaintsEnabled then
-						print("Sending message now!")
+					if isRepPaintsEnabled() then
 						sendChat("✅Block has been restored back to normal")
-					else
-						print("RepPaints is NOT enabled, skipping message")
 					end
-				else
-					print("No Paint tool found, skipping restore")
 				end
 	
 				shared.IsRestoringBKit = false
@@ -24751,6 +24730,13 @@ local script = G2L["225"];
 	end)
 	
 	updateVisual()
+	
+	-- Share the enabled state globally so AutoPaintRep can read it
+	shared.RepPaintsEnabled = RepPaintsTickBox:GetAttribute("Enabled")
+	
+	RepPaintsTickBox:GetAttributeChangedSignal("Enabled"):Connect(function()
+		shared.RepPaintsEnabled = RepPaintsTickBox:GetAttribute("Enabled")
+	end)
 	
 	-- ============================================================
 	-- TOOLTIP
