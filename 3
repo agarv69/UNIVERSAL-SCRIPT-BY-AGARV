@@ -21726,51 +21726,8 @@ local script = G2L["1c3"];
 		return s and s:FindFirstChild("Event")
 	end
 	
-	-- NEW: Function to check if RepPaints is enabled
 	local function isRepPaintsEnabled()
-		-- Go up to the ScreenGui (common ancestor of both pages)
-		local screenGui = script:FindFirstAncestorWhichIsA("ScreenGui")
-		if not screenGui then 
-			print("Could not find ScreenGui")
-			return false 
-		end
-	
-		-- Find TCOMiscPage
-		local TCOMiscPage = screenGui:FindFirstChild("TCOMiscPage")
-		if not TCOMiscPage then 
-			print("Could not find TCOMiscPage")
-			return false 
-		end
-	
-		-- Find TCOMiscRightSide
-		local TCOMiscRightSide = TCOMiscPage:FindFirstChild("TCOMiscRightSide")
-		if not TCOMiscRightSide then 
-			print("Could not find TCOMiscRightSide")
-			return false 
-		end
-	
-		-- Find AlertGroup
-		local AlertGroup = TCOMiscRightSide:FindFirstChild("AlertGroup")
-		if not AlertGroup then 
-			print("Could not find AlertGroup")
-			return false 
-		end
-	
-		local RepPaintsRow = AlertGroup:FindFirstChild("RepPaintsRow")
-		if not RepPaintsRow then 
-			print("Could not find RepPaintsRow")
-			return false 
-		end
-	
-		local RepPaintsTickBox = RepPaintsRow:FindFirstChild("RepPaintsTickBox")
-		if not RepPaintsTickBox then 
-			print("Could not find RepPaintsTickBox")
-			return false 
-		end
-	
-		local isEnabled = RepPaintsTickBox:GetAttribute("Enabled") == true
-		print("Found RepPaintsTickBox! Enabled =", isEnabled)
-		return isEnabled
+		return shared.RepPaintsEnabled == true
 	end
 	
 	local SIDES = {
@@ -21783,7 +21740,7 @@ local script = G2L["1c3"];
 	}
 	
 	local DEFAULT_COLOR    = Color3.fromRGB(192, 192, 192)
-	local DEFAULT_MATERIAL = "Plastic"
+	local DEFAULT_MATERIAL = "plastic"
 	
 	--------------------------------------------------
 	-- RESTORE FUNCTION USING PAINT TOOL
@@ -21807,7 +21764,7 @@ local script = G2L["1c3"];
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
 	
-		-- Repaint all sides
+		-- Step 1: Repaint all sides with default color
 		for _, side in ipairs(SIDES) do
 			pcall(function()
 				paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "", "")
@@ -21815,24 +21772,49 @@ local script = G2L["1c3"];
 			task.wait(0.05)
 		end
 	
-		-- Reset material
-		pcall(function()
-			paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", DEFAULT_COLOR, DEFAULT_MATERIAL, "")
-		end)
-		task.wait(0.1)
+		-- Step 2: Apply default material - KEEP TRYING UNTIL IT'S A CLEAN MATERIAL
+		local maxMaterialAttempts = 10
+		for attempt = 1, maxMaterialAttempts do
+			-- Check if material is already clean
+			if CLEAN_MATERIALS[repBrick.Material.Name] then
+				break
+			end
 	
-		-- Spray two times on all sides to clean
-		for _, side in ipairs(SIDES) do
-			for _ = 1, 2 do
+			-- Apply plastic material
+			pcall(function()
+				paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", DEFAULT_COLOR, DEFAULT_MATERIAL, "")
+			end)
+			task.wait(0.15)
+		end
+	
+		-- Step 3: Clear ALL sprays - KEEP SPRAYING UNTIL NO CHILDREN REMAIN
+		local maxSprayAttempts = 20
+		for attempt = 1, maxSprayAttempts do
+			-- Check if all sprays are gone
+			if #repBrick:GetChildren() == 0 then
+				break
+			end
+	
+			-- Spray all sides
+			for _, side in ipairs(SIDES) do
 				pcall(function()
 					paintEvent:FireServer(repBrick, side, repBrick.Position, "both 🤝", DEFAULT_COLOR, "spray", "")
 				end)
 				task.wait(0.03)
 			end
+	
+			task.wait(0.05)
 		end
 	
-		-- Anchor if unanchored
+		-- Step 4: Anchor if unanchored
 		if not repBrick.Anchored then
+			-- Clear spray on Top side first
+			pcall(function()
+				paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "both 🤝", DEFAULT_COLOR, "spray", "")
+			end)
+			task.wait(0.1)
+	
+			-- Anchor it
 			pcall(function()
 				paintEvent:FireServer(repBrick, Enum.NormalId.Top, repBrick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
 			end)
@@ -24774,7 +24756,7 @@ local script = G2L["225"];
 	
 	updateVisual()
 	
-	-- Share the enabled state globally
+	-- Share the enabled state globally so AutoPaintRep can read it
 	shared.RepPaintsEnabled = RepPaintsTickBox:GetAttribute("Enabled")
 	
 	RepPaintsTickBox:GetAttributeChangedSignal("Enabled"):Connect(function()
