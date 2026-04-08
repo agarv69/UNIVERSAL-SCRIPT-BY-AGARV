@@ -24531,12 +24531,10 @@ local function C_20c()
 local script = G2L["20c"];
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
-	
 	local LocalPlayer = Players.LocalPlayer
 	
 	local DecimalFixerRow = script.Parent
 	local DecimalFixerTickBox = DecimalFixerRow.DecimalFixerTickBox
-	
 	local MiscGroup = DecimalFixerRow.Parent
 	
 	local function getAccentColor()
@@ -24552,10 +24550,7 @@ local script = G2L["20c"];
 		end
 	end
 	
-	-- ============================================================
-	-- TOOLTIP
-	-- ============================================================
-	
+	-- Tooltip
 	local tooltipFrame = Instance.new("Frame")
 	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16,16,16)
 	tooltipFrame.BorderSizePixel = 0
@@ -24576,7 +24571,7 @@ local script = G2L["20c"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Automatically fixes your time to not be in decimals"
+	tooltipLabel.Text = "Fixes decimals into donate values"
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -24593,94 +24588,89 @@ local script = G2L["20c"];
 		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
 		tooltipFrame.Visible = true
 	end)
+	
 	DecimalFixerTickBox.MouseLeave:Connect(function()
 		tooltipFrame.Visible = false
 	end)
 	
-	-- ============================================================
-	-- HELPERS
-	-- ============================================================
-	
+	-- Chat
 	local function sendChat(message)
 		if shared.sendChat then
 			shared.sendChat(message)
 		end
 	end
 	
-	-- ============================================================
-	-- STATE
-	-- ============================================================
-	
+	-- State
 	local isEnabled = false
-	local loopConn
-	local lastFixedValue = nil
-	local isFixing = false
+	local loopRunning = false
+	
+	local function processDecimal(textLabel)
+		local text = textLabel.Text
+		local number = tonumber(text)
+		if not number then return end
+	
+		-- must contain decimal
+		if not text:find("%.") then return end
+	
+		local integerPart = math.floor(number)
+		if number == integerPart then return end
+	
+		-- WAIT 1 SECOND then recheck
+		task.wait(1)
+	
+		-- recheck after delay
+		local newText = textLabel.Text
+		local newNumber = tonumber(newText)
+		if not newNumber then return end
+	
+		if not newText:find("%.") then return end
+	
+		local newInteger = math.floor(newNumber)
+		if newNumber == newInteger then return end
+	
+		-- get decimal length
+		local decimalPart = newText:match("%.(.+)")
+		local decimalLength = #decimalPart
+	
+		-- amount needed to reach next whole number
+		local needed = (newInteger + 1) - newNumber
+	
+		local formatted = string.format("%." .. decimalLength .. "f", needed)
+		formatted = formatted:gsub("0+$", ""):gsub("%.$", "")
+	
+		local finalNumber = "1" .. formatted:sub(2)
+	
+		local message = ";donate random " .. finalNumber
+	
+		-- DEBUG + ACTUAL SEND
+		sendChat("[DecimalFixer DEBUG] " .. message)
+		sendChat(message)
+	end
 	
 	local function enable()
 		isEnabled = true
 		DecimalFixerTickBox.BackgroundColor3 = getAccentColor()
-		lastFixedValue = nil
-		isFixing = false
 	
-		loopConn = RunService.RenderStepped:Connect(function()
-			if isFixing then return end
+		local player = Players.LocalPlayer
+		local tiempo = workspace:WaitForChild(player.Name):WaitForChild("Tiempo")
+		local textLabel = tiempo:WaitForChild("Text1")
 	
-			local playerFolder = workspace:FindFirstChild(LocalPlayer.Name)
-			if not playerFolder then return end
+		if loopRunning then return end
+		loopRunning = true
 	
-			local tiempo = playerFolder:FindFirstChild("Tiempo")
-			if not tiempo then return end
-	
-			local text1 = tiempo:FindFirstChild("Text1")
-			if not text1 then return end
-	
-			local currentText = text1.Text
-			local currentValue = tonumber(currentText)
-	
-			if not currentValue then return end
-	
-			-- Check if there's a decimal
-			if currentValue % 1 ~= 0 then
-				-- Only fix if it's a different value than last time
-				if lastFixedValue ~= currentValue then
-					isFixing = true
-					lastFixedValue = currentValue
-	
-					-- Calculate how much is needed to round up to next whole number
-					local nextWhole = math.ceil(currentValue)
-					local decimalNeeded = nextWhole - currentValue
-	
-					-- Add 1 to the decimal
-					local finalAmount = decimalNeeded + 1
-	
-					-- Send the chat command with FULL precision
-					sendChat(";donate random " .. tostring(finalAmount))
-	
-					print("[DECIMALFIXER] Detected decimal: " .. currentText .. " | Need: " .. tostring(decimalNeeded) .. " | Sending: ;donate random " .. tostring(finalAmount))
-	
-					-- Wait before allowing another fix
-					task.delay(2, function()
-						isFixing = false
-					end)
-				end
-			else
-				-- If it's a whole number, reset the lastFixedValue
-				lastFixedValue = nil
+		task.spawn(function()
+			while isEnabled do
+				processDecimal(textLabel)
+				task.wait(0.1) -- small delay to prevent spam stacking
 			end
+			loopRunning = false
 		end)
 	end
 	
 	local function disable()
 		isEnabled = false
 		DecimalFixerTickBox.BackgroundColor3 = Color3.new(0,0,0)
-		if loopConn then
-			loopConn:Disconnect()
-		end
 	end
-	
-	-- ============================================================
-	-- TOGGLE
-	-- ============================================================
 	
 	DecimalFixerTickBox.MouseButton1Click:Connect(function()
 		if isEnabled then
