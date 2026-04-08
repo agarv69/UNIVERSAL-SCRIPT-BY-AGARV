@@ -24613,10 +24613,12 @@ local script = G2L["20c"];
 	
 	local isEnabled = false
 	local loopConn
+	local hasDecimal = false
 	
 	local function enable()
 		isEnabled = true
 		DecimalFixerTickBox.BackgroundColor3 = getAccentColor()
+		hasDecimal = false
 	
 		loopConn = RunService.RenderStepped:Connect(function()
 			local playerFolder = workspace:FindFirstChild(LocalPlayer.Name)
@@ -24635,17 +24637,28 @@ local script = G2L["20c"];
 	
 			-- Check if there's a decimal
 			if currentValue % 1 ~= 0 then
-				-- Calculate how much is needed to round up to next whole number
-				local nextWhole = math.ceil(currentValue)
-				local decimalNeeded = nextWhole - currentValue
+				-- Only fix if we haven't already sent a command for this decimal period
+				if not hasDecimal then
+					hasDecimal = true
 	
-				-- Add 1 to the decimal
-				local finalAmount = decimalNeeded + 1
+					-- Calculate how much is needed to round up to next whole number
+					local nextWhole = math.ceil(currentValue)
+					local decimalNeeded = nextWhole - currentValue
 	
-				-- Send the chat command with FULL precision
-				sendChat(";donate random " .. tostring(finalAmount))
+					-- Add 1 to the decimal
+					local finalAmount = decimalNeeded + 1
 	
-				print("[DECIMALFIXER] Detected decimal: " .. currentText .. " | Need: " .. tostring(decimalNeeded) .. " | Sending: ;donate random " .. tostring(finalAmount))
+					-- Round to 6 decimal places to avoid floating point errors
+					finalAmount = math.floor(finalAmount * 1000000 + 0.5) / 1000000
+	
+					-- Send the chat command with FULL precision
+					sendChat(";donate random " .. tostring(finalAmount))
+	
+					print("[DECIMALFIXER] Detected decimal: " .. currentText .. " | Need: " .. tostring(decimalNeeded) .. " | Sending: ;donate random " .. tostring(finalAmount))
+				end
+			else
+				-- If it's a whole number, reset so we can fix again next time
+				hasDecimal = false
 			end
 		end)
 	end
