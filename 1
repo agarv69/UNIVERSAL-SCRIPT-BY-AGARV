@@ -6649,8 +6649,8 @@ local script = G2L["4"];
 	-- CENTER MAIN FRAME
 	--------------------------------------------------
 	
-	MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-	MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	MainFrame.AnchorPoint = Vector2.new(0.5, 0)
+	MainFrame.Position = UDim2.new(0.5, 0, 0.5, -150)
 	
 	--------------------------------------------------
 	-- POSITION KEYBIND FRAME TOP RIGHT
@@ -25547,11 +25547,11 @@ local script = G2L["230"];
 				local isAdmin = chosenTeam and LocalPlayer.Team == chosenTeam
 	
 				if isAdmin then
-					text = text .. "  |  Admin"
+					text = text .. " | Admin"
 				elseif hasArken then
-					text = text .. "  |  Enlightened"
+					text = text .. " | Enlightened"
 				else
-					text = text .. "  |  Neutral"
+					text = text .. " | Neutral"
 				end
 			end
 		end
