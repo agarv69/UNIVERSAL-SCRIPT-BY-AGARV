@@ -12980,6 +12980,7 @@ local script = G2L["de"];
 	local DonateSpyTickBox = nil
 	local MutedSpyTickBox = nil
 	local MiscAccentColor = nil
+	local EnliChatBlueTickBox = nil
 	
 	for _, desc in pairs(ScreenGui:GetDescendants()) do
 		if desc.Name == "ArkSpyRow" then
@@ -12995,6 +12996,9 @@ local script = G2L["de"];
 			if not MiscAccentColor then
 				MiscAccentColor = desc.Parent:FindFirstChild("AlertAccentColor")
 			end
+		end
+		if desc.Name == "EnliChatBlueTickBox" then
+			EnliChatBlueTickBox = desc
 		end
 	end
 	
@@ -13117,10 +13121,21 @@ local script = G2L["de"];
 		return player:HasTag("Muted")
 	end
 	
+	local function hasEnlighten(player)
+		local backpack = player:FindFirstChild("Backpack")
+		local char = workspace:FindFirstChild(player.Name)
+		return (backpack and backpack:FindFirstChild("The Arkenstone") ~= nil)
+			or (char and char:FindFirstChild("The Arkenstone") ~= nil)
+	end
+	
+	local function enliBlueOn()
+		if not EnliChatBlueTickBox then return false end
+		return EnliChatBlueTickBox.BackgroundColor3 ~= Color3.new(0, 0, 0)
+	end
+	
 	-- ============================================================
 	-- BOTREPLY HELPERS
 	-- ============================================================
-	
 	local function botReplyTickOn(tickbox)
 		if not tickbox then return false end
 		return tickbox.BackgroundColor3 ~= Color3.new(0,0,0)
@@ -13193,7 +13208,6 @@ local script = G2L["de"];
 	-- ============================================================
 	-- BOT MIN TIME CHECK
 	-- ============================================================
-	
 	local function getPlayerTime(player)
 		local ls = player:FindFirstChild("leaderstats")
 		if not ls then return nil end
@@ -13411,15 +13425,22 @@ local script = G2L["de"];
 			end
 		end
 	
+		-- Build icon with enli star always on the left
 		local icon = ""
+		local enliStar = (enliBlueOn() and hasEnlighten(plr)) and "🌟" or ""
+	
 		if spychat then
 			if hidden then
-				icon = "🚫 "
+				icon = enliStar .. "🚫 "
 			elseif muted then
-				icon = "🤐 "
+				icon = enliStar .. "🤐 "
 			elseif iqEmoji then
-				icon = iqEmoji .. " "
+				icon = enliStar .. iqEmoji .. " "
+			else
+				icon = enliStar ~= "" and (enliStar .. " ") or ""
 			end
+		else
+			icon = enliStar ~= "" and (enliStar .. " ") or ""
 		end
 	
 		local r   = namecolors[cn][1]
@@ -13434,10 +13455,10 @@ local script = G2L["de"];
 			mdata.PrefixText = "<font color=\"" .. hex .. "\"><i><font color='rgb(" .. r .. "," .. g .. "," .. b .. ")'>" .. icon .. "(" .. displayName .. ") </font></i></font>"
 		end
 	
-		if plr == LocalPlayer then return end
-	
 		local rawMsg = mdata.Text or ""
 		if rawMsg == "" then return end
+		if plr == LocalPlayer then return end
+	
 		local silent = rawMsg:sub(1,1) == ";"
 		local mutedPlayer = isMuted(plr)
 		local mutedPrefix = mutedPlayer and "MUTED " or ""
