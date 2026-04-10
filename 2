@@ -5605,7 +5605,7 @@ G2L["1fd"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 G2L["1fe"] = Instance.new("Frame", G2L["1fc"]);
 G2L["1fe"]["BackgroundColor3"] = Color3.fromRGB(17, 17, 17);
 G2L["1fe"]["BorderMode"] = Enum.BorderMode.Middle;
-G2L["1fe"]["Size"] = UDim2.new(0, 170, 0, 116);
+G2L["1fe"]["Size"] = UDim2.new(0, 170, 0, 100);
 G2L["1fe"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["1fe"]["Name"] = [[MiscGroup]];
 G2L["1fe"]["LayoutOrder"] = 2;
@@ -5827,7 +5827,7 @@ G2L["212"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["212"]["BackgroundTransparency"] = 1;
 G2L["212"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["212"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["212"]["Text"] = [[Fix Other Decimal]];
+G2L["212"]["Text"] = [[Fix Other Decimals]];
 G2L["212"]["Name"] = [[OtherDecimalFixerText]];
 G2L["212"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -24267,12 +24267,6 @@ task.spawn(C_1ff);
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMiscPage.TCOMiscLeftSide.MiscGroup.LJoinXLRow.LJoinXLScript
 local function C_205()
 local script = G2L["205"];
-	-- ============================================================
-	-- LJOINXL SCRIPT
-	-- Hold the button to join the biggest server in The Chosen One XL.
-	-- Uses Roblox's GameServer API to find the server with the most players.
-	-- ============================================================
-	
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local TeleportService = game:GetService("TeleportService")
@@ -24286,9 +24280,10 @@ local script = G2L["205"];
 	local HOLD_TIME = 1.0
 	local GREY = Color3.fromRGB(80, 80, 80)
 	
-	-- ============================================================
-	-- BUILD HOLD-BUTTON UI (same pattern as ResetScript)
-	-- ============================================================
+	--------------------------------------------------
+	-- BUILD HOLD-BUTTON UI
+	--------------------------------------------------
+	
 	LJoinXLButton.Text = ""
 	
 	local fillBar = Instance.new("Frame")
@@ -24305,19 +24300,21 @@ local script = G2L["205"];
 	btnLabel.Size = UDim2.new(1, 0, 1, 0)
 	btnLabel.Position = UDim2.new(0, 0, 0, 0)
 	btnLabel.BackgroundTransparency = 1
-	btnLabel.Text = "Join Biggest XL Server"
+	btnLabel.Text = "Join Largest XL"
 	btnLabel.TextColor3 = Color3.new(1, 1, 1)
 	btnLabel.TextSize = 14
 	btnLabel.Font = Enum.Font.Code
 	btnLabel.ZIndex = 2
 	btnLabel.Parent = LJoinXLButton
 	
-	-- ============================================================
+	--------------------------------------------------
 	-- HOLD STATE
-	-- ============================================================
+	--------------------------------------------------
+	
 	local holding    = false
 	local progress   = 0
 	local connection = nil
+	local cachedCount = nil
 	
 	local function stopHold()
 		holding = false
@@ -24328,12 +24325,17 @@ local script = G2L["205"];
 		progress = 0
 		fillBar.Size = UDim2.new(0, 0, 1, 0)
 		fillBar.BackgroundColor3 = GREY
-		btnLabel.Text = "Join Biggest XL Server"
+		if cachedCount and cachedCount > 0 then
+			btnLabel.Text = "Join Largest XL (" .. cachedCount .. ")"
+		else
+			btnLabel.Text = "Join Largest XL"
+		end
 	end
 	
-	-- ============================================================
+	--------------------------------------------------
 	-- FIND BIGGEST SERVER
-	-- ============================================================
+	--------------------------------------------------
+	
 	local function getBiggestServer()
 		local bestJobId = nil
 		local bestCount = -1
@@ -24372,15 +24374,42 @@ local script = G2L["205"];
 		return bestJobId, bestCount
 	end
 	
-	-- ============================================================
+	--------------------------------------------------
+	-- FETCH COUNT ON LOAD + REFRESH EVERY 30s
+	--------------------------------------------------
+	
+	task.spawn(function()
+		local _, playerCount = getBiggestServer()
+		if playerCount and playerCount > 0 then
+			cachedCount = playerCount
+			if not holding then
+				btnLabel.Text = "Join Largest XL (" .. playerCount .. ")"
+			end
+		end
+	end)
+	
+	task.spawn(function()
+		while true do
+			task.wait(30)
+			local _, playerCount = getBiggestServer()
+			if playerCount and playerCount > 0 then
+				cachedCount = playerCount
+				if not holding then
+					btnLabel.Text = "Join Largest XL (" .. playerCount .. ")"
+				end
+			end
+		end
+	end)
+	
+	--------------------------------------------------
 	-- JOIN FUNCTION
-	-- ============================================================
+	--------------------------------------------------
+	
 	local function joinBiggestServer()
 		btnLabel.Text = "Finding server..."
 	
 		task.spawn(function()
 			local jobId, playerCount = getBiggestServer()
-			print("[DEBUG] jobId:", jobId, "| players:", playerCount)
 	
 			if not jobId then
 				btnLabel.Text = "No servers found!"
@@ -24411,9 +24440,10 @@ local script = G2L["205"];
 		end)
 	end
 	
-	-- ============================================================
+	--------------------------------------------------
 	-- INPUT CONNECTIONS
-	-- ============================================================
+	--------------------------------------------------
+	
 	LJoinXLButton.MouseButton1Down:Connect(function()
 		holding  = true
 		progress = 0
@@ -24439,9 +24469,10 @@ local script = G2L["205"];
 		stopHold()
 	end)
 	
-	-- ============================================================
+	--------------------------------------------------
 	-- CLEANUP
-	-- ============================================================
+	--------------------------------------------------
+	
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			if connection then connection:Disconnect() end
@@ -24694,7 +24725,7 @@ local script = G2L["20c"];
 	
 	local tooltipLabel = Instance.new("TextLabel")
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Fixes your own time decimals by donating randomly."
+	tooltipLabel.Text = "Fixes your own time decimals by donating other players your decimals."
 	tooltipLabel.TextColor3 = Color3.new(1,1,1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -24748,13 +24779,12 @@ local script = G2L["20c"];
 		if not number then return end
 		if number == math.floor(number) then return end
 	
-		local decimalPart = number - math.floor(number)
-		local donateAmount = 1 + (1 - decimalPart)
-		-- Format to avoid floating point weirdness
-		local formatted = string.format("%.10f", donateAmount):gsub("0+$", ""):gsub("%.$", "")
+		local decimalStr = text:match("%.(.+)")
+		if not decimalStr then return end
 	
-		print("DecimalFixer (self) →", text, "=> ;donate r", formatted)
-		sendChat(";donate r " .. formatted)
+		local message = ";donate r 1." .. decimalStr
+		print("DecimalFixer →", text, "=>", message)
+		sendChat(message)
 	end
 	
 	--------------------------------------------------
@@ -24863,7 +24893,7 @@ local script = G2L["210"];
 	
 	local tooltipLabel = Instance.new("TextLabel")
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Fixes other players time decimals by donating to them."
+	tooltipLabel.Text = "Fixes other players time decimals by donating to them but makes your time into decimals."
 	tooltipLabel.TextColor3 = Color3.new(1,1,1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
