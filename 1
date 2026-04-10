@@ -6291,7 +6291,7 @@ G2L["23b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["23b"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["23b"]["LayoutOrder"] = 30;
 G2L["23b"]["BorderColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["23b"]["Text"] = [[10]];
+G2L["23b"]["Text"] = [[2.1]];
 G2L["23b"]["Name"] = [[VersionNumber]];
 G2L["23b"]["Position"] = UDim2.new(0, 0, 1.25, 0);
 
@@ -25540,17 +25540,17 @@ local script = G2L["230"];
 	
 				-- Role label
 				local chosenTeam = game:GetService("Teams"):FindFirstChild("Chosen")
-				local neutralTeam = game:GetService("Teams"):FindFirstChild("Neutral")
 				local backpack = LocalPlayer:FindFirstChild("Backpack")
 				local char = workspace:FindFirstChild(LocalPlayer.Name)
 				local hasArken = (backpack and backpack:FindFirstChild("The Arkenstone"))
 					or (char and char:FindFirstChild("The Arkenstone"))
+				local isAdmin = chosenTeam and LocalPlayer.Team == chosenTeam
 	
-				if hasArken then
-					text = text .. "  |  Enlightened"
-				elseif chosenTeam and LocalPlayer.Team == chosenTeam then
+				if isAdmin then
 					text = text .. "  |  Admin"
-				elseif neutralTeam and LocalPlayer.Team == neutralTeam then
+				elseif hasArken then
+					text = text .. "  |  Enlightened"
+				else
 					text = text .. "  |  Neutral"
 				end
 			end
