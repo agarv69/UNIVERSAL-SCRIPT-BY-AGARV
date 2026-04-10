@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 596 | Scripts: 135 | Modules: 0 | Tags: 0
+-- Instances: 601 | Scripts: 136 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareGui
@@ -6555,6 +6555,62 @@ G2L["253"]["Text"] = [[]];
 -- StarterGui.AgarWareGui.ColorPicker.HEX.HEXScript
 G2L["254"] = Instance.new("LocalScript", G2L["253"]);
 G2L["254"]["Name"] = [[HEXScript]];
+
+
+-- StarterGui.AgarWareGui.LoadedMainFrame
+G2L["255"] = Instance.new("Frame", G2L["1"]);
+G2L["255"]["ZIndex"] = 999999999;
+G2L["255"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
+G2L["255"]["Size"] = UDim2.new(0, 300, 0, 100);
+G2L["255"]["Position"] = UDim2.new(0.53471, 0, 0.36219, 0);
+G2L["255"]["BorderColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["255"]["Name"] = [[LoadedMainFrame]];
+
+
+-- StarterGui.AgarWareGui.LoadedMainFrame.LoadedFrame
+G2L["256"] = Instance.new("Frame", G2L["255"]);
+G2L["256"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["256"]["Size"] = UDim2.new(0, 284, 0, 84);
+G2L["256"]["Position"] = UDim2.new(0.02667, 0, 0.08, 0);
+G2L["256"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
+G2L["256"]["Name"] = [[LoadedFrame]];
+
+
+-- StarterGui.AgarWareGui.LoadedMainFrame.LoadedFrame.AGARWARELOADED
+G2L["257"] = Instance.new("TextLabel", G2L["256"]);
+G2L["257"]["TextWrapped"] = true;
+G2L["257"]["BorderSizePixel"] = 0;
+G2L["257"]["TextSize"] = 30;
+G2L["257"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["257"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["257"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["257"]["BackgroundTransparency"] = 1;
+G2L["257"]["Size"] = UDim2.new(0, 284, 0, 61);
+G2L["257"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["257"]["Text"] = [[AGAR WARE LOADED]];
+G2L["257"]["Name"] = [[AGARWARELOADED]];
+
+
+-- StarterGui.AgarWareGui.LoadedMainFrame.LoadedFrame.GameNameLoaded
+G2L["258"] = Instance.new("TextLabel", G2L["256"]);
+G2L["258"]["TextWrapped"] = true;
+G2L["258"]["BorderSizePixel"] = 0;
+G2L["258"]["TextSize"] = 16;
+G2L["258"]["TextTransparency"] = 0.4;
+G2L["258"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["258"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["258"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["258"]["BackgroundTransparency"] = 1;
+G2L["258"]["Size"] = UDim2.new(0, 284, 0, 21);
+G2L["258"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["258"]["Text"] = [[GAME: The Chosen One]];
+G2L["258"]["Name"] = [[GameNameLoaded]];
+G2L["258"]["Position"] = UDim2.new(0, 0, 0.65476, 0);
+
+
+-- StarterGui.AgarWareGui.LoadedMainFrame.LoadedScript
+G2L["259"] = Instance.new("LocalScript", G2L["255"]);
+G2L["259"]["Name"] = [[LoadedScript]];
 
 
 -- StarterGui.AgarWareGui.MoveToCorGui
@@ -26819,5 +26875,70 @@ local script = G2L["254"];
 	end
 end;
 task.spawn(C_254);
+-- StarterGui.AgarWareGui.LoadedMainFrame.LoadedScript
+local function C_259()
+local script = G2L["259"];
+	local Players = game:GetService("Players")
+	local TweenService = game:GetService("TweenService")
+	local MarketplaceService = game:GetService("MarketplaceService")
+	
+	local LoadedMainFrame = script.Parent
+	local LoadedFrame = LoadedMainFrame:WaitForChild("LoadedFrame")
+	local GameNameLoaded = LoadedFrame:WaitForChild("GameNameLoaded")
+	
+	--------------------------------------------------
+	-- CENTER FRAME
+	--------------------------------------------------
+	
+	LoadedMainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+	LoadedMainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	LoadedMainFrame.Visible = true
+	
+	--------------------------------------------------
+	-- GET GAME NAME
+	--------------------------------------------------
+	
+	local function getGameName()
+		local ok, info = pcall(function()
+			return MarketplaceService:GetProductInfo(game.PlaceId)
+		end)
+		if ok and info and info.Name then
+			return info.Name
+		end
+		return "Cannot find game name"
+	end
+	
+	GameNameLoaded.Text = "GAME: " .. getGameName()
+	
+	--------------------------------------------------
+	-- FADE AWAY AFTER 3 SECONDS
+	--------------------------------------------------
+	
+	task.wait(1)
+	
+	local tween = TweenService:Create(LoadedFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		BackgroundTransparency = 1
+	})
+	
+	-- Fade all text labels too
+	local labels = LoadedFrame:GetDescendants()
+	local labelTweens = {}
+	for _, obj in ipairs(labels) do
+		if obj:IsA("TextLabel") then
+			local t = TweenService:Create(obj, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				TextTransparency = 1,
+				TextStrokeTransparency = 1
+			})
+			table.insert(labelTweens, t)
+			t:Play()
+		end
+	end
+	
+	tween:Play()
+	tween.Completed:Wait()
+	
+	LoadedMainFrame.Visible = false
+end;
+task.spawn(C_259);
 
 return G2L["1"], require;
