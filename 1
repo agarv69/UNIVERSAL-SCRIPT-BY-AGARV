@@ -7508,7 +7508,7 @@ local script = G2L["7"];
 			return false
 		end
 		local diff = removedAt - entry.lastTick
-		if diff < 0.05 then
+		if diff < 0.02 then
 			entry.count = entry.count + 1
 			entry.lastTick = removedAt
 			return entry.count >= DELCUBE_THRESHOLD
@@ -7765,9 +7765,23 @@ local script = G2L["7"];
 	--------------------------------------------------
 	
 	local function handleDelete(brickPos, ownerName, removedAt)
-		if isDelcube(ownerName, removedAt) then return end
+		-- Update delcube tracker first
+		local entry = delcubeTracker[ownerName]
+		if not entry then
+			delcubeTracker[ownerName] = {lastTick = removedAt, count = 1}
+		elseif (removedAt - entry.lastTick) < 0.02 then
+			entry.count = entry.count + 1
+			entry.lastTick = removedAt
+		else
+			delcubeTracker[ownerName] = {lastTick = removedAt, count = 1}
+		end
 	
-		task.spawn(function()
+		-- Wait 0.02s then check if it ended up being a delcube
+		task.delay(0.02, function()
+			local e = delcubeTracker[ownerName]
+			if e and e.count >= DELCUBE_THRESHOLD then return end
+	
+			task.spawn(function()
 			-- Step 1: Check who was within 30 studs
 			local inRange = {}
 			for _, player in ipairs(Players:GetPlayers()) do
@@ -7811,6 +7825,7 @@ local script = G2L["7"];
 					end
 				end
 			end
+		end)
 		end)
 	end
 	
