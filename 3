@@ -7264,6 +7264,7 @@ local script = G2L["7"];
 	shared.DeleteGriefEvent  = shared.DeleteGriefEvent  or Instance.new("BindableEvent")
 	shared.PaintGriefEvent   = shared.PaintGriefEvent   or Instance.new("BindableEvent")
 	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
+	shared.BuildGriefEvent   = shared.BuildGriefEvent   or Instance.new("BindableEvent")
 	shared.BoomboxLoudEvent  = shared.BoomboxLoudEvent  or Instance.new("BindableEvent")
 	
 	--------------------------------------------------
@@ -7292,6 +7293,7 @@ local script = G2L["7"];
 	local DELCUBE_CANCEL      = 0.02
 	local EXPLOIT_SOUND_LIMIT = 3
 	local EXPLOIT_WAIT_MAX    = 1.0
+	local NORMAL_BUFFER       = 2
 	
 	--------------------------------------------------
 	-- ATTRIBUTE HELPERS
@@ -7300,7 +7302,8 @@ local script = G2L["7"];
 	local function isDeleteOn()  return ScreenGui:GetAttribute("DeleteLogsEnabled")   == true end
 	local function isPaintOn()   return ScreenGui:GetAttribute("PaintLogsEnabled")    == true end
 	local function isExploitOn() return ScreenGui:GetAttribute("ExploitsLogsEnabled") == true end
-	local function anyOn()       return isDeleteOn() or isPaintOn() or isExploitOn() end
+	local function isSpamOn()    return ScreenGui:GetAttribute("SpamLogsEnabled")     == true end
+	local function anyOn()       return isDeleteOn() or isPaintOn() or isExploitOn() or isSpamOn() end
 	
 	--------------------------------------------------
 	-- GRIEF SETTINGS
@@ -7349,26 +7352,29 @@ local script = G2L["7"];
 	end
 	
 	--------------------------------------------------
-	-- STATE - use clear() pattern, never reassign
+	-- STATE
 	--------------------------------------------------
 	
-	local isRunning          = false
-	local connections        = {}
-	
-	local recentDeleteSound  = {}
-	local recentPaintSound   = {}
-	local recentSlashAnim    = {}
-	local deleteToolPresence = {}
-	local paintToolPresence  = {}
-	local deleteTracker      = {}
-	local deleteCooldown     = {}
-	local paintTracker       = {}
-	local paintCooldown      = {}
-	local exploitTracker     = {}
-	local exploitCooldown    = {}
-	local lastBrickRemoved   = {}
+	local isRunning           = false
+	local connections         = {}
+	local recentDeleteSound   = {}
+	local recentPaintSound    = {}
+	local recentSlashAnim     = {}
+	local deleteToolPresence  = {}
+	local paintToolPresence   = {}
+	local deleteTracker       = {}
+	local deleteCooldown      = {}
+	local paintTracker        = {}
+	local paintCooldown       = {}
+	local exploitTracker      = {}
+	local exploitCooldown     = {}
+	local lastBrickRemoved    = {}
 	local usedSoundTimestamps = {}
-	local pendingExploits    = {}
+	local pendingExploits     = {}
+	local deleteNormalBuffer  = {}
+	local paintNormalBuffer   = {}
+	local spamTracker         = {}  -- userId -> {times={}}
+	local spamCooldown        = {}
 	
 	local function clearTable(t)
 		for k in pairs(t) do t[k] = nil end
@@ -7399,6 +7405,7 @@ local script = G2L["7"];
 		return (eventTime - last) < DELCUBE_CANCEL
 	end
 	
+	-- Fixed timeout - always waits the full window from start, not remaining time
 	local function waitForCondition(condFn, timeout)
 		local start = tick()
 		while tick() - start < timeout do
@@ -7469,25 +7476,70 @@ local script = G2L["7"];
 	end
 	
 	local function flagExploit(player, ownerName, actionType)
+		-- Check normal buffer first
+		local bufferTable = actionType == "deleted" and deleteNormalBuffer or paintNormalBuffer
+		local buf = bufferTable[player.UserId] or 0
+		if buf > 0 then
+			bufferTable[player.UserId] = buf - 1
+			if actionType == "deleted" then
+				flagDelete(player, ownerName)
+			else
+				flagPaint(player, ownerName)
+			end
+			return
+		end
+	
+		-- Skip entirely if on cooldown
+		if exploitCooldown[player.UserId] and tick() < exploitCooldown[player.UserId] then return end
+	
 		local count = addCount(exploitTracker, player.UserId, tick(), EXPLOIT_TIME)
 		local suffix = Players:FindFirstChild(ownerName) and "" or " (NOT INGAME)"
 		print("[EXPLOIT] " .. player.Name .. " " .. actionType .. " " .. ownerName .. suffix .. " | Count: " .. count .. "/" .. EXPLOIT_COUNT)
 		if count >= EXPLOIT_COUNT then
-			if not exploitCooldown[player.UserId] or tick() >= exploitCooldown[player.UserId] then
-				print("[EXPLOITGRIEFLOG] 🚨 " .. player.Name .. " has been detected exploiting")
-				shared.GriefEvent:Fire(player, "exploit")
-				shared.ExploitGriefEvent:Fire(player)
-				exploitCooldown[player.UserId] = tick() + (shared.GriefCooldown or 30)
-				resetCount(exploitTracker, player.UserId)
-			end
+			local cooldown = shared.GriefCooldown or 30
+			print("[EXPLOITGRIEFLOG] 🚨 " .. player.Name .. " has been detected exploiting | Cooldown: " .. cooldown)
+			shared.GriefEvent:Fire(player, "exploit")
+			shared.ExploitGriefEvent:Fire(player)
+			exploitCooldown[player.UserId] = tick() + cooldown
+			resetCount(exploitTracker, player.UserId)
+			task.delay(cooldown, function()
+				print("[EXPLOIT] " .. player.Name .. "'s cooldown ended (" .. cooldown .. ")")
+			end)
 		end
+	end
+	
+	local SPAM_COUNT = 60
+	local SPAM_TIME  = 13
+	
+	local function flagSpam(player)
+		if spamCooldown[player.UserId] and tick() < spamCooldown[player.UserId] then return end
+		local count = addCount(spamTracker, player.UserId, tick(), SPAM_TIME)
+		if count % 10 == 0 then
+			print("[BUILD] " .. player.Name .. " build spam | Count: " .. count .. "/" .. SPAM_COUNT)
+		end
+		if count >= SPAM_COUNT then
+			local cooldown = shared.GriefCooldown or 30
+			print("[BUILDGRIEFLOG] 🚨 " .. player.Name .. " is placing blocks too fast | Cooldown: " .. cooldown)
+			shared.GriefEvent:Fire(player, "build")
+			shared.BuildGriefEvent:Fire(player)
+			resetCount(spamTracker, player.UserId)
+			spamCooldown[player.UserId] = tick() + cooldown
+			task.delay(cooldown, function()
+				print("[BUILD] " .. player.Name .. "'s cooldown ended (" .. cooldown .. ")")
+			end)
+		end
+	end
+	
+	local function setDeleteBuffer(player)
+		deleteNormalBuffer[player.UserId] = NORMAL_BUFFER
+	end
+	
+	local function setPaintBuffer(player)
+		paintNormalBuffer[player.UserId] = NORMAL_BUFFER
 	end
 	
 	--------------------------------------------------
 	-- EXPLOIT DETECTION
-	-- Bricks register as pending when deleted.
-	-- When a root sound plays, it checks all pending
-	-- bricks and counts up to EXPLOIT_SOUND_LIMIT.
 	--------------------------------------------------
 	
 	local function processExploitSound(player, soundTime, soundTable)
@@ -7498,34 +7550,24 @@ local script = G2L["7"];
 	
 		for i = #pendingExploits, 1, -1 do
 			local entry = pendingExploits[i]
-	
-			-- Remove expired entries
 			if now > entry.deadline then
 				table.remove(pendingExploits, i)
 				continue
 			end
-	
-			-- Must match the right sound table
 			if entry.soundTable ~= soundTable then continue end
-	
-			-- Sound must be after event
 			local delay = soundTime - entry.eventTime
 			if delay < 0 or delay > EXPLOIT_WAIT_MAX then continue end
-	
-			-- Sound not already used for another brick
 			local used = usedSoundTimestamps[player.UserId]
 			if used and used == soundTime then continue end
-	
 			table.insert(matched, entry)
 		end
 	
 		if #matched == 0 then return end
 	
 		local countToFlag = math.min(#matched, EXPLOIT_SOUND_LIMIT)
-	
-		-- Check slash against matched bricks
 		local slashTime = recentSlashAnim[player.UserId]
 		local anyNonSlash = false
+	
 		for i = 1, countToFlag do
 			local entry = matched[i]
 			if not slashTime or math.abs(slashTime - entry.eventTime) > SLASH_WINDOW then
@@ -7544,7 +7586,6 @@ local script = G2L["7"];
 				end
 			end
 		else
-			-- All slash — flag once for first brick (bypass detection)
 			local best = matched[1]
 			if passesFilters(player, best.ownerName) then
 				flagExploit(player, best.ownerName, best.actionType)
@@ -7576,48 +7617,45 @@ local script = G2L["7"];
 	--------------------------------------------------
 	
 	local function checkPlayerDelete(player, ownerName, brickPos, eventTime)
-		local name = player.Name
-	
 		local dist = getPlayerDist(player, brickPos)
 		if dist > MAX_DISTANCE then return "failed" end
+		if player.Name == ownerName then return "ownbrick" end
 	
-		if name == ownerName then return "ownbrick" end
-	
-		-- Held delete tool check
+		-- Tool check - fixed timeout TOOL_WINDOW from now
 		local toolMet = false
 		local toolT = deleteToolPresence[player.UserId]
-		if toolT and (eventTime - toolT) <= TOOL_WINDOW then
+		if toolT and math.abs(toolT - eventTime) <= TOOL_WINDOW then
 			toolMet = true
 		end
 		if not toolMet then
 			toolMet = waitForCondition(function()
 				local t = deleteToolPresence[player.UserId]
 				return t ~= nil and math.abs(t - eventTime) <= TOOL_WINDOW
-			end, math.max(0, eventTime + TOOL_WINDOW - tick()))
+			end, TOOL_WINDOW)
 		end
 		if not toolMet then return "exploit" end
 	
-		-- Slash anim check
+		-- Slash check - fixed timeout SLASH_WINDOW from now
 		local slashMet = false
 		local slashT = recentSlashAnim[player.UserId]
-		if slashT and (eventTime - slashT) <= SLASH_WINDOW then
+		if slashT and math.abs(slashT - eventTime) <= SLASH_WINDOW then
 			slashMet = true
 		end
 		if not slashMet then
 			slashMet = waitForCondition(function()
 				local t = recentSlashAnim[player.UserId]
 				return t ~= nil and math.abs(t - eventTime) <= SLASH_WINDOW
-			end, math.max(0, eventTime + SLASH_WINDOW - tick()))
+			end, SLASH_WINDOW)
 		end
 		if not slashMet then return "exploit" end
 	
-		-- Brick sound check
+		-- Sound check - fixed timeout SOUND_MAX from now
 		local soundMet = waitForCondition(function()
 			local t = recentDeleteSound[player.UserId]
 			if not t then return false end
 			local delay = t - eventTime
 			return delay >= SOUND_MIN and delay <= SOUND_MAX
-		end, math.max(0, eventTime + SOUND_MAX - tick()))
+		end, SOUND_MAX)
 		if not soundMet then return "failed" end
 	
 		if not passesFilters(player, ownerName) then return "failed" end
@@ -7630,36 +7668,33 @@ local script = G2L["7"];
 	--------------------------------------------------
 	
 	local function checkPlayerPaint(player, ownerName, brickPos, eventTime)
-		local name = player.Name
-	
 		local dist = getPlayerDist(player, brickPos)
 		if dist > MAX_DISTANCE then return "failed" end
-	
-		if name == ownerName then return "ownbrick" end
+		if player.Name == ownerName then return "ownbrick" end
 	
 		local toolMet = false
 		local toolT = paintToolPresence[player.UserId]
-		if toolT and (eventTime - toolT) <= TOOL_WINDOW then
+		if toolT and math.abs(toolT - eventTime) <= TOOL_WINDOW then
 			toolMet = true
 		end
 		if not toolMet then
 			toolMet = waitForCondition(function()
 				local t = paintToolPresence[player.UserId]
 				return t ~= nil and math.abs(t - eventTime) <= TOOL_WINDOW
-			end, math.max(0, eventTime + TOOL_WINDOW - tick()))
+			end, TOOL_WINDOW)
 		end
 		if not toolMet then return "exploit" end
 	
 		local slashMet = false
 		local slashT = recentSlashAnim[player.UserId]
-		if slashT and (eventTime - slashT) <= SLASH_WINDOW then
+		if slashT and math.abs(slashT - eventTime) <= SLASH_WINDOW then
 			slashMet = true
 		end
 		if not slashMet then
 			slashMet = waitForCondition(function()
 				local t = recentSlashAnim[player.UserId]
 				return t ~= nil and math.abs(t - eventTime) <= SLASH_WINDOW
-			end, math.max(0, eventTime + SLASH_WINDOW - tick()))
+			end, SLASH_WINDOW)
 		end
 		if not slashMet then return "exploit" end
 	
@@ -7668,7 +7703,7 @@ local script = G2L["7"];
 			if not t then return false end
 			local delay = t - eventTime
 			return delay >= SOUND_MIN and delay <= SOUND_MAX
-		end, math.max(0, eventTime + SOUND_MAX - tick()))
+		end, SOUND_MAX)
 		if not soundMet then return "failed" end
 	
 		if not passesFilters(player, ownerName) then return "failed" end
@@ -7699,6 +7734,7 @@ local script = G2L["7"];
 	
 			if isDeleteOn() and #detected > 0 then
 				for _, player in ipairs(detected) do
+					setDeleteBuffer(player)
 					flagDelete(player, ownerName)
 				end
 			else
@@ -7726,6 +7762,7 @@ local script = G2L["7"];
 	
 			if isPaintOn() and #detected > 0 then
 				for _, player in ipairs(detected) do
+					setPaintBuffer(player)
 					flagPaint(player, ownerName)
 				end
 			else
@@ -7891,6 +7928,22 @@ local script = G2L["7"];
 			table.insert(connections, c)
 		end
 	
+		-- Build spam: watch ChildAdded on folder directly (no per-brick connections)
+		if isSpamOn() then
+			local ownerPlayer = Players:FindFirstChild(ownerName)
+			if ownerPlayer then
+				local c = folder.ChildAdded:Connect(function(child)
+					if child.Name ~= "Brick" then return end
+					if not isSpamOn() then return end
+					local player = Players:FindFirstChild(ownerName)
+					if not player then return end
+					if not passesFilters(player, ownerName) then return end
+					flagSpam(player)
+				end)
+				table.insert(connections, c)
+			end
+		end
+	
 		local c2 = folder.ChildAdded:Connect(function(child)
 			if child.Name ~= "Brick" then return end
 			watchBrick(child, ownerName)
@@ -7922,18 +7975,22 @@ local script = G2L["7"];
 	
 		Players.PlayerRemoving:Connect(function(player)
 			local uid = player.UserId
-			recentDeleteSound[uid]    = nil
-			recentPaintSound[uid]     = nil
-			recentSlashAnim[uid]      = nil
-			deleteToolPresence[uid]   = nil
-			paintToolPresence[uid]    = nil
-			deleteTracker[uid]        = nil
-			paintTracker[uid]         = nil
-			exploitTracker[uid]       = nil
-			deleteCooldown[uid]       = nil
-			paintCooldown[uid]        = nil
-			exploitCooldown[uid]      = nil
-			usedSoundTimestamps[uid]  = nil
+			recentDeleteSound[uid]   = nil
+			recentPaintSound[uid]    = nil
+			recentSlashAnim[uid]     = nil
+			deleteToolPresence[uid]  = nil
+			paintToolPresence[uid]   = nil
+			deleteTracker[uid]       = nil
+			paintTracker[uid]        = nil
+			exploitTracker[uid]      = nil
+			deleteCooldown[uid]      = nil
+			paintCooldown[uid]       = nil
+			exploitCooldown[uid]     = nil
+			usedSoundTimestamps[uid] = nil
+			deleteNormalBuffer[uid]  = nil
+			paintNormalBuffer[uid]   = nil
+			spamTracker[uid]         = nil
+			spamCooldown[uid]        = nil
 		end)
 	
 		for _, folder in ipairs(bricksFolder:GetChildren()) do
@@ -7951,7 +8008,6 @@ local script = G2L["7"];
 			pcall(function() c:Disconnect() end)
 		end
 		clearArray(connections)
-	
 		clearTable(recentDeleteSound)
 		clearTable(recentPaintSound)
 		clearTable(recentSlashAnim)
@@ -7965,6 +8021,10 @@ local script = G2L["7"];
 		clearTable(exploitCooldown)
 		clearTable(lastBrickRemoved)
 		clearTable(usedSoundTimestamps)
+		clearTable(deleteNormalBuffer)
+		clearTable(paintNormalBuffer)
+		clearTable(spamTracker)
+		clearTable(spamCooldown)
 		clearArray(pendingExploits)
 	end
 	
@@ -7972,7 +8032,7 @@ local script = G2L["7"];
 	-- ATTRIBUTE WATCHERS
 	--------------------------------------------------
 	
-	local ATTRS = {"DeleteLogsEnabled", "PaintLogsEnabled", "ExploitsLogsEnabled"}
+	local ATTRS = {"DeleteLogsEnabled", "PaintLogsEnabled", "ExploitsLogsEnabled", "SpamLogsEnabled"}
 	
 	for _, attr in ipairs(ATTRS) do
 		ScreenGui:GetAttributeChangedSignal(attr):Connect(function()
@@ -21236,144 +21296,7 @@ local script = G2L["1ac"];
 	local EnableAccentColor = EnableGroup:WaitForChild("EnableAccentColor")
 	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
 	
-	--------------------------------------------------
-	-- SETTINGS
-	--------------------------------------------------
-	
-	local SPAM_COUNT = 60
-	local SPAM_TIME  = 13
-	local COOLDOWN   = 30
-	
-	--------------------------------------------------
-	-- ENSURE EVENTS EXIST
-	--------------------------------------------------
-	
-	shared.BuildGriefEvent = shared.BuildGriefEvent or Instance.new("BindableEvent")
-	shared.GriefEvent      = shared.GriefEvent      or Instance.new("BindableEvent")
-	shared.BuildEvent      = shared.BuildEvent      or Instance.new("BindableEvent")
-	
-	--------------------------------------------------
-	-- STATE
-	--------------------------------------------------
-	
-	local Enabled     = false
-	local connections = {}
-	local trackers    = {}
-	local cooldowns   = {}
-	
-	--------------------------------------------------
-	-- FILTER HELPERS
-	--------------------------------------------------
-	
-	local function isWhitelisted(player)
-		local w = shared.GriefWhitelist
-		return w and w[player.Name] == true
-	end
-	
-	local function hasArkenstone(player)
-		local b = player:FindFirstChild("Backpack")
-		return b and b:FindFirstChild("The Arkenstone") ~= nil
-	end
-	
-	local function passesEnlightenCheck(player)
-		local e = shared.GriefEnlightenEnabled
-		if e == nil then e = true end
-		if e then return true end
-		return not hasArkenstone(player)
-	end
-	
-	local function passesTimeFilterCheck(player)
-		local filter = shared.GriefTimeFilter or 0
-		if filter == 0 then return true end
-		local ls = player:FindFirstChild("leaderstats")
-		if not ls then return true end
-		local t = ls:FindFirstChild("Time")
-		if not t then return true end
-		return t.Value < filter
-	end
-	
-	--------------------------------------------------
-	-- ON BRICK ADDED
-	--------------------------------------------------
-	
-	local function onBrickAdded(player)
-		if not Enabled then return end
-		if not player then return end
-		if isWhitelisted(player) then return end
-		if not passesEnlightenCheck(player) then return end
-		if not passesTimeFilterCheck(player) then return end
-	
-		local userId = player.UserId
-		if cooldowns[userId] and tick() < cooldowns[userId] then return end
-	
-		local now = tick()
-		trackers[userId] = trackers[userId] or {}
-		table.insert(trackers[userId], now)
-	
-		for i = #trackers[userId], 1, -1 do
-			if now - trackers[userId][i] > SPAM_TIME then
-				table.remove(trackers[userId], i)
-			end
-		end
-	
-		local count = #trackers[userId]
-		if count % 10 == 0 then
-			print("[BUILDLOG] " .. player.DisplayName .. " (" .. player.Name .. ") | count: " .. count)
-		end
-		if count >= SPAM_COUNT then
-			print("[SPAM GRIEF DETECTED]", player.Name)
-			shared.BuildGriefEvent:Fire(player)
-			shared.GriefEvent:Fire(player, "build")
-			trackers[userId] = {}
-			cooldowns[userId] = tick() + (shared.GriefCooldown or COOLDOWN)
-		end
-	end
-	
-	--------------------------------------------------
-	-- WATCH FOLDERS
-	--------------------------------------------------
-	
-	local function watchFolder(folder)
-		local player = Players:FindFirstChild(folder.Name)
-		if not player then return end
-	
-		local c = folder.ChildAdded:Connect(function(child)
-			if child.Name == "Brick" then
-				onBrickAdded(player)
-			end
-		end)
-		table.insert(connections, c)
-	end
-	
-	local function startWatching()
-		local bricksFolder = workspace:WaitForChild("Bricks")
-	
-		for _, folder in ipairs(bricksFolder:GetChildren()) do
-			watchFolder(folder)
-		end
-	
-		local c1 = bricksFolder.ChildAdded:Connect(watchFolder)
-		table.insert(connections, c1)
-	
-		local c2 = Players.PlayerAdded:Connect(function(player)
-			local folder = bricksFolder:FindFirstChild(player.Name)
-			if folder then watchFolder(folder) end
-		end)
-		table.insert(connections, c2)
-	end
-	
-	local function stopWatching()
-		for _, c in ipairs(connections) do
-			pcall(function() c:Disconnect() end)
-		end
-		connections = {}
-		trackers    = {}
-		cooldowns   = {}
-	end
-	
-	--------------------------------------------------
-	-- ENABLE STATE
-	--------------------------------------------------
+	local Enabled = false
 	
 	local function updateVisual()
 		if Enabled then
@@ -21389,11 +21312,6 @@ local script = G2L["1ac"];
 		Enabled = not Enabled
 		ScreenGui:SetAttribute("SpamLogsEnabled", Enabled)
 		updateVisual()
-		if Enabled then
-			startWatching()
-		else
-			stopWatching()
-		end
 	end)
 	
 	updateVisual()
