@@ -3245,14 +3245,13 @@ G2L["127"]["Name"] = [[TrollTCOPG]];
 G2L["128"] = Instance.new("TextButton", G2L["123"]);
 G2L["128"]["TextWrapped"] = true;
 G2L["128"]["TextSize"] = 12;
-G2L["128"]["TextScaled"] = true;
 G2L["128"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["128"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["128"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["128"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["128"]["LayoutOrder"] = 2;
 G2L["128"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
-G2L["128"]["Text"] = [[Detection (UNDER MAINTANCE)]];
+G2L["128"]["Text"] = [[Detection]];
 G2L["128"]["Name"] = [[DetectionTCOPG]];
 
 
@@ -6607,7 +6606,7 @@ G2L["257"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["257"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["257"]["LayoutOrder"] = 30;
 G2L["257"]["BorderColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["257"]["Text"] = [[2.4]];
+G2L["257"]["Text"] = [[2.4.1]];
 G2L["257"]["Name"] = [[VersionNumber]];
 G2L["257"]["Position"] = UDim2.new(0, 0, 1.25, 0);
 
@@ -6875,7 +6874,6 @@ G2L["270"]["Name"] = [[HEXScript]];
 
 -- StarterGui.AgarWareGui.LoadedMainFrame
 G2L["271"] = Instance.new("Frame", G2L["1"]);
-G2L["271"]["Visible"] = false;
 G2L["271"]["ZIndex"] = 999999999;
 G2L["271"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
 G2L["271"]["Size"] = UDim2.new(0, 300, 0, 100);
@@ -7092,64 +7090,57 @@ task.spawn(C_4);
 -- StarterGui.AgarWareGui.UnloadBLACKLIST
 local function C_5()
 local script = G2L["5"];
-	do
-		local Players = game:GetService("Players")
-		local LocalPlayer = Players.LocalPlayer
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
 	
-		-- The ID you want to hide from seeing you use the script
-		local BLOCKED_ID = 8615658150
+	local BLOCKED_ID = 8308247571
 	
-		-- Exception list: these users will NOT trigger the unload
-		local EXCEPTIONS = {
-			9763171531, -- pealz
-			10304502709, -- mental
-			2581030028, -- valtiel
-			10340049663, -- evilguy
-			10587072700, -- agarv alt
-			574381128, -- agarv
-		}
+	local EXCEPTIONS = {
+		9763171531, -- pealz
+		10304502709, -- mental
+		2581030028, -- valtiel
+		10340049663, -- evilguy
+		574381128, -- agarv
+	}
 	
-		local function isException(userId)
-			for _, id in ipairs(EXCEPTIONS) do
-				if id == userId then
-					return true
-				end
+	local function isException(userId)
+		for _, id in ipairs(EXCEPTIONS) do
+			if id == userId then
+				return true
 			end
+		end
+		return false
+	end
+	
+	local function isBlocked(player)
+		if isException(player.UserId) then
 			return false
 		end
+		return player.UserId == BLOCKED_ID and player ~= LocalPlayer
+	end
 	
-		local function isBlocked(player)
-			if isException(player.UserId) then
-				return false
-			end
-			return player.UserId == BLOCKED_ID and player ~= LocalPlayer
-		end
-	
-		local function unloadScript()
-			pcall(function()
-				local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
-				if screenGui then
-					screenGui:Destroy()
-					print("Script unloaded: Blacklisted user detected.")
-				end
-			end)
-		end
-	
-		-- Check everyone currently in the server
-		for _, player in ipairs(Players:GetPlayers()) do
-			if isBlocked(player) then 
-				unloadScript() 
-				return 
-			end
-		end
-	
-		-- Check for anyone who joins later
-		Players.PlayerAdded:Connect(function(player)
-			if isBlocked(player) then 
-				unloadScript() 
+	local function unloadScript()
+		pcall(function()
+			local screenGui = LocalPlayer.PlayerGui:FindFirstChild("AgarWareGui")
+			if screenGui then
+				screenGui:Destroy()
+				print("Script unloaded: Blacklisted user detected.")
 			end
 		end)
 	end
+	
+	for _, player in ipairs(Players:GetPlayers()) do
+		if isBlocked(player) then
+			unloadScript()
+			return
+		end
+	end
+	
+	Players.PlayerAdded:Connect(function(player)
+		if isBlocked(player) then
+			unloadScript()
+		end
+	end)
 end;
 task.spawn(C_5);
 -- StarterGui.AgarWareGui.AGARVOWNERLABEL
@@ -7509,7 +7500,7 @@ local script = G2L["7"];
 			return false
 		end
 		local diff = removedAt - entry.lastTick
-		if diff < 0.05 then
+		if diff < 0.02 then
 			entry.count = entry.count + 1
 			entry.lastTick = removedAt
 			return entry.count >= DELCUBE_THRESHOLD
@@ -7766,9 +7757,23 @@ local script = G2L["7"];
 	--------------------------------------------------
 	
 	local function handleDelete(brickPos, ownerName, removedAt)
-		if isDelcube(ownerName, removedAt) then return end
+		-- Update delcube tracker first
+		local entry = delcubeTracker[ownerName]
+		if not entry then
+			delcubeTracker[ownerName] = {lastTick = removedAt, count = 1}
+		elseif (removedAt - entry.lastTick) < 0.02 then
+			entry.count = entry.count + 1
+			entry.lastTick = removedAt
+		else
+			delcubeTracker[ownerName] = {lastTick = removedAt, count = 1}
+		end
 	
-		task.spawn(function()
+		-- Wait 0.02s then check if it ended up being a delcube
+		task.delay(0.02, function()
+			local e = delcubeTracker[ownerName]
+			if e and e.count >= DELCUBE_THRESHOLD then return end
+	
+			task.spawn(function()
 			-- Step 1: Check who was within 30 studs
 			local inRange = {}
 			for _, player in ipairs(Players:GetPlayers()) do
@@ -7812,6 +7817,7 @@ local script = G2L["7"];
 					end
 				end
 			end
+		end)
 		end)
 	end
 	
@@ -23314,6 +23320,7 @@ local script = G2L["1e6"];
 	local AlertGriefTickBox = findDescendant("AlertGriefTickBox")
 	local ConfirmGriefTickBox = findDescendant("ConfirmGriefTickBox")
 	local SFXGriefTickBox = findDescendant("SFXGriefTickBox")
+	local FlingExploitTickBox = findDescendant("FlingExploitTickBox")
 	
 	-- ============================================================
 	-- TOOLTIP BUILDER
@@ -23392,6 +23399,10 @@ local script = G2L["1e6"];
 		"Plays an alert sound when a player is detected griefing."
 	)
 	
+	local flingExploitTooltip = makeTooltip(
+		"Automatically flings players detected using exploits to grief."
+	)
+	
 	-- ============================================================
 	-- HOOK THEM
 	-- ============================================================
@@ -23400,6 +23411,7 @@ local script = G2L["1e6"];
 	hookTooltip(AlertGriefTickBox, alertTooltip)
 	hookTooltip(ConfirmGriefTickBox, confirmTooltip)
 	hookTooltip(SFXGriefTickBox, sfxTooltip)
+	hookTooltip(FlingExploitTickBox, flingExploitTooltip)
 	
 	-- ============================================================
 	-- CLEANUP
@@ -23410,6 +23422,7 @@ local script = G2L["1e6"];
 			flingTooltip:Destroy()
 			alertTooltip:Destroy()
 			confirmTooltip:Destroy()
+			flingExploitTooltip:Destroy()
 		end
 	end)
 end;
@@ -23771,7 +23784,7 @@ local script = G2L["1f0"];
 		["toxify"]   = "⚠️%s was spamming toxify and got flung",
 		["unanchor"] = "⚠️%s was spamming unanchor and got flung",
 		["build"]    = "⚠️%s was spamming blocks and got flung",
-		["exploit"]  = "⚠️%s was using grief aura and got flung",
+		["exploit"]  = "⚠️%s was using exploits to grief and got flung",
 	}
 	
 	--------------------------------------------------
@@ -23913,7 +23926,7 @@ local script = G2L["1f0"];
 			isFlingActive = false
 			isFlingDone = true
 			FlingConfirm.Text = "FLING PLAYER"
-			FlingConfirm.BackgroundColor3 = Color3.fromRGB(0,0,0)
+			FlingConfirm.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
 	
 			if flingCancelled then
 				isFlingDone = false
@@ -24005,6 +24018,7 @@ local script = G2L["1f0"];
 							shared.sendChat(msg)
 						end
 					end
+					hideConfirm(false)
 				end)
 			end)
 			return
@@ -24074,7 +24088,7 @@ local script = G2L["1f4"];
 	local sound = Instance.new("Sound")
 	sound.SoundId = "rbxassetid://138817522589884"
 	sound.Volume = 1
-	sound.Parent = LocalPlayer.PlayerGui
+	sound.Parent = workspace
 	
 	--------------------------------------------------
 	-- STOP FUNCTION (called by ConfirmGriefScript on hide)
