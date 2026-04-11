@@ -6560,7 +6560,7 @@ G2L["253"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["253"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["253"]["LayoutOrder"] = 30;
 G2L["253"]["BorderColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["253"]["Text"] = [[2.2]];
+G2L["253"]["Text"] = [[2.4]];
 G2L["253"]["Name"] = [[VersionNumber]];
 G2L["253"]["Position"] = UDim2.new(0, 0, 1.25, 0);
 
@@ -7551,6 +7551,7 @@ local script = G2L["7"];
 				continue
 			end
 			if entry.soundTable ~= soundTable then continue end
+			if entry.brickPos and getPlayerDist(player, entry.brickPos) < MAX_DISTANCE then continue end
 			local delay = soundTime - entry.eventTime
 			if delay < 0 or delay > EXPLOIT_WAIT_MAX then continue end
 			local used = usedSoundTimestamps[player.UserId]
@@ -7577,19 +7578,19 @@ local script = G2L["7"];
 		if anyNonSlash or not slashTime then
 			for i = 1, countToFlag do
 				local entry = matched[i]
-				if passesFilters(player, entry.ownerName) then
+				if player.Name ~= entry.ownerName and passesFilters(player, entry.ownerName) then
 					flagExploit(player, entry.ownerName, entry.actionType)
 				end
 			end
 		else
 			local best = matched[1]
-			if passesFilters(player, best.ownerName) then
+			if player.Name ~= best.ownerName and passesFilters(player, best.ownerName) then
 				flagExploit(player, best.ownerName, best.actionType)
 			end
 		end
 	end
 	
-	local function handleExploit(ownerName, eventTime, actionType, soundTable)
+	local function handleExploit(ownerName, eventTime, actionType, soundTable, brickPos)
 		if not isExploitOn() then return end
 		table.insert(pendingExploits, {
 			ownerName  = ownerName,
@@ -7597,6 +7598,7 @@ local script = G2L["7"];
 			actionType = actionType,
 			soundTable = soundTable,
 			deadline   = eventTime + EXPLOIT_WAIT_MAX,
+			brickPos   = brickPos,
 		})
 	end
 	
@@ -7738,7 +7740,7 @@ local script = G2L["7"];
 				end
 			else
 				if isExploitOn() then
-					handleExploit(ownerName, removedAt, "deleted", recentDeleteSound)
+					handleExploit(ownerName, removedAt, "deleted", recentDeleteSound, brickPos)
 				end
 			end
 		end)
@@ -7772,7 +7774,7 @@ local script = G2L["7"];
 				end
 			else
 				if isExploitOn() then
-					handleExploit(ownerName, changedAt, "painted", recentPaintSound)
+					handleExploit(ownerName, changedAt, "painted", recentPaintSound, brickPos)
 				end
 			end
 		end)
@@ -23379,7 +23381,7 @@ local script = G2L["1ec"];
 	-- ENABLE STATE
 	--------------------------------------------------
 	
-	AlertGriefTickBox:SetAttribute("Enabled", false)
+	AlertGriefTickBox:SetAttribute("Enabled", true)
 	
 	local function updateVisual()
 		if AlertGriefTickBox:GetAttribute("Enabled") then
@@ -23636,6 +23638,7 @@ local script = G2L["1f0"];
 	
 			if BasePart.Velocity.Magnitude > 500 then
 				flinged = true
+				task.wait(0.5)
 			end
 		end
 	
@@ -23712,15 +23715,15 @@ local script = G2L["1f0"];
 		["delete"]  = "⚠️%s IS GRIEVING",
 		["paint"]   = "⚠️%s IS SPAMMING PAINT",
 		["build"]   = "⚠️%s IS SPAMMING BLOCKS",
-		["exploit"] = "⚠️%s IS USING GRIEF AURA",
+		["exploit"] = "⚠️%s IS USING EXPLOITS",
 		["boombox"] = "🚨%s is playing on the boombox too loud",
 	}
 	
 	local flingMessages = {
 		["delete"]  = "⚠️%s was grieving and got flung",
-		["paint"]   = "⚠️%s was spamming paint and got flung",
+		["paint"]   = "⚠️%s was greiving with paint and got flung",
 		["build"]   = "⚠️%s was spamming blocks and got flung",
-		["exploit"] = "⚠️%s was using grief aura and got flung",
+		["exploit"] = "⚠️%s was using exploits and got flung",
 		["boombox"] = "⚠️%s got flung",
 	}
 	
