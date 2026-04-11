@@ -7264,6 +7264,7 @@ local script = G2L["7"];
 	shared.DeleteGriefEvent  = shared.DeleteGriefEvent  or Instance.new("BindableEvent")
 	shared.PaintGriefEvent   = shared.PaintGriefEvent   or Instance.new("BindableEvent")
 	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
+	shared.BuildGriefEvent   = shared.BuildGriefEvent   or Instance.new("BindableEvent")
 	shared.BoomboxLoudEvent  = shared.BoomboxLoudEvent  or Instance.new("BindableEvent")
 	
 	--------------------------------------------------
@@ -7301,7 +7302,8 @@ local script = G2L["7"];
 	local function isDeleteOn()  return ScreenGui:GetAttribute("DeleteLogsEnabled")   == true end
 	local function isPaintOn()   return ScreenGui:GetAttribute("PaintLogsEnabled")    == true end
 	local function isExploitOn() return ScreenGui:GetAttribute("ExploitsLogsEnabled") == true end
-	local function anyOn()       return isDeleteOn() or isPaintOn() or isExploitOn() end
+	local function isSpamOn()    return ScreenGui:GetAttribute("SpamLogsEnabled")     == true end
+	local function anyOn()       return isDeleteOn() or isPaintOn() or isExploitOn() or isSpamOn() end
 	
 	--------------------------------------------------
 	-- GRIEF SETTINGS
@@ -7371,6 +7373,8 @@ local script = G2L["7"];
 	local pendingExploits     = {}
 	local deleteNormalBuffer  = {}
 	local paintNormalBuffer   = {}
+	local spamTracker         = {}  -- userId -> {times={}}
+	local spamCooldown        = {}
 	
 	local function clearTable(t)
 		for k in pairs(t) do t[k] = nil end
@@ -7500,6 +7504,28 @@ local script = G2L["7"];
 			resetCount(exploitTracker, player.UserId)
 			task.delay(cooldown, function()
 				print("[EXPLOIT] " .. player.Name .. "'s cooldown ended (" .. cooldown .. ")")
+			end)
+		end
+	end
+	
+	local SPAM_COUNT = 60
+	local SPAM_TIME  = 13
+	
+	local function flagSpam(player)
+		if spamCooldown[player.UserId] and tick() < spamCooldown[player.UserId] then return end
+		local count = addCount(spamTracker, player.UserId, tick(), SPAM_TIME)
+		if count % 10 == 0 then
+			print("[BUILD] " .. player.Name .. " build spam | Count: " .. count .. "/" .. SPAM_COUNT)
+		end
+		if count >= SPAM_COUNT then
+			local cooldown = shared.GriefCooldown or 30
+			print("[BUILDGRIEFLOG] 🚨 " .. player.Name .. " is placing blocks too fast | Cooldown: " .. cooldown)
+			shared.GriefEvent:Fire(player, "build")
+			shared.BuildGriefEvent:Fire(player)
+			resetCount(spamTracker, player.UserId)
+			spamCooldown[player.UserId] = tick() + cooldown
+			task.delay(cooldown, function()
+				print("[BUILD] " .. player.Name .. "'s cooldown ended (" .. cooldown .. ")")
 			end)
 		end
 	end
@@ -7710,6 +7736,12 @@ local script = G2L["7"];
 				for _, player in ipairs(detected) do
 					setDeleteBuffer(player)
 					flagDelete(player, ownerName)
+					-- Clear pending exploit entries for this player so exploit doesnt also fire
+					for i = #pendingExploits, 1, -1 do
+						if pendingExploits[i].soundTable == recentDeleteSound then
+							table.remove(pendingExploits, i)
+						end
+					end
 				end
 			else
 				if isExploitOn() then
@@ -7738,6 +7770,12 @@ local script = G2L["7"];
 				for _, player in ipairs(detected) do
 					setPaintBuffer(player)
 					flagPaint(player, ownerName)
+					-- Clear pending exploit entries for this player so exploit doesnt also fire
+					for i = #pendingExploits, 1, -1 do
+						if pendingExploits[i].soundTable == recentPaintSound then
+							table.remove(pendingExploits, i)
+						end
+					end
 				end
 			else
 				if isExploitOn() then
@@ -7902,6 +7940,22 @@ local script = G2L["7"];
 			table.insert(connections, c)
 		end
 	
+		-- Build spam: watch ChildAdded on folder directly (no per-brick connections)
+		if isSpamOn() then
+			local ownerPlayer = Players:FindFirstChild(ownerName)
+			if ownerPlayer then
+				local c = folder.ChildAdded:Connect(function(child)
+					if child.Name ~= "Brick" then return end
+					if not isSpamOn() then return end
+					local player = Players:FindFirstChild(ownerName)
+					if not player then return end
+					if not passesFilters(player, ownerName) then return end
+					flagSpam(player)
+				end)
+				table.insert(connections, c)
+			end
+		end
+	
 		local c2 = folder.ChildAdded:Connect(function(child)
 			if child.Name ~= "Brick" then return end
 			watchBrick(child, ownerName)
@@ -7947,6 +8001,8 @@ local script = G2L["7"];
 			usedSoundTimestamps[uid] = nil
 			deleteNormalBuffer[uid]  = nil
 			paintNormalBuffer[uid]   = nil
+			spamTracker[uid]         = nil
+			spamCooldown[uid]        = nil
 		end)
 	
 		for _, folder in ipairs(bricksFolder:GetChildren()) do
@@ -7979,6 +8035,8 @@ local script = G2L["7"];
 		clearTable(usedSoundTimestamps)
 		clearTable(deleteNormalBuffer)
 		clearTable(paintNormalBuffer)
+		clearTable(spamTracker)
+		clearTable(spamCooldown)
 		clearArray(pendingExploits)
 	end
 	
@@ -7986,7 +8044,7 @@ local script = G2L["7"];
 	-- ATTRIBUTE WATCHERS
 	--------------------------------------------------
 	
-	local ATTRS = {"DeleteLogsEnabled", "PaintLogsEnabled", "ExploitsLogsEnabled"}
+	local ATTRS = {"DeleteLogsEnabled", "PaintLogsEnabled", "ExploitsLogsEnabled", "SpamLogsEnabled"}
 	
 	for _, attr in ipairs(ATTRS) do
 		ScreenGui:GetAttributeChangedSignal(attr):Connect(function()
@@ -21250,144 +21308,7 @@ local script = G2L["1ac"];
 	local EnableAccentColor = EnableGroup:WaitForChild("EnableAccentColor")
 	local ScreenGui = script:FindFirstAncestorOfClass("ScreenGui")
 	
-	--------------------------------------------------
-	-- SETTINGS
-	--------------------------------------------------
-	
-	local SPAM_COUNT = 60
-	local SPAM_TIME  = 13
-	local COOLDOWN   = 30
-	
-	--------------------------------------------------
-	-- ENSURE EVENTS EXIST
-	--------------------------------------------------
-	
-	shared.BuildGriefEvent = shared.BuildGriefEvent or Instance.new("BindableEvent")
-	shared.GriefEvent      = shared.GriefEvent      or Instance.new("BindableEvent")
-	shared.BuildEvent      = shared.BuildEvent      or Instance.new("BindableEvent")
-	
-	--------------------------------------------------
-	-- STATE
-	--------------------------------------------------
-	
-	local Enabled     = false
-	local connections = {}
-	local trackers    = {}
-	local cooldowns   = {}
-	
-	--------------------------------------------------
-	-- FILTER HELPERS
-	--------------------------------------------------
-	
-	local function isWhitelisted(player)
-		local w = shared.GriefWhitelist
-		return w and w[player.Name] == true
-	end
-	
-	local function hasArkenstone(player)
-		local b = player:FindFirstChild("Backpack")
-		return b and b:FindFirstChild("The Arkenstone") ~= nil
-	end
-	
-	local function passesEnlightenCheck(player)
-		local e = shared.GriefEnlightenEnabled
-		if e == nil then e = true end
-		if e then return true end
-		return not hasArkenstone(player)
-	end
-	
-	local function passesTimeFilterCheck(player)
-		local filter = shared.GriefTimeFilter or 0
-		if filter == 0 then return true end
-		local ls = player:FindFirstChild("leaderstats")
-		if not ls then return true end
-		local t = ls:FindFirstChild("Time")
-		if not t then return true end
-		return t.Value < filter
-	end
-	
-	--------------------------------------------------
-	-- ON BRICK ADDED
-	--------------------------------------------------
-	
-	local function onBrickAdded(player)
-		if not Enabled then return end
-		if not player then return end
-		if isWhitelisted(player) then return end
-		if not passesEnlightenCheck(player) then return end
-		if not passesTimeFilterCheck(player) then return end
-	
-		local userId = player.UserId
-		if cooldowns[userId] and tick() < cooldowns[userId] then return end
-	
-		local now = tick()
-		trackers[userId] = trackers[userId] or {}
-		table.insert(trackers[userId], now)
-	
-		for i = #trackers[userId], 1, -1 do
-			if now - trackers[userId][i] > SPAM_TIME then
-				table.remove(trackers[userId], i)
-			end
-		end
-	
-		local count = #trackers[userId]
-		if count % 10 == 0 then
-			print("[BUILDLOG] " .. player.DisplayName .. " (" .. player.Name .. ") | count: " .. count)
-		end
-		if count >= SPAM_COUNT then
-			print("[SPAM GRIEF DETECTED]", player.Name)
-			shared.BuildGriefEvent:Fire(player)
-			shared.GriefEvent:Fire(player, "build")
-			trackers[userId] = {}
-			cooldowns[userId] = tick() + (shared.GriefCooldown or COOLDOWN)
-		end
-	end
-	
-	--------------------------------------------------
-	-- WATCH FOLDERS
-	--------------------------------------------------
-	
-	local function watchFolder(folder)
-		local player = Players:FindFirstChild(folder.Name)
-		if not player then return end
-	
-		local c = folder.ChildAdded:Connect(function(child)
-			if child.Name == "Brick" then
-				onBrickAdded(player)
-			end
-		end)
-		table.insert(connections, c)
-	end
-	
-	local function startWatching()
-		local bricksFolder = workspace:WaitForChild("Bricks")
-	
-		for _, folder in ipairs(bricksFolder:GetChildren()) do
-			watchFolder(folder)
-		end
-	
-		local c1 = bricksFolder.ChildAdded:Connect(watchFolder)
-		table.insert(connections, c1)
-	
-		local c2 = Players.PlayerAdded:Connect(function(player)
-			local folder = bricksFolder:FindFirstChild(player.Name)
-			if folder then watchFolder(folder) end
-		end)
-		table.insert(connections, c2)
-	end
-	
-	local function stopWatching()
-		for _, c in ipairs(connections) do
-			pcall(function() c:Disconnect() end)
-		end
-		connections = {}
-		trackers    = {}
-		cooldowns   = {}
-	end
-	
-	--------------------------------------------------
-	-- ENABLE STATE
-	--------------------------------------------------
+	local Enabled = false
 	
 	local function updateVisual()
 		if Enabled then
@@ -21403,11 +21324,6 @@ local script = G2L["1ac"];
 		Enabled = not Enabled
 		ScreenGui:SetAttribute("SpamLogsEnabled", Enabled)
 		updateVisual()
-		if Enabled then
-			startWatching()
-		else
-			stopWatching()
-		end
 	end)
 	
 	updateVisual()
