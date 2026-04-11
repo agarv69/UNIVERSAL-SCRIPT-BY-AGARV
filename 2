@@ -7373,7 +7373,7 @@ local script = G2L["7"];
 	local pendingExploits     = {}
 	local deleteNormalBuffer  = {}
 	local paintNormalBuffer   = {}
-	local spamTracker         = {}  -- userId -> {times={}}
+	local spamTracker         = {}
 	local spamCooldown        = {}
 	
 	local function clearTable(t)
@@ -7405,7 +7405,6 @@ local script = G2L["7"];
 		return (eventTime - last) < DELCUBE_CANCEL
 	end
 	
-	-- Fixed timeout - always waits the full window from start, not remaining time
 	local function waitForCondition(condFn, timeout)
 		local start = tick()
 		while tick() - start < timeout do
@@ -7476,7 +7475,6 @@ local script = G2L["7"];
 	end
 	
 	local function flagExploit(player, ownerName, actionType)
-		-- Check normal buffer first
 		local bufferTable = actionType == "deleted" and deleteNormalBuffer or paintNormalBuffer
 		local buf = bufferTable[player.UserId] or 0
 		if buf > 0 then
@@ -7489,7 +7487,6 @@ local script = G2L["7"];
 			return
 		end
 	
-		-- Skip entirely if on cooldown
 		if exploitCooldown[player.UserId] and tick() < exploitCooldown[player.UserId] then return end
 	
 		local count = addCount(exploitTracker, player.UserId, tick(), EXPLOIT_TIME)
@@ -7529,7 +7526,9 @@ local script = G2L["7"];
 			end)
 		end
 	end
-	deleteNormalBuffer[player.UserId] = NORMAL_BUFFER
+	
+	local function setDeleteBuffer(player)
+		deleteNormalBuffer[player.UserId] = NORMAL_BUFFER
 	end
 	
 	local function setPaintBuffer(player)
@@ -7619,7 +7618,6 @@ local script = G2L["7"];
 		if dist > MAX_DISTANCE then return "failed" end
 		if player.Name == ownerName then return "ownbrick" end
 	
-		-- Tool check - fixed timeout TOOL_WINDOW from now
 		local toolMet = false
 		local toolT = deleteToolPresence[player.UserId]
 		if toolT and math.abs(toolT - eventTime) <= TOOL_WINDOW then
@@ -7633,7 +7631,6 @@ local script = G2L["7"];
 		end
 		if not toolMet then return "exploit" end
 	
-		-- Slash check - fixed timeout SLASH_WINDOW from now
 		local slashMet = false
 		local slashT = recentSlashAnim[player.UserId]
 		if slashT and math.abs(slashT - eventTime) <= SLASH_WINDOW then
@@ -7647,7 +7644,6 @@ local script = G2L["7"];
 		end
 		if not slashMet then return "exploit" end
 	
-		-- Sound check - fixed timeout SOUND_MAX from now
 		local soundMet = waitForCondition(function()
 			local t = recentDeleteSound[player.UserId]
 			if not t then return false end
@@ -7734,6 +7730,12 @@ local script = G2L["7"];
 				for _, player in ipairs(detected) do
 					setDeleteBuffer(player)
 					flagDelete(player, ownerName)
+					for i = #pendingExploits, 1, -1 do
+						if pendingExploits[i].soundTable == recentDeleteSound
+							and pendingExploits[i].ownerName == ownerName then
+							table.remove(pendingExploits, i)
+						end
+					end
 				end
 			else
 				if isExploitOn() then
@@ -7762,6 +7764,12 @@ local script = G2L["7"];
 				for _, player in ipairs(detected) do
 					setPaintBuffer(player)
 					flagPaint(player, ownerName)
+					for i = #pendingExploits, 1, -1 do
+						if pendingExploits[i].soundTable == recentPaintSound
+							and pendingExploits[i].ownerName == ownerName then
+							table.remove(pendingExploits, i)
+						end
+					end
 				end
 			else
 				if isExploitOn() then
@@ -7778,40 +7786,20 @@ local script = G2L["7"];
 	local function hookHRP(player, hrp)
 		local function trackSound(obj)
 			if not obj:IsA("Sound") then return end
-			local lastTime = 0
-			local wasPlaying = false
 	
 			if obj.SoundId == BRICK_SOUND_ID then
-				local c = RunService.Heartbeat:Connect(function()
-					if not obj.Parent then return end
-					local t = obj.TimePosition
-					local playing = obj.IsPlaying
-					if playing then
-						if not wasPlaying or (lastTime > 0.05 and t < 0.05) then
-							local soundTime = tick()
-							recentDeleteSound[player.UserId] = soundTime
-							onDeleteSoundPlayed(player, soundTime)
-						end
-					end
-					lastTime = t
-					wasPlaying = playing
+				local c = obj.Played:Connect(function()
+					local soundTime = tick()
+					recentDeleteSound[player.UserId] = soundTime
+					onDeleteSoundPlayed(player, soundTime)
 				end)
 				table.insert(connections, c)
 	
 			elseif obj.SoundId == PAINT_SOUND_ID then
-				local c = RunService.Heartbeat:Connect(function()
-					if not obj.Parent then return end
-					local t = obj.TimePosition
-					local playing = obj.IsPlaying
-					if playing then
-						if not wasPlaying or (lastTime > 0.05 and t < 0.05) then
-							local soundTime = tick()
-							recentPaintSound[player.UserId] = soundTime
-							onPaintSoundPlayed(player, soundTime)
-						end
-					end
-					lastTime = t
-					wasPlaying = playing
+				local c = obj.Played:Connect(function()
+					local soundTime = tick()
+					recentPaintSound[player.UserId] = soundTime
+					onPaintSoundPlayed(player, soundTime)
 				end)
 				table.insert(connections, c)
 			end
@@ -7829,28 +7817,34 @@ local script = G2L["7"];
 	--------------------------------------------------
 	
 	local function hookAnim(player)
-		local lastTime = 0
-		local wasPlaying = false
-		local c = RunService.Heartbeat:Connect(function()
-			local char = player.Character
-			if not char then return end
-			local hum = char:FindFirstChildOfClass("Humanoid")
+		local function setupAnimator(animator)
+			local c = animator.AnimationPlayed:Connect(function(track)
+				if track.Animation and track.Animation.AnimationId:find(DELETE_ANIM_ID) then
+					recentSlashAnim[player.UserId] = tick()
+				end
+			end)
+			table.insert(connections, c)
+		end
+	
+		local function checkChar(char)
+			local hum = char:WaitForChild("Humanoid", 10)
 			if not hum then return end
 			local animator = hum:FindFirstChildOfClass("Animator")
-			if not animator then return end
-			for _, track in pairs(animator:GetPlayingAnimationTracks()) do
-				if track.Animation and track.Animation.AnimationId:find(DELETE_ANIM_ID) then
-					local t = track.TimePosition
-					if not wasPlaying or (lastTime > 0.05 and t < 0.05) then
-						recentSlashAnim[player.UserId] = tick()
-					end
-					lastTime = t
-					wasPlaying = true
-					return
-				end
+			if animator then
+				setupAnimator(animator)
 			end
-			wasPlaying = false
-		end)
+			local c = hum.ChildAdded:Connect(function(child)
+				if child:IsA("Animator") then
+					setupAnimator(child)
+				end
+			end)
+			table.insert(connections, c)
+		end
+	
+		if player.Character then
+			checkChar(player.Character)
+		end
+		local c = player.CharacterAdded:Connect(checkChar)
 		table.insert(connections, c)
 	end
 	
@@ -7926,7 +7920,6 @@ local script = G2L["7"];
 			table.insert(connections, c)
 		end
 	
-		-- Build spam: watch ChildAdded on folder directly (no per-brick connections)
 		if isSpamOn() then
 			local ownerPlayer = Players:FindFirstChild(ownerName)
 			if ownerPlayer then
