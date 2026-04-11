@@ -6606,7 +6606,7 @@ G2L["257"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["257"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["257"]["LayoutOrder"] = 30;
 G2L["257"]["BorderColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["257"]["Text"] = [[2.4.1]];
+G2L["257"]["Text"] = [[2.4.2]];
 G2L["257"]["Name"] = [[VersionNumber]];
 G2L["257"]["Position"] = UDim2.new(0, 0, 1.25, 0);
 
@@ -7503,7 +7503,7 @@ local script = G2L["7"];
 			return false
 		end
 		local diff = removedAt - entry.lastTick
-		if diff < 0.02 then
+		if diff < 0.05 then
 			entry.count = entry.count + 1
 			entry.lastTick = removedAt
 			return entry.count >= DELCUBE_THRESHOLD
@@ -7549,7 +7549,7 @@ local script = G2L["7"];
 		if count >= GRIEF_COUNT then
 			local cooldown = shared.GriefCooldown or 30
 			print("[GRIEFLOG]  🚨  " .. display .. "  |  Triggered Paint Detection  |  Cooldown: " .. cooldown)
-			shared.GriefEvent:Fire(player, "toxify")
+			shared.GriefEvent:Fire(player, "paint")
 			shared.PaintGriefEvent:Fire(player)
 			resetCount(paintTracker, player.UserId)
 			paintCooldown[player.UserId] = tick() + cooldown
@@ -7760,23 +7760,9 @@ local script = G2L["7"];
 	--------------------------------------------------
 	
 	local function handleDelete(brickPos, ownerName, removedAt)
-		-- Update delcube tracker first
-		local entry = delcubeTracker[ownerName]
-		if not entry then
-			delcubeTracker[ownerName] = {lastTick = removedAt, count = 1}
-		elseif (removedAt - entry.lastTick) < 0.02 then
-			entry.count = entry.count + 1
-			entry.lastTick = removedAt
-		else
-			delcubeTracker[ownerName] = {lastTick = removedAt, count = 1}
-		end
+		if isDelcube(ownerName, removedAt) then return end
 	
-		-- Wait 0.02s then check if it ended up being a delcube
-		task.delay(0.02, function()
-			local e = delcubeTracker[ownerName]
-			if e and e.count >= DELCUBE_THRESHOLD then return end
-	
-			task.spawn(function()
+		task.spawn(function()
 			-- Step 1: Check who was within 30 studs
 			local inRange = {}
 			for _, player in ipairs(Players:GetPlayers()) do
@@ -7820,7 +7806,6 @@ local script = G2L["7"];
 					end
 				end
 			end
-		end)
 		end)
 	end
 	
@@ -23542,7 +23527,7 @@ local script = G2L["1f0"];
 	ConfirmGriefFrame.Visible = false
 	
 	--------------------------------------------------
-	-- ENABLE STATE (SAFE MUTUAL EXCLUSIVE)
+	-- ENABLE STATE
 	--------------------------------------------------
 	
 	ConfirmGriefTickBox:SetAttribute("Enabled", false)
@@ -23766,28 +23751,25 @@ local script = G2L["1f0"];
 	--------------------------------------------------
 	
 	local griefTypeLabels = {
-		["delete"]   = "DELETE DETECTION",
-		["toxify"]   = "PAINT DETECTION",
-		["unanchor"] = "PAINT DETECTION",
-		["build"]    = "BUILD SPAM",
-		["exploit"]  = "EXPLOIT DETECTION",
-		["boombox"]  = "LOUD BOOMBOX",
+		["delete"]  = "DELETE DETECTION",
+		["paint"]   = "PAINT DETECTION",
+		["build"]   = "BUILD SPAM",
+		["exploit"] = "EXPLOIT DETECTION",
+		["boombox"] = "LOUD BOOMBOX",
 	}
 	
 	local alertMessages = {
-		["delete"]   = "⚠️%s IS GRIEVING",
-		["toxify"]   = "⚠️%s IS SPAMMING TOXIFY",
-		["unanchor"] = "⚠️%s IS SPAMMING UNANCHOR",
-		["build"]    = "⚠️%s IS SPAMMING BLOCKS",
-		["exploit"]  = "⚠️%s IS USING GRIEF AURA",
+		["delete"]  = "⚠️%s IS GRIEVING",
+		["paint"]   = "⚠️%s IS GRIEF PAINTING",
+		["build"]   = "⚠️%s IS SPAMMING BLOCKS",
+		["exploit"] = "⚠️%s IS USING EXPLOITS TO GRIEF",
 	}
 	
 	local flingMessages = {
-		["delete"]   = "⚠️%s was grieving and got flung",
-		["toxify"]   = "⚠️%s was spamming toxify and got flung",
-		["unanchor"] = "⚠️%s was spamming unanchor and got flung",
-		["build"]    = "⚠️%s was spamming blocks and got flung",
-		["exploit"]  = "⚠️%s was using exploits to grief and got flung",
+		["delete"]  = "⚠️%s was grieving and got flung",
+		["paint"]   = "⚠️%s was paint griefing and got flung",
+		["build"]   = "⚠️%s was spamming blocks and got flung",
+		["exploit"] = "⚠️%s was using exploits to grief and got flung",
 	}
 	
 	--------------------------------------------------
@@ -23820,10 +23802,8 @@ local script = G2L["1f0"];
 		setButtonsForBoombox(false)
 		spectateBack()
 	
-		-- Reset pause button text
 		PauseConfirm.Text = "PAUSE TIMER"
 	
-		-- Stop SFX
 		if shared.StopGriefSFX then shared.StopGriefSFX() end
 	
 		if timerConn then
@@ -23866,7 +23846,6 @@ local script = G2L["1f0"];
 		currentGriefType = griefType
 		currentIsBoombox = isBoombox or false
 	
-		-- Reset pause state cleanly
 		timerPaused = false
 		PauseConfirm.Text = "PAUSE TIMER"
 	
@@ -23983,13 +23962,12 @@ local script = G2L["1f0"];
 	-- ENSURE EVENTS EXIST
 	--------------------------------------------------
 	
-	shared.GriefEvent         = shared.GriefEvent         or Instance.new("BindableEvent")
-	shared.DeleteGriefEvent   = shared.DeleteGriefEvent   or Instance.new("BindableEvent")
-	shared.ToxifyGriefEvent   = shared.ToxifyGriefEvent   or Instance.new("BindableEvent")
-	shared.UnanchorGriefEvent = shared.UnanchorGriefEvent or Instance.new("BindableEvent")
-	shared.BuildGriefEvent    = shared.BuildGriefEvent    or Instance.new("BindableEvent")
-	shared.ExploitGriefEvent  = shared.ExploitGriefEvent  or Instance.new("BindableEvent")
-	shared.BoomboxLoudEvent   = shared.BoomboxLoudEvent   or Instance.new("BindableEvent")
+	shared.GriefEvent        = shared.GriefEvent        or Instance.new("BindableEvent")
+	shared.DeleteGriefEvent  = shared.DeleteGriefEvent  or Instance.new("BindableEvent")
+	shared.PaintGriefEvent   = shared.PaintGriefEvent   or Instance.new("BindableEvent")
+	shared.BuildGriefEvent   = shared.BuildGriefEvent   or Instance.new("BindableEvent")
+	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
+	shared.BoomboxLoudEvent  = shared.BoomboxLoudEvent  or Instance.new("BindableEvent")
 	
 	--------------------------------------------------
 	-- LISTEN FOR GRIEF EVENT
@@ -24000,7 +23978,6 @@ local script = G2L["1f0"];
 		local isExploit = griefType == "exploit"
 		local autoFling = shared.FlingExploitEnabled == true
 	
-		-- If exploit and FlingExploit on, show confirm and auto fling
 		if isExploit and autoFling then
 			showConfirm(player, griefType, false)
 			task.delay(0.1, function()
