@@ -6560,7 +6560,7 @@ G2L["253"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["253"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["253"]["LayoutOrder"] = 30;
 G2L["253"]["BorderColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["253"]["Text"] = [[2.3]];
+G2L["253"]["Text"] = [[2.4]];
 G2L["253"]["Name"] = [[VersionNumber]];
 G2L["253"]["Position"] = UDim2.new(0, 0, 1.25, 0);
 
@@ -7577,13 +7577,13 @@ local script = G2L["7"];
 		if anyNonSlash or not slashTime then
 			for i = 1, countToFlag do
 				local entry = matched[i]
-				if passesFilters(player, entry.ownerName) then
+				if player.Name ~= entry.ownerName and passesFilters(player, entry.ownerName) then
 					flagExploit(player, entry.ownerName, entry.actionType)
 				end
 			end
 		else
 			local best = matched[1]
-			if passesFilters(player, best.ownerName) then
+			if player.Name ~= best.ownerName and passesFilters(player, best.ownerName) then
 				flagExploit(player, best.ownerName, best.actionType)
 			end
 		end
