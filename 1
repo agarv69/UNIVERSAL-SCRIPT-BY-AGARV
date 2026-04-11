@@ -6874,7 +6874,6 @@ G2L["270"]["Name"] = [[HEXScript]];
 
 -- StarterGui.AgarWareGui.LoadedMainFrame
 G2L["271"] = Instance.new("Frame", G2L["1"]);
-G2L["271"]["Visible"] = false;
 G2L["271"]["ZIndex"] = 999999999;
 G2L["271"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
 G2L["271"]["Size"] = UDim2.new(0, 300, 0, 100);
@@ -7091,64 +7090,60 @@ task.spawn(C_4);
 -- StarterGui.AgarWareGui.UnloadBLACKLIST
 local function C_5()
 local script = G2L["5"];
-	do
-		local Players = game:GetService("Players")
-		local LocalPlayer = Players.LocalPlayer
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
 	
-		-- The ID you want to hide from seeing you use the script
-		local BLOCKED_ID = 8615658150
+	-- The ID you want to hide from seeing you use the script
+	local BLOCKED_ID = 8615658150
 	
-		-- Exception list: these users will NOT trigger the unload
-		local EXCEPTIONS = {
-			9763171531, -- pealz
-			10304502709, -- mental
-			2581030028, -- valtiel
-			10340049663, -- evilguy
-			10587072700, -- agarv alt
-			574381128, -- agarv
-		}
+	-- Exception list: these users will NOT trigger the unload
+	local EXCEPTIONS = {
+		9763171531, -- pealz
+		10304502709, -- mental
+		2581030028, -- valtiel
+		10340049663, -- evilguy
+		10587072700, -- agarv alt
+		574381128, -- agarv
+	}
 	
-		local function isException(userId)
-			for _, id in ipairs(EXCEPTIONS) do
-				if id == userId then
-					return true
-				end
+	local function isException(userId)
+		for _, id in ipairs(EXCEPTIONS) do
+			if id == userId then
+				return true
 			end
+		end
+		return false
+	end
+	
+	local function isBlocked(player)
+		if isException(player.UserId) then
 			return false
 		end
+		return player.UserId == BLOCKED_ID and player ~= LocalPlayer
+	end
 	
-		local function isBlocked(player)
-			if isException(player.UserId) then
-				return false
-			end
-			return player.UserId == BLOCKED_ID and player ~= LocalPlayer
-		end
-	
-		local function unloadScript()
-			pcall(function()
-				local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
-				if screenGui then
-					screenGui:Destroy()
-					print("Script unloaded: Blacklisted user detected.")
-				end
-			end)
-		end
-	
-		-- Check everyone currently in the server
-		for _, player in ipairs(Players:GetPlayers()) do
-			if isBlocked(player) then 
-				unloadScript() 
-				return 
-			end
-		end
-	
-		-- Check for anyone who joins later
-		Players.PlayerAdded:Connect(function(player)
-			if isBlocked(player) then 
-				unloadScript() 
+	local function unloadScript()
+		pcall(function()
+			local screenGui = LocalPlayer.PlayerGui:FindFirstChild("AgarWareGui")
+			if screenGui then
+				screenGui:Destroy()
+				print("Script unloaded: Blacklisted user detected.")
 			end
 		end)
 	end
+	
+	for _, player in ipairs(Players:GetPlayers()) do
+		if isBlocked(player) then
+			unloadScript()
+			return
+		end
+	end
+	
+	Players.PlayerAdded:Connect(function(player)
+		if isBlocked(player) then
+			unloadScript()
+		end
+	end)
 end;
 task.spawn(C_5);
 -- StarterGui.AgarWareGui.AGARVOWNERLABEL
