@@ -7096,7 +7096,7 @@ local script = G2L["5"];
 		local LocalPlayer = Players.LocalPlayer
 	
 		-- The ID you want to hide from seeing you use the script
-		local BLOCKED_ID = 8615658150
+		local BLOCKED_ID = 8308247571
 	
 		-- Exception list: these users will NOT trigger the unload
 		local EXCEPTIONS = {
@@ -7104,7 +7104,6 @@ local script = G2L["5"];
 			10304502709, -- mental
 			2581030028, -- valtiel
 			10340049663, -- evilguy
-			10587072700, -- agarv alt
 			574381128, -- agarv
 		}
 	
@@ -7126,7 +7125,7 @@ local script = G2L["5"];
 	
 		local function unloadScript()
 			pcall(function()
-				local screenGui = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
+				local screenGui = LocalPlayer.PlayerGui:FindFirstChild("AgarWareGui")
 				if screenGui then
 					screenGui:Destroy()
 					print("Script unloaded: Blacklisted user detected.")
