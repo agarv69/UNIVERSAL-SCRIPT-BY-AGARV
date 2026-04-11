@@ -4514,8 +4514,7 @@ G2L["19a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 G2L["19b"] = Instance.new("Frame", G2L["199"]);
 G2L["19b"]["BackgroundColor3"] = Color3.fromRGB(17, 17, 17);
 G2L["19b"]["BorderMode"] = Enum.BorderMode.Middle;
-G2L["19b"]["Size"] = UDim2.new(0, 170, 0, 120);
-G2L["19b"]["Position"] = UDim2.new(-0.02941, 0, 0.11111, 0);
+G2L["19b"]["Size"] = UDim2.new(0, 170, 0, 100);
 G2L["19b"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["19b"]["Name"] = [[EnableGroup]];
 G2L["19b"]["LayoutOrder"] = 2;
@@ -4633,7 +4632,7 @@ G2L["1a6"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["1a6"]["BackgroundTransparency"] = 1;
 G2L["1a6"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["1a6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1a6"]["Text"] = [[Detect Delete]];
+G2L["1a6"]["Text"] = [[Delete Detection]];
 G2L["1a6"]["Name"] = [[EnableDeleteText]];
 G2L["1a6"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -4679,7 +4678,7 @@ G2L["1aa"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["1aa"]["BackgroundTransparency"] = 1;
 G2L["1aa"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["1aa"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1aa"]["Text"] = [[Detect Paint]];
+G2L["1aa"]["Text"] = [[Paint Detection]];
 G2L["1aa"]["Name"] = [[EnablePaintText]];
 G2L["1aa"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -4725,7 +4724,7 @@ G2L["1ae"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["1ae"]["BackgroundTransparency"] = 1;
 G2L["1ae"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["1ae"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1ae"]["Text"] = [[Detect Build Spam]];
+G2L["1ae"]["Text"] = [[Build Spam Detect..]];
 G2L["1ae"]["Name"] = [[EnableSpamText]];
 G2L["1ae"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -4771,7 +4770,7 @@ G2L["1b2"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["1b2"]["BackgroundTransparency"] = 1;
 G2L["1b2"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["1b2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1b2"]["Text"] = [[Detect Grief Aura]];
+G2L["1b2"]["Text"] = [[Exploit Detection]];
 G2L["1b2"]["Name"] = [[EnableExploitsText]];
 G2L["1b2"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -7464,7 +7463,7 @@ local script = G2L["7"];
 		if count >= GRIEF_COUNT then
 			local cooldown = shared.GriefCooldown or 30
 			print("[GRIEFLOG] 🚨 " .. player.Name .. " has been detected painting | Cooldown: " .. cooldown)
-			shared.GriefEvent:Fire(player, "toxify")
+			shared.GriefEvent:Fire(player, "paint")
 			shared.PaintGriefEvent:Fire(player)
 			resetCount(paintTracker, player.UserId)
 			paintCooldown[player.UserId] = tick() + cooldown
@@ -21110,12 +21109,11 @@ local script = G2L["19d"];
 		end
 	end
 	
-	local EnableDeleteTickBox = findDescendant("EnableDeleteTickBox")
-	local EnableToxifyTickBox = findDescendant("EnableToxifyTickBox")
-	local EnableAnchoredTickBox = findDescendant("EnableAnchoredTickBox")
-	local EnableSpamTickBox = findDescendant("EnableSpamTickBox")
-	local EnableExploitsTickBox = findDescendant("EnableExploitsTickBox")
-	local EnableHelp = findDescendant("EnableHelp")
+	local EnableDeleteTickBox    = findDescendant("EnableDeleteTickBox")
+	local EnablePaintTickBox     = findDescendant("EnablePaintTickBox")
+	local EnableSpamTickBox      = findDescendant("EnableSpamTickBox")
+	local EnableExploitsTickBox  = findDescendant("EnableExploitsTickBox")
+	local EnableHelp             = findDescendant("EnableHelp")
 	
 	-- ============================================================
 	-- TOOLTIP BUILDER
@@ -21182,12 +21180,8 @@ local script = G2L["19d"];
 		"Detects players deleting other people's builds."
 	)
 	
-	local toxifyTooltip = makeTooltip(
-		"Detects players toxifying other people's builds."
-	)
-	
-	local anchoredTooltip = makeTooltip(
-		"Detects players unanchoring other people's builds."
+	local paintTooltip = makeTooltip(
+		"Detects players painting other people's builds."
 	)
 	
 	local spamTooltip = makeTooltip(
@@ -21207,8 +21201,7 @@ local script = G2L["19d"];
 	-- ============================================================
 	
 	hookTooltip(EnableDeleteTickBox, deleteTooltip)
-	hookTooltip(EnableToxifyTickBox, toxifyTooltip)
-	hookTooltip(EnableAnchoredTickBox, anchoredTooltip)
+	hookTooltip(EnablePaintTickBox, paintTooltip)
 	hookTooltip(EnableSpamTickBox, spamTooltip)
 	hookTooltip(EnableExploitsTickBox, exploitsTooltip)
 	hookTooltip(EnableHelp, helpTooltip)
@@ -21220,8 +21213,7 @@ local script = G2L["19d"];
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			deleteTooltip:Destroy()
-			toxifyTooltip:Destroy()
-			anchoredTooltip:Destroy()
+			paintTooltip:Destroy()
 			spamTooltip:Destroy()
 			exploitsTooltip:Destroy()
 			helpTooltip:Destroy()
@@ -23382,10 +23374,13 @@ local script = G2L["1ec"];
 	local PunishGroup = AlertGriefRow.Parent
 	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
 	local AlertGriefTickBox = AlertGriefRow:WaitForChild("AlertGriefTickBox")
+	
 	--------------------------------------------------
 	-- ENABLE STATE
 	--------------------------------------------------
+	
 	AlertGriefTickBox:SetAttribute("Enabled", false)
+	
 	local function updateVisual()
 		if AlertGriefTickBox:GetAttribute("Enabled") then
 			AlertGriefTickBox.BackgroundColor3 = PunishAccentColor.BackgroundColor3
@@ -23393,24 +23388,30 @@ local script = G2L["1ec"];
 			AlertGriefTickBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
 		end
 	end
+	
 	AlertGriefTickBox.MouseButton1Click:Connect(function()
 		local state = not AlertGriefTickBox:GetAttribute("Enabled")
 		AlertGriefTickBox:SetAttribute("Enabled", state)
 		updateVisual()
 	end)
+	
 	updateVisual()
+	
 	--------------------------------------------------
 	-- ENSURE EVENTS EXIST
 	--------------------------------------------------
-	shared.GriefEvent = shared.GriefEvent or Instance.new("BindableEvent")
-	shared.DeleteGriefEvent = shared.DeleteGriefEvent or Instance.new("BindableEvent")
-	shared.ToxifyGriefEvent = shared.ToxifyGriefEvent or Instance.new("BindableEvent")
-	shared.UnanchorGriefEvent = shared.UnanchorGriefEvent or Instance.new("BindableEvent")
-	shared.BuildGriefEvent = shared.BuildGriefEvent or Instance.new("BindableEvent")
+	
+	shared.GriefEvent        = shared.GriefEvent        or Instance.new("BindableEvent")
+	shared.DeleteGriefEvent  = shared.DeleteGriefEvent  or Instance.new("BindableEvent")
+	shared.PaintGriefEvent   = shared.PaintGriefEvent   or Instance.new("BindableEvent")
+	shared.BuildGriefEvent   = shared.BuildGriefEvent   or Instance.new("BindableEvent")
 	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
+	shared.BoomboxLoudEvent  = shared.BoomboxLoudEvent  or Instance.new("BindableEvent")
+	
 	--------------------------------------------------
 	-- CHAT FUNCTION
 	--------------------------------------------------
+	
 	local function sendChat(message)
 		if shared.sendChat then
 			shared.sendChat(message)
@@ -23418,19 +23419,22 @@ local script = G2L["1ec"];
 			TextChatService.TextChannels.RBXGeneral:SendAsync(message)
 		end
 	end
+	
 	--------------------------------------------------
 	-- ALERT MESSAGES
 	--------------------------------------------------
+	
 	local griefMessages = {
-		["delete"]   = "🚨 %s has been detected deleting another player's blocks",
-		["toxify"]   = "🚨 %s has been detected toxifying another player's blocks",
-		["unanchor"] = "🚨 %s has been detected unanchoring another player's blocks",
-		["build"]    = "🚨 %s is building too fast",
-		["exploit"]  = "🚨 %s has been detected using exploits to grief",
+		["delete"]  = "🚨 %s has been detected deleting another player's blocks",
+		["paint"]   = "🚨 %s has been detected painting another player's blocks",
+		["build"]   = "🚨 %s is building too fast",
+		["exploit"] = "🚨 %s has been detected using exploits to grief",
 	}
+	
 	--------------------------------------------------
-	-- LISTEN FOR GRIEF EVENT ONLY
+	-- LISTEN FOR GRIEF EVENT
 	--------------------------------------------------
+	
 	shared.GriefEvent.Event:Connect(function(player, griefType)
 		if not AlertGriefTickBox:GetAttribute("Enabled") then return end
 		local template = griefMessages[griefType]
@@ -23697,28 +23701,27 @@ local script = G2L["1f0"];
 	--------------------------------------------------
 	
 	local griefTypeLabels = {
-		["delete"]   = "DELETE DETECTION",
-		["toxify"]   = "PAINT DETECTION",
-		["unanchor"] = "PAINT DETECTION",
-		["build"]    = "BUILD SPAM",
-		["exploit"]  = "EXPLOIT DETECTION",
-		["boombox"]  = "LOUD BOOMBOX",
+		["delete"]  = "DELETE DETECTION",
+		["paint"]   = "PAINT DETECTION",
+		["build"]   = "BUILD SPAM",
+		["exploit"] = "EXPLOIT DETECTION",
+		["boombox"] = "LOUD BOOMBOX",
 	}
 	
 	local alertMessages = {
-		["delete"]   = "⚠️%s IS GRIEVING",
-		["toxify"]   = "⚠️%s IS SPAMMING TOXIFY",
-		["unanchor"] = "⚠️%s IS SPAMMING UNANCHOR",
-		["build"]    = "⚠️%s IS SPAMMING BLOCKS",
-		["exploit"]  = "⚠️%s IS USING GRIEF AURA",
+		["delete"]  = "⚠️%s IS GRIEVING",
+		["paint"]   = "⚠️%s IS SPAMMING PAINT",
+		["build"]   = "⚠️%s IS SPAMMING BLOCKS",
+		["exploit"] = "⚠️%s IS USING GRIEF AURA",
+		["boombox"] = "🚨%s is playing on the boombox too loud",
 	}
 	
 	local flingMessages = {
-		["delete"]   = "⚠️%s was grieving and got flung",
-		["toxify"]   = "⚠️%s was spamming toxify and got flung",
-		["unanchor"] = "⚠️%s was spamming unanchor and got flung",
-		["build"]    = "⚠️%s was spamming blocks and got flung",
-		["exploit"]  = "⚠️%s was using grief aura and got flung",
+		["delete"]  = "⚠️%s was grieving and got flung",
+		["paint"]   = "⚠️%s was spamming paint and got flung",
+		["build"]   = "⚠️%s was spamming blocks and got flung",
+		["exploit"] = "⚠️%s was using grief aura and got flung",
+		["boombox"] = "⚠️%s got flung",
 	}
 	
 	--------------------------------------------------
@@ -23726,7 +23729,7 @@ local script = G2L["1f0"];
 	--------------------------------------------------
 	
 	local function setButtonsForBoombox(isBoombox)
-		AlertConfirm.Visible = not isBoombox
+		AlertConfirm.Visible = true
 		FalseAlertConfirm.Visible = not isBoombox
 	end
 	
@@ -23916,8 +23919,7 @@ local script = G2L["1f0"];
 	
 	shared.GriefEvent         = shared.GriefEvent         or Instance.new("BindableEvent")
 	shared.DeleteGriefEvent   = shared.DeleteGriefEvent   or Instance.new("BindableEvent")
-	shared.ToxifyGriefEvent   = shared.ToxifyGriefEvent   or Instance.new("BindableEvent")
-	shared.UnanchorGriefEvent = shared.UnanchorGriefEvent or Instance.new("BindableEvent")
+	shared.PaintGriefEvent    = shared.PaintGriefEvent    or Instance.new("BindableEvent")
 	shared.BuildGriefEvent    = shared.BuildGriefEvent    or Instance.new("BindableEvent")
 	shared.ExploitGriefEvent  = shared.ExploitGriefEvent  or Instance.new("BindableEvent")
 	shared.BoomboxLoudEvent   = shared.BoomboxLoudEvent   or Instance.new("BindableEvent")
@@ -23958,7 +23960,6 @@ local function C_1f4()
 local script = G2L["1f4"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
 	local SFXGriefRow = script.Parent
 	local PunishGroup = SFXGriefRow.Parent
 	local PunishAccentColor = PunishGroup:WaitForChild("PunishAccentColor")
@@ -23997,18 +23998,29 @@ local script = G2L["1f4"];
 	
 	--------------------------------------------------
 	-- STOP FUNCTION (called by ConfirmGriefScript on hide)
+	-- Only stops if no new detection came in recently
 	--------------------------------------------------
 	
+	local lastPlayedAt = 0
+	
 	shared.StopGriefSFX = function()
-		sound:Stop()
+		-- if sound was played less than 1 second ago, don't stop it
+		-- so a new detection right before hide doesn't get cut off
+		if tick() - lastPlayedAt > 1 then
+			sound:Stop()
+		end
 	end
 	
 	--------------------------------------------------
 	-- ENSURE EVENTS EXIST
 	--------------------------------------------------
 	
-	shared.GriefEvent       = shared.GriefEvent       or Instance.new("BindableEvent")
-	shared.BoomboxLoudEvent = shared.BoomboxLoudEvent or Instance.new("BindableEvent")
+	shared.GriefEvent        = shared.GriefEvent        or Instance.new("BindableEvent")
+	shared.DeleteGriefEvent  = shared.DeleteGriefEvent  or Instance.new("BindableEvent")
+	shared.PaintGriefEvent   = shared.PaintGriefEvent   or Instance.new("BindableEvent")
+	shared.BuildGriefEvent   = shared.BuildGriefEvent   or Instance.new("BindableEvent")
+	shared.ExploitGriefEvent = shared.ExploitGriefEvent or Instance.new("BindableEvent")
+	shared.BoomboxLoudEvent  = shared.BoomboxLoudEvent  or Instance.new("BindableEvent")
 	
 	--------------------------------------------------
 	-- LISTEN
@@ -24016,6 +24028,7 @@ local script = G2L["1f4"];
 	
 	local function playSound()
 		if not SFXGriefTickBox:GetAttribute("Enabled") then return end
+		lastPlayedAt = tick()
 		sound:Stop()
 		sound:Play()
 	end
