@@ -6560,7 +6560,7 @@ G2L["253"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["253"]["Size"] = UDim2.new(0, 80, 0, 15);
 G2L["253"]["LayoutOrder"] = 30;
 G2L["253"]["BorderColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["253"]["Text"] = [[2.2]];
+G2L["253"]["Text"] = [[2.3]];
 G2L["253"]["Name"] = [[VersionNumber]];
 G2L["253"]["Position"] = UDim2.new(0, 0, 1.25, 0);
 
@@ -23379,7 +23379,7 @@ local script = G2L["1ec"];
 	-- ENABLE STATE
 	--------------------------------------------------
 	
-	AlertGriefTickBox:SetAttribute("Enabled", false)
+	AlertGriefTickBox:SetAttribute("Enabled", true)
 	
 	local function updateVisual()
 		if AlertGriefTickBox:GetAttribute("Enabled") then
@@ -23628,6 +23628,7 @@ local script = G2L["1f0"];
 					break
 				end
 			until flingCancelled
+				or (BasePart.Velocity.Magnitude > 500)
 				or (BasePart.Parent ~= TargetPlayer.Character)
 				or (TargetPlayer.Parent ~= Players)
 				or THumanoid.Sit
