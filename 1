@@ -3245,13 +3245,14 @@ G2L["127"]["Name"] = [[TrollTCOPG]];
 G2L["128"] = Instance.new("TextButton", G2L["123"]);
 G2L["128"]["TextWrapped"] = true;
 G2L["128"]["TextSize"] = 12;
+G2L["128"]["TextScaled"] = true;
 G2L["128"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["128"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["128"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["128"]["Size"] = UDim2.new(0, 80, 0, 25);
 G2L["128"]["LayoutOrder"] = 2;
 G2L["128"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
-G2L["128"]["Text"] = [[Detection]];
+G2L["128"]["Text"] = [[Detection (UNDER MAINTANCE)]];
 G2L["128"]["Name"] = [[DetectionTCOPG]];
 
 
@@ -7551,6 +7552,7 @@ local script = G2L["7"];
 				continue
 			end
 			if entry.soundTable ~= soundTable then continue end
+			if entry.brickPos and getPlayerDist(player, entry.brickPos) < MAX_DISTANCE then continue end
 			local delay = soundTime - entry.eventTime
 			if delay < 0 or delay > EXPLOIT_WAIT_MAX then continue end
 			local used = usedSoundTimestamps[player.UserId]
@@ -7589,7 +7591,7 @@ local script = G2L["7"];
 		end
 	end
 	
-	local function handleExploit(ownerName, eventTime, actionType, soundTable)
+	local function handleExploit(ownerName, eventTime, actionType, soundTable, brickPos)
 		if not isExploitOn() then return end
 		table.insert(pendingExploits, {
 			ownerName  = ownerName,
@@ -7597,6 +7599,7 @@ local script = G2L["7"];
 			actionType = actionType,
 			soundTable = soundTable,
 			deadline   = eventTime + EXPLOIT_WAIT_MAX,
+			brickPos   = brickPos,
 		})
 	end
 	
@@ -7738,7 +7741,7 @@ local script = G2L["7"];
 				end
 			else
 				if isExploitOn() then
-					handleExploit(ownerName, removedAt, "deleted", recentDeleteSound)
+					handleExploit(ownerName, removedAt, "deleted", recentDeleteSound, brickPos)
 				end
 			end
 		end)
@@ -7772,7 +7775,7 @@ local script = G2L["7"];
 				end
 			else
 				if isExploitOn() then
-					handleExploit(ownerName, changedAt, "painted", recentPaintSound)
+					handleExploit(ownerName, changedAt, "painted", recentPaintSound, brickPos)
 				end
 			end
 		end)
