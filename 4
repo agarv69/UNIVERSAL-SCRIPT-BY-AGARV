@@ -7257,7 +7257,7 @@ local script = G2L["7"];
 	local ScreenGui = script.Parent
 	
 	--------------------------------------------------
-	-- ENSURE SHARED EVENTS
+	-- SHARED EVENTS
 	--------------------------------------------------
 	
 	shared.GriefEvent        = shared.GriefEvent        or Instance.new("BindableEvent")
@@ -7278,22 +7278,20 @@ local script = G2L["7"];
 	-- WINDOWS
 	--------------------------------------------------
 	
-	local NORMAL_WAIT     = 0.5    -- wait after event before checking normal detection
-	local TOOL_WINDOW     = 0.5    -- tool must exist in char 0.5s before OR after event
-	local SLASH_WINDOW    = 0.1    -- slash anim 0.1s before OR after event
-	local SOUND_MIN       = 0.02   -- sound must play at least this after event
-	local SOUND_MAX       = 0.15   -- sound must play within this after event
-	local MAX_DISTANCE    = 30     -- studs
+	local TOOL_WINDOW    = 0.5    -- held tool 0.5s before OR after event
+	local SLASH_WINDOW   = 0.1    -- slash 0.1s before OR after event
+	local SOUND_MIN      = 0.02   -- sound min delay after event
+	local SOUND_MAX      = 0.15   -- sound max delay after event
+	local MAX_DISTANCE   = 30
 	
-	local EXPLOIT_MAX     = 0.13   -- exploit sound window 0-0.13s after event
-	local EXPLOIT_WAIT    = 0.13   -- wait before checking exploit
+	local EXPLOIT_MAX    = 0.13
 	
-	local GRIEF_COUNT     = 12
-	local GRIEF_TIME      = 5
-	local EXPLOIT_COUNT   = 40
-	local EXPLOIT_TIME    = 7
+	local GRIEF_COUNT    = 12
+	local GRIEF_TIME     = 5
+	local EXPLOIT_COUNT  = 40
+	local EXPLOIT_TIME   = 7
 	
-	local DELCUBE_CANCEL  = 0.02   -- within this = cancel (being delcubed)
+	local DELCUBE_CANCEL = 0.02
 	
 	--------------------------------------------------
 	-- ATTRIBUTE HELPERS
@@ -7354,26 +7352,20 @@ local script = G2L["7"];
 	-- STATE
 	--------------------------------------------------
 	
-	local isRunning         = false
-	local connections       = {}
-	
-	local recentDeleteSound = {}  -- userId -> tick()
-	local recentPaintSound  = {}  -- userId -> tick()
-	local recentSlashAnim   = {}  -- userId -> tick()
-	
-	-- Track if delete/paint tool is in character at any point
-	-- We store a table of timestamps when the tool was seen
-	local deleteToolPresence = {}  -- userId -> tick() last seen in character
-	local paintToolPresence  = {}  -- userId -> tick() last seen in character
-	
-	local deleteTracker   = {}
-	local deleteCooldown  = {}
-	local paintTracker    = {}
-	local paintCooldown   = {}
-	local exploitTracker  = {}
-	local exploitCooldown = {}
-	
-	local lastBrickRemoved = {}  -- folderName -> tick()
+	local isRunning          = false
+	local connections        = {}
+	local recentDeleteSound  = {}
+	local recentPaintSound   = {}
+	local recentSlashAnim    = {}
+	local deleteToolPresence = {}  -- userId -> tick() continuously updated while tool in char
+	local paintToolPresence  = {}
+	local deleteTracker      = {}
+	local deleteCooldown     = {}
+	local paintTracker       = {}
+	local paintCooldown      = {}
+	local exploitTracker     = {}
+	local exploitCooldown    = {}
+	local lastBrickRemoved   = {}
 	
 	--------------------------------------------------
 	-- HELPERS
@@ -7390,64 +7382,21 @@ local script = G2L["7"];
 		return (hrp.Position - pos).Magnitude
 	end
 	
-	-- Check if delete tool was in character within TOOL_WINDOW before OR after eventTime
-	local function hadDeleteToolNear(player, eventTime)
-		local t = deleteToolPresence[player.UserId]
-		if not t then return false end
-		return math.abs(t - eventTime) <= TOOL_WINDOW
-	end
-	
-	-- Check if paint tool was in character within TOOL_WINDOW before OR after eventTime
-	local function hadPaintToolNear(player, eventTime)
-		local t = paintToolPresence[player.UserId]
-		if not t then return false end
-		return math.abs(t - eventTime) <= TOOL_WINDOW
-	end
-	
-	-- Check if slash anim played within SLASH_WINDOW before OR after eventTime
-	local function playedSlashNear(player, eventTime)
-		local t = recentSlashAnim[player.UserId]
-		if not t then return false end
-		return math.abs(t - eventTime) <= SLASH_WINDOW
-	end
-	
-	-- Check if delete sound played SOUND_MIN-SOUND_MAX AFTER eventTime
-	local function playedDeleteSoundAfter(player, eventTime)
-		local t = recentDeleteSound[player.UserId]
-		if not t then return false end
-		local delay = t - eventTime
-		return delay >= SOUND_MIN and delay <= SOUND_MAX
-	end
-	
-	-- Check if paint sound played SOUND_MIN-SOUND_MAX AFTER eventTime
-	local function playedPaintSoundAfter(player, eventTime)
-		local t = recentPaintSound[player.UserId]
-		if not t then return false end
-		local delay = t - eventTime
-		return delay >= SOUND_MIN and delay <= SOUND_MAX
-	end
-	
-	-- Check if delete sound played 0-EXPLOIT_MAX AFTER eventTime
-	local function playedDeleteSoundExploit(player, eventTime)
-		local t = recentDeleteSound[player.UserId]
-		if not t then return false end
-		local delay = t - eventTime
-		return delay >= 0 and delay <= EXPLOIT_MAX
-	end
-	
-	-- Check if paint sound played 0-EXPLOIT_MAX AFTER eventTime
-	local function playedPaintSoundExploit(player, eventTime)
-		local t = recentPaintSound[player.UserId]
-		if not t then return false end
-		local delay = t - eventTime
-		return delay >= 0 and delay <= EXPLOIT_MAX
-	end
-	
-	-- Delcube check
 	local function isDelcubing(folderName, eventTime)
 		local last = lastBrickRemoved[folderName]
 		if not last then return false end
 		return (eventTime - last) < DELCUBE_CANCEL
+	end
+	
+	-- Wait until condition is true or timeout, checking every frame
+	-- Returns true if condition met, false if timed out
+	local function waitForCondition(condFn, timeout)
+		local start = tick()
+		while tick() - start < timeout do
+			if condFn() then return true end
+			RunService.Heartbeat:Wait()
+		end
+		return condFn() -- final check
 	end
 	
 	--------------------------------------------------
@@ -7476,42 +7425,44 @@ local script = G2L["7"];
 	
 	local function flagDelete(player, ownerName)
 		if deleteCooldown[player.UserId] and tick() < deleteCooldown[player.UserId] then return end
-		local now = tick()
-		local count = addCount(deleteTracker, player.UserId, now, GRIEF_TIME)
-		local inGame = Players:FindFirstChild(ownerName) ~= nil
-		local suffix = inGame and "" or " (NOT INGAME)"
+		local count = addCount(deleteTracker, player.UserId, tick(), GRIEF_TIME)
+		local suffix = Players:FindFirstChild(ownerName) and "" or " (NOT INGAME)"
 		print("[DELETE] " .. player.Name .. " griefed " .. ownerName .. suffix .. " | Count: " .. count .. "/" .. GRIEF_COUNT)
 		if count >= GRIEF_COUNT then
-			print("[GRIEFLOG] 🚨 " .. player.Name .. " has been detected deleting")
+			local cooldown = shared.GriefCooldown or 30
+			print("[GRIEFLOG] 🚨 " .. player.Name .. " has been detected deleting | Cooldown: " .. cooldown)
 			shared.GriefEvent:Fire(player, "delete")
 			shared.DeleteGriefEvent:Fire(player)
 			resetCount(deleteTracker, player.UserId)
-			deleteCooldown[player.UserId] = tick() + (shared.GriefCooldown or 30)
+			deleteCooldown[player.UserId] = tick() + cooldown
+			-- Notify when cooldown ends
+			task.delay(cooldown, function()
+				print("[DELETE] " .. player.Name .. "'s cooldown ended (" .. cooldown .. ")")
+			end)
 		end
 	end
 	
 	local function flagPaint(player, ownerName)
 		if paintCooldown[player.UserId] and tick() < paintCooldown[player.UserId] then return end
-		local now = tick()
-		local count = addCount(paintTracker, player.UserId, now, GRIEF_TIME)
-		local inGame = Players:FindFirstChild(ownerName) ~= nil
-		local suffix = inGame and "" or " (NOT INGAME)"
+		local count = addCount(paintTracker, player.UserId, tick(), GRIEF_TIME)
+		local suffix = Players:FindFirstChild(ownerName) and "" or " (NOT INGAME)"
 		print("[PAINT] " .. player.Name .. " griefed " .. ownerName .. suffix .. " | Count: " .. count .. "/" .. GRIEF_COUNT)
 		if count >= GRIEF_COUNT then
-			print("[GRIEFLOG] 🚨 " .. player.Name .. " has been detected painting")
+			local cooldown = shared.GriefCooldown or 30
+			print("[GRIEFLOG] 🚨 " .. player.Name .. " has been detected painting | Cooldown: " .. cooldown)
 			shared.GriefEvent:Fire(player, "toxify")
 			shared.PaintGriefEvent:Fire(player)
 			resetCount(paintTracker, player.UserId)
-			paintCooldown[player.UserId] = tick() + (shared.GriefCooldown or 30)
+			paintCooldown[player.UserId] = tick() + cooldown
+			task.delay(cooldown, function()
+				print("[PAINT] " .. player.Name .. "'s cooldown ended (" .. cooldown .. ")")
+			end)
 		end
 	end
 	
 	local function flagExploit(player, ownerName, actionType)
-		-- No cooldown on individual exploit logs, only on EXPLOITGRIEFLOG
-		local now = tick()
-		local count = addCount(exploitTracker, player.UserId, now, EXPLOIT_TIME)
-		local inGame = Players:FindFirstChild(ownerName) ~= nil
-		local suffix = inGame and "" or " (NOT INGAME)"
+		local count = addCount(exploitTracker, player.UserId, tick(), EXPLOIT_TIME)
+		local suffix = Players:FindFirstChild(ownerName) and "" or " (NOT INGAME)"
 		print("[EXPLOIT] " .. player.Name .. " " .. actionType .. " " .. ownerName .. suffix .. " | Count: " .. count .. "/" .. EXPLOIT_COUNT)
 		if count >= EXPLOIT_COUNT then
 			if not exploitCooldown[player.UserId] or tick() >= exploitCooldown[player.UserId] then
@@ -7526,216 +7477,266 @@ local script = G2L["7"];
 	
 	--------------------------------------------------
 	-- EXPLOIT DETECTION
+	-- usedSoundTimestamps: track sound timestamps already counted so same sound
+	-- cant be counted for multiple brick deletions
 	--------------------------------------------------
 	
-	local function handleExploit(ownerName, eventTime, actionType, soundCheckFn)
-		if not isExploitOn() then return end
+	local usedSoundTimestamps = {}  -- userId -> tick() of last used sound
 	
-		local slashPlayers  = {}
+	local function tryFlagExploit(ownerName, eventTime, actionType, soundTable)
+		local slashPlayers   = {}
 		local noSlashPlayers = {}
 	
 		for _, player in ipairs(Players:GetPlayers()) do
 			if player.Name == ownerName then continue end
 			if isWhitelisted(player) then continue end
-			if not soundCheckFn(player, eventTime) then continue end
 	
-			if playedSlashNear(player, eventTime) then
+			local st = soundTable[player.UserId]
+			if not st then continue end
+	
+			-- Sound must be after event and within 1s
+			local delay = st - eventTime
+			if delay < 0 or delay > 1.0 then continue end
+	
+			-- Sound must not have been used already for another brick
+			local used = usedSoundTimestamps[player.UserId]
+			if used and used == st then continue end
+	
+			if recentSlashAnim[player.UserId] and math.abs(recentSlashAnim[player.UserId] - eventTime) <= SLASH_WINDOW then
 				table.insert(slashPlayers, player)
 			else
 				table.insert(noSlashPlayers, player)
 			end
 		end
 	
-		-- Flag all players who played sound but did NOT play slash
 		if #noSlashPlayers > 0 then
 			for _, player in ipairs(noSlashPlayers) do
-				if not passesFilters(player, ownerName) then continue end
-				flagExploit(player, ownerName, actionType)
+				if passesFilters(player, ownerName) then
+					usedSoundTimestamps[player.UserId] = soundTable[player.UserId]
+					flagExploit(player, ownerName, actionType)
+				end
 			end
+			return true
 		elseif #slashPlayers > 0 then
-			-- Everyone played slash — flag closest timing (bypass detection)
-			local best = nil
-			local bestDiff = math.huge
+			local best, bestDiff = nil, math.huge
 			for _, player in ipairs(slashPlayers) do
-				local st = recentDeleteSound[player.UserId] or recentPaintSound[player.UserId]
+				local st = soundTable[player.UserId]
 				if st then
 					local diff = math.abs(st - eventTime)
-					if diff < bestDiff then
-						best = player
-						bestDiff = diff
-					end
+					if diff < bestDiff then best = player; bestDiff = diff end
 				end
 			end
 			if best and passesFilters(best, ownerName) then
+				usedSoundTimestamps[best.UserId] = soundTable[best.UserId]
 				flagExploit(best, ownerName, actionType)
 			end
+			return true
+		end
+		return false
+	end
+	
+	local function handleExploit(ownerName, eventTime, actionType, soundTable)
+		if not isExploitOn() then return end
+	
+		-- Check instantly first (0-0.13s window)
+		local found = tryFlagExploit(ownerName, eventTime, actionType, soundTable)
+		if found then return end
+	
+		-- Nobody played sound yet — wait up to 1s for a sound to come in
+		local deadline = eventTime + 1.0
+		while tick() < deadline do
+			RunService.Heartbeat:Wait()
+			found = tryFlagExploit(ownerName, eventTime, actionType, soundTable)
+			if found then return end
 		end
 	end
 	
 	--------------------------------------------------
-	-- DELETE DETECTION
+	-- CHECK ONE PLAYER FOR DELETE
+	-- Returns "detected", "failed", or "exploit"
+	--------------------------------------------------
+	
+	local function checkPlayerDelete(player, ownerName, brickPos, eventTime)
+		local name = player.Name
+	
+		-- Check 1: Distance (instant)
+		local dist = getPlayerDist(player, brickPos)
+		local inRange = dist <= MAX_DISTANCE
+		if not inRange then return "failed" end
+	
+		-- Check 2: Own brick (instant)
+		if name == ownerName then
+			return "ownbrick"
+		end
+	
+		-- Check 3: Held delete tool - resolve as soon as met or timeout 0.5s after event
+		local toolMet = false
+		local toolT = deleteToolPresence[player.UserId]
+		if toolT and (eventTime - toolT) <= TOOL_WINDOW then
+			toolMet = true
+		end
+		if not toolMet then
+			local deadline = eventTime + TOOL_WINDOW
+			toolMet = waitForCondition(function()
+				local t = deleteToolPresence[player.UserId]
+				return t ~= nil and math.abs(t - eventTime) <= TOOL_WINDOW
+			end, math.max(0, deadline - tick()))
+		end
+		if not toolMet then return "exploit" end
+	
+		-- Check 4: Slash anim - resolve as soon as met or timeout 0.1s after event
+		local slashMet = false
+		local slashT = recentSlashAnim[player.UserId]
+		if slashT and (eventTime - slashT) <= SLASH_WINDOW then
+			slashMet = true
+		end
+		if not slashMet then
+			local deadline = eventTime + SLASH_WINDOW
+			slashMet = waitForCondition(function()
+				local t = recentSlashAnim[player.UserId]
+				return t ~= nil and math.abs(t - eventTime) <= SLASH_WINDOW
+			end, math.max(0, deadline - tick()))
+		end
+		if not slashMet then return "exploit" end
+	
+		-- Check 5: Brick sound - wait until played or 0.15s after event
+		local soundMet = false
+		local deadline = eventTime + SOUND_MAX
+		soundMet = waitForCondition(function()
+			local t = recentDeleteSound[player.UserId]
+			if not t then return false end
+			local delay = t - eventTime
+			return delay >= SOUND_MIN and delay <= SOUND_MAX
+		end, math.max(0, deadline - tick()))
+		if not soundMet then return "failed" end
+	
+		-- GSettings
+		if not passesFilters(player, ownerName) then
+			return "failed"
+		end
+	
+		return "detected"
+	end
+	
+	--------------------------------------------------
+	-- CHECK ONE PLAYER FOR PAINT
+	--------------------------------------------------
+	
+	local function checkPlayerPaint(player, ownerName, brickPos, eventTime)
+		local name = player.Name
+	
+		local dist = getPlayerDist(player, brickPos)
+		local inRange = dist <= MAX_DISTANCE
+		if not inRange then return "failed" end
+	
+		if name == ownerName then
+			return "ownbrick"
+		end
+	
+		local toolMet = false
+		local toolT = paintToolPresence[player.UserId]
+		if toolT and (eventTime - toolT) <= TOOL_WINDOW then
+			toolMet = true
+		end
+		if not toolMet then
+			local deadline = eventTime + TOOL_WINDOW
+			toolMet = waitForCondition(function()
+				local t = paintToolPresence[player.UserId]
+				return t ~= nil and math.abs(t - eventTime) <= TOOL_WINDOW
+			end, math.max(0, deadline - tick()))
+		end
+		if not toolMet then return "exploit" end
+	
+		local slashMet = false
+		local slashT = recentSlashAnim[player.UserId]
+		if slashT and (eventTime - slashT) <= SLASH_WINDOW then
+			slashMet = true
+		end
+		if not slashMet then
+			local deadline = eventTime + SLASH_WINDOW
+			slashMet = waitForCondition(function()
+				local t = recentSlashAnim[player.UserId]
+				return t ~= nil and math.abs(t - eventTime) <= SLASH_WINDOW
+			end, math.max(0, deadline - tick()))
+		end
+		if not slashMet then return "exploit" end
+	
+		local soundMet = false
+		local deadline = eventTime + SOUND_MAX
+		soundMet = waitForCondition(function()
+			local t = recentPaintSound[player.UserId]
+			if not t then return false end
+			local delay = t - eventTime
+			return delay >= SOUND_MIN and delay <= SOUND_MAX
+		end, math.max(0, deadline - tick()))
+		if not soundMet then return "failed" end
+	
+		if not passesFilters(player, ownerName) then
+			return "failed"
+		end
+	
+		return "detected"
+	end
+	
+	--------------------------------------------------
+	-- HANDLE DELETE
 	--------------------------------------------------
 	
 	local function handleDelete(brickPos, ownerName, removedAt)
-		-- Delcube check
 		if isDelcubing(ownerName, removedAt) then
 			lastBrickRemoved[ownerName] = removedAt
 			return
 		end
 		lastBrickRemoved[ownerName] = removedAt
 	
-		task.delay(NORMAL_WAIT, function()
-			if not isDeleteOn() and not isExploitOn() then return end
-	
-			local anyInRange     = false
-			local anyHeldTool    = false
-			local anyPlayedSlash = false
-			local detected       = {}
+		task.spawn(function()
+			local detected    = {}
+			local exploitCandidates = {}
 	
 			for _, player in ipairs(Players:GetPlayers()) do
-				local name = player.Name
-	
-				-- Step 1: Distance check
-				local dist = getPlayerDist(player, brickPos)
-				local inRange = dist <= MAX_DISTANCE
-				print("[DEBUG DELETE] " .. name .. " - within 30 studs: " .. tostring(inRange))
-				if not inRange then continue end
-				anyInRange = true
-	
-				-- Step 2: Own brick check - skip entirely
-				if name == ownerName then
-					print("[DEBUG DELETE] " .. name .. " - own brick: yes (skipped)")
-					continue
-				end
-				print("[DEBUG DELETE] " .. name .. " - own brick: no")
-	
-				-- Step 3: Held delete tool check
-				local heldTool = hadDeleteToolNear(player, removedAt)
-				print("[DEBUG DELETE] " .. name .. " - held delete tool: " .. tostring(heldTool))
-				if heldTool then anyHeldTool = true end
-	
-				-- Step 4: Slash anim check
-				local playedSlash = playedSlashNear(player, removedAt)
-				print("[DEBUG DELETE] " .. name .. " - played slash: " .. tostring(playedSlash))
-				if playedSlash then anyPlayedSlash = true end
-	
-				-- Step 5: Sound check
-				local playedSound = playedDeleteSoundAfter(player, removedAt)
-				print("[DEBUG DELETE] " .. name .. " - played brick sound: " .. tostring(playedSound))
-	
-				-- All normal checks must pass
-				if not heldTool then continue end
-				if not playedSlash then continue end
-				if not playedSound then continue end
-	
-				-- GSettings filters
-				if not passesFilters(player, ownerName) then
-					print("[DEBUG DELETE] " .. name .. " - failed GSettings filters")
-					continue
-				end
-	
-				table.insert(detected, player)
-			end
-	
-			-- If nobody held tool or nobody played slash, skip to exploit
-			local skipToExploit = false
-			if isDeleteOn() then
-				if anyInRange and not anyHeldTool then
-					print("[DEBUG DELETE] Nobody held delete tool - skipping to exploit")
-					skipToExploit = true
-				elseif anyInRange and not anyPlayedSlash then
-					print("[DEBUG DELETE] Nobody played slash - skipping to exploit")
-					skipToExploit = true
+				local result = checkPlayerDelete(player, ownerName, brickPos, removedAt)
+				if result == "detected" then
+					table.insert(detected, player)
+				elseif result == "exploit" then
+					table.insert(exploitCandidates, player)
 				end
 			end
 	
-			if not skipToExploit and #detected > 0 then
+			if isDeleteOn() and #detected > 0 then
 				for _, player in ipairs(detected) do
 					flagDelete(player, ownerName)
 				end
 			else
-				-- Skip to exploit detection
+				-- Nobody detected normally, run exploit
 				if isExploitOn() then
-					handleExploit(ownerName, removedAt, "deleted", playedDeleteSoundExploit)
+					handleExploit(ownerName, removedAt, "deleted", recentDeleteSound)
 				end
 			end
 		end)
 	end
 	
 	--------------------------------------------------
-	-- PAINT DETECTION
+	-- HANDLE PAINT
 	--------------------------------------------------
 	
 	local function handlePaint(brickPos, ownerName, changedAt)
-		task.delay(NORMAL_WAIT, function()
-			if not isPaintOn() and not isExploitOn() then return end
-	
-			local anyInRange     = false
-			local anyHeldTool    = false
-			local anyPlayedSlash = false
-			local detected       = {}
+		task.spawn(function()
+			local detected = {}
 	
 			for _, player in ipairs(Players:GetPlayers()) do
-				local name = player.Name
-	
-				-- Step 1: Distance check
-				local dist = getPlayerDist(player, brickPos)
-				local inRange = dist <= MAX_DISTANCE
-				print("[DEBUG PAINT] " .. name .. " - within 30 studs: " .. tostring(inRange))
-				if not inRange then continue end
-				anyInRange = true
-	
-				-- Step 2: Own brick check - skip entirely
-				if name == ownerName then
-					print("[DEBUG PAINT] " .. name .. " - own brick: yes (skipped)")
-					continue
-				end
-				print("[DEBUG PAINT] " .. name .. " - own brick: no")
-	
-				-- Step 3: Held paint tool check
-				local heldTool = hadPaintToolNear(player, changedAt)
-				print("[DEBUG PAINT] " .. name .. " - held paint tool: " .. tostring(heldTool))
-				if heldTool then anyHeldTool = true end
-	
-				-- Step 4: Slash anim check
-				local playedSlash = playedSlashNear(player, changedAt)
-				print("[DEBUG PAINT] " .. name .. " - played slash: " .. tostring(playedSlash))
-				if playedSlash then anyPlayedSlash = true end
-	
-				-- Step 5: Sound check
-				local playedSound = playedPaintSoundAfter(player, changedAt)
-				print("[DEBUG PAINT] " .. name .. " - played paint sound: " .. tostring(playedSound))
-	
-				if not heldTool then continue end
-				if not playedSlash then continue end
-				if not playedSound then continue end
-	
-				if not passesFilters(player, ownerName) then
-					print("[DEBUG PAINT] " .. name .. " - failed GSettings filters")
-					continue
-				end
-	
-				table.insert(detected, player)
-			end
-	
-			local skipToExploit = false
-			if isPaintOn() then
-				if anyInRange and not anyHeldTool then
-					print("[DEBUG PAINT] Nobody held paint tool - skipping to exploit")
-					skipToExploit = true
-				elseif anyInRange and not anyPlayedSlash then
-					print("[DEBUG PAINT] Nobody played slash - skipping to exploit")
-					skipToExploit = true
+				local result = checkPlayerPaint(player, ownerName, brickPos, changedAt)
+				if result == "detected" then
+					table.insert(detected, player)
 				end
 			end
 	
-			if not skipToExploit and #detected > 0 then
+			if isPaintOn() and #detected > 0 then
 				for _, player in ipairs(detected) do
 					flagPaint(player, ownerName)
 				end
 			else
 				if isExploitOn() then
-					handleExploit(ownerName, changedAt, "painted", playedPaintSoundExploit)
+					handleExploit(ownerName, changedAt, "painted", recentPaintSound)
 				end
 			end
 		end)
@@ -7822,7 +7823,6 @@ local script = G2L["7"];
 	
 	--------------------------------------------------
 	-- TOOL PRESENCE TRACKING
-	-- Continuously update last seen time while tool is in character
 	--------------------------------------------------
 	
 	local function hookToolPresence(player)
@@ -7848,13 +7848,11 @@ local script = G2L["7"];
 			local hrp = player.Character:FindFirstChild("HumanoidRootPart")
 			if hrp then hookHRP(player, hrp) end
 		end
-	
 		local cc = player.CharacterAdded:Connect(function(char)
 			local hrp = char:WaitForChild("HumanoidRootPart", 10)
 			if hrp then hookHRP(player, hrp) end
 		end)
 		table.insert(connections, cc)
-	
 		hookAnim(player)
 		hookToolPresence(player)
 	end
@@ -7952,19 +7950,20 @@ local script = G2L["7"];
 		for _, c in ipairs(connections) do
 			pcall(function() c:Disconnect() end)
 		end
-		connections          = {}
-		recentDeleteSound    = {}
-		recentPaintSound     = {}
-		recentSlashAnim      = {}
-		deleteToolPresence   = {}
-		paintToolPresence    = {}
-		deleteTracker        = {}
-		paintTracker         = {}
-		exploitTracker       = {}
-		deleteCooldown       = {}
-		paintCooldown        = {}
-		exploitCooldown      = {}
-		lastBrickRemoved     = {}
+		connections         = {}
+		recentDeleteSound   = {}
+		recentPaintSound    = {}
+		recentSlashAnim     = {}
+		deleteToolPresence  = {}
+		paintToolPresence   = {}
+		deleteTracker       = {}
+		paintTracker        = {}
+		exploitTracker      = {}
+		deleteCooldown      = {}
+		paintCooldown       = {}
+		exploitCooldown     = {}
+		lastBrickRemoved    = {}
+		usedSoundTimestamps = {}
 	end
 	
 	--------------------------------------------------
@@ -7975,17 +7974,11 @@ local script = G2L["7"];
 	
 	for _, attr in ipairs(ATTRS) do
 		ScreenGui:GetAttributeChangedSignal(attr):Connect(function()
-			if anyOn() then
-				startWatching()
-			else
-				stopWatching()
-			end
+			if anyOn() then startWatching() else stopWatching() end
 		end)
 	end
 	
-	if anyOn() then
-		startWatching()
-	end
+	if anyOn() then startWatching() end
 end;
 task.spawn(C_7);
 -- StarterGui.AgarWareGui.MainFrame.SideBar.PageHandler
