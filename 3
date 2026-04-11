@@ -7278,20 +7278,20 @@ local script = G2L["7"];
 	-- WINDOWS
 	--------------------------------------------------
 	
-	local TOOL_WINDOW    = 0.5    -- held tool 0.5s before OR after event
-	local SLASH_WINDOW   = 0.1    -- slash 0.1s before OR after event
-	local SOUND_MIN      = 0.02   -- sound min delay after event
-	local SOUND_MAX      = 0.15   -- sound max delay after event
+	local TOOL_WINDOW    = 0.5
+	local SLASH_WINDOW   = 0.1
+	local SOUND_MIN      = 0.02
+	local SOUND_MAX      = 0.15
 	local MAX_DISTANCE   = 30
-	
-	local EXPLOIT_MAX    = 0.13
 	
 	local GRIEF_COUNT    = 12
 	local GRIEF_TIME     = 5
 	local EXPLOIT_COUNT  = 40
 	local EXPLOIT_TIME   = 7
 	
-	local DELCUBE_CANCEL = 0.02
+	local DELCUBE_CANCEL      = 0.02
+	local EXPLOIT_SOUND_LIMIT = 3
+	local EXPLOIT_WAIT_MAX    = 1.0
 	
 	--------------------------------------------------
 	-- ATTRIBUTE HELPERS
@@ -7349,15 +7349,16 @@ local script = G2L["7"];
 	end
 	
 	--------------------------------------------------
-	-- STATE
+	-- STATE - use clear() pattern, never reassign
 	--------------------------------------------------
 	
 	local isRunning          = false
 	local connections        = {}
+	
 	local recentDeleteSound  = {}
 	local recentPaintSound   = {}
 	local recentSlashAnim    = {}
-	local deleteToolPresence = {}  -- userId -> tick() continuously updated while tool in char
+	local deleteToolPresence = {}
 	local paintToolPresence  = {}
 	local deleteTracker      = {}
 	local deleteCooldown     = {}
@@ -7366,6 +7367,16 @@ local script = G2L["7"];
 	local exploitTracker     = {}
 	local exploitCooldown    = {}
 	local lastBrickRemoved   = {}
+	local usedSoundTimestamps = {}
+	local pendingExploits    = {}
+	
+	local function clearTable(t)
+		for k in pairs(t) do t[k] = nil end
+	end
+	
+	local function clearArray(t)
+		for i = #t, 1, -1 do table.remove(t, i) end
+	end
 	
 	--------------------------------------------------
 	-- HELPERS
@@ -7388,15 +7399,13 @@ local script = G2L["7"];
 		return (eventTime - last) < DELCUBE_CANCEL
 	end
 	
-	-- Wait until condition is true or timeout, checking every frame
-	-- Returns true if condition met, false if timed out
 	local function waitForCondition(condFn, timeout)
 		local start = tick()
 		while tick() - start < timeout do
 			if condFn() then return true end
 			RunService.Heartbeat:Wait()
 		end
-		return condFn() -- final check
+		return condFn()
 	end
 	
 	--------------------------------------------------
@@ -7435,7 +7444,6 @@ local script = G2L["7"];
 			shared.DeleteGriefEvent:Fire(player)
 			resetCount(deleteTracker, player.UserId)
 			deleteCooldown[player.UserId] = tick() + cooldown
-			-- Notify when cooldown ends
 			task.delay(cooldown, function()
 				print("[DELETE] " .. player.Name .. "'s cooldown ended (" .. cooldown .. ")")
 			end)
@@ -7477,117 +7485,142 @@ local script = G2L["7"];
 	
 	--------------------------------------------------
 	-- EXPLOIT DETECTION
+	-- Bricks register as pending when deleted.
+	-- When a root sound plays, it checks all pending
+	-- bricks and counts up to EXPLOIT_SOUND_LIMIT.
 	--------------------------------------------------
 	
-	local function handleExploit(ownerName, eventTime, actionType, soundTable)
+	local function processExploitSound(player, soundTime, soundTable)
 		if not isExploitOn() then return end
 	
-		-- Wait up to EXPLOIT_MAX for sounds to come in
-		task.wait(EXPLOIT_MAX)
+		local matched = {}
+		local now = tick()
 	
-		local slashPlayers   = {}
-		local noSlashPlayers = {}
+		for i = #pendingExploits, 1, -1 do
+			local entry = pendingExploits[i]
 	
-		for _, player in ipairs(Players:GetPlayers()) do
-			if player.Name == ownerName then continue end
-			if isWhitelisted(player) then continue end
+			-- Remove expired entries
+			if now > entry.deadline then
+				table.remove(pendingExploits, i)
+				continue
+			end
 	
-			local st = soundTable[player.UserId]
-			if not st then continue end
-			local delay = st - eventTime
-			if delay < 0 or delay > EXPLOIT_MAX then continue end
+			-- Must match the right sound table
+			if entry.soundTable ~= soundTable then continue end
 	
-			if recentSlashAnim[player.UserId] and math.abs(recentSlashAnim[player.UserId] - eventTime) <= SLASH_WINDOW then
-				table.insert(slashPlayers, player)
-			else
-				table.insert(noSlashPlayers, player)
+			-- Sound must be after event
+			local delay = soundTime - entry.eventTime
+			if delay < 0 or delay > EXPLOIT_WAIT_MAX then continue end
+	
+			-- Sound not already used for another brick
+			local used = usedSoundTimestamps[player.UserId]
+			if used and used == soundTime then continue end
+	
+			table.insert(matched, entry)
+		end
+	
+		if #matched == 0 then return end
+	
+		local countToFlag = math.min(#matched, EXPLOIT_SOUND_LIMIT)
+	
+		-- Check slash against matched bricks
+		local slashTime = recentSlashAnim[player.UserId]
+		local anyNonSlash = false
+		for i = 1, countToFlag do
+			local entry = matched[i]
+			if not slashTime or math.abs(slashTime - entry.eventTime) > SLASH_WINDOW then
+				anyNonSlash = true
+				break
 			end
 		end
 	
-		if #noSlashPlayers > 0 then
-			for _, player in ipairs(noSlashPlayers) do
-				if passesFilters(player, ownerName) then
-					flagExploit(player, ownerName, actionType)
+		usedSoundTimestamps[player.UserId] = soundTime
+	
+		if anyNonSlash or not slashTime then
+			for i = 1, countToFlag do
+				local entry = matched[i]
+				if passesFilters(player, entry.ownerName) then
+					flagExploit(player, entry.ownerName, entry.actionType)
 				end
 			end
-		elseif #slashPlayers > 0 then
-			local best, bestDiff = nil, math.huge
-			for _, player in ipairs(slashPlayers) do
-				local st = soundTable[player.UserId]
-				if st then
-					local diff = math.abs(st - eventTime)
-					if diff < bestDiff then best = player; bestDiff = diff end
-				end
-			end
-			if best and passesFilters(best, ownerName) then
-				flagExploit(best, ownerName, actionType)
+		else
+			-- All slash — flag once for first brick (bypass detection)
+			local best = matched[1]
+			if passesFilters(player, best.ownerName) then
+				flagExploit(player, best.ownerName, best.actionType)
 			end
 		end
 	end
 	
+	local function handleExploit(ownerName, eventTime, actionType, soundTable)
+		if not isExploitOn() then return end
+		table.insert(pendingExploits, {
+			ownerName  = ownerName,
+			eventTime  = eventTime,
+			actionType = actionType,
+			soundTable = soundTable,
+			deadline   = eventTime + EXPLOIT_WAIT_MAX,
+		})
+	end
+	
+	local function onDeleteSoundPlayed(player, soundTime)
+		processExploitSound(player, soundTime, recentDeleteSound)
+	end
+	
+	local function onPaintSoundPlayed(player, soundTime)
+		processExploitSound(player, soundTime, recentPaintSound)
+	end
+	
 	--------------------------------------------------
 	-- CHECK ONE PLAYER FOR DELETE
-	-- Returns "detected", "failed", or "exploit"
 	--------------------------------------------------
 	
 	local function checkPlayerDelete(player, ownerName, brickPos, eventTime)
 		local name = player.Name
 	
-		-- Check 1: Distance (instant)
 		local dist = getPlayerDist(player, brickPos)
-		local inRange = dist <= MAX_DISTANCE
-		if not inRange then return "failed" end
+		if dist > MAX_DISTANCE then return "failed" end
 	
-		-- Check 2: Own brick (instant)
-		if name == ownerName then
-			return "ownbrick"
-		end
+		if name == ownerName then return "ownbrick" end
 	
-		-- Check 3: Held delete tool - resolve as soon as met or timeout 0.5s after event
+		-- Held delete tool check
 		local toolMet = false
 		local toolT = deleteToolPresence[player.UserId]
 		if toolT and (eventTime - toolT) <= TOOL_WINDOW then
 			toolMet = true
 		end
 		if not toolMet then
-			local deadline = eventTime + TOOL_WINDOW
 			toolMet = waitForCondition(function()
 				local t = deleteToolPresence[player.UserId]
 				return t ~= nil and math.abs(t - eventTime) <= TOOL_WINDOW
-			end, math.max(0, deadline - tick()))
+			end, math.max(0, eventTime + TOOL_WINDOW - tick()))
 		end
 		if not toolMet then return "exploit" end
 	
-		-- Check 4: Slash anim - resolve as soon as met or timeout 0.1s after event
+		-- Slash anim check
 		local slashMet = false
 		local slashT = recentSlashAnim[player.UserId]
 		if slashT and (eventTime - slashT) <= SLASH_WINDOW then
 			slashMet = true
 		end
 		if not slashMet then
-			local deadline = eventTime + SLASH_WINDOW
 			slashMet = waitForCondition(function()
 				local t = recentSlashAnim[player.UserId]
 				return t ~= nil and math.abs(t - eventTime) <= SLASH_WINDOW
-			end, math.max(0, deadline - tick()))
+			end, math.max(0, eventTime + SLASH_WINDOW - tick()))
 		end
 		if not slashMet then return "exploit" end
 	
-		-- Check 5: Brick sound - wait until played or 0.15s after event
-		local soundMet = false
-		local deadline = eventTime + SOUND_MAX
-		soundMet = waitForCondition(function()
+		-- Brick sound check
+		local soundMet = waitForCondition(function()
 			local t = recentDeleteSound[player.UserId]
 			if not t then return false end
 			local delay = t - eventTime
 			return delay >= SOUND_MIN and delay <= SOUND_MAX
-		end, math.max(0, deadline - tick()))
+		end, math.max(0, eventTime + SOUND_MAX - tick()))
 		if not soundMet then return "failed" end
 	
-		-- GSettings
-		if not passesFilters(player, ownerName) then
-			return "failed"
-		end
+		if not passesFilters(player, ownerName) then return "failed" end
 	
 		return "detected"
 	end
@@ -7600,12 +7633,9 @@ local script = G2L["7"];
 		local name = player.Name
 	
 		local dist = getPlayerDist(player, brickPos)
-		local inRange = dist <= MAX_DISTANCE
-		if not inRange then return "failed" end
+		if dist > MAX_DISTANCE then return "failed" end
 	
-		if name == ownerName then
-			return "ownbrick"
-		end
+		if name == ownerName then return "ownbrick" end
 	
 		local toolMet = false
 		local toolT = paintToolPresence[player.UserId]
@@ -7613,11 +7643,10 @@ local script = G2L["7"];
 			toolMet = true
 		end
 		if not toolMet then
-			local deadline = eventTime + TOOL_WINDOW
 			toolMet = waitForCondition(function()
 				local t = paintToolPresence[player.UserId]
 				return t ~= nil and math.abs(t - eventTime) <= TOOL_WINDOW
-			end, math.max(0, deadline - tick()))
+			end, math.max(0, eventTime + TOOL_WINDOW - tick()))
 		end
 		if not toolMet then return "exploit" end
 	
@@ -7627,27 +7656,22 @@ local script = G2L["7"];
 			slashMet = true
 		end
 		if not slashMet then
-			local deadline = eventTime + SLASH_WINDOW
 			slashMet = waitForCondition(function()
 				local t = recentSlashAnim[player.UserId]
 				return t ~= nil and math.abs(t - eventTime) <= SLASH_WINDOW
-			end, math.max(0, deadline - tick()))
+			end, math.max(0, eventTime + SLASH_WINDOW - tick()))
 		end
 		if not slashMet then return "exploit" end
 	
-		local soundMet = false
-		local deadline = eventTime + SOUND_MAX
-		soundMet = waitForCondition(function()
+		local soundMet = waitForCondition(function()
 			local t = recentPaintSound[player.UserId]
 			if not t then return false end
 			local delay = t - eventTime
 			return delay >= SOUND_MIN and delay <= SOUND_MAX
-		end, math.max(0, deadline - tick()))
+		end, math.max(0, eventTime + SOUND_MAX - tick()))
 		if not soundMet then return "failed" end
 	
-		if not passesFilters(player, ownerName) then
-			return "failed"
-		end
+		if not passesFilters(player, ownerName) then return "failed" end
 	
 		return "detected"
 	end
@@ -7664,15 +7688,12 @@ local script = G2L["7"];
 		lastBrickRemoved[ownerName] = removedAt
 	
 		task.spawn(function()
-			local detected    = {}
-			local exploitCandidates = {}
+			local detected = {}
 	
 			for _, player in ipairs(Players:GetPlayers()) do
 				local result = checkPlayerDelete(player, ownerName, brickPos, removedAt)
 				if result == "detected" then
 					table.insert(detected, player)
-				elseif result == "exploit" then
-					table.insert(exploitCandidates, player)
 				end
 			end
 	
@@ -7681,7 +7702,6 @@ local script = G2L["7"];
 					flagDelete(player, ownerName)
 				end
 			else
-				-- Nobody detected normally, run exploit
 				if isExploitOn() then
 					handleExploit(ownerName, removedAt, "deleted", recentDeleteSound)
 				end
@@ -7733,7 +7753,9 @@ local script = G2L["7"];
 					local playing = obj.IsPlaying
 					if playing then
 						if not wasPlaying or (lastTime > 0.05 and t < 0.05) then
-							recentDeleteSound[player.UserId] = tick()
+							local soundTime = tick()
+							recentDeleteSound[player.UserId] = soundTime
+							onDeleteSoundPlayed(player, soundTime)
 						end
 					end
 					lastTime = t
@@ -7748,7 +7770,9 @@ local script = G2L["7"];
 					local playing = obj.IsPlaying
 					if playing then
 						if not wasPlaying or (lastTime > 0.05 and t < 0.05) then
-							recentPaintSound[player.UserId] = tick()
+							local soundTime = tick()
+							recentPaintSound[player.UserId] = soundTime
+							onPaintSoundPlayed(player, soundTime)
 						end
 					end
 					lastTime = t
@@ -7898,17 +7922,18 @@ local script = G2L["7"];
 	
 		Players.PlayerRemoving:Connect(function(player)
 			local uid = player.UserId
-			recentDeleteSound[uid]   = nil
-			recentPaintSound[uid]    = nil
-			recentSlashAnim[uid]     = nil
-			deleteToolPresence[uid]  = nil
-			paintToolPresence[uid]   = nil
-			deleteTracker[uid]       = nil
-			paintTracker[uid]        = nil
-			exploitTracker[uid]      = nil
-			deleteCooldown[uid]      = nil
-			paintCooldown[uid]       = nil
-			exploitCooldown[uid]     = nil
+			recentDeleteSound[uid]    = nil
+			recentPaintSound[uid]     = nil
+			recentSlashAnim[uid]      = nil
+			deleteToolPresence[uid]   = nil
+			paintToolPresence[uid]    = nil
+			deleteTracker[uid]        = nil
+			paintTracker[uid]         = nil
+			exploitTracker[uid]       = nil
+			deleteCooldown[uid]       = nil
+			paintCooldown[uid]        = nil
+			exploitCooldown[uid]      = nil
+			usedSoundTimestamps[uid]  = nil
 		end)
 	
 		for _, folder in ipairs(bricksFolder:GetChildren()) do
@@ -7921,22 +7946,26 @@ local script = G2L["7"];
 	local function stopWatching()
 		if not isRunning then return end
 		isRunning = false
+	
 		for _, c in ipairs(connections) do
 			pcall(function() c:Disconnect() end)
 		end
-		connections         = {}
-		recentDeleteSound   = {}
-		recentPaintSound    = {}
-		recentSlashAnim     = {}
-		deleteToolPresence  = {}
-		paintToolPresence   = {}
-		deleteTracker       = {}
-		paintTracker        = {}
-		exploitTracker      = {}
-		deleteCooldown      = {}
-		paintCooldown       = {}
-		exploitCooldown     = {}
-		lastBrickRemoved    = {}
+		clearArray(connections)
+	
+		clearTable(recentDeleteSound)
+		clearTable(recentPaintSound)
+		clearTable(recentSlashAnim)
+		clearTable(deleteToolPresence)
+		clearTable(paintToolPresence)
+		clearTable(deleteTracker)
+		clearTable(paintTracker)
+		clearTable(exploitTracker)
+		clearTable(deleteCooldown)
+		clearTable(paintCooldown)
+		clearTable(exploitCooldown)
+		clearTable(lastBrickRemoved)
+		clearTable(usedSoundTimestamps)
+		clearArray(pendingExploits)
 	end
 	
 	--------------------------------------------------
