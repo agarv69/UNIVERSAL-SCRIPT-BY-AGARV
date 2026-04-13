@@ -20507,9 +20507,7 @@ local script = G2L["18a"];
 	
 				if currentEvent and currentUI then
 					pcall(function()
-						-- Use blackhole position if enabled, otherwise block position
-						local spawnPosition = _G.BlackholeTargetPosition or block.Position
-						currentEvent:FireServer(block, Enum.NormalId.Top, spawnPosition, currentUI.Button.Text)
+						currentEvent:FireServer(block, Enum.NormalId.Top, block.Position, currentUI.Button.Text)
 					end)
 				else
 					refreshBuildTool()
@@ -20685,8 +20683,6 @@ local script = G2L["18a"];
 				positionLock:Disconnect()
 				LocalPlayer.Character.Humanoid:UnequipTools()
 				LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
-				BlockSpamButton.Text = "Failed spray removal"
-				task.wait(2)
 				BlockSpamButton.Text = TEXT_START
 				return false
 			end
@@ -20704,8 +20700,6 @@ local script = G2L["18a"];
 			positionLock:Disconnect()
 			LocalPlayer.Character.Humanoid:UnequipTools()
 			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
-			BlockSpamButton.Text = "Failed spray removal"
-			task.wait(2)
 			BlockSpamButton.Text = TEXT_START
 			return false
 		end
@@ -20722,8 +20716,6 @@ local script = G2L["18a"];
 			positionLock:Disconnect()
 			LocalPlayer.Character.Humanoid:UnequipTools()
 			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
-			BlockSpamButton.Text = "Failed paint"
-			task.wait(2)
 			BlockSpamButton.Text = TEXT_START
 			return false
 		end
@@ -20740,8 +20732,6 @@ local script = G2L["18a"];
 			positionLock:Disconnect()
 			LocalPlayer.Character.Humanoid:UnequipTools()
 			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
-			BlockSpamButton.Text = "Failed unanchor"
-			task.wait(2)
 			BlockSpamButton.Text = TEXT_START
 			return false
 		end
@@ -20801,8 +20791,6 @@ local script = G2L["18a"];
 			positionLock:Disconnect()
 			LocalPlayer.Character.Humanoid:UnequipTools()
 			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
-			BlockSpamButton.Text = "Resize failed!"
-			task.wait(2)
 			BlockSpamButton.Text = TEXT_START
 			return false
 		end
@@ -20881,8 +20869,6 @@ local script = G2L["18a"];
 		BlockSpamButton.Text = TEXT_PROCESSING
 	
 		if not processBlock(selectedBlock) then
-			BlockSpamButton.Text = "Failed, Press Again."
-			task.wait(1)
 			isProcessing = false
 			BlockSpamButton.Text = TEXT_START
 		end
@@ -21511,11 +21497,10 @@ local script = G2L["199"];
 		local targetSize = getTargetSize()
 		local handleSize = targetSize + 1
 	
-		-- Create part
 		handlesPart = Instance.new("Part")
 		handlesPart.Name = "BlackholeHandlesPart"
 		handlesPart.Size = Vector3.new(handleSize, handleSize, handleSize)
-		handlesPart.Position = hrp.Position + Vector3.new(0, 10, 0)
+		handlesPart.Position = Vector3.new(hrp.Position.X, hrp.Position.Y + 10, hrp.Position.Z)
 		handlesPart.Anchored = true
 		handlesPart.CanCollide = false
 		handlesPart.Transparency = 0.5
@@ -21532,52 +21517,52 @@ local script = G2L["199"];
 	
 		targetPosition = handlesPart.Position
 	
-		-- Store in global for BlockSpamScript
-		_G.BlackholeTargetPosition = targetPosition
-	
 		-- Custom drag system (works on mobile AND PC)
 		local dragging = false
 		local dragStart = nil
 		local dragStartPos = nil
+		local originalCameraType = nil
 	
 		local function startDrag(input)
 			dragging = true
 			dragStart = input.Position
 			dragStartPos = handlesPart.Position
+	
+			-- Lock camera while dragging
+			local camera = workspace.CurrentCamera
+			originalCameraType = camera.CameraType
+			camera.CameraType = Enum.CameraType.Scriptable
 		end
 	
 		local function updateDrag(input)
 			if not dragging then return end
 	
 			local camera = workspace.CurrentCamera
-			local mouse3D = camera:ScreenPointToRay(input.Position.X, input.Position.Y)
-	
-			-- Project mouse movement onto a plane
 			local delta = input.Position - dragStart
-			local worldDelta = camera.CFrame.RightVector * (delta.X * 0.05) + camera.CFrame.UpVector * (-delta.Y * 0.05)
+	
+			local worldDelta =
+				camera.CFrame.RightVector * (delta.X * 0.05)
+				+ camera.CFrame.UpVector * (-delta.Y * 0.05)
 	
 			handlesPart.Position = dragStartPos + worldDelta
 			targetPosition = handlesPart.Position
-	
-			-- Update global for BlockSpamScript
-			_G.BlackholeTargetPosition = targetPosition
 		end
 	
 		local function stopDrag()
 			dragging = false
 			dragStart = nil
 			dragStartPos = nil
+	
+			-- Unlock camera
+			if originalCameraType then
+				local camera = workspace.CurrentCamera
+				camera.CameraType = originalCameraType
+				originalCameraType = nil
+			end
 		end
 	
-		-- Connect to ClickDetector for easier clicking
-		local clickDetector = Instance.new("ClickDetector")
-		clickDetector.MaxActivationDistance = 1000
-		clickDetector.Parent = handlesPart
-	
-		-- Mouse/Touch input
 		table.insert(dragConnections, UserInputService.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				-- Check if clicking the part
 				local mouse = LocalPlayer:GetMouse()
 				if mouse.Target == handlesPart then
 					startDrag(input)
@@ -21623,12 +21608,9 @@ local script = G2L["199"];
 		end
 	
 		targetPosition = nil
-	
-		-- Clear global
-		_G.BlackholeTargetPosition = nil
 	end
 	
-	-- Release all blocks
+	-- Release all blocks WITH EXPLOSION
 	local function releaseAllBlocks()
 		for block, data in pairs(bodyPositions) do
 			if block and block.Parent then
@@ -21641,6 +21623,16 @@ local script = G2L["199"];
 					block.CanCollide = data.props.canCollide
 					block.CanTouch = data.props.canTouch
 				end
+	
+				-- EXPLODE: Random direction for each block
+				local randomDirection = Vector3.new(
+					math.random() * 2 - 1,
+					math.random() * 2 - 1,
+					math.random() * 2 - 1
+				).Unit
+	
+				local explosionForce = 120
+				block.AssemblyLinearVelocity = randomDirection * explosionForce
 			end
 		end
 	
@@ -21652,33 +21644,27 @@ local script = G2L["199"];
 		isEnabled = true
 		BlackholeLagTickBox.BackgroundColor3 = getAccentColor()
 	
-		-- Scan for existing blocks
 		for _, obj in ipairs(workspace:GetDescendants()) do
 			checkAndAddBlock(obj)
 		end
 	
-		-- Monitor new blocks
 		workspace.DescendantAdded:Connect(function(obj)
 			if isEnabled then
 				checkAndAddBlock(obj)
 			end
 		end)
 	
-		-- Create handles
 		createHandles()
 	
-		-- Update block positions to follow handles
 		monitorConnection = RunService.Heartbeat:Connect(function()
 			if not isEnabled or not targetPosition then return end
 	
-			-- Update positions
 			for block, data in pairs(bodyPositions) do
 				if block and block.Parent and data.bp and data.bp.Parent then
 					data.bp.Position = targetPosition
 				end
 			end
 	
-			-- Keep simulation radius maxed
 			pcall(function()
 				sethiddenproperty(LocalPlayer, "SimulationRadius", PICKUP_RADIUS)
 			end)
@@ -21692,22 +21678,17 @@ local script = G2L["199"];
 		isEnabled = false
 		BlackholeLagTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
-		-- Stop monitoring
 		if monitorConnection then
 			monitorConnection:Disconnect()
 			monitorConnection = nil
 		end
 	
-		-- Release all blocks (they fall where they are)
 		releaseAllBlocks()
-	
-		-- Destroy handles
 		destroyHandles()
 	
 		print("[BlackholeLag] Disabled")
 	end
 	
-	-- Toggle
 	local function toggle()
 		if isEnabled then
 			disable()
@@ -21716,13 +21697,10 @@ local script = G2L["199"];
 		end
 	end
 	
-	-- Click handler
 	BlackholeLagTickBox.MouseButton1Click:Connect(toggle)
 	
-	-- Initialize
 	BlackholeLagTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
-	-- Cleanup on script removal
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			disable()
