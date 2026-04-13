@@ -20421,32 +20421,10 @@ local script = G2L["18a"];
 	
 		task.wait(0.3)
 	
-		-- REMOVE SPRAY ON TOP SIDE ONLY
-		BlockSpamButton.Text = "Cleaning Top..."
-		local topSpray = block:FindFirstChild("Spray")
-		if topSpray then
-			pcall(function()
-				topSpray:Destroy()
-			end)
-			task.wait(0.1)
-		end
-	
-		-- Paint (ALL ON TOP SIDE)
-		BlockSpamButton.Text = "Painting..."
-		local paintSuccess = spamPaintUntil(
-			block,
-			function(b)
-				return math.abs(b.Color.R - TARGET_COLOR.R) < 0.02
-					and math.abs(b.Color.G - TARGET_COLOR.G) < 0.02
-					and math.abs(b.Color.B - TARGET_COLOR.B) < 0.02
-					and b.Material == TARGET_MATERIAL
-			end,
-			"both 🤝",
-			"toxic",
-			8
-		)
-	
-		if not paintSuccess then
+		-- Paint color + toxify + unanchor ALL AT ONCE
+		BlockSpamButton.Text = "Painting + Toxify + Unanchor..."
+		local paintEvent = getPaintEvent()
+		if not paintEvent then
 			positionLock:Disconnect()
 			LocalPlayer.Character.Humanoid:UnequipTools()
 			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
@@ -20456,48 +20434,75 @@ local script = G2L["18a"];
 			return false
 		end
 	
-		-- Unanchor (ON TOP SIDE)
+		-- Fire paint (color + toxic) and unanchor together
+		local startTime = tick()
+		while tick() - startTime < 8 do
+			-- Paint black + toxic
+			pcall(function()
+				paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "both 🤝", TARGET_COLOR, "toxic", "")
+			end)
+	
+			-- Unanchor
+			pcall(function()
+				paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "material", TARGET_COLOR, "anchor", "")
+			end)
+	
+			task.wait(0.05)
+	
+			-- Check if complete
+			local colorMatch = math.abs(block.Color.R - TARGET_COLOR.R) < 0.02
+				and math.abs(block.Color.G - TARGET_COLOR.G) < 0.02
+				and math.abs(block.Color.B - TARGET_COLOR.B) < 0.02
+			local materialMatch = block.Material == TARGET_MATERIAL
+			local unanchored = block:FindFirstChild("Drag") ~= nil
+	
+			if colorMatch and materialMatch and unanchored then
+				break
+			end
+		end
+	
+		-- Check if unanchored - if not, retry ONLY unanchor
 		if not block:FindFirstChild("Drag") then
-			BlockSpamButton.Text = "Unanchoring..."
-			local paintEvent = getPaintEvent()
-			if paintEvent then
+			BlockSpamButton.Text = "Retry Unanchor..."
+	
+			-- First, try clearing any spray on Top side that might be blocking
+			local topSpray = block:FindFirstChild("Spray")
+			if topSpray then
+				pcall(function()
+					topSpray:Destroy()
+				end)
+				task.wait(0.1)
+			end
+	
+			local retryStart = tick()
+			while tick() - retryStart < 8 do
+				if block:FindFirstChild("Drag") then
+					break
+				end
+	
 				pcall(function()
 					paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "material", TARGET_COLOR, "anchor", "")
 				end)
 	
-				local startTime = tick()
-				while tick() - startTime < 3 do
-					if block:FindFirstChild("Drag") then
-						break
-					end
-					task.wait(0.1)
-				end
-			end
-		end
-	
-		-- SPRAY TEXT ON ALL 6 SIDES
-		BlockSpamButton.Text = "Spraying..."
-		local paintEvent = getPaintEvent()
-		if paintEvent then
-			local sprayText = string.rep("#", 132)
-			local sides = {
-				{Enum.NormalId.Front, block.Position + (block.CFrame.LookVector * block.Size.Z/2)},
-				{Enum.NormalId.Right, block.Position + (block.CFrame.RightVector * block.Size.X/2)},
-				{Enum.NormalId.Back, block.Position - (block.CFrame.LookVector * block.Size.Z/2)},
-				{Enum.NormalId.Left, block.Position - (block.CFrame.RightVector * block.Size.X/2)},
-				{Enum.NormalId.Top, block.Position + (block.CFrame.UpVector * block.Size.Y/2)},
-				{Enum.NormalId.Bottom, block.Position - (block.CFrame.UpVector * block.Size.Y/2)}
-			}
-	
-			for _, sideData in ipairs(sides) do
-				pcall(function()
-					paintEvent:FireServer(block, sideData[1], sideData[2], "both 🤝", TARGET_COLOR, "spray", sprayText)
-				end)
 				task.wait(0.05)
 			end
+	
+			-- If STILL not unanchored, fail
+			if not block:FindFirstChild("Drag") then
+				positionLock:Disconnect()
+				LocalPlayer.Character.Humanoid:UnequipTools()
+				if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+				end
+				LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+				BlockSpamButton.Text = "Cannot unanchor!"
+				task.wait(2)
+				BlockSpamButton.Text = TEXT_START
+				return false
+			end
 		end
 	
-		-- Resize
+		-- NOW block is definitely unanchored - safe to resize
 		if block.Size.X ~= targetSize or block.Size.Y ~= targetSize or block.Size.Z ~= targetSize then
 			BlockSpamButton.Text = "Resizing..."
 			local resizeSuccess = resizeBlock(block, targetSize)
@@ -20516,6 +20521,25 @@ local script = G2L["18a"];
 			end
 		end
 	
+		-- NOW spray all 6 sides (block is unanchored and resized)
+		BlockSpamButton.Text = "Spraying..."
+		local sprayText = string.rep("#", 132)
+		local sides = {
+			{Enum.NormalId.Front, block.Position + (block.CFrame.LookVector * block.Size.Z/2)},
+			{Enum.NormalId.Right, block.Position + (block.CFrame.RightVector * block.Size.X/2)},
+			{Enum.NormalId.Back, block.Position - (block.CFrame.LookVector * block.Size.Z/2)},
+			{Enum.NormalId.Left, block.Position - (block.CFrame.RightVector * block.Size.X/2)},
+			{Enum.NormalId.Top, block.Position + (block.CFrame.UpVector * block.Size.Y/2)},
+			{Enum.NormalId.Bottom, block.Position - (block.CFrame.UpVector * block.Size.Y/2)}
+		}
+	
+		for _, sideData in ipairs(sides) do
+			pcall(function()
+				paintEvent:FireServer(block, sideData[1], sideData[2], "both 🤝", TARGET_COLOR, "spray", sprayText)
+			end)
+			task.wait(0.05)
+		end
+	
 		LocalPlayer.Character.Humanoid:UnequipTools()
 		positionLock:Disconnect()
 		task.wait(0.1)
@@ -20523,35 +20547,7 @@ local script = G2L["18a"];
 		-- Weld
 		BlockSpamButton.Text = "Welding..."
 	
-		if not block:FindFirstChild("Drag") then
-			local paintEvent = getPaintEvent()
-			if paintEvent then
-				local startTime = tick()
-				local timeout = 5
-	
-				while tick() - startTime < timeout do
-					if block:FindFirstChild("Drag") then
-						break
-					end
-	
-					pcall(function()
-						paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "material", TARGET_COLOR, "anchor", "")
-					end)
-	
-					task.wait(0.05)
-				end
-	
-				if not block:FindFirstChild("Drag") then
-					LocalPlayer.Character.Humanoid:UnequipTools()
-					if previousTool and previousTool.Parent == LocalPlayer.Backpack then
-						LocalPlayer.Character.Humanoid:EquipTool(previousTool)
-					end
-					LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
-					return false
-				end
-			end
-		end
-	
+		-- Block is already unanchored from earlier, no need to check again
 		block.CanCollide = false
 	
 		local finalUnderPos = block.Position - Vector3.new(0, 8, 0)
