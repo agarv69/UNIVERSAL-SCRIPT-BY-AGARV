@@ -20130,10 +20130,10 @@ local script = G2L["18a"];
 				return true
 			end
 	
-			-- Fire remove spray on all sides
+			-- Fire remove spray on all sides with BLACK color but BLANK text (empty string removes spray)
 			for _, sideData in ipairs(sides) do
 				pcall(function()
-					paintEvent:FireServer(block, sideData[1], sideData[2], "both 🤝", Color3.new(1,1,1), "spray", "")
+					paintEvent:FireServer(block, sideData[1], sideData[2], "both 🤝", Color3.fromRGB(2, 2, 1), "spray", "")
 				end)
 				task.wait(0.02)
 			end
@@ -20155,7 +20155,13 @@ local script = G2L["18a"];
 	-- STEP 2: PAINT + TOXIFY (IF NEEDED)
 	-- ============================================================
 	local function paintAndToxify(block)
-		local colorCorrect = block.BrickColor == TARGET_BRICKCOLOR
+		-- Check current color
+		local currentColor = block.Color
+	
+		-- Check if color and material already correct
+		local colorCorrect = (currentColor.R * 255 >= 1 and currentColor.R * 255 <= 3) and 
+			(currentColor.G * 255 >= 1 and currentColor.G * 255 <= 3) and 
+			(currentColor.B * 255 >= 0 and currentColor.B * 255 <= 2)
 		local materialCorrect = block.Material == TARGET_MATERIAL
 	
 		if colorCorrect and materialCorrect then
@@ -20179,20 +20185,17 @@ local script = G2L["18a"];
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
 	
-		local startTime = tick()
-		while tick() - startTime < 5 do
+		local targetColor = Color3.fromRGB(2, 2, 1)
+	
+		-- Fire 5 times then move on
+		for i = 1, 5 do
 			pcall(function()
-				paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "both 🤝", Color3.fromRGB(2, 2, 1), "toxic", "")
+				paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "both 🤝", targetColor, "toxic", "")
 			end)
-	
 			task.wait(0.05)
-	
-			if block.BrickColor == TARGET_BRICKCOLOR and block.Material == TARGET_MATERIAL then
-				return true
-			end
 		end
 	
-		return block.BrickColor == TARGET_BRICKCOLOR and block.Material == TARGET_MATERIAL
+		return true
 	end
 	
 	-- ============================================================
@@ -20316,13 +20319,7 @@ local script = G2L["18a"];
 	local function sprayAllSides(block)
 		BlockSpamButton.Text = "Spraying..."
 	
-		-- Equip Paint tool
-		local paintTool = getPaintTool()
-		if paintTool and paintTool.Parent == LocalPlayer.Backpack then
-			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
-			task.wait(0.2)
-		end
-	
+		-- Paint tool should already be equipped before calling this
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
 	
@@ -20562,20 +20559,12 @@ local script = G2L["18a"];
 			end
 		end)
 	
+		-- Equip PAINT tool only at start
 		local paintTool = getPaintTool()
-		local shapeTool = getShapeTool()
-	
 		if paintTool and paintTool.Parent == LocalPlayer.Backpack then
 			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
+			task.wait(0.3)
 		end
-	
-		task.wait(0.1)
-	
-		if shapeTool and shapeTool.Parent == LocalPlayer.Backpack then
-			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
-		end
-	
-		task.wait(0.3)
 	
 		-- STEP 1
 		if not removeAllSprays(block) then
@@ -20610,9 +20599,24 @@ local script = G2L["18a"];
 			return false
 		end
 	
-		-- STEP 4 & 5
+		-- Equip SHAPE tool for resizing
+		local shapeTool = getShapeTool()
+		if shapeTool and shapeTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
+			task.wait(0.2)
+		end
+	
+		-- STEP 4
 		local resizeSuccess = resizeBlock(block, targetSize)
 	
+		-- Re-equip PAINT tool for spraying
+		local paintTool = getPaintTool()
+		if paintTool and paintTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
+			task.wait(0.2)
+		end
+	
+		-- STEP 5
 		task.wait(0.1)
 		sprayAllSides(block)
 	
@@ -20626,7 +20630,15 @@ local script = G2L["18a"];
 			return false
 		end
 	
+		-- Unequip all tools and restore original tool before welding
 		LocalPlayer.Character.Humanoid:UnequipTools()
+		task.wait(0.1)
+	
+		-- Restore previous tool if there was one
+		if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+		end
+	
 		positionLock:Disconnect()
 		task.wait(0.1)
 	
@@ -20659,9 +20671,6 @@ local script = G2L["18a"];
 			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
 			return false
 		end
-	
-		LocalPlayer.Character.Humanoid:UnequipTools()
-		task.wait(0.1)
 	
 		return true
 	end
