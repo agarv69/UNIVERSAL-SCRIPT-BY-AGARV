@@ -21624,14 +21624,14 @@ local script = G2L["199"];
 					block.CanTouch = data.props.canTouch
 				end
 	
-				-- EXPLODE: Random direction for each block
+				-- EXPLODE: Random direction for each block with MAX force
 				local randomDirection = Vector3.new(
 					math.random() * 2 - 1,
 					math.random() * 2 - 1,
 					math.random() * 2 - 1
 				).Unit
 	
-				local explosionForce = math.random(80, 120)
+				local explosionForce = 500
 				block.AssemblyLinearVelocity = randomDirection * explosionForce
 			end
 		end
