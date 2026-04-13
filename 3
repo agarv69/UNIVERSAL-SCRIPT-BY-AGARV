@@ -4488,38 +4488,38 @@ G2L["198"]["LayoutOrder"] = 8;
 G2L["198"]["BackgroundTransparency"] = 1;
 
 
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.BlackholeLagRow.BlackholeLagScript
+G2L["199"] = Instance.new("LocalScript", G2L["198"]);
+G2L["199"]["Name"] = [[BlackholeLagScript]];
+
+
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.BlackholeLagRow.BlackholeLagText
-G2L["199"] = Instance.new("TextLabel", G2L["198"]);
-G2L["199"]["BorderSizePixel"] = 0;
-G2L["199"]["TextSize"] = 14;
-G2L["199"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["199"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["199"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["199"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["199"]["BackgroundTransparency"] = 1;
-G2L["199"]["Size"] = UDim2.new(0, 88, 0, 20);
-G2L["199"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["199"]["Text"] = [[Enable Blackhole]];
-G2L["199"]["Name"] = [[BlackholeLagText]];
-G2L["199"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
+G2L["19a"] = Instance.new("TextLabel", G2L["198"]);
+G2L["19a"]["BorderSizePixel"] = 0;
+G2L["19a"]["TextSize"] = 14;
+G2L["19a"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["19a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["19a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["19a"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["19a"]["BackgroundTransparency"] = 1;
+G2L["19a"]["Size"] = UDim2.new(0, 88, 0, 20);
+G2L["19a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["19a"]["Text"] = [[Enable Blackhole]];
+G2L["19a"]["Name"] = [[BlackholeLagText]];
+G2L["19a"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.BlackholeLagRow.BlackholeLagTickBox
-G2L["19a"] = Instance.new("TextButton", G2L["198"]);
-G2L["19a"]["TextSize"] = 14;
-G2L["19a"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["19a"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["19a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["19a"]["Size"] = UDim2.new(0, 16, 0, 16);
-G2L["19a"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
-G2L["19a"]["Text"] = [[]];
-G2L["19a"]["Name"] = [[BlackholeLagTickBox]];
-G2L["19a"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
-
-
--- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.BlackholeLagRow.BlackholeLagScript
-G2L["19b"] = Instance.new("LocalScript", G2L["198"]);
-G2L["19b"]["Name"] = [[BlackholeLagScript]];
+G2L["19b"] = Instance.new("TextButton", G2L["198"]);
+G2L["19b"]["TextSize"] = 14;
+G2L["19b"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["19b"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["19b"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["19b"]["Size"] = UDim2.new(0, 16, 0, 16);
+G2L["19b"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
+G2L["19b"]["Text"] = [[]];
+G2L["19b"]["Name"] = [[BlackholeLagTickBox]];
+G2L["19b"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCODetectionPage
@@ -21354,8 +21354,8 @@ local script = G2L["195"];
 end;
 task.spawn(C_195);
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.LagGroup.BlackholeLagRow.BlackholeLagScript
-local function C_19b()
-local script = G2L["19b"];
+local function C_199()
+local script = G2L["199"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local RunService = game:GetService("RunService")
@@ -21458,6 +21458,18 @@ local script = G2L["19b"];
 			end
 		end
 	
+		-- Skip the selected block (check if it has BlockSpamWeld connecting to player)
+		local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			for _, child in ipairs(hrp:GetChildren()) do
+				if child:IsA("WeldConstraint") and child.Name == "BlockSpamWeld" then
+					if child.Part0 == obj or child.Part1 == obj then
+						return false -- This is the selected/welded block, skip it
+					end
+				end
+			end
+		end
+	
 		-- Check if unanchored and has Drag (lag machine blocks)
 		if not obj:FindFirstChild("Drag") then
 			return false
@@ -21509,11 +21521,17 @@ local script = G2L["19b"];
 		local dragging = false
 		local dragStart = nil
 		local dragStartPos = nil
+		local originalCameraType = nil
 	
 		local function startDrag(input)
 			dragging = true
 			dragStart = input.Position
 			dragStartPos = handlesPart.Position
+	
+			-- Lock camera while dragging
+			local camera = workspace.CurrentCamera
+			originalCameraType = camera.CameraType
+			camera.CameraType = Enum.CameraType.Scriptable
 		end
 	
 		local function updateDrag(input)
@@ -21534,38 +21552,15 @@ local script = G2L["19b"];
 			dragging = false
 			dragStart = nil
 			dragStartPos = nil
+	
+			-- Unlock camera
+			if originalCameraType then
+				local camera = workspace.CurrentCamera
+				camera.CameraType = originalCameraType
+				originalCameraType = nil
+			end
 		end
 	
-		UserInputService.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1
-				or input.UserInputType == Enum.UserInputType.Touch then
-				local mouse = LocalPlayer:GetMouse()
-				if mouse.Target == handlesPart then
-					startDrag(input)
-				end
-			end
-		end)
-	
-		UserInputService.InputChanged:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseMovement
-				or input.UserInputType == Enum.UserInputType.Touch then
-				updateDrag(input)
-			end
-		end)
-	
-		UserInputService.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1
-				or input.UserInputType == Enum.UserInputType.Touch then
-				stopDrag()
-			end
-		end)
-	
-		-- Connect to ClickDetector for easier clicking
-		local clickDetector = Instance.new("ClickDetector")
-		clickDetector.MaxActivationDistance = 1000
-		clickDetector.Parent = handlesPart
-	
-		-- Mouse/Touch input
 		table.insert(dragConnections, UserInputService.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				local mouse = LocalPlayer:GetMouse()
@@ -21615,7 +21610,7 @@ local script = G2L["19b"];
 		targetPosition = nil
 	end
 	
-	-- Release all blocks
+	-- Release all blocks WITH EXPLOSION
 	local function releaseAllBlocks()
 		for block, data in pairs(bodyPositions) do
 			if block and block.Parent then
@@ -21628,6 +21623,16 @@ local script = G2L["19b"];
 					block.CanCollide = data.props.canCollide
 					block.CanTouch = data.props.canTouch
 				end
+	
+				-- EXPLODE: Random direction for each block
+				local randomDirection = Vector3.new(
+					math.random() * 2 - 1,
+					math.random() * 2 - 1,
+					math.random() * 2 - 1
+				).Unit
+	
+				local explosionForce = math.random(80, 120)
+				block.AssemblyLinearVelocity = randomDirection * explosionForce
 			end
 		end
 	
@@ -21704,7 +21709,7 @@ local script = G2L["19b"];
 	
 	print("[BlackholeLag] Script loaded - OFF by default")
 end;
-task.spawn(C_19b);
+task.spawn(C_199);
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCODetectionPage.TCODetectionLeftSide.EnableGroup.EnableScript
 local function C_1a0()
 local script = G2L["1a0"];
