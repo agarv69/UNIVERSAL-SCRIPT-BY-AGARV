@@ -20115,13 +20115,36 @@ local script = G2L["18a"];
 			{Enum.NormalId.Bottom, block.Position - (block.CFrame.UpVector * block.Size.Y/2)}
 		}
 	
+		-- Keep spamming until ALL sprays are gone (max 3 seconds)
 		local startTime = tick()
-		while tick() - startTime < 0.5 do
+		while tick() - startTime < 3 do
+			-- Check if all sprays removed
+			local sprayCount = 0
+			for _, child in ipairs(block:GetChildren()) do
+				if child.Name == "Spray" then
+					sprayCount = sprayCount + 1
+				end
+			end
+	
+			if sprayCount == 0 then
+				return true
+			end
+	
+			-- Fire remove spray on all sides with BLACK color but BLANK text (empty string removes spray)
 			for _, sideData in ipairs(sides) do
 				pcall(function()
-					paintEvent:FireServer(block, sideData[1], sideData[2], "both 🤝", Color3.new(1,1,1), "spray", "")
+					paintEvent:FireServer(block, sideData[1], sideData[2], "both 🤝", Color3.fromRGB(2, 2, 1), "spray", "")
 				end)
-				task.wait(0.01)
+				task.wait(0.02)
+			end
+	
+			task.wait(0.05)
+		end
+	
+		-- Check one more time
+		for _, child in ipairs(block:GetChildren()) do
+			if child.Name == "Spray" then
+				return false
 			end
 		end
 	
@@ -20132,7 +20155,15 @@ local script = G2L["18a"];
 	-- STEP 2: PAINT + TOXIFY (IF NEEDED)
 	-- ============================================================
 	local function paintAndToxify(block)
-		local colorCorrect = block.BrickColor == TARGET_BRICKCOLOR
+		-- Check current color - BrickColor.new("Really black") is Color3.fromRGB(17, 17, 17) in properties
+		-- But when painted it becomes RGB(2, 2, 1)
+		local currentColor = block.Color
+		local targetColor = Color3.fromRGB(2, 2, 1)
+	
+		-- Check if color and material already correct
+		local colorCorrect = (currentColor.R * 255 >= 1 and currentColor.R * 255 <= 3) and 
+			(currentColor.G * 255 >= 1 and currentColor.G * 255 <= 3) and 
+			(currentColor.B * 255 >= 0 and currentColor.B * 255 <= 2)
 		local materialCorrect = block.Material == TARGET_MATERIAL
 	
 		if colorCorrect and materialCorrect then
@@ -20159,17 +20190,29 @@ local script = G2L["18a"];
 		local startTime = tick()
 		while tick() - startTime < 5 do
 			pcall(function()
-				paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "both 🤝", Color3.fromRGB(2, 2, 1), "toxic", "")
+				paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "both 🤝", targetColor, "toxic", "")
 			end)
 	
 			task.wait(0.05)
 	
-			if block.BrickColor == TARGET_BRICKCOLOR and block.Material == TARGET_MATERIAL then
+			-- Check again
+			local newColor = block.Color
+			local nowColorCorrect = (newColor.R * 255 >= 1 and newColor.R * 255 <= 3) and 
+				(newColor.G * 255 >= 1 and newColor.G * 255 <= 3) and 
+				(newColor.B * 255 >= 0 and newColor.B * 255 <= 2)
+	
+			if nowColorCorrect and block.Material == TARGET_MATERIAL then
 				return true
 			end
 		end
 	
-		return block.BrickColor == TARGET_BRICKCOLOR and block.Material == TARGET_MATERIAL
+		-- Final check
+		local finalColor = block.Color
+		local finalColorCorrect = (finalColor.R * 255 >= 1 and finalColor.R * 255 <= 3) and 
+			(finalColor.G * 255 >= 1 and finalColor.G * 255 <= 3) and 
+			(finalColor.B * 255 >= 0 and finalColor.B * 255 <= 2)
+	
+		return finalColorCorrect and block.Material == TARGET_MATERIAL
 	end
 	
 	-- ============================================================
@@ -20293,6 +20336,7 @@ local script = G2L["18a"];
 	local function sprayAllSides(block)
 		BlockSpamButton.Text = "Spraying..."
 	
+		-- Paint tool should already be equipped before calling this
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
 	
@@ -20532,20 +20576,12 @@ local script = G2L["18a"];
 			end
 		end)
 	
+		-- Equip PAINT tool only at start
 		local paintTool = getPaintTool()
-		local shapeTool = getShapeTool()
-	
 		if paintTool and paintTool.Parent == LocalPlayer.Backpack then
 			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
+			task.wait(0.3)
 		end
-	
-		task.wait(0.1)
-	
-		if shapeTool and shapeTool.Parent == LocalPlayer.Backpack then
-			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
-		end
-	
-		task.wait(0.3)
 	
 		-- STEP 1
 		if not removeAllSprays(block) then
@@ -20580,9 +20616,24 @@ local script = G2L["18a"];
 			return false
 		end
 	
-		-- STEP 4 & 5
+		-- Equip SHAPE tool for resizing
+		local shapeTool = getShapeTool()
+		if shapeTool and shapeTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
+			task.wait(0.2)
+		end
+	
+		-- STEP 4
 		local resizeSuccess = resizeBlock(block, targetSize)
 	
+		-- Re-equip PAINT tool for spraying
+		local paintTool = getPaintTool()
+		if paintTool and paintTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
+			task.wait(0.2)
+		end
+	
+		-- STEP 5
 		task.wait(0.1)
 		sprayAllSides(block)
 	
@@ -20596,7 +20647,15 @@ local script = G2L["18a"];
 			return false
 		end
 	
+		-- Unequip all tools and restore original tool before welding
 		LocalPlayer.Character.Humanoid:UnequipTools()
+		task.wait(0.1)
+	
+		-- Restore previous tool if there was one
+		if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+			LocalPlayer.Character.Humanoid:EquipTool(previousTool)
+		end
+	
 		positionLock:Disconnect()
 		task.wait(0.1)
 	
@@ -20629,9 +20688,6 @@ local script = G2L["18a"];
 			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
 			return false
 		end
-	
-		LocalPlayer.Character.Humanoid:UnequipTools()
-		task.wait(0.1)
 	
 		return true
 	end
