@@ -20101,8 +20101,6 @@ local script = G2L["18a"];
 			return true
 		end
 	
-		BlockSpamButton.Text = "Removing Sprays..."
-	
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
 	
@@ -20118,6 +20116,8 @@ local script = G2L["18a"];
 		-- Keep spamming until ALL sprays are gone (max 3 seconds)
 		local startTime = tick()
 		while tick() - startTime < 3 do
+			if not isSpamming then return false end
+	
 			-- Check if all sprays removed
 			local sprayCount = 0
 			for _, child in ipairs(block:GetChildren()) do
@@ -20130,10 +20130,11 @@ local script = G2L["18a"];
 				return true
 			end
 	
-			-- Fire remove spray on all sides
+			-- Fire remove spray on all sides with BLACK color but BLANK text (empty string removes spray)
 			for _, sideData in ipairs(sides) do
+				if not isSpamming then return false end
 				pcall(function()
-					paintEvent:FireServer(block, sideData[1], sideData[2], "both 🤝", Color3.new(1,1,1), "spray", "")
+					paintEvent:FireServer(block, sideData[1], sideData[2], "both 🤝", Color3.fromRGB(2, 2, 1), "spray", "")
 				end)
 				task.wait(0.02)
 			end
@@ -20155,7 +20156,13 @@ local script = G2L["18a"];
 	-- STEP 2: PAINT + TOXIFY (IF NEEDED)
 	-- ============================================================
 	local function paintAndToxify(block)
-		local colorCorrect = block.BrickColor == TARGET_BRICKCOLOR
+		-- Check current color
+		local currentColor = block.Color
+	
+		-- Check if color and material already correct
+		local colorCorrect = (currentColor.R * 255 >= 1 and currentColor.R * 255 <= 3) and 
+			(currentColor.G * 255 >= 1 and currentColor.G * 255 <= 3) and 
+			(currentColor.B * 255 >= 0 and currentColor.B * 255 <= 2)
 		local materialCorrect = block.Material == TARGET_MATERIAL
 	
 		if colorCorrect and materialCorrect then
@@ -20174,25 +20181,21 @@ local script = G2L["18a"];
 			return false
 		end
 	
-		BlockSpamButton.Text = "Painting + Toxify..."
-	
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
 	
-		local startTime = tick()
-		while tick() - startTime < 5 do
+		local targetColor = Color3.fromRGB(2, 2, 1)
+	
+		-- Fire 5 times then move on
+		for i = 1, 5 do
+			if not isSpamming then return false end
 			pcall(function()
-				paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "both 🤝", Color3.fromRGB(2, 2, 1), "toxic", "")
+				paintEvent:FireServer(block, Enum.NormalId.Top, block.Position, "both 🤝", targetColor, "toxic", "")
 			end)
-	
 			task.wait(0.05)
-	
-			if block.BrickColor == TARGET_BRICKCOLOR and block.Material == TARGET_MATERIAL then
-				return true
-			end
 		end
 	
-		return block.BrickColor == TARGET_BRICKCOLOR and block.Material == TARGET_MATERIAL
+		return true
 	end
 	
 	-- ============================================================
@@ -20203,8 +20206,6 @@ local script = G2L["18a"];
 			return true
 		end
 	
-		BlockSpamButton.Text = "Unanchoring..."
-	
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
 	
@@ -20212,6 +20213,8 @@ local script = G2L["18a"];
 	
 		local startTime = tick()
 		while tick() - startTime < 2 do
+			if not isSpamming then return false end
+	
 			pcall(function()
 				paintEvent:FireServer(block, Enum.NormalId.Bottom, bottomPos, "material", Color3.fromRGB(2, 2, 1), "anchor", "")
 			end)
@@ -20235,11 +20238,11 @@ local script = G2L["18a"];
 			return true
 		end
 	
-		BlockSpamButton.Text = "Resizing..."
-	
 		local maxAttempts = 3
 	
 		for attempt = 1, maxAttempts do
+			if not isSpamming then return false end
+	
 			local shapeTool = getShapeTool()
 			local shapeEvent = getShapeEvent()
 	
@@ -20261,6 +20264,8 @@ local script = G2L["18a"];
 			local iterations = 0
 	
 			while iterations < maxIterations do
+				if not isSpamming then return false end
+	
 				local currentSize = block.Size
 	
 				if currentSize.X == targetSize and currentSize.Y == targetSize and currentSize.Z == targetSize then
@@ -20314,8 +20319,6 @@ local script = G2L["18a"];
 	-- STEP 5: SPRAY ALL SIDES
 	-- ============================================================
 	local function sprayAllSides(block)
-		BlockSpamButton.Text = "Spraying..."
-	
 		-- Paint tool should already be equipped before calling this
 		local paintEvent = getPaintEvent()
 		if not paintEvent then return false end
@@ -20332,6 +20335,8 @@ local script = G2L["18a"];
 	
 		local maxTime = tick() + 5
 		while tick() < maxTime do
+			if not isSpamming then return false end
+	
 			local sprayCount = 0
 			for _, child in ipairs(block:GetChildren()) do
 				if child.Name == "Spray" then
@@ -20344,6 +20349,7 @@ local script = G2L["18a"];
 			end
 	
 			for _, sideData in ipairs(sides) do
+				if not isSpamming then return false end
 				pcall(function()
 					paintEvent:FireServer(block, sideData[1], sideData[2], "both 🤝", Color3.fromRGB(2, 2, 1), "spray", sprayText)
 				end)
@@ -20535,6 +20541,11 @@ local script = G2L["18a"];
 			return false
 		end
 	
+		-- Set to "Stop Spam" immediately
+		isProcessing = true
+		isSpamming = true
+		BlockSpamButton.Text = TEXT_STOP
+	
 		local previousTool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
 	
 		if not positionBeforeStop then
@@ -20563,7 +20574,49 @@ local script = G2L["18a"];
 			task.wait(0.3)
 		end
 	
-		-- STEP 1
+		-- Check if sprays are already correct (6 sprays with ### text)
+		local sprayText = string.rep("#", 132)
+		local correctSprays = 0
+		for _, child in ipairs(block:GetChildren()) do
+			if child.Name == "Spray" and child:IsA("SurfaceGui") then
+				local label = child:FindFirstChild("Label")
+				if label and label:IsA("TextLabel") and label.Text == sprayText then
+					correctSprays = correctSprays + 1
+				end
+			end
+		end
+	
+		-- If already has 6 correct sprays, skip spray removal and re-spraying entirely
+		local skipSpraySteps = (correctSprays == 6)
+	
+		-- STEP 1 - Only if sprays not already correct
+		if not skipSpraySteps then
+			if not isSpamming then
+				positionLock:Disconnect()
+				LocalPlayer.Character.Humanoid:UnequipTools()
+				LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+				return false
+			end
+	
+			if not removeAllSprays(block) then
+				positionLock:Disconnect()
+				LocalPlayer.Character.Humanoid:UnequipTools()
+				LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+				BlockSpamButton.Text = "Failed spray removal"
+				task.wait(2)
+				BlockSpamButton.Text = TEXT_START
+				return false
+			end
+		end
+	
+		-- STEP 2
+		if not isSpamming then
+			positionLock:Disconnect()
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+			return false
+		end
+	
 		if not removeAllSprays(block) then
 			positionLock:Disconnect()
 			LocalPlayer.Character.Humanoid:UnequipTools()
@@ -20575,6 +20628,13 @@ local script = G2L["18a"];
 		end
 	
 		-- STEP 2
+		if not isSpamming then
+			positionLock:Disconnect()
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+			return false
+		end
+	
 		if not paintAndToxify(block) then
 			positionLock:Disconnect()
 			LocalPlayer.Character.Humanoid:UnequipTools()
@@ -20586,6 +20646,13 @@ local script = G2L["18a"];
 		end
 	
 		-- STEP 3
+		if not isSpamming then
+			positionLock:Disconnect()
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+			return false
+		end
+	
 		if not unanchorBlock(block) then
 			positionLock:Disconnect()
 			LocalPlayer.Character.Humanoid:UnequipTools()
@@ -20597,6 +20664,13 @@ local script = G2L["18a"];
 		end
 	
 		-- Equip SHAPE tool for resizing
+		if not isSpamming then
+			positionLock:Disconnect()
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+			return false
+		end
+	
 		local shapeTool = getShapeTool()
 		if shapeTool and shapeTool.Parent == LocalPlayer.Backpack then
 			LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
@@ -20604,18 +20678,41 @@ local script = G2L["18a"];
 		end
 	
 		-- STEP 4
+		if not isSpamming then
+			positionLock:Disconnect()
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+			return false
+		end
+	
 		local resizeSuccess = resizeBlock(block, targetSize)
 	
 		-- Re-equip PAINT tool for spraying
+		if not isSpamming then
+			positionLock:Disconnect()
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+			return false
+		end
+	
 		local paintTool = getPaintTool()
 		if paintTool and paintTool.Parent == LocalPlayer.Backpack then
 			LocalPlayer.Character.Humanoid:EquipTool(paintTool)
 			task.wait(0.2)
 		end
 	
-		-- STEP 5
-		task.wait(0.1)
-		sprayAllSides(block)
+		-- STEP 5 - Only if sprays weren't already correct
+		if not skipSpraySteps then
+			if not isSpamming then
+				positionLock:Disconnect()
+				LocalPlayer.Character.Humanoid:UnequipTools()
+				LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+				return false
+			end
+	
+			task.wait(0.1)
+			sprayAllSides(block)
+		end
 	
 		if not resizeSuccess then
 			positionLock:Disconnect()
@@ -20624,6 +20721,13 @@ local script = G2L["18a"];
 			BlockSpamButton.Text = "Resize failed!"
 			task.wait(2)
 			BlockSpamButton.Text = TEXT_START
+			return false
+		end
+	
+		if not isSpamming then
+			positionLock:Disconnect()
+			LocalPlayer.Character.Humanoid:UnequipTools()
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
 			return false
 		end
 	
@@ -20639,7 +20743,12 @@ local script = G2L["18a"];
 		positionLock:Disconnect()
 		task.wait(0.1)
 	
-		BlockSpamButton.Text = "Welding..."
+		if not isSpamming then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+			return false
+		end
+	
+		BlockSpamButton.Text = TEXT_STOP
 	
 		block.CanCollide = false
 	
@@ -20661,7 +20770,7 @@ local script = G2L["18a"];
 		currentWeld = weld
 		weldedBlock = block
 	
-		BlockSpamButton.Text = "Starting spam..."
+		BlockSpamButton.Text = TEXT_STOP
 	
 		if not startSpamBuilding(block) then
 			cleanupWeld()
