@@ -93,8 +93,7 @@ local function enableGodmode()
 
 	local character = LocalPlayer.Character
 	if not character then return end
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return end
+	local humanoid = character:WaitForChild("Humanoid")
 
 	humanoid.MaxHealth = math.huge
 	humanoid.Health    = math.huge
@@ -121,10 +120,10 @@ local function enableGodmode()
 	end))
 end
 
+task.wait(2)
 enableGodmode()
 
 LocalPlayer.CharacterAdded:Connect(function(character)
-	character:WaitForChild("Humanoid")
-	task.wait(0.1)
+	task.wait(0.5)
 	enableGodmode()
 end)
