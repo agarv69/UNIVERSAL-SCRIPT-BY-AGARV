@@ -95,6 +95,8 @@ local script = G2L["5"];
 	
 	local ToggleButton = script.Parent.Parent
 	
+	task.wait(2) -- wait for other scripts in folder to load
+	
 	--------------------------------------------------
 	-- EXECUTE BOT2 SCRIPT (anti fling, auto pickup, god mode)
 	--------------------------------------------------
@@ -120,7 +122,6 @@ local script = G2L["5"];
 					return
 				end
 			end
-			-- Fallback
 			local rs = game:GetService("ReplicatedStorage")
 			local chatEvents = rs:WaitForChild("DefaultChatSystemChatEvents", 2)
 			if chatEvents then
@@ -130,6 +131,36 @@ local script = G2L["5"];
 				end
 			end
 		end)
+	end
+	
+	--------------------------------------------------
+	-- KVDB BROKEN SERVERS
+	--------------------------------------------------
+	
+	local KVDB_BUCKET = "Uci4nd5osK682hHutcULtt"
+	local KVDB_KEY    = "brokenservers"
+	
+	local function saveBrokenServers(brokenServers)
+		pcall(function()
+			local body = HttpService:JSONEncode(brokenServers)
+			request({
+				Url     = "https://kvdb.io/" .. KVDB_BUCKET .. "/" .. KVDB_KEY,
+				Method  = "POST",
+				Headers = {["Content-Type"] = "application/json"},
+				Body    = body
+			})
+		end)
+	end
+	
+	local function loadBrokenServers()
+		local ok, result = pcall(function()
+			local res = request({
+				Url    = "https://kvdb.io/" .. KVDB_BUCKET .. "/" .. KVDB_KEY,
+				Method = "GET"
+			})
+			return HttpService:JSONDecode(res.Body)
+		end)
+		return ok and result or {}
 	end
 	
 	--------------------------------------------------
@@ -148,7 +179,6 @@ local script = G2L["5"];
 	--------------------------------------------------
 	
 	local STATE_FILE   = "BotGuiState.json"
-	local BROKEN_FILE  = "BotGuiBroken.json"
 	local VISITED_FILE = "BotGuiVisited.json"
 	
 	local function readJson(file)
@@ -164,24 +194,26 @@ local script = G2L["5"];
 		end)
 	end
 	
-	local brokenServers  = readJson(BROKEN_FILE)
-	-- visitedServers: jobId -> tick() when visited
+	local brokenServers  = loadBrokenServers()
 	local visitedServers = readJson(VISITED_FILE)
 	
 	shared.BrokenServers  = brokenServers
 	shared.VisitedServers = visitedServers
 	
+	local visitCounter = 0
+	
 	local function markBroken(jobId)
 		brokenServers[jobId] = true
-		writeJson(BROKEN_FILE, brokenServers)
+		saveBrokenServers(brokenServers)
+		shared.BrokenServers = brokenServers
 	end
 	
-	local visitCounter = 0
 	local function markVisited(jobId)
 		if not visitedServers[jobId] then
 			visitCounter = visitCounter + 1
 			visitedServers[jobId] = visitCounter
 			writeJson(VISITED_FILE, visitedServers)
+			shared.VisitedServers = visitedServers
 		end
 	end
 	
@@ -204,8 +236,6 @@ local script = G2L["5"];
 	
 	--------------------------------------------------
 	-- ARKENSTONE WATCHER
-	-- When arkenstone appears: send ;bkit + equip arkenstone simultaneously
-	-- Then wait for Delete tool
 	--------------------------------------------------
 	
 	local arkestoneDetected = false
@@ -215,16 +245,16 @@ local script = G2L["5"];
 	
 		local function checkAndHandle()
 			if arkestoneDetected then return end
-			local backpack  = LocalPlayer:FindFirstChild("Backpack")
-			local char      = LocalPlayer.Character
+			local backpack   = LocalPlayer:FindFirstChild("Backpack")
+			local char       = LocalPlayer.Character
 			local inBackpack = backpack and backpack:FindFirstChild("The Arkenstone")
-			local inChar    = char and char:FindFirstChild("The Arkenstone")
-			local arken     = inBackpack or inChar
+			local inChar     = char and char:FindFirstChild("The Arkenstone")
+			local arken      = inBackpack or inChar
 			if not arken then return end
 	
 			arkestoneDetected = true
 	
-			-- Equip arkenstone first, then send ;bkit 0.5s after
+			-- Equip arkenstone first then send ;bkit 0.5s after
 			task.spawn(function()
 				pcall(function()
 					local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -241,7 +271,6 @@ local script = G2L["5"];
 			onDetected()
 		end
 	
-		-- Watch backpack
 		local connections = {}
 	
 		local backpack = LocalPlayer:FindFirstChild("Backpack")
@@ -253,7 +282,6 @@ local script = G2L["5"];
 			end))
 		end
 	
-		-- Watch character
 		local char = LocalPlayer.Character
 		if char then
 			table.insert(connections, char.ChildAdded:Connect(function(child)
@@ -263,7 +291,6 @@ local script = G2L["5"];
 			end))
 		end
 	
-		-- Also check if already present
 		checkAndHandle()
 	
 		return connections
@@ -276,7 +303,6 @@ local script = G2L["5"];
 	local function mainLoop()
 		markVisited(game.JobId)
 	
-		-- Step 1: Check ReplicatedStorage.Brick
 		setStatus("Checking server...")
 		task.wait(2)
 	
@@ -290,13 +316,11 @@ local script = G2L["5"];
 			return
 		end
 	
-		-- Step 2: Wait up to 60s for Delete tool
-		-- But first watch for Arkenstone — if we get it, send ;bkit + equip
-		local waitStart    = tick()
-		local WAIT_TIME    = 60
-		local gotDelete    = false
-		local brickGone    = false
-		local arkConns     = {}
+		local waitStart = tick()
+		local WAIT_TIME = 60
+		local gotDelete = false
+		local brickGone = false
+		local arkConns  = {}
 	
 		local brickConn = brick.AncestryChanged:Connect(function()
 			if not brick:IsDescendantOf(game) then
@@ -304,16 +328,12 @@ local script = G2L["5"];
 			end
 		end)
 	
-		-- Start arkenstone watcher — when triggered it equips + sends ;bkit
-		-- which causes Delete tool to appear
-		arkConns = watchArkenstone(function()
-			-- Arkenstone handled — just keep waiting for Delete tool
-		end)
+		arkConns = watchArkenstone(function() end)
 	
 		local timerConn = RunService.Heartbeat:Connect(function()
 			if not shared.BotEnabled then return end
 			local remaining = math.max(0, WAIT_TIME - (tick() - waitStart))
-			setStatus(string.format("Waiting for Delete tool... (%.1f)", remaining))
+			setStatus(string.format("Waiting... (%.1f)", remaining))
 		end)
 	
 		while tick() - waitStart < WAIT_TIME and shared.BotEnabled do
@@ -347,7 +367,6 @@ local script = G2L["5"];
 			return
 		end
 	
-		-- Step 3: Break bkit
 		setStatus("Breaking Bkit...")
 		local success = shared.BotBreakBkit()
 	
@@ -389,7 +408,7 @@ local script = G2L["5"];
 		setStatus("OFF")
 		brokenServers  = {}
 		visitedServers = {}
-		writeJson(BROKEN_FILE, brokenServers)
+		saveBrokenServers(brokenServers)
 		writeJson(VISITED_FILE, visitedServers)
 		shared.BrokenServers  = brokenServers
 		shared.VisitedServers = visitedServers
@@ -406,7 +425,7 @@ local script = G2L["5"];
 	-- Auto restart after server hop
 	local savedState = readJson(STATE_FILE)
 	if savedState.wasOn then
-		brokenServers  = readJson(BROKEN_FILE)
+		brokenServers  = loadBrokenServers()
 		visitedServers = readJson(VISITED_FILE)
 		shared.BrokenServers  = brokenServers
 		shared.VisitedServers = visitedServers
