@@ -14,6 +14,7 @@ local G2L = {};
 G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
 G2L["1"]["Name"] = [[BotGui]];
 G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+G2L["1"]["ResetOnSpawn"] = false;
 
 
 -- StarterGui.BotGui.ToggleButton
@@ -71,8 +72,6 @@ local script = G2L["4"];
 	local RunService  = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local conn = nil
-	
 	local function disableCollisionsFor(character)
 		if not character then return end
 		for _, part in pairs(character:GetDescendants()) do
@@ -82,44 +81,31 @@ local script = G2L["4"];
 		end
 	end
 	
-	shared.BotAntiFling = function(on)
-		if on then
-			if conn then return end
-			-- Hook existing players
-			for _, player in pairs(Players:GetPlayers()) do
-				if player ~= LocalPlayer and player.Character then
-					disableCollisionsFor(player.Character)
-					player.CharacterAdded:Connect(disableCollisionsFor)
-				end
-			end
-			Players.PlayerAdded:Connect(function(player)
-				if player ~= LocalPlayer then
-					player.CharacterAdded:Connect(disableCollisionsFor)
-				end
-			end)
-			conn = RunService.Heartbeat:Connect(function()
-				for _, player in pairs(Players:GetPlayers()) do
-					if player ~= LocalPlayer and player.Character then
-						disableCollisionsFor(player.Character)
-					end
-				end
-			end)
-		else
-			if conn then
-				conn:Disconnect()
-				conn = nil
-			end
-			for _, player in pairs(Players:GetPlayers()) do
-				if player ~= LocalPlayer and player.Character then
-					for _, part in pairs(player.Character:GetDescendants()) do
-						if part:IsA("BasePart") then
-							part.CanCollide = true
-						end
-					end
-				end
-			end
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			disableCollisionsFor(player.Character)
+		end
+		if player ~= LocalPlayer then
+			player.CharacterAdded:Connect(disableCollisionsFor)
 		end
 	end
+	
+	Players.PlayerAdded:Connect(function(player)
+		if player ~= LocalPlayer then
+			player.CharacterAdded:Connect(disableCollisionsFor)
+			if player.Character then
+				disableCollisionsFor(player.Character)
+			end
+		end
+	end)
+	
+	RunService.Heartbeat:Connect(function()
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character then
+				disableCollisionsFor(player.Character)
+			end
+		end
+	end)
 end;
 task.spawn(C_4);
 -- StarterGui.BotGui.ToggleButton.ToggleScript.MainScript
@@ -365,17 +351,18 @@ local script = G2L["6"];
 	local Players     = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
-	shared.BotAutoPickup = function(on)
+	pcall(function()
+		sethiddenproperty(LocalPlayer, "SimulationRadius", 1000)
+	end)
+	
+	LocalPlayer.ReplicationFocus = workspace
+	
+	RunService = game:GetService("RunService")
+	RunService.Heartbeat:Connect(function()
 		pcall(function()
-			sethiddenproperty(LocalPlayer, "SimulationRadius", on and 1000 or 0)
+			sethiddenproperty(LocalPlayer, "SimulationRadius", 1000)
 		end)
-		if on then
-			workspace.CurrentCamera.Focus = LocalPlayer.Character and LocalPlayer.Character.PrimaryPart and LocalPlayer.Character.PrimaryPart.CFrame or workspace.CurrentCamera.Focus
-			LocalPlayer.ReplicationFocus = workspace
-		else
-			LocalPlayer.ReplicationFocus = LocalPlayer.Character and LocalPlayer.Character.PrimaryPart or nil
-		end
-	end
+	end)
 end;
 task.spawn(C_6);
 -- StarterGui.BotGui.ToggleButton.ToggleScript.ServerHopScript
