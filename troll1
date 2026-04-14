@@ -26,18 +26,14 @@ clickBtn = lib.makebutton("Target: None", t, function()
 
 		if part then
 			if part then
-				for _, plr in pairs(game.Players:GetPlayers()) do
-					if plr.Character and part:IsDescendantOf(plr.Character) then
+				local model = part
+				while model and model.Parent do
+					local plr = game.Players:GetPlayerFromCharacter(model)
+					if plr then
 						found = plr
 						break
 					end
-				end
-				-- fallback: if no player found from character check, check by part name/ancestor
-				if not found then
-					local model = part.Parent
-					if model then
-						found = game.Players:GetPlayerFromCharacter(model)
-					end
+					model = model.Parent
 				end
 			end
 		end
