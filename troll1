@@ -55,6 +55,10 @@ clickBtn = lib.makebutton("Target: None", t, function()
 		end
 	end)
 end)
+lib.makebutton("Set Target: You", t, function()
+	targetPlayer = localplr
+	clickBtn.Text = "Target: You"
+end)
 local r = 1000
 local localplr = game.Players.LocalPlayer
 local radiuscircle = Instance.new("Part")
