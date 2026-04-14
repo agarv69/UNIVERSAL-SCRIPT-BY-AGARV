@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 9 | Scripts: 4 | Modules: 0 | Tags: 0
+-- Instances: 10 | Scripts: 5 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.BotGui
@@ -68,17 +68,22 @@ G2L["8"] = Instance.new("LocalScript", G2L["4"]);
 G2L["8"]["Name"] = [[WebhookScript]];
 
 
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.LocalScript
+G2L["9"] = Instance.new("LocalScript", G2L["4"]);
+
+
+
 -- StarterGui.BotGui.BotMainFrame.BotTitle
-G2L["9"] = Instance.new("TextLabel", G2L["2"]);
-G2L["9"]["TextSize"] = 14;
-G2L["9"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
-G2L["9"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["9"]["TextColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["9"]["Size"] = UDim2.new(0, 200, 0, 28);
-G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["9"]["Text"] = [[Bkit Disabler Bot]];
-G2L["9"]["Name"] = [[BotTitle]];
-G2L["9"]["Position"] = UDim2.new(-0.0047, 0, -0.0049, 0);
+G2L["a"] = Instance.new("TextLabel", G2L["2"]);
+G2L["a"]["TextSize"] = 14;
+G2L["a"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
+G2L["a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["a"]["TextColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["a"]["Size"] = UDim2.new(0, 200, 0, 28);
+G2L["a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["a"]["Text"] = [[Bkit Disabler Bot]];
+G2L["a"]["Name"] = [[BotTitle]];
+G2L["a"]["Position"] = UDim2.new(-0.0047, 0, -0.0049, 0);
 
 
 -- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.MainScript
@@ -667,5 +672,14 @@ local script = G2L["8"];
 	end
 end;
 task.spawn(C_8);
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.LocalScript
+local function C_9()
+local script = G2L["9"];
+	local BotMainFrame = script.Parent.Parent.Parent:WaitForChild("BotMainFrame")
+	
+	BotMainFrame.AnchorPoint = Vector2.new(0.5, 0)
+	BotMainFrame.Position = UDim2.new(0.5, 0, BotMainFrame.Position.Y.Scale, BotMainFrame.Position.Y.Offset)
+end;
+task.spawn(C_9);
 
 return G2L["1"], require;
