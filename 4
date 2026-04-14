@@ -1,5 +1,5 @@
--- TCO Bot Script
--- Auto server hops and sends "67" in chat
+-- TCO Bot Script with Auto Raid Bot
+-- Auto server hops, sends "67", and breaks bkit with Discord logging
 
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
@@ -12,10 +12,27 @@ local player = Players.LocalPlayer
 local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
 local request = request or syn.request or http.request or fluxus.request
 
+-- Discord Webhook
+local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1493581974378516490/fxTemv1sP_l5acVQ9t_nhHMA8lwHM7TnC4RYelhtqpFShy2H9VX0U4hwWNDFNBVAnZJL"
+
 -- Prevent multiple instances
 if getgenv ~= nil and getgenv().tcobotgui then
     getgenv().tcobotgui:Destroy()
 end
+
+-- Track visited servers
+if not getgenv().visitedServers then
+    getgenv().visitedServers = {}
+end
+table.insert(getgenv().visitedServers, game.JobId)
+
+-- Check if this was queued (don't queue again to prevent infinite loop)
+local wasQueued = getgenv().tcoWasQueued or false
+getgenv().tcoWasQueued = false
+
+-- Auto raid bot state
+local autoRaidEnabled = false
+local raidBotRunning = false
 
 -- Create UI
 local screenGui = Instance.new("ScreenGui")
@@ -35,7 +52,7 @@ end
 -- Main Frame (top middle)
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 200, 0, 80)
+mainFrame.Size = UDim2.new(0, 200, 0, 125)
 mainFrame.Position = UDim2.new(0.5, -100, 0, 10) -- Top middle
 mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 mainFrame.BorderSizePixel = 2
@@ -81,6 +98,23 @@ local buttonCorner = Instance.new("UICorner")
 buttonCorner.CornerRadius = UDim.new(0, 6)
 buttonCorner.Parent = hopButton
 
+-- Auto Raid Bot Button
+local raidButton = Instance.new("TextButton")
+raidButton.Name = "RaidButton"
+raidButton.Size = UDim2.new(0, 180, 0, 35)
+raidButton.Position = UDim2.new(0, 10, 0, 80)
+raidButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+raidButton.BorderSizePixel = 0
+raidButton.Text = "Auto Raid Bot: OFF"
+raidButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+raidButton.TextSize = 14
+raidButton.Font = Enum.Font.GothamBold
+raidButton.Parent = mainFrame
+
+local raidCorner = Instance.new("UICorner")
+raidCorner.CornerRadius = UDim.new(0, 6)
+raidCorner.Parent = raidButton
+
 -- Make UI draggable
 local dragging = false
 local dragInput, mousePos, framePos
@@ -117,18 +151,7 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
     end
 end)
 
--- Function to send message in chat
-local function sendChatMessage(message)
-    local success, err = pcall(function()
-        -- Try new TextChatService first (newer Roblox)
-        local TextChatService = game:GetService("TextChatService")
-        local textChannels = TextChatService:WaitForChild("TextChannels", 2)
-        
-        if textChannels then
-            local generalChannel = textChannels:FindFirstChild("RBXGeneral")
-            if generalChannel then
-                generalChannel:SendAsync(message)
-                return
+
             end
         end
         
@@ -150,8 +173,126 @@ local function sendChatMessage(message)
     end
 end
 
--- Function to get a different server
-local function getRandomServer()
+-- Function to send Discord webhook
+local function sendWebhook()
+    if not request then
+        warn("Request function not available")
+        return
+    end
+    
+    local playerCount = #Players:GetPlayers()
+    local maxPlayers = Players.MaxPlayers
+    
+    local joinLink = string.format(
+        "https://www.roblox.com/games/start?placeId=%s&gameInstanceId=%s",
+        tostring(game.PlaceId),
+        game.JobId
+    )
+    
+    local executor = "Unknown"
+    if syn and syn.request then
+        executor = "Synapse X"
+    elseif fluxus and fluxus.request then
+        executor = "Fluxus"
+    elseif getexecutorname then
+        executor = getexecutorname()
+    end
+    
+    local embed = {
+        title = string.format("Bkit Disabled  |  %d/%d", playerCount, maxPlayers),
+        description = string.format("[Join Game](%s)\n\n%s / `%s` • Today at %s",
+            joinLink,
+            player.DisplayName,
+            player.Name,
+            os.date("%I:%M %p")
+        ),
+        color = 0xff0000, -- Red color
+        footer = {
+            text = executor
+        },
+        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    }
+    
+    local data = {
+        embeds = {embed}
+    }
+    
+    pcall(function()
+        request({
+            Url = WEBHOOK_URL,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = HttpService:JSONEncode(data)
+        })
+    end)
+    
+    print("Sent Discord webhook")
+end
+
+-- Function to break bkit
+local function breakBkit()
+    local success, err = pcall(function()
+        local character = player.Character
+        if not character then error("No character") end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not humanoid then error("No humanoid") end
+        
+        -- Find delete tool in backpack
+        local deleteTool = player.Backpack:FindFirstChild("Delete")
+        if not deleteTool then error("Delete tool not found in backpack") end
+        
+        print("Breaking bkit...")
+        
+        -- Save currently equipped tool
+        local previousTool = character:FindFirstChildOfClass("Tool")
+        
+        -- Equip Delete tool
+        humanoid:EquipTool(deleteTool)
+        task.wait(0.1)
+        
+        -- Get the event from the equipped tool
+        local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+        
+        -- Get Brick from ReplicatedStorage
+        local rs = game:GetService("ReplicatedStorage")
+        local brick = rs:FindFirstChild("Brick")
+        if not brick then error("No Brick in ReplicatedStorage") end
+        
+        -- Fire delete event
+        event:FireServer(brick, character.HumanoidRootPart.Position)
+        task.wait(0.1)
+        
+        -- Unequip Delete tool
+        humanoid:UnequipTools()
+        
+        -- Re-equip previous tool if there was one
+        if previousTool and previousTool.Parent == player.Backpack then
+            humanoid:EquipTool(previousTool)
+        end
+        
+        print("Bkit broken!")
+        
+        -- Send webhook
+        sendWebhook()
+    end)
+    
+    if not success then
+        warn("Failed to break bkit:", err)
+    end
+    
+    return success
+end
+
+-- Function to check if Delete tool is in inventory
+local function hasDeleteTool()
+    return player.Backpack:FindFirstChild("Delete") ~= nil
+end
+
+-- Function to get a fresh server (not visited before)
+local function getFreshServer()
     local placeId = game.PlaceId
     local currentJobId = game.JobId
     
@@ -160,19 +301,26 @@ local function getRandomServer()
     
     local servers
     if request then
-        -- Use request if available (better compatibility)
         local response = request({Url = url})
         servers = HttpService:JSONDecode(response.Body).data
     else
-        -- Fallback to HttpGet
         servers = HttpService:JSONDecode(game:HttpGet(url)).data
     end
     
-    -- Find a server that's not full and not the current one
+    -- Find a server that's not full, not current, and not visited
     if servers then
         for i, server in pairs(servers) do
             if type(server) == "table" and server.id and server.maxPlayers and server.playing then
-                if server.id ~= currentJobId and tonumber(server.playing) < tonumber(server.maxPlayers) then
+                local isVisited = false
+                for _, visitedId in ipairs(getgenv().visitedServers) do
+                    if server.id == visitedId then
+                        isVisited = true
+                        break
+                    end
+                end
+                
+                -- Don't join full servers
+                if not isVisited and server.id ~= currentJobId and tonumber(server.playing) < tonumber(server.maxPlayers) then
                     return server.id
                 end
             end
@@ -182,237 +330,22 @@ local function getRandomServer()
     return nil
 end
 
--- Function to server hop
+-- Function to server hop (manual)
 local function serverHop()
     hopButton.Text = "Finding Server..."
     hopButton.BackgroundColor3 = Color3.fromRGB(170, 170, 0)
     
-    local targetServer = getRandomServer()
+    local targetServer = getFreshServer()
     
     if targetServer then
         print("Found new server, hopping...")
         hopButton.Text = "Hopping..."
         
-        -- Queue the script to re-execute on join
-        if queueteleport then
+        -- Queue the script to re-execute on join (only if not already queued)
+        if queueteleport and not wasQueued then
             pcall(function()
-                queueteleport([[
-                    -- TCO Bot Script
--- Auto server hops and sends "67" in chat
-
-local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local CoreGui = game:GetService("CoreGui")
-
-local player = Players.LocalPlayer
-
--- Get queue_on_teleport and request functions
-local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
-local request = request or syn.request or http.request or fluxus.request
-
--- Prevent multiple instances
-if getgenv ~= nil and getgenv().tcobotgui then
-    getgenv().tcobotgui:Destroy()
-end
-
--- Create UI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "TCOBotUI"
-screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-getgenv().tcobotgui = screenGui
-
--- Try to parent to CoreGui, fallback to PlayerGui if that fails
-local success = pcall(function()
-    screenGui.Parent = CoreGui
-end)
-if not success then
-    screenGui.Parent = player:WaitForChild("PlayerGui")
-end
-
--- Main Frame (top middle)
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 200, 0, 80)
-mainFrame.Position = UDim2.new(0.5, -100, 0, 10) -- Top middle
-mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-mainFrame.BorderSizePixel = 2
-mainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
-mainFrame.Parent = screenGui
-
--- Add corner rounding
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = mainFrame
-
--- Title Label
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Name = "TitleLabel"
-titleLabel.Size = UDim2.new(1, 0, 0, 30)
-titleLabel.Position = UDim2.new(0, 0, 0, 0)
-titleLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-titleLabel.BorderSizePixel = 0
-titleLabel.Text = "TCO Bot"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 16
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Parent = mainFrame
-
-local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 8)
-titleCorner.Parent = titleLabel
-
--- Server Hop Button
-local hopButton = Instance.new("TextButton")
-hopButton.Name = "HopButton"
-hopButton.Size = UDim2.new(0, 180, 0, 35)
-hopButton.Position = UDim2.new(0, 10, 0, 40)
-hopButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-hopButton.BorderSizePixel = 0
-hopButton.Text = "Server Hop"
-hopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-hopButton.TextSize = 14
-hopButton.Font = Enum.Font.GothamBold
-hopButton.Parent = mainFrame
-
-local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 6)
-buttonCorner.Parent = hopButton
-
--- Make UI draggable
-local dragging = false
-local dragInput, mousePos, framePos
-
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        mousePos = input.Position
-        framePos = mainFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - mousePos
-        mainFrame.Position = UDim2.new(
-            framePos.X.Scale,
-            framePos.X.Offset + delta.X,
-            framePos.Y.Scale,
-            framePos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- Function to send message in chat
-local function sendChatMessage(message)
-    local success, err = pcall(function()
-        -- Try new TextChatService first (newer Roblox)
-        local TextChatService = game:GetService("TextChatService")
-        local textChannels = TextChatService:WaitForChild("TextChannels", 2)
-        
-        if textChannels then
-            local generalChannel = textChannels:FindFirstChild("RBXGeneral")
-            if generalChannel then
-                generalChannel:SendAsync(message)
-                return
-            end
-        end
-        
-        -- Fallback to legacy chat
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
-        if chatEvents then
-            local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
-            if sayMessage then
-                sayMessage:FireServer(message, "All")
-            end
-        end
-    end)
-    
-    if not success then
-        warn("Failed to send chat message:", err)
-    else
-        print("Sent '67' in chat")
-    end
-end
-
--- Function to get a different server
-local function getRandomServer()
-    local placeId = game.PlaceId
-    local currentJobId = game.JobId
-    
-    -- Get server list
-    local url = "https://games.roblox.com/v1/games/" .. tostring(placeId) .. "/servers/Public?sortOrder=Desc&limit=100"
-    
-    local servers
-    if request then
-        -- Use request if available (better compatibility)
-        local response = request({Url = url})
-        servers = HttpService:JSONDecode(response.Body).data
-    else
-        -- Fallback to HttpGet
-        servers = HttpService:JSONDecode(game:HttpGet(url)).data
-    end
-    
-    -- Find a server that's not full and not the current one
-    if servers then
-        for i, server in pairs(servers) do
-            if type(server) == "table" and server.id and server.maxPlayers and server.playing then
-                if server.id ~= currentJobId and tonumber(server.playing) < tonumber(server.maxPlayers) then
-                    return server.id
-                end
-            end
-        end
-    end
-    
-    return nil
-end
-
--- Function to server hop
-local function serverHop()
-    hopButton.Text = "Finding Server..."
-    hopButton.BackgroundColor3 = Color3.fromRGB(170, 170, 0)
-    
-    local targetServer = getRandomServer()
-    
-    if targetServer then
-        print("Found new server, hopping...")
-        hopButton.Text = "Hopping..."
-        
-        -- Teleport to the new server
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServer, player)
-    else
-        print("No available servers found")
-        hopButton.Text = "No Servers!"
-        hopButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        wait(2)
-        hopButton.Text = "Server Hop"
-        hopButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-    end
-end
-
--- Connect button
-hopButton.MouseButton1Click:Connect(serverHop)
-
--- Send "67" in chat on load
-wait(1) -- Small delay to ensure everything is loaded
-sendChatMessage("67")
-
-print("TCO Bot loaded! Click 'Server Hop' to switch servers and send '67' again")
-                ]])
+                getgenv().tcoWasQueued = true
+                queueteleport(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))
             end)
         end
         
@@ -428,11 +361,121 @@ print("TCO Bot loaded! Click 'Server Hop' to switch servers and send '67' again"
     end
 end
 
--- Connect button
+-- Auto raid bot loop
+local function autoRaidLoop()
+    raidBotRunning = true
+    
+    while autoRaidEnabled do
+        print("Auto Raid Bot: Waiting for Delete tool...")
+        raidButton.Text = "Waiting for Delete..."
+        
+        local startTime = tick()
+        local foundTool = false
+        
+        -- Wait up to 1 minute for Delete tool
+        while tick() - startTime < 60 and autoRaidEnabled do
+            if hasDeleteTool() then
+                foundTool = true
+                break
+            end
+            wait(1)
+        end
+        
+        if not autoRaidEnabled then break end
+        
+        if foundTool then
+            print("Auto Raid Bot: Delete tool found! Breaking bkit...")
+            raidButton.Text = "Breaking Bkit..."
+            
+            -- Break bkit
+            local success = breakBkit()
+            
+            if success then
+                wait(2)
+                
+                -- Hop to new server
+                print("Auto Raid Bot: Finding new server...")
+                raidButton.Text = "Finding Server..."
+                
+                local targetServer = getFreshServer()
+                
+                if targetServer then
+                    print("Auto Raid Bot: Hopping to new server...")
+                    
+                    -- Queue script (only if not already queued)
+                    if queueteleport and not wasQueued then
+                        pcall(function()
+                            getgenv().tcoWasQueued = true
+                            queueteleport(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))
+                        end)
+                    end
+                    
+                    -- Teleport
+                    TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServer, player)
+                else
+                    print("Auto Raid Bot: No servers available")
+                    raidButton.Text = "No Servers!"
+                    wait(5)
+                end
+            end
+        else
+            -- No tool found in 1 minute, hop to new server
+            print("Auto Raid Bot: No Delete tool, hopping to new server...")
+            raidButton.Text = "No Tool - Hopping..."
+            
+            local targetServer = getFreshServer()
+            
+            if targetServer then
+                -- Queue script (only if not already queued)
+                if queueteleport and not wasQueued then
+                    pcall(function()
+                        getgenv().tcoWasQueued = true
+                        queueteleport(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))
+                    end)
+                end
+                
+                -- Teleport
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServer, player)
+            else
+                print("Auto Raid Bot: No servers available")
+                raidButton.Text = "No Servers!"
+                wait(5)
+            end
+        end
+        
+        if not autoRaidEnabled then break end
+        wait(1)
+    end
+    
+    raidBotRunning = false
+    raidButton.Text = "Auto Raid Bot: OFF"
+end
+
+-- Connect buttons
 hopButton.MouseButton1Click:Connect(serverHop)
 
+raidButton.MouseButton1Click:Connect(function()
+    autoRaidEnabled = not autoRaidEnabled
+    
+    if autoRaidEnabled then
+        raidButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+        raidButton.Text = "Auto Raid Bot: ON"
+        print("Auto Raid Bot enabled")
+        
+        if not raidBotRunning then
+            spawn(autoRaidLoop)
+        end
+    else
+        raidButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+        raidButton.Text = "Auto Raid Bot: OFF"
+        print("Auto Raid Bot disabled")
+    end
+end)
+
 -- Send "67" in chat on load
-wait(1) -- Small delay to ensure everything is loaded
+wait(1)
 sendChatMessage("67")
 
-print("TCO Bot loaded! Click 'Server Hop' to switch servers and send '67' again")
+print("TCO Bot loaded!")
+print("Click 'Server Hop' to manually switch servers")
+print("Click 'Auto Raid Bot' to toggle automatic raiding")
