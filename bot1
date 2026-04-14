@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 8 | Scripts: 4 | Modules: 0 | Tags: 0
+-- Instances: 9 | Scripts: 4 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.BotGui
@@ -17,61 +17,73 @@ G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 G2L["1"]["ResetOnSpawn"] = false;
 
 
--- StarterGui.BotGui.ToggleButton
-G2L["2"] = Instance.new("TextButton", G2L["1"]);
-G2L["2"]["TextWrapped"] = true;
-G2L["2"]["TextSize"] = 14;
-G2L["2"]["TextScaled"] = true;
-G2L["2"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2"]["BackgroundColor3"] = Color3.fromRGB(46, 46, 46);
-G2L["2"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["2"]["Size"] = UDim2.new(0, 200, 0, 55);
+-- StarterGui.BotGui.BotMainFrame
+G2L["2"] = Instance.new("Frame", G2L["1"]);
+G2L["2"]["BorderSizePixel"] = 0;
+G2L["2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2"]["Size"] = UDim2.new(0, 200, 0, 103);
+G2L["2"]["Position"] = UDim2.new(0.4053, 0, 0.19952, 0);
 G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2"]["Text"] = [[Starting...]];
-G2L["2"]["Name"] = [[ToggleButton]];
-G2L["2"]["Position"] = UDim2.new(0.4053, 0, 0.21947, 0);
+G2L["2"]["Name"] = [[BotMainFrame]];
+G2L["2"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.BotGui.ToggleButton.ToggleScript
-G2L["3"] = Instance.new("Folder", G2L["2"]);
-G2L["3"]["Name"] = [[ToggleScript]];
+-- StarterGui.BotGui.BotMainFrame.ToggleButton
+G2L["3"] = Instance.new("TextButton", G2L["2"]);
+G2L["3"]["TextWrapped"] = true;
+G2L["3"]["TextSize"] = 14;
+G2L["3"]["TextScaled"] = true;
+G2L["3"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["3"]["BackgroundColor3"] = Color3.fromRGB(53, 53, 53);
+G2L["3"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["3"]["Size"] = UDim2.new(0, 200, 0, 55);
+G2L["3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["3"]["Text"] = [[Starting...]];
+G2L["3"]["Name"] = [[ToggleButton]];
+G2L["3"]["Position"] = UDim2.new(-0.0047, 0, 0.27947, 0);
 
 
--- StarterGui.BotGui.ToggleButton.ToggleScript.MainScript
-G2L["4"] = Instance.new("LocalScript", G2L["3"]);
-G2L["4"]["Name"] = [[MainScript]];
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript
+G2L["4"] = Instance.new("Folder", G2L["3"]);
+G2L["4"]["Name"] = [[ToggleScript]];
 
 
--- StarterGui.BotGui.ToggleButton.ToggleScript.ServerHopScript
-G2L["5"] = Instance.new("LocalScript", G2L["3"]);
-G2L["5"]["Name"] = [[ServerHopScript]];
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.MainScript
+G2L["5"] = Instance.new("LocalScript", G2L["4"]);
+G2L["5"]["Name"] = [[MainScript]];
 
 
--- StarterGui.BotGui.ToggleButton.ToggleScript.BkitBreakScript
-G2L["6"] = Instance.new("LocalScript", G2L["3"]);
-G2L["6"]["Name"] = [[BkitBreakScript]];
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.ServerHopScript
+G2L["6"] = Instance.new("LocalScript", G2L["4"]);
+G2L["6"]["Name"] = [[ServerHopScript]];
 
 
--- StarterGui.BotGui.ToggleButton.ToggleScript.WebhookScript
-G2L["7"] = Instance.new("LocalScript", G2L["3"]);
-G2L["7"]["Name"] = [[WebhookScript]];
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.BkitBreakScript
+G2L["7"] = Instance.new("LocalScript", G2L["4"]);
+G2L["7"]["Name"] = [[BkitBreakScript]];
 
 
--- StarterGui.BotGui.TextLabel
-G2L["8"] = Instance.new("TextLabel", G2L["1"]);
-G2L["8"]["TextSize"] = 14;
-G2L["8"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
-G2L["8"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["8"]["TextColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["8"]["Size"] = UDim2.new(0, 200, 0, 28);
-G2L["8"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["8"]["Text"] = [[Bkit Disabler Bot]];
-G2L["8"]["Position"] = UDim2.new(0.4053, 0, 0.1851, 0);
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.WebhookScript
+G2L["8"] = Instance.new("LocalScript", G2L["4"]);
+G2L["8"]["Name"] = [[WebhookScript]];
 
 
--- StarterGui.BotGui.ToggleButton.ToggleScript.MainScript
-local function C_4()
-local script = G2L["4"];
+-- StarterGui.BotGui.BotMainFrame.BotTitle
+G2L["9"] = Instance.new("TextLabel", G2L["2"]);
+G2L["9"]["TextSize"] = 14;
+G2L["9"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
+G2L["9"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["9"]["TextColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["9"]["Size"] = UDim2.new(0, 200, 0, 28);
+G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["9"]["Text"] = [[Bkit Disabler Bot]];
+G2L["9"]["Name"] = [[BotTitle]];
+G2L["9"]["Position"] = UDim2.new(-0.0047, 0, -0.0049, 0);
+
+
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.MainScript
+local function C_5()
+local script = G2L["5"];
 	-- MainScript (LocalScript under ToggleButton/ToggleScript)
 	
 	local Players           = game:GetService("Players")
@@ -409,10 +421,10 @@ local script = G2L["4"];
 		end
 	end)
 end;
-task.spawn(C_4);
--- StarterGui.BotGui.ToggleButton.ToggleScript.ServerHopScript
-local function C_5()
-local script = G2L["5"];
+task.spawn(C_5);
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.ServerHopScript
+local function C_6()
+local script = G2L["6"];
 	-- ServerHopScript (LocalScript under ToggleButton/ToggleScript)
 	
 	local Players         = game:GetService("Players")
@@ -583,10 +595,10 @@ local script = G2L["5"];
 		end
 	end
 end;
-task.spawn(C_5);
--- StarterGui.BotGui.ToggleButton.ToggleScript.BkitBreakScript
-local function C_6()
-local script = G2L["6"];
+task.spawn(C_6);
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.BkitBreakScript
+local function C_7()
+local script = G2L["7"];
 	-- BkitBreakScript (LocalScript under ToggleButton/ToggleScript)
 	
 	local Players           = game:GetService("Players")
@@ -619,10 +631,10 @@ local script = G2L["6"];
 		return ok
 	end
 end;
-task.spawn(C_6);
--- StarterGui.BotGui.ToggleButton.ToggleScript.WebhookScript
-local function C_7()
-local script = G2L["7"];
+task.spawn(C_7);
+-- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.WebhookScript
+local function C_8()
+local script = G2L["8"];
 	-- WebhookScript (LocalScript under ToggleButton/ToggleScript)
 	
 	local HttpService = game:GetService("HttpService")
@@ -654,6 +666,6 @@ local script = G2L["7"];
 		end)
 	end
 end;
-task.spawn(C_7);
+task.spawn(C_8);
 
 return G2L["1"], require;
