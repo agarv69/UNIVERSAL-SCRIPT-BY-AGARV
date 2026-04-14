@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 9 | Scripts: 6 | Modules: 0 | Tags: 0
+-- Instances: 7 | Scripts: 4 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.BotGui
@@ -35,82 +35,29 @@ G2L["3"] = Instance.new("Folder", G2L["2"]);
 G2L["3"]["Name"] = [[ToggleScript]];
 
 
--- StarterGui.BotGui.ToggleButton.ToggleScript.AntiFlingScript
-G2L["4"] = Instance.new("LocalScript", G2L["3"]);
-G2L["4"]["Name"] = [[AntiFlingScript]];
-
-
 -- StarterGui.BotGui.ToggleButton.ToggleScript.MainScript
-G2L["5"] = Instance.new("LocalScript", G2L["3"]);
-G2L["5"]["Name"] = [[MainScript]];
-
-
--- StarterGui.BotGui.ToggleButton.ToggleScript.AutoPickupScript
-G2L["6"] = Instance.new("LocalScript", G2L["3"]);
-G2L["6"]["Name"] = [[AutoPickupScript]];
+G2L["4"] = Instance.new("LocalScript", G2L["3"]);
+G2L["4"]["Name"] = [[MainScript]];
 
 
 -- StarterGui.BotGui.ToggleButton.ToggleScript.ServerHopScript
-G2L["7"] = Instance.new("LocalScript", G2L["3"]);
-G2L["7"]["Name"] = [[ServerHopScript]];
+G2L["5"] = Instance.new("LocalScript", G2L["3"]);
+G2L["5"]["Name"] = [[ServerHopScript]];
 
 
 -- StarterGui.BotGui.ToggleButton.ToggleScript.BkitBreakScript
-G2L["8"] = Instance.new("LocalScript", G2L["3"]);
-G2L["8"]["Name"] = [[BkitBreakScript]];
+G2L["6"] = Instance.new("LocalScript", G2L["3"]);
+G2L["6"]["Name"] = [[BkitBreakScript]];
 
 
 -- StarterGui.BotGui.ToggleButton.ToggleScript.WebhookScript
-G2L["9"] = Instance.new("LocalScript", G2L["3"]);
-G2L["9"]["Name"] = [[WebhookScript]];
+G2L["7"] = Instance.new("LocalScript", G2L["3"]);
+G2L["7"]["Name"] = [[WebhookScript]];
 
 
--- StarterGui.BotGui.ToggleButton.ToggleScript.AntiFlingScript
+-- StarterGui.BotGui.ToggleButton.ToggleScript.MainScript
 local function C_4()
 local script = G2L["4"];
-	local Players     = game:GetService("Players")
-	local RunService  = game:GetService("RunService")
-	local LocalPlayer = Players.LocalPlayer
-	
-	local function disableCollisionsFor(character)
-		if not character then return end
-		for _, part in pairs(character:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = false
-			end
-		end
-	end
-	
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character then
-			disableCollisionsFor(player.Character)
-		end
-		if player ~= LocalPlayer then
-			player.CharacterAdded:Connect(disableCollisionsFor)
-		end
-	end
-	
-	Players.PlayerAdded:Connect(function(player)
-		if player ~= LocalPlayer then
-			player.CharacterAdded:Connect(disableCollisionsFor)
-			if player.Character then
-				disableCollisionsFor(player.Character)
-			end
-		end
-	end)
-	
-	RunService.Heartbeat:Connect(function()
-		for _, player in pairs(Players:GetPlayers()) do
-			if player ~= LocalPlayer and player.Character then
-				disableCollisionsFor(player.Character)
-			end
-		end
-	end)
-end;
-task.spawn(C_4);
--- StarterGui.BotGui.ToggleButton.ToggleScript.MainScript
-local function C_5()
-local script = G2L["5"];
 	-- MainScript (LocalScript under ToggleButton/ToggleScript)
 	
 	local Players           = game:GetService("Players")
@@ -249,17 +196,18 @@ local script = G2L["5"];
 	
 			arkestoneDetected = true
 	
-			-- Send ;bkit AND equip arkenstone at the same time
-			task.spawn(function()
-				sendChat(";bkit")
-			end)
+			-- Equip arkenstone first, then send ;bkit 0.5s after
 			task.spawn(function()
 				pcall(function()
 					local hum = char and char:FindFirstChildOfClass("Humanoid")
-					if hum and arken then
-						hum:EquipTool(arken)
+					local ark = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
+						or (char and char:FindFirstChild("The Arkenstone"))
+					if hum and ark then
+						hum:EquipTool(ark)
 					end
 				end)
+				task.wait(0.5)
+				sendChat(";bkit")
 			end)
 	
 			onDetected()
@@ -445,30 +393,10 @@ local script = G2L["5"];
 		end
 	end)
 end;
-task.spawn(C_5);
--- StarterGui.BotGui.ToggleButton.ToggleScript.AutoPickupScript
-local function C_6()
-local script = G2L["6"];
-	local Players     = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	
-	pcall(function()
-		sethiddenproperty(LocalPlayer, "SimulationRadius", 1000)
-	end)
-	
-	LocalPlayer.ReplicationFocus = workspace
-	
-	RunService = game:GetService("RunService")
-	RunService.Heartbeat:Connect(function()
-		pcall(function()
-			sethiddenproperty(LocalPlayer, "SimulationRadius", 1000)
-		end)
-	end)
-end;
-task.spawn(C_6);
+task.spawn(C_4);
 -- StarterGui.BotGui.ToggleButton.ToggleScript.ServerHopScript
-local function C_7()
-local script = G2L["7"];
+local function C_5()
+local script = G2L["5"];
 	-- ServerHopScript (LocalScript under ToggleButton/ToggleScript)
 	
 	local Players         = game:GetService("Players")
@@ -639,10 +567,10 @@ local script = G2L["7"];
 		end
 	end
 end;
-task.spawn(C_7);
+task.spawn(C_5);
 -- StarterGui.BotGui.ToggleButton.ToggleScript.BkitBreakScript
-local function C_8()
-local script = G2L["8"];
+local function C_6()
+local script = G2L["6"];
 	-- BkitBreakScript (LocalScript under ToggleButton/ToggleScript)
 	
 	local Players           = game:GetService("Players")
@@ -675,10 +603,10 @@ local script = G2L["8"];
 		return ok
 	end
 end;
-task.spawn(C_8);
+task.spawn(C_6);
 -- StarterGui.BotGui.ToggleButton.ToggleScript.WebhookScript
-local function C_9()
-local script = G2L["9"];
+local function C_7()
+local script = G2L["7"];
 	-- WebhookScript (LocalScript under ToggleButton/ToggleScript)
 	
 	local HttpService = game:GetService("HttpService")
@@ -710,6 +638,6 @@ local script = G2L["9"];
 		end)
 	end
 end;
-task.spawn(C_9);
+task.spawn(C_7);
 
 return G2L["1"], require;
