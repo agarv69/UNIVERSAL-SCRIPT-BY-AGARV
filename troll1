@@ -6,14 +6,14 @@ local DEADRAILS = true -- set to false if your not using dead rails
 
 getgenv().deletewhendupefound = true
 local lib = loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Lib-18698"))()
-lib.makelib("SET SPEED TO 4 OR OVER")
+lib.makelib("SET SPEED TO 2 OR OVER")
 local txtstuff = loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Text-to-Blocks-WIP-20736"))() 
 local t = lib.maketab("Main")
 
-local targetPlayer = game.Players.LocalPlayer
+local targetPlayer = nil
 local clickBtn
 
-clickBtn = lib.makebutton("Target: You", t, function()
+clickBtn = lib.makebutton("Target: None", t, function()
 	local mouse = game.Players.LocalPlayer:GetMouse()
 
 	clickBtn.Text = "Click a player..."
@@ -34,14 +34,12 @@ clickBtn = lib.makebutton("Target: You", t, function()
 
 		targetPlayer = found
 
-		if targetPlayer then
+		if targetPlayer and targetPlayer == localplr then
+			clickBtn.Text = "Target: You"
+		elseif targetPlayer then
 			clickBtn.Text = "Target: " .. targetPlayer.Name
 		else
 			clickBtn.Text = "Target: None"
-		end
-
-		if conn then
-			conn:Disconnect()
 		end
 	end)
 end)
@@ -309,7 +307,8 @@ local ohb = game:GetService("RunService").Heartbeat:Connect(function(t)
 		if ctxt and txtcfr and autoupdtxt then
 			updatetxt(ctxt)
 		end
-		local char = targetPlayer and targetPlayer.Character or localplr.Character
+		if not targetPlayer then return end
+		local char = targetPlayer.Character
 		if not char then return end
 
 		local mcfr = char:GetPivot()
@@ -488,6 +487,7 @@ lib.maketoggle("parts of fling",t,function(b)
 	if b then
 		cb = "cof"
 	else
+		cb = nil
 		for i,v in pairs(boolz) do
 			if v then
 				cb = i
@@ -502,6 +502,7 @@ lib.maketoggle("ring of parts",t,function(b)
 	if b then
 		cb = "ring"
 	else
+		cb = nil
 		for i,v in pairs(boolz) do
 			if v then
 				cb = i
@@ -519,6 +520,7 @@ lib.maketoggle("tornado of parts (kinda)",t,function(b)
 	if b then
 		cb = "tornado"
 	else
+		cb = nil
 		for i,v in pairs(boolz) do
 			if v then
 				cb = i
@@ -547,6 +549,7 @@ lib.maketoggle("make parts into text",t,function(b)
 		cb = "txt"
 		updatetxt(ctxt,nil,true)
 	else
+		cb = nil
 		if display then
 			deletedisplay(display)
 			display = nil
@@ -568,6 +571,7 @@ lib.maketoggle("fling people",t,function(b)
 	if b then
 		cb = "fp"
 	else
+		cb = nil
 		for i,v in pairs(boolz) do
 			if v then
 				cb = i
@@ -656,6 +660,10 @@ local onplrjoin = game.Players.PlayerAdded:Connect(function(v)
 end)
 local onplrleave = game.Players.PlayerRemoving:Connect(function(v)
 	removeplr(v)
+	if targetPlayer == v then
+		targetPlayer = nil
+		clickBtn.Text = "Target: None"
+	end
 end)
 lib.ondestroyedfunc = function()
 	ohb:Disconnect()
