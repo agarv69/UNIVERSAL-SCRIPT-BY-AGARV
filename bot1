@@ -27,7 +27,7 @@ G2L["2"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]]
 G2L["2"]["Size"] = UDim2.new(0, 200, 0, 50);
 G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["2"]["Name"] = [[ToggleButton]];
-G2L["2"]["Position"] = UDim2.new(0.4517, 0, 0.1238, 0);
+G2L["2"]["Position"] = UDim2.new(0.4053, 0, 0.19231, 0);
 
 
 -- StarterGui.BotGui.ToggleButton.ToggleScript
@@ -150,9 +150,11 @@ local script = G2L["4"];
 		writeJson(BROKEN_FILE, brokenServers)
 	end
 	
+	local visitCounter = 0
 	local function markVisited(jobId)
 		if not visitedServers[jobId] then
-			visitedServers[jobId] = tick()
+			visitCounter = visitCounter + 1
+			visitedServers[jobId] = visitCounter
 			writeJson(VISITED_FILE, visitedServers)
 		end
 	end
