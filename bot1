@@ -117,6 +117,7 @@ local script = G2L["5"];
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local RunService        = game:GetService("RunService")
 	local HttpService       = game:GetService("HttpService")
+	local TextChatService   = game:GetService("TextChatService")
 	local LocalPlayer       = Players.LocalPlayer
 	
 	local ToggleButton = script.Parent.Parent
@@ -133,6 +134,32 @@ local script = G2L["5"];
 	end)
 	
 	--------------------------------------------------
+	-- CHAT FUNCTION
+	--------------------------------------------------
+	
+	local function sendChat(message)
+		pcall(function()
+			local channels = TextChatService:WaitForChild("TextChannels", 2)
+			if channels then
+				local general = channels:FindFirstChild("RBXGeneral")
+				if general then
+					general:SendAsync(message)
+					return
+				end
+			end
+			-- Fallback
+			local rs = game:GetService("ReplicatedStorage")
+			local chatEvents = rs:WaitForChild("DefaultChatSystemChatEvents", 2)
+			if chatEvents then
+				local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
+				if sayMessage then
+					sayMessage:FireServer(message, "All")
+				end
+			end
+		end)
+	end
+	
+	--------------------------------------------------
 	-- SHARED STATE
 	--------------------------------------------------
 	
@@ -141,6 +168,7 @@ local script = G2L["5"];
 	shared.BotBreakBkit   = function() return false end
 	shared.BotHop         = function() end
 	shared.BotSendWebhook = function(title, desc, color, footer) end
+	shared.BotSendChat    = sendChat
 	
 	--------------------------------------------------
 	-- PERSISTENT STATE
@@ -164,6 +192,7 @@ local script = G2L["5"];
 	end
 	
 	local brokenServers  = readJson(BROKEN_FILE)
+	-- visitedServers: jobId -> tick() when visited
 	local visitedServers = readJson(VISITED_FILE)
 	
 	shared.BrokenServers  = brokenServers
@@ -175,8 +204,10 @@ local script = G2L["5"];
 	end
 	
 	local function markVisited(jobId)
-		visitedServers[jobId] = true
-		writeJson(VISITED_FILE, visitedServers)
+		if not visitedServers[jobId] then
+			visitedServers[jobId] = tick()
+			writeJson(VISITED_FILE, visitedServers)
+		end
 	end
 	
 	local function isBroken(jobId)
@@ -194,6 +225,72 @@ local script = G2L["5"];
 	local function setStatus(text)
 		shared.BotStatus  = text
 		ToggleButton.Text = text
+	end
+	
+	--------------------------------------------------
+	-- ARKENSTONE WATCHER
+	-- When arkenstone appears: send ;bkit + equip arkenstone simultaneously
+	-- Then wait for Delete tool
+	--------------------------------------------------
+	
+	local arkestoneDetected = false
+	
+	local function watchArkenstone(onDetected)
+		arkestoneDetected = false
+	
+		local function checkAndHandle()
+			if arkestoneDetected then return end
+			local backpack  = LocalPlayer:FindFirstChild("Backpack")
+			local char      = LocalPlayer.Character
+			local inBackpack = backpack and backpack:FindFirstChild("The Arkenstone")
+			local inChar    = char and char:FindFirstChild("The Arkenstone")
+			local arken     = inBackpack or inChar
+			if not arken then return end
+	
+			arkestoneDetected = true
+	
+			-- Send ;bkit AND equip arkenstone at the same time
+			task.spawn(function()
+				sendChat(";bkit")
+			end)
+			task.spawn(function()
+				pcall(function()
+					local hum = char and char:FindFirstChildOfClass("Humanoid")
+					if hum and arken then
+						hum:EquipTool(arken)
+					end
+				end)
+			end)
+	
+			onDetected()
+		end
+	
+		-- Watch backpack
+		local connections = {}
+	
+		local backpack = LocalPlayer:FindFirstChild("Backpack")
+		if backpack then
+			table.insert(connections, backpack.ChildAdded:Connect(function(child)
+				if child.Name == "The Arkenstone" then
+					checkAndHandle()
+				end
+			end))
+		end
+	
+		-- Watch character
+		local char = LocalPlayer.Character
+		if char then
+			table.insert(connections, char.ChildAdded:Connect(function(child)
+				if child.Name == "The Arkenstone" then
+					checkAndHandle()
+				end
+			end))
+		end
+	
+		-- Also check if already present
+		checkAndHandle()
+	
+		return connections
 	end
 	
 	--------------------------------------------------
@@ -218,15 +315,23 @@ local script = G2L["5"];
 		end
 	
 		-- Step 2: Wait up to 60s for Delete tool
-		local waitStart = tick()
-		local WAIT_TIME  = 60
-		local gotDelete  = false
-		local brickGone  = false
+		-- But first watch for Arkenstone — if we get it, send ;bkit + equip
+		local waitStart    = tick()
+		local WAIT_TIME    = 60
+		local gotDelete    = false
+		local brickGone    = false
+		local arkConns     = {}
 	
 		local brickConn = brick.AncestryChanged:Connect(function()
 			if not brick:IsDescendantOf(game) then
 				brickGone = true
 			end
+		end)
+	
+		-- Start arkenstone watcher — when triggered it equips + sends ;bkit
+		-- which causes Delete tool to appear
+		arkConns = watchArkenstone(function()
+			-- Arkenstone handled — just keep waiting for Delete tool
 		end)
 	
 		local timerConn = RunService.Heartbeat:Connect(function()
@@ -248,6 +353,9 @@ local script = G2L["5"];
 	
 		timerConn:Disconnect()
 		brickConn:Disconnect()
+		for _, c in ipairs(arkConns) do
+			pcall(function() c:Disconnect() end)
+		end
 	
 		if not shared.BotEnabled then return end
 	
@@ -366,7 +474,42 @@ local script = G2L["7"];
 	local Players         = game:GetService("Players")
 	local TeleportService = game:GetService("TeleportService")
 	local HttpService     = game:GetService("HttpService")
+	local CoreGui         = game:GetService("CoreGui")
 	local LocalPlayer     = Players.LocalPlayer
+	
+	--------------------------------------------------
+	-- AUTO DISMISS FULL SERVER POPUP
+	--------------------------------------------------
+	
+	task.spawn(function()
+		while true do
+			task.wait(0.5)
+			pcall(function()
+				for _, gui in pairs(LocalPlayer.PlayerGui:GetDescendants()) do
+					if gui:IsA("TextButton") then
+						local t = gui.Text:lower()
+						if t == "ok" or t == "okay" or t == "close" or t == "leave" then
+							gui:activate()
+						end
+					end
+				end
+			end)
+			pcall(function()
+				for _, gui in pairs(CoreGui:GetDescendants()) do
+					if gui:IsA("TextButton") then
+						local t = gui.Text:lower()
+						if t == "ok" or t == "okay" or t == "close" then
+							gui:activate()
+						end
+					end
+				end
+			end)
+		end
+	end)
+	
+	--------------------------------------------------
+	-- GET SERVERS
+	--------------------------------------------------
 	
 	local function getServers()
 		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
@@ -385,44 +528,79 @@ local script = G2L["7"];
 		return {}
 	end
 	
+	--------------------------------------------------
+	-- SERVER HOP
+	--------------------------------------------------
+	
 	shared.BotHop = function()
 		if not shared.BotEnabled then return end
 	
-		local ToggleButton = script.Parent.Parent
-		ToggleButton.Text = "Serverhopping..."
-	
-		local servers       = getServers()
+		local ToggleButton   = script.Parent.Parent
 		local brokenServers  = shared.BrokenServers  or {}
 		local visitedServers = shared.VisitedServers or {}
 	
-		-- Find a non-full, non-broken, non-current server
-		local candidates = {}
-		for _, s in ipairs(servers) do
-			if s.id
-				and s.id ~= game.JobId
-				and not brokenServers[s.id]
-				and s.playing and s.maxPlayers
-				and tonumber(s.playing) < tonumber(s.maxPlayers)
-			then
-				table.insert(candidates, s)
-			end
-		end
+		ToggleButton.Text = "Serverhopping..."
 	
-		-- Fallback: visited servers that aren't broken and aren't current
-		if #candidates == 0 then
-			for jobId, _ in pairs(visitedServers) do
-				if not brokenServers[jobId] and jobId ~= game.JobId then
-					table.insert(candidates, {id = jobId})
+		local target = nil
+	
+		while not target and shared.BotEnabled do
+			local servers = getServers()
+	
+			-- Build set of server ids from API
+			local apiServerIds = {}
+			for _, s in ipairs(servers) do
+				if s.id then
+					apiServerIds[s.id] = s
+				end
+			end
+	
+			-- Step 1: Find unvisited, non-broken, non-full servers
+			local unvisited = {}
+			for _, s in ipairs(servers) do
+				if s.id
+					and s.id ~= game.JobId
+					and not brokenServers[s.id]
+					and not visitedServers[s.id]
+					and s.playing and s.maxPlayers
+					and tonumber(s.playing) < tonumber(s.maxPlayers)
+				then
+					table.insert(unvisited, s)
+				end
+			end
+	
+			if #unvisited > 0 then
+				target = unvisited[1]
+			else
+				-- Step 2: All servers visited — find oldest visited non-broken non-full server
+				local oldest = nil
+				local oldestTime = math.huge
+	
+				for _, s in ipairs(servers) do
+					if s.id
+						and s.id ~= game.JobId
+						and not brokenServers[s.id]
+						and s.playing and s.maxPlayers
+						and tonumber(s.playing) < tonumber(s.maxPlayers)
+					then
+						local visitTime = visitedServers[s.id] or math.huge
+						if visitTime < oldestTime then
+							oldestTime = visitTime
+							oldest = s
+						end
+					end
+				end
+	
+				if oldest then
+					target = oldest
+				else
+					-- No valid servers at all — retry after 30s
+					ToggleButton.Text = "No servers found, retrying..."
+					task.wait(30)
 				end
 			end
 		end
 	
-		if #candidates == 0 then
-			ToggleButton.Text = "No servers found"
-			return
-		end
-	
-		local target = candidates[1]
+		if not target or not shared.BotEnabled then return end
 	
 		-- Queue re-execution after teleport
 		pcall(function()
@@ -453,6 +631,12 @@ local script = G2L["7"];
 		pcall(function()
 			TeleportService:TeleportToPlaceInstance(game.PlaceId, target.id, LocalPlayer)
 		end)
+	
+		-- If teleport fails, retry after 10s
+		task.wait(10)
+		if shared.BotEnabled then
+			shared.BotHop()
+		end
 	end
 end;
 task.spawn(C_7);
