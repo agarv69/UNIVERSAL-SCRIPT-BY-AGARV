@@ -345,7 +345,7 @@ local function serverHop()
         if queueteleport and not wasQueued then
             pcall(function()
                 getgenv().tcoWasQueued = true
-                queueteleport(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))
+                queueteleport([[loadstring(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))()]])
             end)
         end
         
@@ -406,7 +406,7 @@ local function autoRaidLoop()
                     if queueteleport and not wasQueued then
                         pcall(function()
                             getgenv().tcoWasQueued = true
-                            queueteleport(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))
+                            queueteleport([[loadstring(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))()]])
                         end)
                     end
                     
@@ -430,7 +430,7 @@ local function autoRaidLoop()
                 if queueteleport and not wasQueued then
                     pcall(function()
                         getgenv().tcoWasQueued = true
-                        queueteleport(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))
+                        queueteleport([[loadstring(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))()]])
                     end)
                 end
                 
