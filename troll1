@@ -10,6 +10,7 @@ lib.makelib("SET SPEED TO 2 OR OVER")
 local txtstuff = loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Text-to-Blocks-WIP-20736"))() 
 local t = lib.maketab("Main")
 
+local localplr = game.Players.LocalPlayer
 local targetPlayer = nil
 local clickBtn
 
@@ -60,7 +61,6 @@ lib.makebutton("Set Target: You", t, function()
 	clickBtn.Text = "Target: You"
 end)
 local r = 1000
-local localplr = game.Players.LocalPlayer
 local radiuscircle = Instance.new("Part")
 sethiddenproperty(game.Players.LocalPlayer,"SimulationRadius", 1000)
 lib.makeslider("Pick Up Radius (more radius = more lag)",t,0,2000,function(n)
