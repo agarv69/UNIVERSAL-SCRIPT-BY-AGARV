@@ -21,14 +21,15 @@ clickBtn = lib.makebutton("Target: None", t, function()
 	local conn
 	conn = mouse.Button1Down:Connect(function()
 		local part = mouse.Target
-		if not part then return end
 
 		local found = nil
 
-		for _, plr in pairs(game.Players:GetPlayers()) do
-			if plr.Character and part:IsDescendantOf(plr.Character) then
-				found = plr
-				break
+		if part then
+			for _, plr in pairs(game.Players:GetPlayers()) do
+				if plr.Character and part:IsDescendantOf(plr.Character) then
+					found = plr
+					break
+				end
 			end
 		end
 
@@ -40,6 +41,11 @@ clickBtn = lib.makebutton("Target: None", t, function()
 			clickBtn.Text = "Target: " .. targetPlayer.Name
 		else
 			clickBtn.Text = "Target: None"
+		end
+
+		if conn then
+			conn:Disconnect()
+			conn = nil
 		end
 	end)
 end)
