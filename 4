@@ -6,37 +6,63 @@ local DEADRAILS = true -- set to false if your not using dead rails
 
 getgenv().deletewhendupefound = true
 local lib = loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Lib-18698"))()
-lib.makelib("Destroyed. (2AreYouMental110)")
+lib.makelib("SET SPEED TO 2 OR OVER")
 local txtstuff = loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Text-to-Blocks-WIP-20736"))() 
 local t = lib.maketab("Main")
 
-local targetPlayer = game.Players.LocalPlayer
+local localplr = game.Players.LocalPlayer
+local targetPlayer = nil
+local clickBtn
 
-lib.makebutton("Click Target", t, function()
+clickBtn = lib.makebutton("Target: None", t, function()
 	local mouse = game.Players.LocalPlayer:GetMouse()
+
+	clickBtn.Text = "Click a player..."
 
 	local conn
 	conn = mouse.Button1Down:Connect(function()
 		local part = mouse.Target
-		if not part then return end
 
-		for _, plr in pairs(game.Players:GetPlayers()) do
-			if plr.Character and part:IsDescendantOf(plr.Character) then
-				targetPlayer = plr
-				print("Target:", plr.Name)
-				break
+		local found = nil
+
+		if part then
+			-- Check self first
+			if localplr.Character and part:IsDescendantOf(localplr.Character) then
+				found = localplr
+			else
+				-- Check other players
+				for _, plr in pairs(game.Players:GetPlayers()) do
+					if plr ~= localplr and plr.Character and part:IsDescendantOf(plr.Character) then
+						found = plr
+						break
+					end
+				end
 			end
 		end
 
-		conn:Disconnect()
+		targetPlayer = found
+
+		if targetPlayer and targetPlayer == localplr then
+			clickBtn.Text = "Target: You"
+		elseif targetPlayer then
+			clickBtn.Text = "Target: " .. targetPlayer.Name
+		else
+			clickBtn.Text = "Target: None"
+		end
+
+		if conn then
+			conn:Disconnect()
+			conn = nil
+		end
 	end)
 end)
-local r = 0
-local localplr = game.Players.LocalPlayer
-local radiuscircle = Instance.new("Part")
-pcall(function()
-	sethiddenproperty(game.Players.LocalPlayer,"SimulationRadius",r)
+lib.makebutton("Set Target: You", t, function()
+	targetPlayer = localplr
+	clickBtn.Text = "Target: You"
 end)
+local r = 1000
+local radiuscircle = Instance.new("Part")
+sethiddenproperty(game.Players.LocalPlayer,"SimulationRadius", 1000)
 lib.makeslider("Pick Up Radius (more radius = more lag)",t,0,2000,function(n)
 	r = n
 	sethiddenproperty(game.Players.LocalPlayer,"SimulationRadius",r)
@@ -287,12 +313,7 @@ function updatetxt(t,dupd,nocheck)
 end
 local pucf = nil
 local ohb = game:GetService("RunService").Heartbeat:Connect(function(t)
-	local doit = false
-	for i,v in pairs(boolz) do
-		if v == true then
-			doit = true
-		end
-	end
+	local doit = (cb ~= nil)
 	if localplr.Character and doit then
 		if ldi ~= doit then
 			for i,v in pairs(workspace:GetDescendants()) do
@@ -302,7 +323,8 @@ local ohb = game:GetService("RunService").Heartbeat:Connect(function(t)
 		if ctxt and txtcfr and autoupdtxt then
 			updatetxt(ctxt)
 		end
-		local char = targetPlayer and targetPlayer.Character or localplr.Character
+		if not targetPlayer then return end
+		local char = targetPlayer.Character
 		if not char then return end
 
 		local mcfr = char:GetPivot()
@@ -323,7 +345,7 @@ local ohb = game:GetService("RunService").Heartbeat:Connect(function(t)
 					bp.Name = "bp"
 					bp.P = m/0.64e-5
 					bp.D = m/0.64e-3
-					bp.MaxForce = Vector3.new(m/0.64e-6,m/0.64e-6,m/0.64e-6)
+					bp.MaxForce = Vector3.new(1e9, 1e9, 1e9)
 					bp.Parent = i
 				else
 					bp = i:FindFirstChild("bp")
@@ -481,6 +503,7 @@ lib.maketoggle("parts of fling",t,function(b)
 	if b then
 		cb = "cof"
 	else
+		cb = nil
 		for i,v in pairs(boolz) do
 			if v then
 				cb = i
@@ -495,6 +518,7 @@ lib.maketoggle("ring of parts",t,function(b)
 	if b then
 		cb = "ring"
 	else
+		cb = nil
 		for i,v in pairs(boolz) do
 			if v then
 				cb = i
@@ -512,6 +536,7 @@ lib.maketoggle("tornado of parts (kinda)",t,function(b)
 	if b then
 		cb = "tornado"
 	else
+		cb = nil
 		for i,v in pairs(boolz) do
 			if v then
 				cb = i
@@ -540,6 +565,7 @@ lib.maketoggle("make parts into text",t,function(b)
 		cb = "txt"
 		updatetxt(ctxt,nil,true)
 	else
+		cb = nil
 		if display then
 			deletedisplay(display)
 			display = nil
@@ -561,6 +587,7 @@ lib.maketoggle("fling people",t,function(b)
 	if b then
 		cb = "fp"
 	else
+		cb = nil
 		for i,v in pairs(boolz) do
 			if v then
 				cb = i
@@ -649,6 +676,10 @@ local onplrjoin = game.Players.PlayerAdded:Connect(function(v)
 end)
 local onplrleave = game.Players.PlayerRemoving:Connect(function(v)
 	removeplr(v)
+	if targetPlayer == v then
+		targetPlayer = nil
+		clickBtn.Text = "Target: None"
+	end
 end)
 lib.ondestroyedfunc = function()
 	ohb:Disconnect()
