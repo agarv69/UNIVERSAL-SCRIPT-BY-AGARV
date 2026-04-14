@@ -313,7 +313,7 @@ local script = G2L["5"];
 		local timerConn = RunService.Heartbeat:Connect(function()
 			if not shared.BotEnabled then return end
 			local remaining = math.max(0, WAIT_TIME - (tick() - waitStart))
-			setStatus(string.format("Waiting... (%.1f)", remaining))
+			setStatus(string.format("Waiting for Delete tool... (%.1f)", remaining))
 		end)
 	
 		while tick() - waitStart < WAIT_TIME and shared.BotEnabled do
