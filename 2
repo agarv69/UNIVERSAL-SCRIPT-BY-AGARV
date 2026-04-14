@@ -78,3 +78,53 @@ RunService.Heartbeat:Connect(function()
 		end
 	end
 end)
+
+--------------------------------------------------
+-- GOD MODE
+--------------------------------------------------
+
+local godConnections = {}
+
+local function enableGodmode()
+	for _, conn in pairs(godConnections) do
+		if conn then conn:Disconnect() end
+	end
+	godConnections = {}
+
+	local character = LocalPlayer.Character
+	if not character then return end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	humanoid.MaxHealth = math.huge
+	humanoid.Health    = math.huge
+
+	table.insert(godConnections, RunService.RenderStepped:Connect(function()
+		if humanoid and humanoid.Parent then
+			humanoid.MaxHealth = math.huge
+			humanoid.Health    = math.huge
+		end
+	end))
+
+	table.insert(godConnections, humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+		if humanoid and humanoid.Parent then
+			if humanoid.Health < math.huge then
+				humanoid.MaxHealth = math.huge
+				humanoid.Health    = math.huge
+			end
+		end
+	end))
+
+	table.insert(godConnections, humanoid.Died:Connect(function()
+		task.wait()
+		humanoid.Health = math.huge
+	end))
+end
+
+enableGodmode()
+
+LocalPlayer.CharacterAdded:Connect(function(character)
+	character:WaitForChild("Humanoid")
+	task.wait(0.1)
+	enableGodmode()
+end)
