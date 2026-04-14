@@ -95,12 +95,14 @@ local script = G2L["5"];
 	
 	local ToggleButton = script.Parent.Parent
 	
+	task.wait(0.5)
+	
 	--------------------------------------------------
-	-- EXECUTE BOT2 SCRIPT (anti fling, auto pickup, god mode)
+	-- EXECUTE BOT2 SCRIPT
 	--------------------------------------------------
 	
 	task.spawn(function()
-		task.wait(1)
+		task.wait(0.5)
 		pcall(function()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot2"))()
 		end)
@@ -120,7 +122,6 @@ local script = G2L["5"];
 					return
 				end
 			end
-			-- Fallback
 			local rs = game:GetService("ReplicatedStorage")
 			local chatEvents = rs:WaitForChild("DefaultChatSystemChatEvents", 2)
 			if chatEvents then
@@ -165,23 +166,25 @@ local script = G2L["5"];
 	end
 	
 	local brokenServers  = readJson(BROKEN_FILE)
-	-- visitedServers: jobId -> tick() when visited
 	local visitedServers = readJson(VISITED_FILE)
 	
 	shared.BrokenServers  = brokenServers
 	shared.VisitedServers = visitedServers
 	
+	local visitCounter = 0
+	
 	local function markBroken(jobId)
 		brokenServers[jobId] = true
 		writeJson(BROKEN_FILE, brokenServers)
+		shared.BrokenServers = brokenServers
 	end
 	
-	local visitCounter = 0
 	local function markVisited(jobId)
 		if not visitedServers[jobId] then
 			visitCounter = visitCounter + 1
 			visitedServers[jobId] = visitCounter
 			writeJson(VISITED_FILE, visitedServers)
+			shared.VisitedServers = visitedServers
 		end
 	end
 	
@@ -204,8 +207,6 @@ local script = G2L["5"];
 	
 	--------------------------------------------------
 	-- ARKENSTONE WATCHER
-	-- When arkenstone appears: send ;bkit + equip arkenstone simultaneously
-	-- Then wait for Delete tool
 	--------------------------------------------------
 	
 	local arkestoneDetected = false
@@ -215,16 +216,15 @@ local script = G2L["5"];
 	
 		local function checkAndHandle()
 			if arkestoneDetected then return end
-			local backpack  = LocalPlayer:FindFirstChild("Backpack")
-			local char      = LocalPlayer.Character
+			local backpack   = LocalPlayer:FindFirstChild("Backpack")
+			local char       = LocalPlayer.Character
 			local inBackpack = backpack and backpack:FindFirstChild("The Arkenstone")
-			local inChar    = char and char:FindFirstChild("The Arkenstone")
-			local arken     = inBackpack or inChar
+			local inChar     = char and char:FindFirstChild("The Arkenstone")
+			local arken      = inBackpack or inChar
 			if not arken then return end
 	
 			arkestoneDetected = true
 	
-			-- Equip arkenstone first, then send ;bkit 0.5s after
 			task.spawn(function()
 				pcall(function()
 					local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -241,7 +241,6 @@ local script = G2L["5"];
 			onDetected()
 		end
 	
-		-- Watch backpack
 		local connections = {}
 	
 		local backpack = LocalPlayer:FindFirstChild("Backpack")
@@ -253,7 +252,6 @@ local script = G2L["5"];
 			end))
 		end
 	
-		-- Watch character
 		local char = LocalPlayer.Character
 		if char then
 			table.insert(connections, char.ChildAdded:Connect(function(child)
@@ -263,7 +261,6 @@ local script = G2L["5"];
 			end))
 		end
 	
-		-- Also check if already present
 		checkAndHandle()
 	
 		return connections
@@ -276,7 +273,6 @@ local script = G2L["5"];
 	local function mainLoop()
 		markVisited(game.JobId)
 	
-		-- Step 1: Check ReplicatedStorage.Brick
 		setStatus("Checking server...")
 		task.wait(2)
 	
@@ -290,13 +286,11 @@ local script = G2L["5"];
 			return
 		end
 	
-		-- Step 2: Wait up to 60s for Delete tool
-		-- But first watch for Arkenstone — if we get it, send ;bkit + equip
-		local waitStart    = tick()
-		local WAIT_TIME    = 60
-		local gotDelete    = false
-		local brickGone    = false
-		local arkConns     = {}
+		local waitStart = tick()
+		local WAIT_TIME = 60
+		local gotDelete = false
+		local brickGone = false
+		local arkConns  = {}
 	
 		local brickConn = brick.AncestryChanged:Connect(function()
 			if not brick:IsDescendantOf(game) then
@@ -304,11 +298,7 @@ local script = G2L["5"];
 			end
 		end)
 	
-		-- Start arkenstone watcher — when triggered it equips + sends ;bkit
-		-- which causes Delete tool to appear
-		arkConns = watchArkenstone(function()
-			-- Arkenstone handled — just keep waiting for Delete tool
-		end)
+		arkConns = watchArkenstone(function() end)
 	
 		local timerConn = RunService.Heartbeat:Connect(function()
 			if not shared.BotEnabled then return end
@@ -347,7 +337,6 @@ local script = G2L["5"];
 			return
 		end
 	
-		-- Step 3: Break bkit
 		setStatus("Breaking Bkit...")
 		local success = shared.BotBreakBkit()
 	
