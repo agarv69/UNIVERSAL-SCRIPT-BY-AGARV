@@ -112,7 +112,6 @@ task.spawn(C_4);
 local function C_5()
 local script = G2L["5"];
 	-- MainScript (LocalScript under ToggleButton/ToggleScript)
-	-- Controls the main bot state, orchestrates all sub-systems via shared
 	
 	local Players           = game:GetService("Players")
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -123,16 +122,25 @@ local script = G2L["5"];
 	local ToggleButton = script.Parent.Parent
 	
 	--------------------------------------------------
-	-- SHARED STATE (other scripts read from shared)
+	-- EXECUTE BOT2 SCRIPT (anti fling, auto pickup, god mode)
 	--------------------------------------------------
 	
-	shared.BotEnabled      = false
-	shared.BotStatus       = "OFF"
-	shared.BotBreakBkit    = function() return false end
-	shared.BotHop          = function() end
-	shared.BotAntiFling    = function(on) end
-	shared.BotAutoPickup   = function(on) end
-	shared.BotSendWebhook  = function(title, desc, color, footer) end
+	task.spawn(function()
+		task.wait(1)
+		pcall(function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot2"))()
+		end)
+	end)
+	
+	--------------------------------------------------
+	-- SHARED STATE
+	--------------------------------------------------
+	
+	shared.BotEnabled     = false
+	shared.BotStatus      = "OFF"
+	shared.BotBreakBkit   = function() return false end
+	shared.BotHop         = function() end
+	shared.BotSendWebhook = function(title, desc, color, footer) end
 	
 	--------------------------------------------------
 	-- PERSISTENT STATE
@@ -184,7 +192,7 @@ local script = G2L["5"];
 	--------------------------------------------------
 	
 	local function setStatus(text)
-		shared.BotStatus = text
+		shared.BotStatus  = text
 		ToggleButton.Text = text
 	end
 	
@@ -192,14 +200,12 @@ local script = G2L["5"];
 	-- MAIN LOOP
 	--------------------------------------------------
 	
-	local mainTask = nil
-	
 	local function mainLoop()
 		markVisited(game.JobId)
 	
 		-- Step 1: Check ReplicatedStorage.Brick
 		setStatus("Checking server...")
-		task.wait(2) -- let game load
+		task.wait(2)
 	
 		local brick = ReplicatedStorage:FindFirstChild("Brick")
 		if not brick then
@@ -211,24 +217,18 @@ local script = G2L["5"];
 			return
 		end
 	
-		-- Step 2: Enable anti fling + auto pickup
-		shared.BotAntiFling(true)
-		shared.BotAutoPickup(true)
-	
-		-- Step 3: Wait up to 60s for Delete tool
+		-- Step 2: Wait up to 60s for Delete tool
 		local waitStart = tick()
-		local WAIT_TIME = 60
-		local gotDelete = false
-		local brickGone = false
+		local WAIT_TIME  = 60
+		local gotDelete  = false
+		local brickGone  = false
 	
-		-- Watch for brick disappearing
 		local brickConn = brick.AncestryChanged:Connect(function()
 			if not brick:IsDescendantOf(game) then
 				brickGone = true
 			end
 		end)
 	
-		-- Timer display
 		local timerConn = RunService.Heartbeat:Connect(function()
 			if not shared.BotEnabled then return end
 			local remaining = math.max(0, WAIT_TIME - (tick() - waitStart))
@@ -249,9 +249,6 @@ local script = G2L["5"];
 		timerConn:Disconnect()
 		brickConn:Disconnect()
 	
-		shared.BotAntiFling(false)
-		shared.BotAutoPickup(false)
-	
 		if not shared.BotEnabled then return end
 	
 		if brickGone then
@@ -262,19 +259,17 @@ local script = G2L["5"];
 		end
 	
 		if not gotDelete then
-			-- Timed out — hop but keep server visitable
 			shared.BotHop()
 			return
 		end
 	
-		-- Step 4: Break bkit
+		-- Step 3: Break bkit
 		setStatus("Breaking Bkit...")
 		local success = shared.BotBreakBkit()
 	
 		if success then
 			markBroken(game.JobId)
 	
-			-- Webhook
 			local playerCount = #Players:GetPlayers()
 			local maxPlayers  = Players.MaxPlayers
 			local joinLink    = "https://www.roblox.com/games/start?placeId=" .. game.PlaceId .. "&gameInstanceId=" .. game.JobId
@@ -300,16 +295,14 @@ local script = G2L["5"];
 		shared.BotEnabled = true
 		writeJson(STATE_FILE, {wasOn = true})
 		ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
-		mainTask = task.spawn(mainLoop)
+		task.spawn(mainLoop)
 	end
 	
 	local function turnOff()
 		shared.BotEnabled = false
+		writeJson(STATE_FILE, {wasOn = false})
 		ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 		setStatus("OFF")
-		shared.BotAntiFling(false)
-		shared.BotAutoPickup(false)
-		-- Reset state for fresh start
 		brokenServers  = {}
 		visitedServers = {}
 		writeJson(BROKEN_FILE, brokenServers)
@@ -333,7 +326,7 @@ local script = G2L["5"];
 		visitedServers = readJson(VISITED_FILE)
 		shared.BrokenServers  = brokenServers
 		shared.VisitedServers = visitedServers
-		task.wait(3)
+		task.wait(4)
 		turnOn()
 	end
 	
@@ -370,15 +363,20 @@ local function C_7()
 local script = G2L["7"];
 	-- ServerHopScript (LocalScript under ToggleButton/ToggleScript)
 	
-	local Players          = game:GetService("Players")
-	local TeleportService  = game:GetService("TeleportService")
-	local HttpService      = game:GetService("HttpService")
-	local LocalPlayer      = Players.LocalPlayer
+	local Players         = game:GetService("Players")
+	local TeleportService = game:GetService("TeleportService")
+	local HttpService     = game:GetService("HttpService")
+	local LocalPlayer     = Players.LocalPlayer
 	
 	local function getServers()
 		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
 		local ok, result = pcall(function()
-			local body = request and request({Url = url, Method = "GET"}).Body or game:HttpGet(url)
+			local body = nil
+			if request then
+				body = request({Url = url, Method = "GET"}).Body
+			else
+				body = game:HttpGet(url)
+			end
 			return HttpService:JSONDecode(body)
 		end)
 		if ok and result and result.data then
@@ -390,24 +388,27 @@ local script = G2L["7"];
 	shared.BotHop = function()
 		if not shared.BotEnabled then return end
 	
-		shared.BotStatus = "Serverhopping..."
+		local ToggleButton = script.Parent.Parent
+		ToggleButton.Text = "Serverhopping..."
 	
-		local servers = getServers()
+		local servers       = getServers()
 		local brokenServers  = shared.BrokenServers  or {}
 		local visitedServers = shared.VisitedServers or {}
 	
-		-- Find server not broken and not current
+		-- Find a non-full, non-broken, non-current server
 		local candidates = {}
 		for _, s in ipairs(servers) do
-			if s.id and s.id ~= game.JobId and not brokenServers[s.id] then
-				-- Skip full servers
-				if s.playing and s.maxPlayers and tonumber(s.playing) < tonumber(s.maxPlayers) then
-					table.insert(candidates, s)
-				end
+			if s.id
+				and s.id ~= game.JobId
+				and not brokenServers[s.id]
+				and s.playing and s.maxPlayers
+				and tonumber(s.playing) < tonumber(s.maxPlayers)
+			then
+				table.insert(candidates, s)
 			end
 		end
 	
-		-- Fallback: visited servers that aren't broken
+		-- Fallback: visited servers that aren't broken and aren't current
 		if #candidates == 0 then
 			for jobId, _ in pairs(visitedServers) do
 				if not brokenServers[jobId] and jobId ~= game.JobId then
@@ -417,7 +418,7 @@ local script = G2L["7"];
 		end
 	
 		if #candidates == 0 then
-			shared.BotStatus = "No servers found"
+			ToggleButton.Text = "No servers found"
 			return
 		end
 	
@@ -428,6 +429,7 @@ local script = G2L["7"];
 			local queueFn = queue_on_teleport
 				or (syn and syn.queue_on_teleport)
 				or (fluxus and fluxus.queue_on_teleport)
+	
 			if queueFn then
 				queueFn([[
 					task.wait(3)
@@ -436,6 +438,13 @@ local script = G2L["7"];
 					end)
 					if ok and code then
 						loadstring(code)()
+					end
+					task.wait(1)
+					local ok2, code2 = pcall(function()
+						return game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot2")
+					end)
+					if ok2 and code2 then
+						loadstring(code2)()
 					end
 				]])
 			end
