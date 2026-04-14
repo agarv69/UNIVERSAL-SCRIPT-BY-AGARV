@@ -468,7 +468,7 @@ local script = G2L["6"];
 	--------------------------------------------------
 	
 	local function getServers()
-		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
+		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
 		local ok, result = pcall(function()
 			local body = nil
 			if request then
@@ -525,7 +525,7 @@ local script = G2L["6"];
 			end
 	
 			if #unvisited > 0 then
-				target = unvisited[1]
+				target = unvisited[math.random(1, #unvisited)]
 			else
 				-- Step 2: All servers visited — find oldest visited non-broken non-full server
 				local oldest = nil
