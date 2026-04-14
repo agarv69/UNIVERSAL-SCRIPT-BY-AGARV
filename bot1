@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 9 | Scripts: 4 | Modules: 0 | Tags: 0
+-- Instances: 7 | Scripts: 2 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.BotGui
@@ -53,379 +53,58 @@ G2L["5"] = Instance.new("LocalScript", G2L["4"]);
 G2L["5"]["Name"] = [[MainScript]];
 
 
--- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.ServerHopScript
-G2L["6"] = Instance.new("LocalScript", G2L["4"]);
-G2L["6"]["Name"] = [[ServerHopScript]];
-
-
--- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.BkitBreakScript
-G2L["7"] = Instance.new("LocalScript", G2L["4"]);
-G2L["7"]["Name"] = [[BkitBreakScript]];
-
-
 -- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.WebhookScript
-G2L["8"] = Instance.new("LocalScript", G2L["4"]);
-G2L["8"]["Name"] = [[WebhookScript]];
+G2L["6"] = Instance.new("LocalScript", G2L["4"]);
+G2L["6"]["Name"] = [[WebhookScript]];
 
 
 -- StarterGui.BotGui.BotMainFrame.BotTitle
-G2L["9"] = Instance.new("TextLabel", G2L["2"]);
-G2L["9"]["TextSize"] = 14;
-G2L["9"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
-G2L["9"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["9"]["TextColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["9"]["Size"] = UDim2.new(0, 200, 0, 28);
-G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["9"]["Text"] = [[Bkit Disabler Bot]];
-G2L["9"]["Name"] = [[BotTitle]];
-G2L["9"]["Position"] = UDim2.new(-0.0047, 0, -0.0049, 0);
+G2L["7"] = Instance.new("TextLabel", G2L["2"]);
+G2L["7"]["TextSize"] = 14;
+G2L["7"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
+G2L["7"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["7"]["TextColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["7"]["Size"] = UDim2.new(0, 200, 0, 28);
+G2L["7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["7"]["Text"] = [[Bkit Disabler Bot]];
+G2L["7"]["Name"] = [[BotTitle]];
+G2L["7"]["Position"] = UDim2.new(-0.0047, 0, -0.0049, 0);
 
 
 -- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.MainScript
 local function C_5()
 local script = G2L["5"];
 	-- MainScript (LocalScript under ToggleButton/ToggleScript)
+	-- ALL IN ONE - no other scripts needed except WebhookScript
 	
 	local Players           = game:GetService("Players")
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local RunService        = game:GetService("RunService")
 	local HttpService       = game:GetService("HttpService")
 	local TextChatService   = game:GetService("TextChatService")
+	local TeleportService   = game:GetService("TeleportService")
+	local CoreGui           = game:GetService("CoreGui")
 	local LocalPlayer       = Players.LocalPlayer
+	local ToggleButton      = script.Parent.Parent
 	
-	local ToggleButton = script.Parent.Parent
-	
+	-- Clear corrupted broken file
 	pcall(function() writefile("BotGuiBroken.json", "{}") end)
 	
 	task.wait(0.5)
 	
 	--------------------------------------------------
-	-- EXECUTE BOT2 SCRIPT
+	-- EXECUTE BOT2
 	--------------------------------------------------
 	
 	task.spawn(function()
-		task.wait(0.5)
+		task.wait(1)
 		pcall(function()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot2"))()
 		end)
 	end)
 	
 	--------------------------------------------------
-	-- CHAT FUNCTION
-	--------------------------------------------------
-	
-	local function sendChat(message)
-		pcall(function()
-			local channels = TextChatService:WaitForChild("TextChannels", 2)
-			if channels then
-				local general = channels:FindFirstChild("RBXGeneral")
-				if general then
-					general:SendAsync(message)
-					return
-				end
-			end
-			local rs = game:GetService("ReplicatedStorage")
-			local chatEvents = rs:WaitForChild("DefaultChatSystemChatEvents", 2)
-			if chatEvents then
-				local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
-				if sayMessage then
-					sayMessage:FireServer(message, "All")
-				end
-			end
-		end)
-	end
-	
-	--------------------------------------------------
-	-- SHARED STATE
-	--------------------------------------------------
-	
-	shared.BotEnabled     = false
-	shared.BotStatus      = "OFF"
-	shared.BotBreakBkit   = function() return false end
-	shared.BotHop         = function() end
-	shared.BotSendWebhook = function(title, desc, color, footer) end
-	shared.BotSendChat    = sendChat
-	
-	--------------------------------------------------
-	-- PERSISTENT STATE
-	--------------------------------------------------
-	
-	local STATE_FILE   = "BotGuiState.json"
-	local BROKEN_FILE  = "BotGuiBroken.json"
-	local VISITED_FILE = "BotGuiVisited.json"
-	
-	local function readJson(file)
-		local ok, data = pcall(function()
-			return HttpService:JSONDecode(readfile(file))
-		end)
-		return ok and data or {}
-	end
-	
-	local function writeJson(file, data)
-		pcall(function()
-			writefile(file, HttpService:JSONEncode(data))
-		end)
-	end
-	
-	local brokenServers  = readJson(BROKEN_FILE)
-	local visitedServers = readJson(VISITED_FILE)
-	
-	shared.BrokenServers  = brokenServers
-	shared.VisitedServers = visitedServers
-	
-	local visitCounter = 0
-	
-	local function markBroken(jobId)
-		brokenServers[jobId] = true
-		writeJson(BROKEN_FILE, brokenServers)
-		shared.BrokenServers = brokenServers
-	end
-	
-	local function markVisited(jobId)
-		if not visitedServers[jobId] then
-			visitCounter = visitCounter + 1
-			visitedServers[jobId] = visitCounter
-			writeJson(VISITED_FILE, visitedServers)
-			shared.VisitedServers = visitedServers
-		end
-	end
-	
-	local function isBroken(jobId)
-		return brokenServers[jobId] == true
-	end
-	
-	shared.MarkBroken  = markBroken
-	shared.MarkVisited = markVisited
-	shared.IsBroken    = isBroken
-	
-	--------------------------------------------------
-	-- UI
-	--------------------------------------------------
-	
-	local function setStatus(text)
-		shared.BotStatus  = text
-		ToggleButton.Text = text
-	end
-	
-	--------------------------------------------------
-	-- ARKENSTONE WATCHER
-	--------------------------------------------------
-	
-	local arkestoneDetected = false
-	
-	local function watchArkenstone(onDetected)
-		arkestoneDetected = false
-	
-		local function checkAndHandle()
-			if arkestoneDetected then return end
-			local backpack   = LocalPlayer:FindFirstChild("Backpack")
-			local char       = LocalPlayer.Character
-			local inBackpack = backpack and backpack:FindFirstChild("The Arkenstone")
-			local inChar     = char and char:FindFirstChild("The Arkenstone")
-			local arken      = inBackpack or inChar
-			if not arken then return end
-	
-			arkestoneDetected = true
-	
-			task.spawn(function()
-				pcall(function()
-					local hum = char and char:FindFirstChildOfClass("Humanoid")
-					local ark = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
-						or (char and char:FindFirstChild("The Arkenstone"))
-					if hum and ark then
-						hum:EquipTool(ark)
-					end
-				end)
-				task.wait(0.5)
-				sendChat(";bkit")
-			end)
-	
-			onDetected()
-		end
-	
-		local connections = {}
-	
-		local backpack = LocalPlayer:FindFirstChild("Backpack")
-		if backpack then
-			table.insert(connections, backpack.ChildAdded:Connect(function(child)
-				if child.Name == "The Arkenstone" then
-					checkAndHandle()
-				end
-			end))
-		end
-	
-		local char = LocalPlayer.Character
-		if char then
-			table.insert(connections, char.ChildAdded:Connect(function(child)
-				if child.Name == "The Arkenstone" then
-					checkAndHandle()
-				end
-			end))
-		end
-	
-		checkAndHandle()
-	
-		return connections
-	end
-	
-	--------------------------------------------------
-	-- MAIN LOOP
-	--------------------------------------------------
-	
-	local function mainLoop()
-		markVisited(game.JobId)
-	
-		setStatus("Checking server...")
-		task.wait(2)
-	
-		local brick = ReplicatedStorage:FindFirstChild("Brick")
-		if not brick then
-			task.wait(5)
-			if not shared.BotEnabled then return end
-			setStatus("Bkit Broken...")
-			task.wait(1)
-			shared.BotHop()
-			return
-		end
-	
-		local waitStart = tick()
-		local WAIT_TIME = 60
-		local gotDelete = false
-		local brickGone = false
-		local arkConns  = {}
-	
-		local brickConn = brick.AncestryChanged:Connect(function()
-			if not brick:IsDescendantOf(game) then
-				brickGone = true
-			end
-		end)
-	
-		arkConns = watchArkenstone(function() end)
-	
-		local timerConn = RunService.Heartbeat:Connect(function()
-			if not shared.BotEnabled then return end
-			local remaining = math.max(0, WAIT_TIME - (tick() - waitStart))
-			setStatus(string.format("Waiting for Delete tool... (%.1f)", remaining))
-		end)
-	
-		while tick() - waitStart < WAIT_TIME and shared.BotEnabled do
-			if brickGone then break end
-			local del = LocalPlayer.Backpack:FindFirstChild("Delete")
-				or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
-			if del then
-				gotDelete = true
-				break
-			end
-			task.wait(0.2)
-		end
-	
-		timerConn:Disconnect()
-		brickConn:Disconnect()
-		for _, c in ipairs(arkConns) do
-			pcall(function() c:Disconnect() end)
-		end
-	
-		if not shared.BotEnabled then return end
-	
-		if brickGone then
-			setStatus("Bkit Broken...")
-			task.wait(2)
-			shared.BotHop()
-			return
-		end
-	
-		if not gotDelete then
-			shared.BotHop()
-			return
-		end
-	
-		setStatus("Breaking Bkit...")
-		local success = shared.BotBreakBkit()
-	
-		if success then
-			markBroken(game.JobId)
-	
-			local playerCount = #Players:GetPlayers()
-			local maxPlayers  = Players.MaxPlayers
-			local joinLink    = "https://www.roblox.com/games/start?placeId=" .. game.PlaceId .. "&gameInstanceId=" .. game.JobId
-			local display     = LocalPlayer.DisplayName .. " / " .. LocalPlayer.Name
-	
-			shared.BotSendWebhook(
-				"Bkit Disabled | " .. playerCount .. "/" .. maxPlayers,
-				"[Join Game](" .. joinLink .. ")",
-				0xff0000,
-				display
-			)
-		end
-	
-		task.wait(1)
-		shared.BotHop()
-	end
-	
-	--------------------------------------------------
-	-- TOGGLE
-	--------------------------------------------------
-	
-	local function turnOn()
-		shared.BotEnabled = true
-		writeJson(STATE_FILE, {wasOn = true})
-		ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
-		task.spawn(mainLoop)
-	end
-	
-	local function turnOff()
-		shared.BotEnabled = false
-		writeJson(STATE_FILE, {wasOn = false})
-		ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-		setStatus("OFF")
-		brokenServers  = {}
-		visitedServers = {}
-		writeJson(BROKEN_FILE, brokenServers)
-		writeJson(VISITED_FILE, visitedServers)
-		shared.BrokenServers  = brokenServers
-		shared.VisitedServers = visitedServers
-	end
-	
-	ToggleButton.MouseButton1Click:Connect(function()
-		if shared.BotEnabled then
-			turnOff()
-		else
-			turnOn()
-		end
-	end)
-	
-	-- Auto restart after server hop
-	local savedState = readJson(STATE_FILE)
-	if savedState.wasOn then
-		brokenServers  = readJson(BROKEN_FILE)
-		visitedServers = readJson(VISITED_FILE)
-		shared.BrokenServers  = brokenServers
-		shared.VisitedServers = visitedServers
-		task.wait(4)
-		turnOn()
-	end
-	
-	-- Save state on teleport
-	LocalPlayer.OnTeleport:Connect(function(state)
-		if state == Enum.TeleportState.Started then
-			writeJson(STATE_FILE, {wasOn = shared.BotEnabled})
-		end
-	end)
-end;
-task.spawn(C_5);
--- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.ServerHopScript
-local function C_6()
-local script = G2L["6"];
-	-- ServerHopScript (LocalScript under ToggleButton/ToggleScript)
-	
-	local Players         = game:GetService("Players")
-	local TeleportService = game:GetService("TeleportService")
-	local HttpService     = game:GetService("HttpService")
-	local CoreGui         = game:GetService("CoreGui")
-	local LocalPlayer     = Players.LocalPlayer
-	
-	--------------------------------------------------
-	-- AUTO DISMISS FULL SERVER POPUP
+	-- AUTO DISMISS POPUP
 	--------------------------------------------------
 	
 	task.spawn(function()
@@ -455,18 +134,121 @@ local script = G2L["6"];
 	end)
 	
 	--------------------------------------------------
+	-- CHAT
+	--------------------------------------------------
+	
+	local function sendChat(message)
+		pcall(function()
+			local channels = TextChatService:WaitForChild("TextChannels", 2)
+			if channels then
+				local general = channels:FindFirstChild("RBXGeneral")
+				if general then
+					general:SendAsync(message)
+					return
+				end
+			end
+			local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
+			if chatEvents then
+				local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
+				if sayMessage then
+					sayMessage:FireServer(message, "All")
+				end
+			end
+		end)
+	end
+	
+	--------------------------------------------------
+	-- PERSISTENT STATE
+	--------------------------------------------------
+	
+	local STATE_FILE   = "BotGuiState.json"
+	local BROKEN_FILE  = "BotGuiBroken.json"
+	local VISITED_FILE = "BotGuiVisited.json"
+	
+	local function readJson(file)
+		local ok, data = pcall(function()
+			return HttpService:JSONDecode(readfile(file))
+		end)
+		return ok and data or {}
+	end
+	
+	local function writeJson(file, data)
+		pcall(function()
+			writefile(file, HttpService:JSONEncode(data))
+		end)
+	end
+	
+	local brokenServers  = readJson(BROKEN_FILE)
+	local visitedServers = readJson(VISITED_FILE)
+	local visitCounter   = 0
+	
+	local function markBroken(jobId)
+		brokenServers[jobId] = true
+		writeJson(BROKEN_FILE, brokenServers)
+	end
+	
+	local function markVisited(jobId)
+		if not visitedServers[jobId] then
+			visitCounter = visitCounter + 1
+			visitedServers[jobId] = visitCounter
+			writeJson(VISITED_FILE, visitedServers)
+		end
+	end
+	
+	--------------------------------------------------
+	-- UI
+	--------------------------------------------------
+	
+	local isOn = false
+	
+	local function setStatus(text)
+		ToggleButton.Text = text
+	end
+	
+	--------------------------------------------------
+	-- BREAK BKIT
+	--------------------------------------------------
+	
+	local function breakBkit()
+		local character = LocalPlayer.Character
+		if not character then return false end
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if not humanoid then return false end
+		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+			or character:FindFirstChild("Delete")
+		if not deleteTool then return false end
+		local brick = ReplicatedStorage:FindFirstChild("Brick")
+		if not brick then return false end
+		local ok = pcall(function()
+			humanoid:EquipTool(deleteTool)
+			task.wait(0.1)
+			local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+			event:FireServer(brick, character.HumanoidRootPart.Position)
+			task.wait(0.1)
+			humanoid:UnequipTools()
+		end)
+		return ok
+	end
+	
+	--------------------------------------------------
+	-- WEBHOOK
+	--------------------------------------------------
+	
+	local function sendWebhook(title, description, color, footer)
+		pcall(function()
+			if not shared.BotSendWebhook then return end
+			shared.BotSendWebhook(title, description, color, footer)
+		end)
+	end
+	
+	--------------------------------------------------
 	-- GET SERVERS
 	--------------------------------------------------
 	
 	local function getServers()
 		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
 		local ok, result = pcall(function()
-			local body = nil
-			if request then
-				body = request({Url = url, Method = "GET"}).Body
-			else
-				body = game:HttpGet(url)
-			end
+			local body = request and request({Url = url, Method = "GET"}).Body or game:HttpGet(url)
 			return HttpService:JSONDecode(body)
 		end)
 		if ok and result and result.data then
@@ -479,33 +261,18 @@ local script = G2L["6"];
 	-- SERVER HOP
 	--------------------------------------------------
 	
-	shared.BotHop = function()
-		if not shared.BotEnabled then return end
-	
-		local ToggleButton   = script.Parent.Parent
-		local brokenServers  = shared.BrokenServers  or {}
-		local visitedServers = shared.VisitedServers or {}
-	
-		ToggleButton.Text = "Serverhopping..."
+	local function hopToNewServer()
+		setStatus("Serverhopping...")
 	
 		local target = nil
 	
-		while not target and shared.BotEnabled do
+		while not target and isOn do
 			local servers = getServers()
 	
-			-- Build set of server ids from API
-			local apiServerIds = {}
-			for _, s in ipairs(servers) do
-				if s.id then
-					apiServerIds[s.id] = s
-				end
-			end
-	
-			-- Step 1: Find unvisited, non-broken, non-full servers
+			-- Unvisited non-broken non-full servers first
 			local unvisited = {}
 			for _, s in ipairs(servers) do
-				if s.id
-					and s.id ~= game.JobId
+				if s.id and s.id ~= game.JobId
 					and not brokenServers[s.id]
 					and not visitedServers[s.id]
 					and s.playing and s.maxPlayers
@@ -518,59 +285,48 @@ local script = G2L["6"];
 			if #unvisited > 0 then
 				target = unvisited[math.random(1, #unvisited)]
 			else
-				-- Step 2: All servers visited — find oldest visited non-broken non-full server
+				-- Fallback: oldest visited non-broken non-full
 				local oldest = nil
-				local oldestTime = math.huge
-	
+				local oldestNum = math.huge
 				for _, s in ipairs(servers) do
-					if s.id
-						and s.id ~= game.JobId
+					if s.id and s.id ~= game.JobId
 						and not brokenServers[s.id]
 						and s.playing and s.maxPlayers
 						and tonumber(s.playing) < tonumber(s.maxPlayers)
 					then
-						local visitTime = visitedServers[s.id] or math.huge
-						if visitTime < oldestTime then
-							oldestTime = visitTime
+						local v = visitedServers[s.id] or math.huge
+						if v < oldestNum then
+							oldestNum = v
 							oldest = s
 						end
 					end
 				end
-	
 				if oldest then
 					target = oldest
 				else
-					-- No valid servers at all — retry after 30s
-					ToggleButton.Text = "No servers found, retrying..."
-					task.wait(7)
+					setStatus("No servers, retrying...")
+					task.wait(5)
 				end
 			end
 		end
 	
-		if not target or not shared.BotEnabled then return end
+		if not target or not isOn then return end
 	
-		-- Queue re-execution after teleport
+		-- Queue re-execution
 		pcall(function()
 			local queueFn = queue_on_teleport
 				or (syn and syn.queue_on_teleport)
 				or (fluxus and fluxus.queue_on_teleport)
-	
 			if queueFn then
 				queueFn([[
 					task.wait(3)
-					local ok, code = pcall(function()
-						return game:HttpGet("https://pastebin.com/raw/LnAuLdN3")
+					pcall(function()
+						loadstring(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))()
 					end)
-					if ok and code then
-						loadstring(code)()
-					end
 					task.wait(1)
-					local ok2, code2 = pcall(function()
-						return game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot2")
+					pcall(function()
+						loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot2"))()
 					end)
-					if ok2 and code2 then
-						loadstring(code2)()
-					end
 				]])
 			end
 		end)
@@ -579,53 +335,194 @@ local script = G2L["6"];
 			TeleportService:TeleportToPlaceInstance(game.PlaceId, target.id, LocalPlayer)
 		end)
 	
-		-- If teleport fails, retry after 10s
+		-- If teleport fails, retry
 		task.wait(10)
-		if shared.BotEnabled then
-			shared.BotHop()
+		if isOn then
+			hopToNewServer()
 		end
 	end
-end;
-task.spawn(C_6);
--- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.BkitBreakScript
-local function C_7()
-local script = G2L["7"];
-	-- BkitBreakScript (LocalScript under ToggleButton/ToggleScript)
 	
-	local Players           = game:GetService("Players")
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local LocalPlayer       = Players.LocalPlayer
+	--------------------------------------------------
+	-- ARKENSTONE WATCHER
+	--------------------------------------------------
 	
-	shared.BotBreakBkit = function()
-		local character = LocalPlayer.Character
-		if not character then return false end
+	local function watchArkenstone()
+		local detected = false
 	
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		if not humanoid then return false end
+		local function handle()
+			if detected then return end
+			local backpack = LocalPlayer:FindFirstChild("Backpack")
+			local char     = LocalPlayer.Character
+			local ark      = (backpack and backpack:FindFirstChild("The Arkenstone"))
+				or (char and char:FindFirstChild("The Arkenstone"))
+			if not ark then return end
+			detected = true
 	
-		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
-			or character:FindFirstChild("Delete")
-		if not deleteTool then return false end
+			task.spawn(function()
+				pcall(function()
+					local hum = char and char:FindFirstChildOfClass("Humanoid")
+					local a = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
+						or (char and char:FindFirstChild("The Arkenstone"))
+					if hum and a then hum:EquipTool(a) end
+				end)
+				task.wait(0.5)
+				sendChat(";bkit")
+			end)
+		end
 	
+		local conns = {}
+		local backpack = LocalPlayer:FindFirstChild("Backpack")
+		if backpack then
+			table.insert(conns, backpack.ChildAdded:Connect(function(c)
+				if c.Name == "The Arkenstone" then handle() end
+			end))
+		end
+		local char = LocalPlayer.Character
+		if char then
+			table.insert(conns, char.ChildAdded:Connect(function(c)
+				if c.Name == "The Arkenstone" then handle() end
+			end))
+		end
+		handle()
+		return conns
+	end
+	
+	--------------------------------------------------
+	-- MAIN LOOP
+	--------------------------------------------------
+	
+	local function mainLoop()
+		markVisited(game.JobId)
+		setStatus("Checking server...")
+		task.wait(2)
+	
+		-- Check Brick exists
 		local brick = ReplicatedStorage:FindFirstChild("Brick")
-		if not brick then return false end
+		if not brick then
+			task.wait(5)
+			if not isOn then return end
+			setStatus("Bkit Broken...")
+			task.wait(1)
+			hopToNewServer()
+			return
+		end
 	
-		local ok = pcall(function()
-			humanoid:EquipTool(deleteTool)
-			task.wait(0.1)
-			local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
-			event:FireServer(brick, character.HumanoidRootPart.Position)
-			task.wait(0.1)
-			humanoid:UnequipTools()
+		-- Watch arkenstone
+		local arkConns = watchArkenstone()
+	
+		-- Watch brick disappearing
+		local brickGone = false
+		local brickConn = brick.AncestryChanged:Connect(function()
+			if not brick:IsDescendantOf(game) then
+				brickGone = true
+			end
 		end)
 	
-		return ok
+		-- Wait for Delete tool (60s)
+		local waitStart = tick()
+		local WAIT_TIME = 60
+		local gotDelete = false
+	
+		local timerConn = RunService.Heartbeat:Connect(function()
+			if not isOn then return end
+			local remaining = math.max(0, WAIT_TIME - (tick() - waitStart))
+			setStatus(string.format("Waiting... (%.1f)", remaining))
+		end)
+	
+		while tick() - waitStart < WAIT_TIME and isOn do
+			if brickGone then break end
+			local del = LocalPlayer.Backpack:FindFirstChild("Delete")
+				or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
+			if del then gotDelete = true break end
+			task.wait(0.2)
+		end
+	
+		timerConn:Disconnect()
+		brickConn:Disconnect()
+		for _, c in ipairs(arkConns) do pcall(function() c:Disconnect() end) end
+	
+		if not isOn then return end
+	
+		if brickGone then
+			setStatus("Bkit Broken...")
+			task.wait(2)
+			hopToNewServer()
+			return
+		end
+	
+		if not gotDelete then
+			hopToNewServer()
+			return
+		end
+	
+		-- Break bkit
+		setStatus("Breaking Bkit...")
+		local success = breakBkit()
+	
+		if success then
+			markBroken(game.JobId)
+			local playerCount = #Players:GetPlayers()
+			local maxPlayers  = Players.MaxPlayers
+			local joinLink    = "https://www.roblox.com/games/start?placeId=" .. game.PlaceId .. "&gameInstanceId=" .. game.JobId
+			local display     = LocalPlayer.DisplayName .. " / " .. LocalPlayer.Name
+			sendWebhook(
+				"Bkit Disabled | " .. playerCount .. "/" .. maxPlayers,
+				"[Join Game](" .. joinLink .. ")",
+				0xff0000,
+				display
+			)
+		end
+	
+		task.wait(1)
+		hopToNewServer()
 	end
+	
+	--------------------------------------------------
+	-- TOGGLE
+	--------------------------------------------------
+	
+	local function turnOn()
+		isOn = true
+		writeJson(STATE_FILE, {wasOn = true})
+		ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+		task.spawn(mainLoop)
+	end
+	
+	local function turnOff()
+		isOn = false
+		writeJson(STATE_FILE, {wasOn = false})
+		ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+		setStatus("OFF")
+		brokenServers  = {}
+		visitedServers = {}
+		writeJson(BROKEN_FILE, brokenServers)
+		writeJson(VISITED_FILE, visitedServers)
+	end
+	
+	ToggleButton.MouseButton1Click:Connect(function()
+		if isOn then turnOff() else turnOn() end
+	end)
+	
+	-- Auto restart after server hop
+	local savedState = readJson(STATE_FILE)
+	if savedState.wasOn then
+		brokenServers  = readJson(BROKEN_FILE)
+		visitedServers = readJson(VISITED_FILE)
+		task.wait(4)
+		turnOn()
+	end
+	
+	-- Save on teleport
+	LocalPlayer.OnTeleport:Connect(function(state)
+		if state == Enum.TeleportState.Started then
+			writeJson(STATE_FILE, {wasOn = isOn})
+		end
+	end)
 end;
-task.spawn(C_7);
+task.spawn(C_5);
 -- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.WebhookScript
-local function C_8()
-local script = G2L["8"];
+local function C_6()
+local script = G2L["6"];
 	-- WebhookScript (LocalScript under ToggleButton/ToggleScript)
 	
 	local HttpService = game:GetService("HttpService")
@@ -657,6 +554,6 @@ local script = G2L["8"];
 		end)
 	end
 end;
-task.spawn(C_8);
+task.spawn(C_6);
 
 return G2L["1"], require;
