@@ -1,8 +1,10 @@
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
+
 local LocalPlayer = Players.LocalPlayer
 local PLACE_ID = game.PlaceId
 local cooldown = false
+
 ------------------------------------------------
 -- AUTO EXECUTE
 ------------------------------------------------
@@ -11,62 +13,70 @@ local function setupAutoExecute()
 		queue_on_teleport
 		or (syn and syn.queue_on_teleport)
 		or (fluxus and fluxus.queue_on_teleport)
+
 	if queueFn and not _G._AUTOEXEC_SET then
 		_G._AUTOEXEC_SET = true
+
 		queueFn([[
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
-
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
 
 			task.wait(3)
 
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
-
-			task.wait(1)
-
-			task.wait(1)
-
-			pcall(function()
-				local TextChatService = game:GetService("TextChatService")
-				local channel = TextChatService:FindFirstChild("TextChannels")
-					and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
-
-					if channel then
-					channel:DisplaySystemMessage("MONKEY GANG ON TOP")
-				else
-					local ReplicatedStorage = game:GetService("ReplicatedStorage")
-					local event = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-						and ReplicatedStorage.DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest")
-
-					if event then
-						event:FireServer("MONKEY GANG ON TOP", "All")
-					end
-				end
-			end)
 		]])
 	end
 end
+
 setupAutoExecute()
+
+------------------------------------------------
+-- CHAT (RUNS AFTER SCRIPT LOADS)
+------------------------------------------------
+task.spawn(function()
+	task.wait(6) -- wait for rejoin + scripts to load
+
+	pcall(function()
+		local TextChatService = game:GetService("TextChatService")
+		local channels = TextChatService:FindFirstChild("TextChannels")
+
+		if channels and channels:FindFirstChild("RBXGeneral") then
+			channels.RBXGeneral:SendAsync("MONKEY GANG ON TOP")
+		else
+			local ReplicatedStorage = game:GetService("ReplicatedStorage")
+			local event = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+				and ReplicatedStorage.DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest")
+
+			if event then
+				event:FireServer("MONKEY GANG ON TOP", "All")
+			end
+		end
+	end)
+end)
+
 ------------------------------------------------
 -- NOCLIP WATCHER
 ------------------------------------------------
 local function watchNoclip()
 	task.spawn(function()
 		while task.wait(0.05) do
-			if cooldown then
-				continue
-			end
+			if cooldown then continue end
+
 			local char = LocalPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
 			if hrp and hrp.CollisionGroup == "NoClip" then
 				cooldown = true
 				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+
 				task.delay(3, function()
 					cooldown = false
 				end)
+
 				break
 			end
 		end
 	end)
 end
+
 watchNoclip()
