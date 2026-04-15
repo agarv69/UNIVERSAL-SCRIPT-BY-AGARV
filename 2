@@ -1,117 +1,251 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+local flingActive = {}
+local noclippedPlayers = {} -- Track noclipped players
 
--- Pick a random player
-local function getRandomPlayer()
-	local allPlayers = Players:GetPlayers()
-	local otherPlayers = {}
+-- Save original FallenPartsDestroyHeight
+if not getgenv().FPDH then
+	getgenv().FPDH = workspace.FallenPartsDestroyHeight
+end
+
+-- Check if a player is noclipped
+local function isNoclipped(player)
+	local character = player.Character
+	if not character then return false end
 	
-	for _, player in pairs(allPlayers) do
-		if player ~= LocalPlayer then
-			table.insert(otherPlayers, player)
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return false end
+	
+	-- Check CollisionGroup
+	return hrp.CollisionGroup == "NoClip"
+end
+
+-- Monitor players for noclip changes
+local function monitorNoclipChanges(player)
+	task.spawn(function()
+		while player and player.Parent == Players do
+			local character = player.Character
+			if character then
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					local wasNoclipped = noclippedPlayers[player]
+					local nowNoclipped = (hrp.CollisionGroup == "NoClip")
+					
+					-- Player just became clipped (was noclipped, now clipped)
+					if wasNoclipped and not nowNoclipped then
+						print(player.Name .. " is now CLIPPED - adding to fling queue!")
+						noclippedPlayers[player] = false
+						-- Start flinging them again
+						if not flingActive[player] then
+							SkidFling(player)
+						end
+					-- Player just became noclipped
+					elseif not wasNoclipped and nowNoclipped then
+						print(player.Name .. " is now NOCLIPPED - skipping...")
+						noclippedPlayers[player] = true
+					end
+				end
+			end
+			task.wait(0.5) -- Check every 0.5 seconds
 		end
-	end
+	end)
+end
+
+local function SkidFling(TargetPlayer)
+	if flingActive[TargetPlayer] then return end
 	
-	if #otherPlayers > 0 then
-		return otherPlayers[math.random(1, #otherPlayers)]
-	end
-	return nil
-end
-
-local targetPlayer = getRandomPlayer()
-
-if not targetPlayer then
-	warn("No other players in server!")
-	return
-end
-
-print("Following: " .. targetPlayer.Name)
-
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local RootPart = Character:WaitForChild("HumanoidRootPart")
-local Humanoid = Character:WaitForChild("Humanoid")
-
--- Disable all character physics to reduce server checks
-for _, part in pairs(Character:GetDescendants()) do
-	if part:IsA("BasePart") then
-		part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
-		part.CanCollide = false
-	end
-end
-
--- Create BodyVelocity for SERVER-SIDE movement
-local BV = Instance.new("BodyVelocity")
-BV.Parent = RootPart
-BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-BV.Velocity = Vector3.new(0, 0, 0)
-
--- Create BodyGyro to keep upright
-local BG = Instance.new("BodyGyro")
-BG.Parent = RootPart
-BG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-BG.D = 5000
-BG.P = 50000
-
--- Disable seat so you can't be thrown off
-Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-
--- MAIN TRACKING LOOP - Using VELOCITY instead of CFrame
-local connection
-connection = RunService.Heartbeat:Connect(function(delta)
-	if not targetPlayer or targetPlayer.Parent ~= Players then
-		if connection then connection:Disconnect() end
-		if BV then BV:Destroy() end
-		if BG then BG:Destroy() end
+	-- Check if they're noclipped before starting
+	if isNoclipped(TargetPlayer) then
+		print(TargetPlayer.Name .. " is NOCLIPPED - skipping fling")
+		noclippedPlayers[TargetPlayer] = true
 		return
 	end
 	
-	local TCharacter = targetPlayer.Character
-	if not TCharacter then return end
+	flingActive[TargetPlayer] = true
 	
-	local THead = TCharacter:FindFirstChild("Head")
-	if not THead then return end
-	
-	-- Calculate target position
-	local targetPos = THead.Position + Vector3.new(0, 2.5, 0)
-	local currentPos = RootPart.Position
-	
-	-- Calculate the velocity needed to reach target INSTANTLY
-	local displacement = targetPos - currentPos
-	local velocityNeeded = displacement / delta -- Distance / time = velocity
-	
-	-- Apply MASSIVE velocity to force instant movement
-	BV.Velocity = velocityNeeded * 10 -- Multiply for even faster response
-	
-	-- Also do direct CFrame for client-side smoothness
-	RootPart.CFrame = CFrame.new(targetPos)
-	Character:SetPrimaryPartCFrame(CFrame.new(targetPos))
-	
-	-- Keep upright
-	BG.CFrame = CFrame.new(RootPart.Position)
-end)
+	task.spawn(function()
+		while TargetPlayer and TargetPlayer.Parent == Players do
+			local Character = LocalPlayer.Character
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+			local RootPart = Humanoid and Humanoid.RootPart
+			local TCharacter = TargetPlayer.Character
+			local THumanoid = TCharacter and TCharacter:FindFirstChildOfClass("Humanoid")
+			
+			if not (Character and Humanoid and RootPart) then
+				task.wait(0.5)
+				continue
+			end
+			
+			if not (TCharacter and THumanoid) then
+				task.wait(0.5)
+				continue
+			end
+			
+			-- CHECK IF NOCLIPPED - if yes, stop flinging them
+			if isNoclipped(TargetPlayer) then
+				print(TargetPlayer.Name .. " became NOCLIPPED mid-fling - stopping")
+				noclippedPlayers[TargetPlayer] = true
+				break
+			end
+			
+			if not TCharacter:FindFirstChildWhichIsA("BasePart") then
+				task.wait(0.5)
+				continue
+			end
+			
+			if RootPart.Velocity.Magnitude < 50 then
+				getgenv().OldPos = RootPart.CFrame
+			end
+			
+			if THumanoid.Sit then
+				task.wait(0.5)
+				continue
+			end
+			
+			local FPos = function(BasePart, Pos, Ang)
+				if not BasePart then return end
+				RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+				Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+				RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+				RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+			end
+			
+			local SFBasePart = function()
+				local TimeToWait = 2
+				local Time = tick()
+				local Angle = 0
+				
+				repeat
+					-- CHECK NOCLIP STATUS during fling
+					if isNoclipped(TargetPlayer) then
+						print(TargetPlayer.Name .. " became NOCLIPPED - aborting fling")
+						break
+					end
+					
+					-- GET FRESH BASEPART EVERY LOOP
+					local TRootPart = THumanoid and THumanoid.RootPart
+					local THead = TCharacter and TCharacter:FindFirstChild("Head")
+					local Accessory = TCharacter and TCharacter:FindFirstChildOfClass("Accessory")
+					local Handle = Accessory and Accessory:FindFirstChild("Handle")
+					
+					local BasePart = TRootPart or THead or Handle
+					
+					if not BasePart then break end
+					
+					if RootPart and THumanoid then
+						if BasePart.Velocity.Magnitude < 50 then
+							Angle = Angle + 100
+							
+							FPos(BasePart, CFrame.new(0, 1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+						else
+							if not TRootPart then break end
+							
+							FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(-90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+							task.wait()
+						end
+					else
+						break
+					end
+				until (BasePart.Velocity.Magnitude > 500) 
+					or (BasePart.Parent ~= TargetPlayer.Character) 
+					or (TargetPlayer.Parent ~= Players) 
+					or THumanoid.Sit 
+					or (Humanoid.Health <= 0) 
+					or (tick() > (Time + TimeToWait))
+					or isNoclipped(TargetPlayer) -- ADDED: Stop if they noclip mid-fling
+			end
+			
+			workspace.FallenPartsDestroyHeight = 0/0
+			
+			local BV = Instance.new("BodyVelocity")
+			BV.Name = "EpixVel"
+			BV.Parent = RootPart
+			BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
+			BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+			
+			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+			
+			SFBasePart()
+			
+			if BV then BV:Destroy() end
+			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+			
+			if getgenv().OldPos and RootPart then
+				repeat
+					RootPart.CFrame = getgenv().OldPos * CFrame.new(0, 0.5, 0)
+					Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, 0.5, 0))
+					Humanoid:ChangeState("GettingUp")
+					for _, x in pairs(Character:GetChildren()) do
+						if x:IsA("BasePart") then
+							x.Velocity = Vector3.new()
+							x.RotVelocity = Vector3.new()
+						end
+					end
+					task.wait()
+				until (RootPart.Position - getgenv().OldPos.p).Magnitude < 25
+			end
+			
+			workspace.FallenPartsDestroyHeight = getgenv().FPDH
+			task.wait(0.1)
+		end
+		
+		flingActive[TargetPlayer] = nil
+	end)
+end
 
--- SECONDARY LOOP - RenderStepped for visual smoothness on YOUR screen
-RunService.RenderStepped:Connect(function()
-	if not targetPlayer or targetPlayer.Parent ~= Players then return end
-	
-	local TCharacter = targetPlayer.Character
-	if not TCharacter then return end
-	
-	local THead = TCharacter:FindFirstChild("Head")
-	if not THead then return end
-	
-	-- Direct visual update
-	RootPart.CFrame = CFrame.new(THead.Position + Vector3.new(0, 2.5, 0))
-end)
+-- Fling all current players
+for _, player in pairs(Players:GetPlayers()) do
+	if player ~= LocalPlayer then
+		SkidFling(player)
+		monitorNoclipChanges(player) -- Start monitoring for noclip changes
+	end
+end
 
--- Handle respawns
-targetPlayer.CharacterAdded:Connect(function()
-	wait(1)
-	Character = LocalPlayer.Character
-	RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+-- Fling new players
+Players.PlayerAdded:Connect(function(player)
+	SkidFling(player)
+	monitorNoclipChanges(player) -- Monitor new players too
 end)
-
-print("SERVER-SIDE INSTANT HEADSIT on " .. targetPlayer.Name)
