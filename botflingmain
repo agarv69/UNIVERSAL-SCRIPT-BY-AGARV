@@ -18,33 +18,25 @@ local function setupAutoExecute()
 		_G._AUTOEXEC_SET = true
 
 		queueFn([[
-			_G._JUST_REJOINED = true
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
 
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
 
-			task.wait(3)
+            task.wait(3)
 
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
-		]])
+            -- run main + chat at same time
+            task.spawn(function()
+                local TextChatService = game:GetService("TextChatService")
+                local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+                channel:SendAsync("MONKEY GANG ON TOP")
+            end)
+
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
+        ]])
 	end
 end
 
 setupAutoExecute()
-
-------------------------------------------------
--- CHAT (ONLY AFTER REJOIN)
-------------------------------------------------
-if _G._JUST_REJOINED then
-	task.spawn(function()
-		local TextChatService = game:GetService("TextChatService")
-		local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-
-		channel:SendAsync("MONKEY GANG ON TOP")
-	end)
-
-	_G._JUST_REJOINED = nil
-end
 
 ------------------------------------------------
 -- NOCLIP WATCHER
