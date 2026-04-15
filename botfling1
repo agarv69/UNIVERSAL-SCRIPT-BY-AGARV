@@ -6,6 +6,46 @@ local Connections = {}
 local isResetting = false
 local watchConn = nil
 
+-- Anti-NaN helper functions
+local function isNaN(n)
+	return n ~= n
+end
+
+local function isSafe(cf)
+	local p = cf.Position
+	return not (isNaN(p.X) or isNaN(p.Y) or isNaN(p.Z) or
+		math.abs(p.X) == math.huge or
+		math.abs(p.Y) == math.huge or
+		math.abs(p.Z) == math.huge)
+end
+
+local function fixNaNPosition(character)
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	
+	hrp.Anchored = true
+	task.wait(0.1)
+	
+	if not isSafe(hrp.CFrame) then
+		print("NaN detected! Fixing position...")
+		hrp.CFrame = CFrame.new(0, 50, 0)
+	end
+	
+	-- Try to teleport to another player's safe position
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			local otherHRP = plr.Character.HumanoidRootPart
+			if isSafe(otherHRP.CFrame) then
+				hrp.CFrame = otherHRP.CFrame + Vector3.new(0, 5, 0)
+				print("Teleported to safe position near " .. plr.Name)
+				break
+			end
+		end
+	end
+	
+	hrp.Anchored = false
+end
+
 local function disableGodmode()
 	-- Disconnect all godmode connections
 	for _, conn in pairs(Connections) do
@@ -125,13 +165,18 @@ end
 -- Handle character respawns
 LocalPlayer.CharacterAdded:Connect(function(character)
 	isResetting = false -- Reset flag cleared
-	character:WaitForChild("Humanoid")
+	character:WaitForChild("HumanoidRootPart")
+	
+	-- Fix NaN position first
+	fixNaNPosition(character)
+	
 	task.wait(0.2)
 	enableGodmode()
 end)
 
 -- Start godmode on first character
 if LocalPlayer.Character then
+	fixNaNPosition(LocalPlayer.Character)
 	enableGodmode()
 else
 	LocalPlayer.CharacterAdded:Wait()
@@ -142,4 +187,4 @@ end
 -- Start anti-freeze monitoring
 startWatching()
 
-print("God Mode + Anti-Freeze Auto-Exec: ENABLED")
+print("God Mode + Anti-Freeze + Anti-NaN Auto-Exec: ENABLED")
