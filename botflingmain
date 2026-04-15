@@ -24,10 +24,24 @@ local function setupAutoExecute()
 
 			task.wait(1)
 
+			task.wait(1)
+
 			pcall(function()
-				game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", {
-					Text = "MONKEY GANG ON TOP"
-				})
+				local TextChatService = game:GetService("TextChatService")
+				local channel = TextChatService:FindFirstChild("TextChannels")
+					and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+
+					if channel then
+					channel:DisplaySystemMessage("MONKEY GANG ON TOP")
+				else
+					local ReplicatedStorage = game:GetService("ReplicatedStorage")
+					local event = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+						and ReplicatedStorage.DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest")
+
+					if event then
+						event:FireServer("MONKEY GANG ON TOP", "All")
+					end
+				end
 			end)
 		]])
 	end
