@@ -118,8 +118,7 @@ local function SkidFling(TargetPlayer)
 
 			-- CHECK IF NOCLIPPED - if yes, WAIT and skip this cycle
 			if isNoclipped(TargetPlayer) then
-				task.wait(0.5)
-				continue
+				task.wait(0.1)
 			end
 
 			local Character = LocalPlayer.Character
