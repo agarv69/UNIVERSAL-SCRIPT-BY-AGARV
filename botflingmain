@@ -16,10 +16,10 @@ local function setupAutoExecute()
 	if queueFn and not _G._AUTOEXEC_SET then
 		_G._AUTOEXEC_SET = true
 		queueFn([[
-			task.wait(3)
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
+			task.wait(3)
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
 		]])
 	end
 end
