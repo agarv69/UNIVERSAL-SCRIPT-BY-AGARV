@@ -32,78 +32,39 @@ local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local RootPart = Character:WaitForChild("HumanoidRootPart")
 local Humanoid = Character:WaitForChild("Humanoid")
 
--- SET NETWORK OWNERSHIP to ourselves
-pcall(function()
-	RootPart:SetNetworkOwner(LocalPlayer)
-	for _, part in pairs(Character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part:SetNetworkOwner(LocalPlayer)
-		end
+-- Disable all character physics to reduce server checks
+for _, part in pairs(Character:GetDescendants()) do
+	if part:IsA("BasePart") then
+		part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+		part.CanCollide = false
 	end
-end)
-
--- Create AlignPosition and AlignOrientation for PHYSICS-BASED sticking
-local function createAttachment(parent)
-	local att = Instance.new("Attachment")
-	att.Parent = parent
-	return att
 end
 
+-- Create BodyVelocity for SERVER-SIDE movement
+local BV = Instance.new("BodyVelocity")
+BV.Parent = RootPart
+BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+BV.Velocity = Vector3.new(0, 0, 0)
+
+-- Create BodyGyro to keep upright
+local BG = Instance.new("BodyGyro")
+BG.Parent = RootPart
+BG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+BG.D = 5000
+BG.P = 50000
+
+-- Disable seat so you can't be thrown off
+Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+
+-- MAIN TRACKING LOOP - Using VELOCITY instead of CFrame
 local connection
-local alignPos
-local alignOrient
-
-local function setupFollow()
-	local TCharacter = targetPlayer.Character
-	if not TCharacter then return false end
-	
-	local THead = TCharacter:FindFirstChild("Head")
-	if not THead then return false end
-	
-	-- Clean up old constraints
-	if alignPos then alignPos:Destroy() end
-	if alignOrient then alignOrient:Destroy() end
-	
-	-- Create attachments
-	local att0 = createAttachment(RootPart)
-	local att1 = createAttachment(THead)
-	
-	-- AlignPosition - FORCES position match
-	alignPos = Instance.new("AlignPosition")
-	alignPos.Attachment0 = att0
-	alignPos.Attachment1 = att1
-	alignPos.MaxForce = math.huge
-	alignPos.MaxVelocity = math.huge
-	alignPos.Responsiveness = 200 -- MAXIMUM responsiveness
-	alignPos.ApplyAtCenterOfMass = true
-	alignPos.RigidityEnabled = true
-	alignPos.Position = Vector3.new(0, 2, 0) -- Offset above head
-	alignPos.Parent = RootPart
-	
-	-- AlignOrientation - Keep upright
-	alignOrient = Instance.new("AlignOrientation")
-	alignOrient.Attachment0 = att0
-	alignOrient.Attachment1 = att1
-	alignOrient.MaxTorque = math.huge
-	alignOrient.Responsiveness = 200
-	alignOrient.RigidityEnabled = true
-	alignOrient.Parent = RootPart
-	
-	return true
-end
-
--- Initial setup
-if not setupFollow() then
-	targetPlayer.CharacterAdded:Wait()
-	setupFollow()
-end
-
--- RenderStepped for INSTANT visual updates (runs BEFORE frame renders)
-connection = RunService.RenderStepped:Connect(function()
+connection = RunService.Heartbeat:Connect(function(delta)
 	if not targetPlayer or targetPlayer.Parent ~= Players then
 		if connection then connection:Disconnect() end
-		if alignPos then alignPos:Destroy() end
-		if alignOrient then alignOrient:Destroy() end
+		if BV then BV:Destroy() end
+		if BG then BG:Destroy() end
 		return
 	end
 	
@@ -113,20 +74,27 @@ connection = RunService.RenderStepped:Connect(function()
 	local THead = TCharacter:FindFirstChild("Head")
 	if not THead then return end
 	
-	-- DIRECT CFRAME UPDATE for visual smoothness
-	local targetPos = THead.Position + Vector3.new(0, 2, 0)
+	-- Calculate target position
+	local targetPos = THead.Position + Vector3.new(0, 2.5, 0)
+	local currentPos = RootPart.Position
+	
+	-- Calculate the velocity needed to reach target INSTANTLY
+	local displacement = targetPos - currentPos
+	local velocityNeeded = displacement / delta -- Distance / time = velocity
+	
+	-- Apply MASSIVE velocity to force instant movement
+	BV.Velocity = velocityNeeded * 10 -- Multiply for even faster response
+	
+	-- Also do direct CFrame for client-side smoothness
 	RootPart.CFrame = CFrame.new(targetPos)
+	Character:SetPrimaryPartCFrame(CFrame.new(targetPos))
 	
-	-- Zero velocity to prevent physics drift
-	RootPart.Velocity = Vector3.new()
-	RootPart.RotVelocity = Vector3.new()
-	
-	-- Match their velocity for prediction
-	RootPart.AssemblyLinearVelocity = THead.AssemblyLinearVelocity
+	-- Keep upright
+	BG.CFrame = CFrame.new(RootPart.Position)
 end)
 
--- Heartbeat backup for physics
-RunService.Heartbeat:Connect(function()
+-- SECONDARY LOOP - RenderStepped for visual smoothness on YOUR screen
+RunService.RenderStepped:Connect(function()
 	if not targetPlayer or targetPlayer.Parent ~= Players then return end
 	
 	local TCharacter = targetPlayer.Character
@@ -135,15 +103,15 @@ RunService.Heartbeat:Connect(function()
 	local THead = TCharacter:FindFirstChild("Head")
 	if not THead then return end
 	
-	-- Force position again
-	RootPart.CFrame = CFrame.new(THead.Position + Vector3.new(0, 2, 0))
-	Character:SetPrimaryPartCFrame(CFrame.new(THead.Position + Vector3.new(0, 2, 0)))
+	-- Direct visual update
+	RootPart.CFrame = CFrame.new(THead.Position + Vector3.new(0, 2.5, 0))
 end)
 
 -- Handle respawns
 targetPlayer.CharacterAdded:Connect(function()
 	wait(1)
-	setupFollow()
+	Character = LocalPlayer.Character
+	RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
 end)
 
-print("ZERO-DELAY HEADSIT on " .. targetPlayer.Name .. " using Physics Constraints!")
+print("SERVER-SIDE INSTANT HEADSIT on " .. targetPlayer.Name)
