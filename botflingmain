@@ -32,27 +32,36 @@ if not _G._REJOIN_COOLDOWN then
 end
 
 local function watchNoclip()
-	while task.wait(0.1) do
-		-- Check if we're on cooldown
-		if tick() - _G._REJOIN_COOLDOWN < 5 then
-			continue
-		end
-		
-		local char = LocalPlayer.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		
-		if hrp and hrp.CollisionGroup == "NoClip" then
-			print("Noclip detected! Rejoining...")
-			_G._REJOIN_COOLDOWN = tick() -- Set cooldown timestamp
+	task.spawn(function()
+		while true do
+			task.wait(0.1)
 			
-			TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+			-- Check if we're on cooldown
+			if tick() - _G._REJOIN_COOLDOWN < 5 then
+				continue
+			end
 			
-			-- Wait to prevent spam
-			task.wait(10)
-			break -- Exit after teleport attempt
+			local char = LocalPlayer.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			
+			if hrp and hrp.CollisionGroup == "NoClip" then
+				print("Noclip detected! Rejoining...")
+				_G._REJOIN_COOLDOWN = tick() -- Set cooldown timestamp
+				
+				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+				
+				-- Wait 10 seconds before checking again (in case rejoin fails)
+				task.wait(10)
+			end
 		end
-	end
+	end)
 end
 
 -- Start watching
 watchNoclip()
+
+-- Restart watcher if character respawns (in case rejoin failed and you respawned instead)
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(1)
+	watchNoclip()
+end)
