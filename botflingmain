@@ -2,7 +2,7 @@ local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
 local PLACE_ID = game.PlaceId
-
+local cooldown = false
 ------------------------------------------------
 -- AUTO EXECUTE
 ------------------------------------------------
@@ -14,54 +14,34 @@ local function setupAutoExecute()
 	if queueFn and not _G._AUTOEXEC_SET then
 		_G._AUTOEXEC_SET = true
 		queueFn([[
-			task.wait(3)
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
-		]])
+            task.wait(3)
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
+        ]])
 	end
 end
 setupAutoExecute()
-
 ------------------------------------------------
 -- NOCLIP WATCHER
 ------------------------------------------------
--- Reset cooldown flag when script loads (in case of leftover state)
-if not _G._REJOIN_COOLDOWN then
-	_G._REJOIN_COOLDOWN = 0
-end
-
 local function watchNoclip()
 	task.spawn(function()
-		while true do
-			task.wait(0.1)
-			
-			-- Check if we're on cooldown
-			if tick() - _G._REJOIN_COOLDOWN < 5 then
+		while task.wait(0.05) do
+			if cooldown then
 				continue
 			end
-			
 			local char = LocalPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-			
 			if hrp and hrp.CollisionGroup == "NoClip" then
-				print("Noclip detected! Rejoining...")
-				_G._REJOIN_COOLDOWN = tick() -- Set cooldown timestamp
-				
+				cooldown = true
 				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
-				
-				-- Wait 10 seconds before checking again (in case rejoin fails)
-				task.wait(10)
+				task.delay(3, function()
+					cooldown = false
+				end)
+				break
 			end
 		end
 	end)
 end
-
--- Start watching
 watchNoclip()
-
--- Restart watcher if character respawns (in case rejoin failed and you respawned instead)
-LocalPlayer.CharacterAdded:Connect(function()
-	task.wait(1)
-	watchNoclip()
-end)
