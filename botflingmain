@@ -18,6 +18,8 @@ local function setupAutoExecute()
 		_G._AUTOEXEC_SET = true
 
 		queueFn([[
+			_G._JUST_REJOINED = true
+
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
 
@@ -31,28 +33,18 @@ end
 setupAutoExecute()
 
 ------------------------------------------------
--- CHAT (RUNS AFTER SCRIPT LOADS)
+-- CHAT (ONLY AFTER REJOIN)
 ------------------------------------------------
-task.spawn(function()
-	task.wait(6) -- wait for rejoin + scripts to load
-
-	pcall(function()
+if _G._JUST_REJOINED then
+	task.spawn(function()
 		local TextChatService = game:GetService("TextChatService")
-		local channels = TextChatService:FindFirstChild("TextChannels")
+		local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
 
-		if channels and channels:FindFirstChild("RBXGeneral") then
-			channels.RBXGeneral:SendAsync("MONKEY GANG ON TOP")
-		else
-			local ReplicatedStorage = game:GetService("ReplicatedStorage")
-			local event = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-				and ReplicatedStorage.DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest")
-
-			if event then
-				event:FireServer("MONKEY GANG ON TOP", "All")
-			end
-		end
+		channel:SendAsync("MONKEY GANG ON TOP")
 	end)
-end)
+
+	_G._JUST_REJOINED = nil
+end
 
 ------------------------------------------------
 -- NOCLIP WATCHER
@@ -67,6 +59,7 @@ local function watchNoclip()
 
 			if hrp and hrp.CollisionGroup == "NoClip" then
 				cooldown = true
+
 				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
 
 				task.delay(3, function()
