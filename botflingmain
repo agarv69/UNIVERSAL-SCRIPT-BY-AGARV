@@ -1,0 +1,48 @@
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local LocalPlayer = Players.LocalPlayer
+local PLACE_ID = game.PlaceId
+local JOB_ID = game.JobId
+
+------------------------------------------------
+-- AUTO EXECUTE (MUST RUN FIRST)
+------------------------------------------------
+local function setupAutoExecute()
+	local queueFn =
+		queue_on_teleport
+		or (syn and syn.queue_on_teleport)
+		or (fluxus and fluxus.queue_on_teleport)
+
+	if queueFn then
+		queueFn([[
+			task.wait(1)
+			loadstring(game:HttpGet("YOUR_RAW_SCRIPT_LINK_HERE"))()
+		]])
+	end
+end
+
+setupAutoExecute()
+
+------------------------------------------------
+-- NOCLIP WATCHER
+------------------------------------------------
+local function watchNoclip()
+	task.spawn(function()
+		while task.wait(0.05) do
+			local char = LocalPlayer.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+			if hrp then
+				local group = hrp.CollisionGroup
+
+				if group == "NoClip" then
+					TeleportService:TeleportToPlaceInstance(PLACE_ID, JOB_ID, LocalPlayer)
+					break
+				end
+			end
+		end
+	end)
+end
+
+watchNoclip()
