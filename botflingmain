@@ -3,8 +3,6 @@ local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
 local PLACE_ID = game.PlaceId
 local cooldown = false
-local lastRejoinTime = 0
-
 ------------------------------------------------
 -- AUTO EXECUTE
 ------------------------------------------------
@@ -17,40 +15,42 @@ local function setupAutoExecute()
 		_G._AUTOEXEC_SET = true
 		queueFn([[
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
+
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
+
 			task.wait(3)
+
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
+
+			task.wait(1)
+
+			pcall(function()
+				game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", {
+					Text = "MONKEY GANG ON TOP"
+				})
+			end)
 		]])
 	end
 end
 setupAutoExecute()
-
 ------------------------------------------------
 -- NOCLIP WATCHER
 ------------------------------------------------
 local function watchNoclip()
 	task.spawn(function()
-		while task.wait(0.5) do
+		while task.wait(0.05) do
 			if cooldown then
 				continue
 			end
-			
-			-- Prevent rejoining more than once every 10 seconds
-			if tick() - lastRejoinTime < 10 then
-				continue
-			end
-			
 			local char = LocalPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
 			if hrp and hrp.CollisionGroup == "NoClip" then
 				cooldown = true
-				lastRejoinTime = tick()
-				
 				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
-				
-				task.delay(10, function()
+				task.delay(3, function()
 					cooldown = false
 				end)
+				break
 			end
 		end
 	end)
