@@ -1,5 +1,11 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+camera.CameraType = Enum.CameraType.Custom
+camera.CameraSubject = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+
+workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+
 local flingActive = {}
 local flingedPlayers = {} -- Track who has been flinged
 local queue = {}
@@ -121,6 +127,18 @@ local function SkidFling(TargetPlayer)
 			local RootPart = Humanoid and Humanoid.RootPart
 			local TCharacter = TargetPlayer.Character
 			local THumanoid = TCharacter and TCharacter:FindFirstChildOfClass("Humanoid")
+			
+			local TRoot = TCharacter and TCharacter:FindFirstChild("HumanoidRootPart")
+			if not TRoot then
+				task.wait(0.5)
+				continue
+			end
+
+			local dist = (RootPart.Position - TRoot.Position).Magnitude
+			if dist > 250 then
+				task.wait(0.5)
+				continue
+			end
 
 			if not (Character and Humanoid and RootPart) then
 				task.wait(0.5)
@@ -145,13 +163,22 @@ local function SkidFling(TargetPlayer)
 				task.wait(0.5)
 				continue
 			end
+			
+			local function FPos(BasePart, Pos, Ang)
+				if not BasePart or not RootPart then return end
 
-			local FPos = function(BasePart, Pos, Ang)
-				if not BasePart then return end
-				RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
-				Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
-				RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-				RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+				local targetCF = CFrame.new(BasePart.Position) * Pos * Ang
+
+				-- prevent insane teleport distance (THIS is your camera fix)
+				if (RootPart.Position - BasePart.Position).Magnitude > 200 then
+					return
+				end
+
+				RootPart.CFrame = targetCF
+				Character:PivotTo(targetCF)
+
+				RootPart.AssemblyLinearVelocity = Vector3.zero
+				RootPart.AssemblyAngularVelocity = Vector3.zero
 			end
 
 			local SFBasePart = function()
@@ -250,8 +277,8 @@ local function SkidFling(TargetPlayer)
 			local BV = Instance.new("BodyVelocity")
 			BV.Name = "EpixVel"
 			BV.Parent = RootPart
-			BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
-			BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+			BV.Velocity = Vector3.new(0, 0, 0)
+			BV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
 
 			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
@@ -300,3 +327,83 @@ local function SkidFling(TargetPlayer)
 		flingActive[TargetPlayer] = nil
 	end)
 end
+
+
+-- ADD PLAYERS TO QUEUE
+for _, player in pairs(Players:GetPlayers()) do
+	addToQueue(player)
+end
+
+Players.PlayerAdded:Connect(function(player)
+	task.wait(1)
+	addToQueue(player)
+end)
+
+-- MAIN QUEUE LOOP (THIS MAKES EVERYTHING RUN)
+task.spawn(function()
+	while true do
+		sortQueue()
+
+		local target = queue[1]
+
+		if not target then
+			task.wait(1)
+			continue
+		end
+		
+		-- remove dead / invalid players immediately
+		if not target or target.Parent ~= Players or target == LocalPlayer then
+			table.remove(queue, 1)
+			inQueue[target] = nil
+			continue
+		end
+
+		-- skip invalid players
+		if not target.Parent or target == LocalPlayer then
+			table.remove(queue, 1)
+			inQueue[target] = nil
+			continue
+		end
+
+		-- skip far players
+		if getDistance(target) > MAX_DISTANCE then
+			moveToBack(target)
+			task.wait(0.2)
+			continue
+		end
+
+		print("Trying:", target.Name)
+
+		local startTime = tick()
+		local success = false
+
+		SkidFling(target)
+		
+		if target and target.Character then
+			local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+			local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+			if hrp and myHRP then
+				local dist = (myHRP.Position - hrp.Position).Magnitude
+
+				-- HARD STOP CAMERA BREAK RANGE
+				if dist > 200 then
+					task.wait(1)
+					continue
+				end
+			end
+		end
+
+		while tick() - startTime < FLING_TIMEOUT do
+			if isFlinged(target) then
+				success = true
+				break
+			end
+			task.wait()
+		end
+
+		moveToBack(target)
+
+		task.wait(0.5)
+	end
+end)
