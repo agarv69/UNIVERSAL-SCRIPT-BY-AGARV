@@ -82,7 +82,7 @@ local function SkidFling(TargetPlayer)
 			end
 			
 			local SFBasePart = function()
-				local TimeToWait = 2
+				local TimeToWait = 1 -- 1 second timeout before switching
 				local Time = tick()
 				local Angle = 0
 				
@@ -166,6 +166,10 @@ local function SkidFling(TargetPlayer)
 					or (Humanoid.Health <= 0) 
 					or (tick() > (Time + TimeToWait))
 					or isNoclipped(TargetPlayer)
+				
+				-- Check if fling was successful
+				local flingSuccess = BasePart.Velocity.Magnitude > 500
+				return flingSuccess
 			end
 			
 			workspace.FallenPartsDestroyHeight = 0/0
@@ -178,10 +182,13 @@ local function SkidFling(TargetPlayer)
 			
 			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 			
-			SFBasePart()
+			local success = SFBasePart()
 			
 			if BV then BV:Destroy() end
 			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+			
+			-- Wait 1 second after each fling attempt before moving to next cycle
+			task.wait(1)
 			
 			-- Only return to old position if there are no valid targets
 			local hasTargets = false
@@ -209,7 +216,6 @@ local function SkidFling(TargetPlayer)
 			end
 			
 			workspace.FallenPartsDestroyHeight = getgenv().FPDH
-			task.wait(0.1)
 		end
 		
 		flingActive[TargetPlayer] = nil
@@ -226,4 +232,18 @@ end
 -- Fling new players
 Players.PlayerAdded:Connect(function(player)
 	SkidFling(player)
+end)
+
+-- Handle respawns - restart flinging after death
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(1) -- Wait for character to fully load
+	
+	-- Restart flinging all players
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			if not flingActive[player] then
+				SkidFling(player)
+			end
+		end
+	end
 end)
