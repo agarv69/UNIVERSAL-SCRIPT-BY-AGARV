@@ -1,10 +1,7 @@
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
-
 local LocalPlayer = Players.LocalPlayer
 local PLACE_ID = game.PlaceId
-
-local cooldown = false
 
 ------------------------------------------------
 -- AUTO EXECUTE
@@ -14,51 +11,48 @@ local function setupAutoExecute()
 		queue_on_teleport
 		or (syn and syn.queue_on_teleport)
 		or (fluxus and fluxus.queue_on_teleport)
-
 	if queueFn and not _G._AUTOEXEC_SET then
 		_G._AUTOEXEC_SET = true
-
 		queueFn([[
 			task.wait(3)
-
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
-
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
-
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
 		]])
 	end
 end
-
 setupAutoExecute()
 
 ------------------------------------------------
 -- NOCLIP WATCHER
 ------------------------------------------------
-local function watchNoclip()
-	task.spawn(function()
-		while task.wait(0.05) do
-
-			if cooldown then
-				continue
-			end
-
-			local char = LocalPlayer.Character
-			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-			if hrp and hrp.CollisionGroup == "NoClip" then
-				cooldown = true
-
-				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
-
-				task.delay(3, function()
-					cooldown = false
-				end)
-
-				break
-			end
-		end
-	end)
+-- Reset cooldown flag when script loads (in case of leftover state)
+if not _G._REJOIN_COOLDOWN then
+	_G._REJOIN_COOLDOWN = 0
 end
 
+local function watchNoclip()
+	while task.wait(0.1) do
+		-- Check if we're on cooldown
+		if tick() - _G._REJOIN_COOLDOWN < 5 then
+			continue
+		end
+		
+		local char = LocalPlayer.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		
+		if hrp and hrp.CollisionGroup == "NoClip" then
+			print("Noclip detected! Rejoining...")
+			_G._REJOIN_COOLDOWN = tick() -- Set cooldown timestamp
+			
+			TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+			
+			-- Wait to prevent spam
+			task.wait(10)
+			break -- Exit after teleport attempt
+		end
+	end
+end
+
+-- Start watching
 watchNoclip()
