@@ -1,480 +1,218 @@
--- Roblox Script: Auto-send "67" in chat with UI toggle
--- Auto-executes on rejoin (only when using the rejoin button)
-
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
+local flingActive = {}
 
-local player = Players.LocalPlayer
-
--- Get queue_on_teleport function (different executors have different names)
-local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
-
--- Prevent multiple instances
-if getgenv ~= nil and getgenv().chat67gui then
-    getgenv().chat67gui:Destroy()
+-- Save original FallenPartsDestroyHeight
+if not getgenv().FPDH then
+	getgenv().FPDH = workspace.FallenPartsDestroyHeight
 end
 
--- Create UI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "Chat67UI"
-screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-getgenv().chat67gui = screenGui
+-- Check if a player is noclipped
+local function isNoclipped(player)
+	local character = player.Character
+	if not character then return false end
+	
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return false end
+	
+	-- Check CollisionGroup
+	return hrp.CollisionGroup == "NoClip"
+end
 
--- Try to parent to CoreGui, fallback to PlayerGui if that fails
-local success = pcall(function()
-    screenGui.Parent = CoreGui
+local function SkidFling(TargetPlayer)
+	if flingActive[TargetPlayer] then return end
+	flingActive[TargetPlayer] = true
+	
+	task.spawn(function()
+		while TargetPlayer and TargetPlayer.Parent == Players do
+			-- CHECK IF NOCLIPPED - if yes, WAIT and skip this cycle
+			if isNoclipped(TargetPlayer) then
+				task.wait(0.5)
+				continue
+			end
+			
+			local Character = LocalPlayer.Character
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+			local RootPart = Humanoid and Humanoid.RootPart
+			local TCharacter = TargetPlayer.Character
+			local THumanoid = TCharacter and TCharacter:FindFirstChildOfClass("Humanoid")
+			
+			if not (Character and Humanoid and RootPart) then
+				task.wait(0.5)
+				continue
+			end
+			
+			if not (TCharacter and THumanoid) then
+				task.wait(0.5)
+				continue
+			end
+			
+			if not TCharacter:FindFirstChildWhichIsA("BasePart") then
+				task.wait(0.5)
+				continue
+			end
+			
+			if RootPart.Velocity.Magnitude < 50 then
+				getgenv().OldPos = RootPart.CFrame
+			end
+			
+			if THumanoid.Sit then
+				task.wait(0.5)
+				continue
+			end
+			
+			local FPos = function(BasePart, Pos, Ang)
+				if not BasePart then return end
+				RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+				Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+				RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+				RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+			end
+			
+			local SFBasePart = function()
+				local TimeToWait = 2
+				local Time = tick()
+				local Angle = 0
+				local flingSuccess = false
+				
+				repeat
+					-- CHECK NOCLIP - abort this attempt if they noclip mid-fling
+					if isNoclipped(TargetPlayer) then
+						break
+					end
+					
+					-- GET FRESH BASEPART EVERY LOOP
+					local TRootPart = THumanoid and THumanoid.RootPart
+					local THead = TCharacter and TCharacter:FindFirstChild("Head")
+					local Accessory = TCharacter and TCharacter:FindFirstChildOfClass("Accessory")
+					local Handle = Accessory and Accessory:FindFirstChild("Handle")
+					
+					local BasePart = TRootPart or THead or Handle
+					
+					if not BasePart then break end
+					
+					if RootPart and THumanoid then
+						if BasePart.Velocity.Magnitude < 50 then
+							Angle = Angle + 100
+							
+							FPos(BasePart, CFrame.new(0, 1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+							task.wait()
+						else
+							if not TRootPart then break end
+							
+							FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(-90), 0, 0))
+							task.wait()
+							
+							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+							task.wait()
+						end
+					else
+						break
+					end
+					
+					-- Check if fling was successful
+					if BasePart.Velocity.Magnitude > 500 then
+						flingSuccess = true
+					end
+					
+				until (BasePart.Velocity.Magnitude > 500) 
+					or (BasePart.Parent ~= TargetPlayer.Character) 
+					or (TargetPlayer.Parent ~= Players) 
+					or THumanoid.Sit 
+					or (Humanoid.Health <= 0) 
+					or (tick() > (Time + TimeToWait))
+					or isNoclipped(TargetPlayer)
+				
+				return flingSuccess
+			end
+			
+			workspace.FallenPartsDestroyHeight = 0/0
+			
+			local BV = Instance.new("BodyVelocity")
+			BV.Name = "EpixVel"
+			BV.Parent = RootPart
+			BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
+			BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+			
+			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+			
+			local success = SFBasePart()
+			
+			if BV then BV:Destroy() end
+			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+			
+			if getgenv().OldPos and RootPart then
+				repeat
+					RootPart.CFrame = getgenv().OldPos * CFrame.new(0, 0.5, 0)
+					Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, 0.5, 0))
+					Humanoid:ChangeState("GettingUp")
+					for _, x in pairs(Character:GetChildren()) do
+						if x:IsA("BasePart") then
+							x.Velocity = Vector3.new()
+							x.RotVelocity = Vector3.new()
+						end
+					end
+					task.wait()
+				until (RootPart.Position - getgenv().OldPos.p).Magnitude < 25
+			end
+			
+			workspace.FallenPartsDestroyHeight = getgenv().FPDH
+			
+			-- ALWAYS continue the loop - don't stop even if fling was successful
+			task.wait(0.1)
+		end
+		
+		flingActive[TargetPlayer] = nil
+	end)
+end
+
+-- Fling all current players
+for _, player in pairs(Players:GetPlayers()) do
+	if player ~= LocalPlayer then
+		SkidFling(player)
+	end
+end
+
+-- Fling new players
+Players.PlayerAdded:Connect(function(player)
+	SkidFling(player)
 end)
-if not success then
-    screenGui.Parent = player:WaitForChild("PlayerGui")
-end
-
--- Main Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 200, 0, 125)
-mainFrame.Position = UDim2.new(0, 10, 0, 10) -- Top left
-mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-mainFrame.BorderSizePixel = 2
-mainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
-mainFrame.Parent = screenGui
-
--- Add corner rounding
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = mainFrame
-
--- Title Label
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Name = "TitleLabel"
-titleLabel.Size = UDim2.new(1, 0, 0, 30)
-titleLabel.Position = UDim2.new(0, 0, 0, 0)
-titleLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-titleLabel.BorderSizePixel = 0
-titleLabel.Text = "67 Chat Script"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 16
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Parent = mainFrame
-
-local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 8)
-titleCorner.Parent = titleLabel
-
--- Toggle Button
-local toggleButton = Instance.new("TextButton")
-toggleButton.Name = "ToggleButton"
-toggleButton.Size = UDim2.new(0, 180, 0, 35)
-toggleButton.Position = UDim2.new(0, 10, 0, 40)
-toggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-toggleButton.BorderSizePixel = 0
-toggleButton.Text = "✓ Enabled"
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.TextSize = 14
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.Parent = mainFrame
-
-local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 6)
-buttonCorner.Parent = toggleButton
-
--- Rejoin Button
-local rejoinButton = Instance.new("TextButton")
-rejoinButton.Name = "RejoinButton"
-rejoinButton.Size = UDim2.new(0, 180, 0, 35)
-rejoinButton.Position = UDim2.new(0, 10, 0, 80)
-rejoinButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-rejoinButton.BorderSizePixel = 0
-rejoinButton.Text = "↻ Rejoin Server"
-rejoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-rejoinButton.TextSize = 14
-rejoinButton.Font = Enum.Font.GothamBold
-rejoinButton.Parent = mainFrame
-
-local rejoinCorner = Instance.new("UICorner")
-rejoinCorner.CornerRadius = UDim.new(0, 6)
-rejoinCorner.Parent = rejoinButton
-
--- Make UI draggable
-local dragging = false
-local dragInput, mousePos, framePos
-
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        mousePos = input.Position
-        framePos = mainFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - mousePos
-        mainFrame.Position = UDim2.new(
-            framePos.X.Scale,
-            framePos.X.Offset + delta.X,
-            framePos.Y.Scale,
-            framePos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- State management
-local enabled = true
-
--- Function to send message in chat
-local function sendChatMessage(message)
-    local success, err = pcall(function()
-        -- Try new TextChatService first (newer Roblox)
-        local TextChatService = game:GetService("TextChatService")
-        local textChannels = TextChatService:WaitForChild("TextChannels", 2)
-        
-        if textChannels then
-            local generalChannel = textChannels:FindFirstChild("RBXGeneral")
-            if generalChannel then
-                generalChannel:SendAsync(message)
-                return
-            end
-        end
-        
-        -- Fallback to legacy chat
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
-        if chatEvents then
-            local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
-            if sayMessage then
-                sayMessage:FireServer(message, "All")
-            end
-        end
-    end)
-    
-    if not success then
-        warn("Failed to send chat message:", err)
-    else
-        print("Sent '67' in chat")
-    end
-end
-
--- Function to save state
-local function saveState()
-    if writefile then
-        pcall(function()
-            writefile("roblox_67_enabled.txt", tostring(enabled))
-        end)
-    end
-end
-
--- Function to load state
-local function loadState()
-    if isfile and readfile then
-        local success, content = pcall(function()
-            return readfile("roblox_67_enabled.txt")
-        end)
-        
-        if success and content == "false" then
-            enabled = false
-        end
-    end
-end
-
--- Function to update button appearance
-local function updateButton()
-    if enabled then
-        toggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-        toggleButton.Text = "✓ Enabled"
-    else
-        toggleButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        toggleButton.Text = "✗ Disabled"
-    end
-    saveState()
-end
-
--- Toggle button click
-toggleButton.MouseButton1Click:Connect(function()
-    enabled = not enabled
-    updateButton()
-    print("67 script", enabled and "enabled" or "disabled")
-end)
-
--- Function to rejoin server
-local function rejoinServer()
-    local placeId = game.PlaceId
-    local jobId = game.JobId
-    
-    print("Rejoining server...")
-    
-    -- Queue the script to run again on rejoin (this is the key part!)
-    if queueteleport then
-        pcall(function()
-            -- Re-execute this entire script on rejoin
-            queueteleport([[
-                -- Roblox Script: Auto-send "67" in chat with UI toggle
--- Auto-executes on rejoin (only when using the rejoin button)
-
-local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local CoreGui = game:GetService("CoreGui")
-
-local player = Players.LocalPlayer
-
--- Get queue_on_teleport function (different executors have different names)
-local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
-
--- Prevent multiple instances
-if getgenv ~= nil and getgenv().chat67gui then
-    getgenv().chat67gui:Destroy()
-end
-
--- Create UI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "Chat67UI"
-screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-getgenv().chat67gui = screenGui
-
--- Try to parent to CoreGui, fallback to PlayerGui if that fails
-local success = pcall(function()
-    screenGui.Parent = CoreGui
-end)
-if not success then
-    screenGui.Parent = player:WaitForChild("PlayerGui")
-end
-
--- Main Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 200, 0, 125)
-mainFrame.Position = UDim2.new(0, 10, 0, 10) -- Top left
-mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-mainFrame.BorderSizePixel = 2
-mainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
-mainFrame.Parent = screenGui
-
--- Add corner rounding
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = mainFrame
-
--- Title Label
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Name = "TitleLabel"
-titleLabel.Size = UDim2.new(1, 0, 0, 30)
-titleLabel.Position = UDim2.new(0, 0, 0, 0)
-titleLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-titleLabel.BorderSizePixel = 0
-titleLabel.Text = "67 Chat Script"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 16
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Parent = mainFrame
-
-local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 8)
-titleCorner.Parent = titleLabel
-
--- Toggle Button
-local toggleButton = Instance.new("TextButton")
-toggleButton.Name = "ToggleButton"
-toggleButton.Size = UDim2.new(0, 180, 0, 35)
-toggleButton.Position = UDim2.new(0, 10, 0, 40)
-toggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-toggleButton.BorderSizePixel = 0
-toggleButton.Text = "✓ Enabled"
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.TextSize = 14
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.Parent = mainFrame
-
-local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 6)
-buttonCorner.Parent = toggleButton
-
--- Rejoin Button
-local rejoinButton = Instance.new("TextButton")
-rejoinButton.Name = "RejoinButton"
-rejoinButton.Size = UDim2.new(0, 180, 0, 35)
-rejoinButton.Position = UDim2.new(0, 10, 0, 80)
-rejoinButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-rejoinButton.BorderSizePixel = 0
-rejoinButton.Text = "↻ Rejoin Server"
-rejoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-rejoinButton.TextSize = 14
-rejoinButton.Font = Enum.Font.GothamBold
-rejoinButton.Parent = mainFrame
-
-local rejoinCorner = Instance.new("UICorner")
-rejoinCorner.CornerRadius = UDim.new(0, 6)
-rejoinCorner.Parent = rejoinButton
-
--- Make UI draggable
-local dragging = false
-local dragInput, mousePos, framePos
-
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        mousePos = input.Position
-        framePos = mainFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - mousePos
-        mainFrame.Position = UDim2.new(
-            framePos.X.Scale,
-            framePos.X.Offset + delta.X,
-            framePos.Y.Scale,
-            framePos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- State management
-local enabled = true
-
--- Function to send message in chat
-local function sendChatMessage(message)
-    local success, err = pcall(function()
-        -- Try new TextChatService first (newer Roblox)
-        local TextChatService = game:GetService("TextChatService")
-        local textChannels = TextChatService:WaitForChild("TextChannels", 2)
-        
-        if textChannels then
-            local generalChannel = textChannels:FindFirstChild("RBXGeneral")
-            if generalChannel then
-                generalChannel:SendAsync(message)
-                return
-            end
-        end
-        
-        -- Fallback to legacy chat
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
-        if chatEvents then
-            local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
-            if sayMessage then
-                sayMessage:FireServer(message, "All")
-            end
-        end
-    end)
-    
-    if not success then
-        warn("Failed to send chat message:", err)
-    else
-        print("Sent '67' in chat")
-    end
-end
-
--- Function to save state
-local function saveState()
-    if writefile then
-        pcall(function()
-            writefile("roblox_67_enabled.txt", tostring(enabled))
-        end)
-    end
-end
-
--- Function to load state
-local function loadState()
-    if isfile and readfile then
-        local success, content = pcall(function()
-            return readfile("roblox_67_enabled.txt")
-        end)
-        
-        if success and content == "false" then
-            enabled = false
-        end
-    end
-end
-
--- Function to update button appearance
-local function updateButton()
-    if enabled then
-        toggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-        toggleButton.Text = "✓ Enabled"
-    else
-        toggleButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        toggleButton.Text = "✗ Disabled"
-    end
-    saveState()
-end
-
--- Toggle button click
-toggleButton.MouseButton1Click:Connect(function()
-    enabled = not enabled
-    updateButton()
-    print("67 script", enabled and "enabled" or "disabled")
-end)
-
--- Load previous state
-loadState()
-updateButton()
-
--- Send "67" in chat
-wait(1) -- Small delay to ensure everything is loaded
-if enabled then
-    sendChatMessage("67")
-    print("Script loaded - Sent '67' in chat")
-end
-
-print("67 Chat Script loaded! Toggle enabled/disabled in the UI (top left)")
-print("Click 'Rejoin Server' to rejoin and send '67' again (if enabled)")
-            ]])
-        end)
-    else
-        warn("queue_on_teleport not supported by your executor")
-    end
-    
-    -- Teleport to the same server
-    if jobId and jobId ~= "" then
-        TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
-    else
-        -- If no JobId, just rejoin any server
-        TeleportService:Teleport(placeId, player)
-    end
-end
-
--- Rejoin button click
-rejoinButton.MouseButton1Click:Connect(function()
-    rejoinServer()
-end)
-
--- Load previous state
-loadState()
-updateButton()
-
--- Send "67" in chat
-wait(1) -- Small delay to ensure everything is loaded
-if enabled then
-    sendChatMessage("67")
-    print("Script loaded - Sent '67' in chat")
-end
-
-print("67 Chat Script loaded! Toggle enabled/disabled in the UI (top left)")
-print("Click 'Rejoin Server' to rejoin and send '67' again (if enabled)")
