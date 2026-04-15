@@ -88,18 +88,31 @@ local function doReset()
 		end
 	end
 
-	-- Wait for respawn then re-enable godmode
+	-- Wait for respawn
 	LocalPlayer.CharacterAdded:Wait()
-	task.wait(0.2)
+	task.wait(0.3)
+	
+	-- Check if freeze is ACTUALLY gone after reset
+	local newChar = workspace:FindFirstChild(LocalPlayer.Name)
+	if newChar and newChar:FindFirstChild("Hielo") then
+		print("Still frozen after reset! Trying again...")
+		isResetting = false
+		task.wait(0.5)
+		doReset() -- Retry
+		return
+	end
+	
+	-- Freeze is gone, re-enable godmode
 	enableGodmode()
 	isResetting = false
-	print("Godmode re-enabled after reset!")
+	print("Godmode re-enabled after successful reset!")
 end
 
 -- Anti-freeze detection loop
 local function startWatching()
 	if watchConn then watchConn:Disconnect() end
 	watchConn = RunService.Heartbeat:Connect(function()
+		if isResetting then return end -- Don't trigger multiple resets at once
 		local char = workspace:FindFirstChild(LocalPlayer.Name)
 		if not char then return end
 		-- Check for freeze object (Hielo)
