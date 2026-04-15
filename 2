@@ -20,37 +20,6 @@ local function isNoclipped(player)
 	return hrp.CollisionGroup == "NoClip"
 end
 
--- Monitor players for noclip changes
-local function monitorNoclipChanges(player)
-	task.spawn(function()
-		while player and player.Parent == Players do
-			local character = player.Character
-			if character then
-				local hrp = character:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					local wasNoclipped = noclippedPlayers[player]
-					local nowNoclipped = (hrp.CollisionGroup == "NoClip")
-					
-					-- Player just became clipped (was noclipped, now clipped)
-					if wasNoclipped and not nowNoclipped then
-						print(player.Name .. " is now CLIPPED - adding to fling queue!")
-						noclippedPlayers[player] = false
-						-- Start flinging them again
-						if not flingActive[player] then
-							SkidFling(player)
-						end
-					-- Player just became noclipped
-					elseif not wasNoclipped and nowNoclipped then
-						print(player.Name .. " is now NOCLIPPED - skipping...")
-						noclippedPlayers[player] = true
-					end
-				end
-			end
-			task.wait(0.5) -- Check every 0.5 seconds
-		end
-	end)
-end
-
 local function SkidFling(TargetPlayer)
 	if flingActive[TargetPlayer] then return end
 	
@@ -81,11 +50,20 @@ local function SkidFling(TargetPlayer)
 				continue
 			end
 			
-			-- CHECK IF NOCLIPPED - if yes, stop flinging them
+			-- CHECK IF NOCLIPPED - if yes, PAUSE (don't break, just skip this cycle)
 			if isNoclipped(TargetPlayer) then
-				print(TargetPlayer.Name .. " became NOCLIPPED mid-fling - stopping")
-				noclippedPlayers[TargetPlayer] = true
-				break
+				if not noclippedPlayers[TargetPlayer] then
+					print(TargetPlayer.Name .. " became NOCLIPPED - pausing fling")
+					noclippedPlayers[TargetPlayer] = true
+				end
+				task.wait(0.5)
+				continue -- CONTINUE instead of BREAK so loop keeps running
+			else
+				-- Player is clipped now
+				if noclippedPlayers[TargetPlayer] then
+					print(TargetPlayer.Name .. " is now CLIPPED - resuming fling!")
+					noclippedPlayers[TargetPlayer] = false
+				end
 			end
 			
 			if not TCharacter:FindFirstChildWhichIsA("BasePart") then
@@ -116,10 +94,9 @@ local function SkidFling(TargetPlayer)
 				local Angle = 0
 				
 				repeat
-					-- CHECK NOCLIP STATUS during fling
+					-- CHECK NOCLIP STATUS during fling - if noclipped, abort THIS attempt
 					if isNoclipped(TargetPlayer) then
-						print(TargetPlayer.Name .. " became NOCLIPPED - aborting fling")
-						break
+						break -- Break from this fling attempt, will retry in main loop
 					end
 					
 					-- GET FRESH BASEPART EVERY LOOP
@@ -195,7 +172,7 @@ local function SkidFling(TargetPlayer)
 					or THumanoid.Sit 
 					or (Humanoid.Health <= 0) 
 					or (tick() > (Time + TimeToWait))
-					or isNoclipped(TargetPlayer) -- ADDED: Stop if they noclip mid-fling
+					or isNoclipped(TargetPlayer)
 			end
 			
 			workspace.FallenPartsDestroyHeight = 0/0
@@ -240,12 +217,10 @@ end
 for _, player in pairs(Players:GetPlayers()) do
 	if player ~= LocalPlayer then
 		SkidFling(player)
-		monitorNoclipChanges(player) -- Start monitoring for noclip changes
 	end
 end
 
 -- Fling new players
 Players.PlayerAdded:Connect(function(player)
 	SkidFling(player)
-	monitorNoclipChanges(player) -- Monitor new players too
 end)
