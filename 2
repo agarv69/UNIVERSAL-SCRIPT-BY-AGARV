@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local flingActive = {}
+local flingedPlayers = {} -- Track who has been flinged
 
 -- Save original FallenPartsDestroyHeight
 if not getgenv().FPDH then
@@ -17,6 +18,29 @@ local function isNoclipped(player)
 	
 	-- Check CollisionGroup
 	return hrp.CollisionGroup == "NoClip"
+end
+
+-- Check if player is currently flinged (ragdolled/flying)
+local function isFlinged(player)
+	local character = player.Character
+	if not character then return false end
+	
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return false end
+	
+	local rootPart = humanoid.RootPart
+	if not rootPart then return false end
+	
+	-- Check if they're ragdolled or flying fast
+	if humanoid:GetState() == Enum.HumanoidStateType.Ragdoll then
+		return true
+	end
+	
+	if rootPart.Velocity.Magnitude > 100 then
+		return true
+	end
+	
+	return false
 end
 
 -- Check if there are any valid targets (clipped players)
@@ -37,6 +61,12 @@ local function SkidFling(TargetPlayer)
 	
 	task.spawn(function()
 		while TargetPlayer and TargetPlayer.Parent == Players do
+			-- CHECK IF ALREADY FLINGED - skip to next player if they're still flying
+			if flingedPlayers[TargetPlayer] and isFlinged(TargetPlayer) then
+				task.wait(0.5)
+				continue
+			end
+			
 			-- CHECK IF NOCLIPPED - if yes, WAIT and skip this cycle
 			if isNoclipped(TargetPlayer) then
 				task.wait(0.5)
@@ -187,6 +217,12 @@ local function SkidFling(TargetPlayer)
 			if BV then BV:Destroy() end
 			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 			
+			-- If fling was successful, mark player as flinged
+			if success then
+				flingedPlayers[TargetPlayer] = true
+				print(TargetPlayer.Name .. " has been FLINGED - moving to back of queue")
+			end
+			
 			-- Wait 1 second after each fling attempt before moving to next cycle
 			task.wait(1)
 			
@@ -226,12 +262,28 @@ end
 for _, player in pairs(Players:GetPlayers()) do
 	if player ~= LocalPlayer then
 		SkidFling(player)
+		
+		-- Monitor for respawns - when they respawn, unmark as flinged
+		player.CharacterAdded:Connect(function()
+			if flingedPlayers[player] then
+				flingedPlayers[player] = false
+				print(player.Name .. " respawned - moved to FRONT of queue")
+			end
+		end)
 	end
 end
 
 -- Fling new players
 Players.PlayerAdded:Connect(function(player)
 	SkidFling(player)
+	
+	-- Monitor respawns for new players too
+	player.CharacterAdded:Connect(function()
+		if flingedPlayers[player] then
+			flingedPlayers[player] = false
+			print(player.Name .. " respawned - moved to FRONT of queue")
+		end
+	end)
 end)
 
 -- Handle respawns - restart flinging after death
