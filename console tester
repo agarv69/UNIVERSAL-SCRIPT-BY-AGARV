@@ -1,27 +1,32 @@
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
-
 local LocalPlayer = Players.LocalPlayer
 local PLACE_ID = game.PlaceId
-local JOB_ID = game.JobId
+local cooldown = false
+local lastRejoinTime = 0
 
 ------------------------------------------------
--- AUTO EXECUTE (MUST RUN FIRST)
+-- AUTO EXECUTE
 ------------------------------------------------
 local function setupAutoExecute()
 	local queueFn =
 		queue_on_teleport
 		or (syn and syn.queue_on_teleport)
 		or (fluxus and fluxus.queue_on_teleport)
-
 	if queueFn then
 		queueFn([[
-			task.wait(1)
-			loadstring(game:HttpGet("YOUR_RAW_SCRIPT_LINK_HERE"))()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
+			task.wait(3)
+			task.spawn(function()
+				local TextChatService = game:GetService("TextChatService")
+				local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+				channel:SendAsync("MONKEY GANG ON TOP")
+			end)
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
 		]])
 	end
 end
-
 setupAutoExecute()
 
 ------------------------------------------------
@@ -29,20 +34,30 @@ setupAutoExecute()
 ------------------------------------------------
 local function watchNoclip()
 	task.spawn(function()
-		while task.wait(0.05) do
+		while task.wait(0.5) do
+			if cooldown then
+				continue
+			end
+			
+			-- Prevent rejoining more than once every 10 seconds
+			if tick() - lastRejoinTime < 10 then
+				continue
+			end
+			
 			local char = LocalPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-			if hrp then
-				local group = hrp.CollisionGroup
-
-				if group == "NoClip" then
-					TeleportService:TeleportToPlaceInstance(PLACE_ID, JOB_ID, LocalPlayer)
-					break
-				end
+			
+			if hrp and hrp.CollisionGroup == "NoClip" then
+				cooldown = true
+				lastRejoinTime = tick()
+				
+				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+				
+				task.delay(10, function()
+					cooldown = false
+				end)
 			end
 		end
 	end)
 end
-
 watchNoclip()
