@@ -439,9 +439,13 @@ Players.PlayerAdded:Connect(function(player)
 	end)
 end)
 
--- Handle YOUR respawn - reset bang state
+-- Handle YOUR respawn - reset bang state and flinged players
 LocalPlayer.CharacterAdded:Connect(function()
 	stopBang()
+	-- Reset all players as unflinged when YOU respawn
+	for player, _ in pairs(flingedPlayers) do
+		flingedPlayers[player] = false
+	end
 	task.wait(1)
 end)
 
