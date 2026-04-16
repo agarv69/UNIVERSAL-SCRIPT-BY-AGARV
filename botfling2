@@ -1,296 +1,373 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local flingActive = {}
-local flingedPlayers = {} -- Track who has been flinged
+local flingedPlayers = {} -- Track who's been flinged
 
--- Save original FallenPartsDestroyHeight
-if not getgenv().FPDH then
-	getgenv().FPDH = workspace.FallenPartsDestroyHeight
-end
+-- Bang variables
+local bangAnim = nil
+local bang = nil
+local bangDied = nil
+local bangLoop = nil
+local isBanging = false
 
 -- Check if a player is noclipped
 local function isNoclipped(player)
 	local character = player.Character
 	if not character then return false end
-
+	
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	if not hrp then return false end
-
-	-- Check CollisionGroup
+	
 	return hrp.CollisionGroup == "NoClip"
 end
 
--- Check if player is currently flinged (ragdolled/flying)
-local function isFlinged(player)
-	local character = player.Character
+-- Check if a player is frozen
+local function isFrozen(player)
+	local character = workspace:FindFirstChild(player.Name)
 	if not character then return false end
 	
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return false end
-	
-	local rootPart = humanoid.RootPart
-	if not rootPart then return false end
-	
-	-- Check if they're ragdolled or flying fast
-	if humanoid:GetState() == Enum.HumanoidStateType.Ragdoll then
-		return true
-	end
-	
-	if rootPart.Velocity.Magnitude > 100 then
-		return true
-	end
-	
-	return false
+	return character:FindFirstChild("Hielo") ~= nil
 end
 
-local function SkidFling(TargetPlayer)
-	if flingActive[TargetPlayer] then return end
-	flingActive[TargetPlayer] = true
+-- Check if player is an admin (in Chosen team)
+local function isAdmin(player)
+	return player.Team and player.Team.Name == "Chosen"
+end
 
-	task.spawn(function()
-		while TargetPlayer and TargetPlayer.Parent == Players do
-			-- CHECK IF ALREADY FLINGED - skip if they're still flying
-			if flingedPlayers[TargetPlayer] and isFlinged(TargetPlayer) then
-				task.wait(0.5)
-				continue
-			end
-			
-			-- CHECK IF NOCLIPPED - if yes, WAIT and skip this cycle
-			if isNoclipped(TargetPlayer) then
-				task.wait(0.5)
-				continue
-			end
-
-			local Character = LocalPlayer.Character
-			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
-			local RootPart = Humanoid and Humanoid.RootPart
-			local TCharacter = TargetPlayer.Character
-			local THumanoid = TCharacter and TCharacter:FindFirstChildOfClass("Humanoid")
-
-			if not (Character and Humanoid and RootPart) then
-				task.wait(0.5)
-				continue
-			end
-
-			if not (TCharacter and THumanoid) then
-				task.wait(0.5)
-				continue
-			end
-
-			if not TCharacter:FindFirstChildWhichIsA("BasePart") then
-				task.wait(0.5)
-				continue
-			end
-
-			if RootPart.Velocity.Magnitude < 50 then
-				getgenv().OldPos = RootPart.CFrame
-			end
-
-			if THumanoid.Sit then
-				task.wait(0.5)
-				continue
-			end
-
-			local FPos = function(BasePart, Pos, Ang)
-				if not BasePart then return end
-				RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
-				Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
-				RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
-				RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
-			end
-
-			local SFBasePart = function()
-				local TimeToWait = 1 -- 1 second timeout
-				local Time = tick()
-				local Angle = 0
-				local flingSuccess = false
-
-				repeat
-					-- CHECK NOCLIP - abort this attempt if they noclip mid-fling
-					if isNoclipped(TargetPlayer) then
-						break
-					end
-
-					-- GET FRESH BASEPART EVERY LOOP
-					local TRootPart = THumanoid and THumanoid.RootPart
-					local THead = TCharacter and TCharacter:FindFirstChild("Head")
-					local Accessory = TCharacter and TCharacter:FindFirstChildOfClass("Accessory")
-					local Handle = Accessory and Accessory:FindFirstChild("Handle")
-
-					local BasePart = TRootPart or THead or Handle
-
-					if not BasePart then break end
-
-					if RootPart and THumanoid then
-						if BasePart.Velocity.Magnitude < 50 then
-							Angle = Angle + 100
-
-							FPos(BasePart, CFrame.new(0, 1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, -1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
-							task.wait()
-						else
-							if not TRootPart then break end
-
-							FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(-90), 0, 0))
-							task.wait()
-
-							FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
-							task.wait()
-						end
-					else
-						break
-					end
-
-					-- Check if fling was successful
-					if BasePart.Velocity.Magnitude > 500 then
-						flingSuccess = true
-					end
-
-				until (BasePart.Velocity.Magnitude > 500) 
-					or (BasePart.Parent ~= TargetPlayer.Character) 
-					or (TargetPlayer.Parent ~= Players) 
-					or THumanoid.Sit 
-					or (Humanoid.Health <= 0) 
-					or (tick() > (Time + TimeToWait))
-					or isNoclipped(TargetPlayer)
-
-				return flingSuccess
-			end
-
-			workspace.FallenPartsDestroyHeight = 0/0
-
-			local BV = Instance.new("BodyVelocity")
-			BV.Name = "EpixVel"
-			BV.Parent = RootPart
-			BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
-			BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
-
-			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-
-			local success = SFBasePart()
-
-			if BV then BV:Destroy() end
-			Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-			
-			-- If fling was successful, mark player as flinged
-			if success then
-				flingedPlayers[TargetPlayer] = true
-				print(TargetPlayer.Name .. " has been FLINGED - moving to back of queue")
-			end
-
-			-- Only return to old position if there are no valid targets
-			local hasTargets = false
-			for _, player in pairs(Players:GetPlayers()) do
-				if player ~= LocalPlayer and not isNoclipped(player) then
-					hasTargets = true
-					break
-				end
-			end
-
-			if not hasTargets and getgenv().OldPos and RootPart then
-				-- No valid targets, return to position
-				repeat
-					RootPart.CFrame = getgenv().OldPos * CFrame.new(0, 0.5, 0)
-					Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, 0.5, 0))
-					Humanoid:ChangeState("GettingUp")
-					for _, x in pairs(Character:GetChildren()) do
-						if x:IsA("BasePart") then
-							x.Velocity = Vector3.new()
-							x.RotVelocity = Vector3.new()
-						end
-					end
-					task.wait()
-				until (RootPart.Position - getgenv().OldPos.p).Magnitude < 25
-			end
-
-			workspace.FallenPartsDestroyHeight = getgenv().FPDH
-			
-			-- Wait 1 second after each fling attempt
-			task.wait(1)
+-- Get all admins in the server
+local function getAdmins()
+	local admins = {}
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and isAdmin(player) then
+			table.insert(admins, player)
 		end
-
-		flingActive[TargetPlayer] = nil
-	end)
+	end
+	return admins
 end
 
--- Fling all current players
-for _, player in pairs(Players:GetPlayers()) do
-	if player ~= LocalPlayer then
-		SkidFling(player)
-		
-		-- Monitor for respawns - when they respawn, unmark as flinged
-		player.CharacterAdded:Connect(function()
-			if flingedPlayers[player] then
-				flingedPlayers[player] = false
-				print(player.Name .. " respawned - moved to FRONT of queue")
-			end
+-- Get torso for bang
+local function getTorso(character)
+	character = character or LocalPlayer.Character
+	return character:FindFirstChild("Torso") 
+		or character:FindFirstChild("UpperTorso") 
+		or character:FindFirstChild("LowerTorso") 
+		or character:FindFirstChild("HumanoidRootPart")
+end
+
+-- Stop banging
+local function stopBang()
+	if bangDied then bangDied:Disconnect() end
+	if bang then bang:Stop() end
+	if bangAnim then bangAnim:Destroy() end
+	if bangLoop then bangLoop:Disconnect() end
+	bangDied = nil
+	bang = nil
+	bangAnim = nil
+	bangLoop = nil
+	isBanging = false
+end
+
+-- Start banging a player
+local function startBang(targetPlayer)
+	if isBanging then return end
+	
+	stopBang()
+	task.wait(0.1)
+	
+	local character = LocalPlayer.Character
+	if not character then return end
+	
+	local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+	if not humanoid then return end
+	
+	local isR15 = character:FindFirstChild("UpperTorso") ~= nil
+	
+	bangAnim = Instance.new("Animation")
+	bangAnim.AnimationId = isR15 and "rbxassetid://5918726674" or "rbxassetid://148840371"
+	bang = humanoid:LoadAnimation(bangAnim)
+	bang:Play(0.1, 1, 1)
+	bang:AdjustSpeed(3) -- 3x speed
+	
+	isBanging = true
+	
+	bangDied = humanoid.Died:Connect(function()
+		stopBang()
+	end)
+	
+	if targetPlayer then
+		local bangOffset = CFrame.new(0, 0, 1.1)
+		bangLoop = RunService.Stepped:Connect(function()
+			pcall(function()
+				local myRoot = getTorso(LocalPlayer.Character)
+				local otherRoot = getTorso(targetPlayer.Character)
+				if myRoot and otherRoot then
+					myRoot.CFrame = otherRoot.CFrame * bangOffset
+				end
+			end)
 		end)
 	end
 end
 
--- Fling new players
-Players.PlayerAdded:Connect(function(player)
-	SkidFling(player)
-	
-	-- Monitor respawns for new players too
-	player.CharacterAdded:Connect(function()
-		if flingedPlayers[player] then
-			flingedPlayers[player] = false
-			print(player.Name .. " respawned - moved to FRONT of queue")
+-- Check if there are any valid fling targets
+local function getAdmins()
+	local admins = {}
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and isAdmin(player) then
+			table.insert(admins, player)
 		end
+	end
+	return admins
+end
+
+local function flingPlayer(TargetPlayer)
+	local Character = LocalPlayer.Character
+	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+	local RootPart = Humanoid and Humanoid.RootPart
+
+	local TCharacter = TargetPlayer.Character
+	if not TCharacter then return false end
+
+	local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+	local TRootPart = THumanoid and THumanoid.RootPart
+	local THead = TCharacter:FindFirstChild("Head")
+	local Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+	local Handle = Accessory and Accessory:FindFirstChild("Handle")
+
+	if not (Character and Humanoid and RootPart) then return false end
+
+	if RootPart.Velocity.Magnitude < 50 then
+		getgenv().OldPos = RootPart.CFrame
+	end
+
+	if THumanoid and THumanoid.Sit then return false end
+	if not TCharacter:FindFirstChildWhichIsA("BasePart") then return false end
+
+	local flinged = false
+	local startTime = tick()
+	local maxTime = 0.5 -- 0.5 second per player
+
+	local BV = Instance.new("BodyVelocity")
+	BV.Name = "FlingVel"
+	BV.Parent = RootPart
+	BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
+	BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+
+	local FPos = function(BasePart, Pos, Ang)
+		RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+		Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+		RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+		RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+	end
+
+	local SFBasePart = function(BasePart)
+		local Angle = 0
+		repeat
+			if RootPart and THumanoid then
+				if BasePart.Velocity.Magnitude < 50 then
+					Angle = Angle + 100
+					FPos(BasePart, CFrame.new(0, 1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, -1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+					task.wait()
+				else
+					if not TRootPart then break end
+					FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(-90), 0, 0))
+					task.wait()
+					FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+					task.wait()
+				end
+			else
+				break
+			end
+		until (BasePart.Velocity.Magnitude > 500)
+			or (BasePart.Parent ~= TargetPlayer.Character)
+			or (TargetPlayer.Parent ~= Players)
+			or THumanoid.Sit
+			or (Humanoid.Health <= 0)
+			or (tick() - startTime > maxTime)
+
+		if BasePart.Velocity.Magnitude > 500 then
+			flinged = true
+		end
+	end
+
+	local savedFPDH = workspace.FallenPartsDestroyHeight
+	workspace.FallenPartsDestroyHeight = 0/0
+
+	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+	if TRootPart and THead then
+		if (TRootPart.CFrame.p - THead.CFrame.p).Magnitude > 5 then
+			SFBasePart(THead)
+		else
+			SFBasePart(TRootPart)
+		end
+	elseif TRootPart and not THead then
+		SFBasePart(TRootPart)
+	elseif not TRootPart and THead then
+		SFBasePart(THead)
+	elseif not TRootPart and not THead and Accessory and Handle then
+		SFBasePart(Handle)
+	end
+
+	BV:Destroy()
+	Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+	workspace.FallenPartsDestroyHeight = savedFPDH
+
+	return flinged
+end
+
+local function flingEveryone()
+	local currentAdminIndex = 1
+	local lastAdminSwitchTime = tick()
+	local currentFlingBV = nil -- Track current BodyVelocity
+	
+	while true do
+		local hasFlingTargets = false
+		
+		-- Try to fling all valid players (INCLUDING admins if they're valid)
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer then
+				-- Skip if already flinged
+				if flingedPlayers[player] then
+					continue
+				end
+				
+				-- Skip if noclipped
+				if isNoclipped(player) then
+					continue
+				end
+				
+				-- Skip if frozen
+				if isFrozen(player) then
+					continue
+				end
+				
+				-- This is a valid target
+				hasFlingTargets = true
+				
+				-- Stop banging if we were banging
+				if isBanging then
+					print("Valid fling target found - stopping bang")
+					stopBang()
+				end
+				
+				local success = flingPlayer(player)
+				
+				-- Mark as flinged if successful
+				if success then
+					flingedPlayers[player] = true
+					print(player.Name .. " has been flinged!")
+				end
+			end
+		end
+		
+		-- If NO valid fling targets exist, bang admins instead
+		if not hasFlingTargets then
+			-- Clean up any remaining fling stuff
+			local character = LocalPlayer.Character
+			if character then
+				local rootPart = character:FindFirstChild("HumanoidRootPart")
+				if rootPart then
+					-- Remove any BodyVelocity
+					for _, obj in pairs(rootPart:GetChildren()) do
+						if obj:IsA("BodyVelocity") then
+							obj:Destroy()
+						end
+					end
+					
+					-- Reset velocity
+					rootPart.Velocity = Vector3.new()
+					rootPart.RotVelocity = Vector3.new()
+				end
+				
+				local humanoid = character:FindFirstChildOfClass("Humanoid")
+				if humanoid then
+					humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+				end
+			end
+			
+			local admins = getAdmins()
+			
+			if #admins > 0 then
+				-- Switch admin every 1 second if multiple admins
+				if #admins > 1 and tick() - lastAdminSwitchTime >= 1 then
+					currentAdminIndex = currentAdminIndex + 1
+					if currentAdminIndex > #admins then
+						currentAdminIndex = 1
+					end
+					lastAdminSwitchTime = tick()
+					
+					-- Restart bang on new admin
+					if isBanging then
+						stopBang()
+						task.wait(0.1)
+					end
+				end
+				
+				local targetAdmin = admins[currentAdminIndex]
+				
+				if not isBanging then
+					print("No valid fling targets - banging admin: " .. targetAdmin.Name)
+					startBang(targetAdmin)
+				end
+			else
+				-- No admins found, stop banging
+				if isBanging then
+					stopBang()
+				end
+			end
+		end
+		
+		task.wait(0.1)
+	end
+end
+
+-- Monitor respawns to unflag flinged players
+for _, player in pairs(Players:GetPlayers()) do
+	if player ~= LocalPlayer then
+		player.CharacterAdded:Connect(function()
+			flingedPlayers[player] = false
+			print(player.Name .. " respawned - back in queue")
+		end)
+	end
+end
+
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		flingedPlayers[player] = false
 	end)
 end)
 
--- Handle YOUR respawns - restart flinging after YOU die
+-- Handle YOUR respawn - reset bang state
 LocalPlayer.CharacterAdded:Connect(function()
-	task.wait(1) -- Wait for character to fully load
-	
-	print("You respawned - restarting fling on all players")
-	
-	-- Restart flinging all players
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			if not flingActive[player] then
-				SkidFling(player)
-			end
-		end
-	end
+	stopBang() -- Clear old bang state
+	task.wait(1) -- Wait for character to load
+	-- The main loop will automatically restart bang if needed
 end)
+
+flingEveryone()
