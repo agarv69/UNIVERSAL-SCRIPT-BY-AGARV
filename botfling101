@@ -40,11 +40,14 @@ setupAutoExecute()
 -- NOCLIP WATCHER (TURNS ON AFTER 3 SECONDS)
 ------------------------------------------------
 task.delay(3, function()
-	-- Send chat message
+	-- Send chat message ONLY if not already sent
 	task.spawn(function()
-		local TextChatService = game:GetService("TextChatService")
-		local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-		channel:SendAsync("MONKEY GANG ON TOP")
+		if not _G.MONKEY_GANG_SENT then
+			_G.MONKEY_GANG_SENT = true
+			local TextChatService = game:GetService("TextChatService")
+			local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+			channel:SendAsync("MONKEY GANG ON TOP")
+		end
 	end)
 
 	-- Start noclip watcher
@@ -65,6 +68,9 @@ task.delay(3, function()
 			if hrp and hrp.CollisionGroup == "NoClip" then
 				cooldown = true
 				lastRejoinTime = tick()
+				
+				-- Reset flag before rejoining
+				_G.MONKEY_GANG_SENT = nil
 
 				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
 
