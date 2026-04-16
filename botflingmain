@@ -29,6 +29,8 @@ local function setupAutoExecute()
 	if queueFn then
 		queueFn([[
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
+			
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
 		]])
 	end
 end
@@ -44,28 +46,28 @@ task.delay(3, function()
 		local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
 		channel:SendAsync("MONKEY GANG ON TOP")
 	end)
-	
+
 	-- Start noclip watcher
 	task.spawn(function()
 		while task.wait(0.5) do
 			if cooldown then
 				continue
 			end
-			
+
 			-- Prevent rejoining more than once every 10 seconds
 			if tick() - lastRejoinTime < 10 then
 				continue
 			end
-			
+
 			local char = LocalPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-			
+
 			if hrp and hrp.CollisionGroup == "NoClip" then
 				cooldown = true
 				lastRejoinTime = tick()
-				
+
 				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
-				
+
 				task.delay(10, function()
 					cooldown = false
 				end)
@@ -82,10 +84,10 @@ end)
 local function isNoclipped(player)
 	local character = player.Character
 	if not character then return false end
-	
+
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	if not hrp then return false end
-	
+
 	return hrp.CollisionGroup == "NoClip"
 end
 
@@ -93,7 +95,7 @@ end
 local function isFrozen(player)
 	local character = workspace:FindFirstChild(player.Name)
 	if not character then return false end
-	
+
 	return character:FindFirstChild("Hielo") ~= nil
 end
 
@@ -138,30 +140,30 @@ end
 -- Start banging a player
 local function startBang(targetPlayer)
 	if isBanging then return end
-	
+
 	stopBang()
 	task.wait(0.1)
-	
+
 	local character = LocalPlayer.Character
 	if not character then return end
-	
+
 	local humanoid = character:FindFirstChildWhichIsA("Humanoid")
 	if not humanoid then return end
-	
+
 	local isR15 = character:FindFirstChild("UpperTorso") ~= nil
-	
+
 	bangAnim = Instance.new("Animation")
 	bangAnim.AnimationId = isR15 and "rbxassetid://5918726674" or "rbxassetid://148840371"
 	bang = humanoid:LoadAnimation(bangAnim)
 	bang:Play(0.1, 1, 1)
 	bang:AdjustSpeed(3) -- 3x speed
-	
+
 	isBanging = true
-	
+
 	bangDied = humanoid.Died:Connect(function()
 		stopBang()
 	end)
-	
+
 	if targetPlayer then
 		local bangOffset = CFrame.new(0, 0, 1.1)
 		bangLoop = RunService.Stepped:Connect(function()
@@ -301,10 +303,10 @@ end
 local function flingEveryone()
 	local currentAdminIndex = 1
 	local lastAdminSwitchTime = tick()
-	
+
 	while true do
 		local hasFlingTargets = false
-		
+
 		-- Try to fling all valid players (INCLUDING admins if they're valid)
 		for _, player in pairs(Players:GetPlayers()) do
 			if player ~= LocalPlayer then
@@ -312,34 +314,34 @@ local function flingEveryone()
 				if flingedPlayers[player] then
 					continue
 				end
-				
+
 				-- Skip if noclipped
 				if isNoclipped(player) then
 					continue
 				end
-				
+
 				-- Skip if frozen
 				if isFrozen(player) then
 					continue
 				end
-				
+
 				-- This is a valid target
 				hasFlingTargets = true
-				
+
 				-- Stop banging if we were banging
 				if isBanging then
 					stopBang()
 				end
-				
+
 				local success = flingPlayer(player)
-				
+
 				-- Mark as flinged if successful
 				if success then
 					flingedPlayers[player] = true
 				end
 			end
 		end
-		
+
 		-- If NO valid fling targets exist, bang admins instead
 		if not hasFlingTargets then
 			-- Clean up any remaining fling stuff
@@ -353,20 +355,20 @@ local function flingEveryone()
 							obj:Destroy()
 						end
 					end
-					
+
 					-- Reset velocity
 					rootPart.Velocity = Vector3.new()
 					rootPart.RotVelocity = Vector3.new()
 				end
-				
+
 				local humanoid = character:FindFirstChildOfClass("Humanoid")
 				if humanoid then
 					humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 				end
 			end
-			
+
 			local admins = getAdmins()
-			
+
 			if #admins > 0 then
 				-- Switch admin every 1 second if multiple admins
 				if #admins > 1 and tick() - lastAdminSwitchTime >= 1 then
@@ -375,16 +377,16 @@ local function flingEveryone()
 						currentAdminIndex = 1
 					end
 					lastAdminSwitchTime = tick()
-					
+
 					-- Restart bang on new admin
 					if isBanging then
 						stopBang()
 						task.wait(0.1)
 					end
 				end
-				
+
 				local targetAdmin = admins[currentAdminIndex]
-				
+
 				if not isBanging then
 					startBang(targetAdmin)
 				end
@@ -395,7 +397,7 @@ local function flingEveryone()
 				end
 			end
 		end
-		
+
 		task.wait(0.1)
 	end
 end
@@ -411,7 +413,7 @@ end
 
 Players.PlayerAdded:Connect(function(player)
 	flingedPlayers[player] = false
-	
+
 	player.CharacterAdded:Connect(function()
 		task.wait(2)
 		flingedPlayers[player] = false
