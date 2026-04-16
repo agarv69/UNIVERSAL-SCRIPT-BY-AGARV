@@ -358,8 +358,14 @@ for _, player in pairs(Players:GetPlayers()) do
 end
 
 Players.PlayerAdded:Connect(function(player)
+	-- Mark as unflinged
+	flingedPlayers[player] = false
+	
 	player.CharacterAdded:Connect(function()
+		-- Wait for character to fully load before marking as ready
+		task.wait(2) -- Give them time to spawn
 		flingedPlayers[player] = false
+		print(player.Name .. " character ready - back in queue")
 	end)
 end)
 
