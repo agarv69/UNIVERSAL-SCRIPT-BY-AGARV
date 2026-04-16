@@ -73,10 +73,10 @@ G2L["7"]["Position"] = UDim2.new(-0.0047, 0, -0.0049, 0);
 
 -- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.MainScript
 local function C_5()
-local script = G2L["5"];
+	local script = G2L["5"];
 	-- MainScript (LocalScript under ToggleButton/ToggleScript)
 	-- ALL IN ONE - no other scripts needed except WebhookScript
-	
+
 	local Players           = game:GetService("Players")
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local RunService        = game:GetService("RunService")
@@ -86,27 +86,16 @@ local script = G2L["5"];
 	local CoreGui           = game:GetService("CoreGui")
 	local LocalPlayer       = Players.LocalPlayer
 	local ToggleButton      = script.Parent.Parent
-	
+
 	-- Clear corrupted broken file
 	pcall(function() writefile("BotGuiBroken.json", "{}") end)
-	
+
 	task.wait(0.5)
-	
-	--------------------------------------------------
-	-- EXECUTE BOT2
-	--------------------------------------------------
-	
-	task.spawn(function()
-		task.wait(1)
-		pcall(function()
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot2"))()
-		end)
-	end)
-	
+
 	--------------------------------------------------
 	-- AUTO DISMISS POPUP
 	--------------------------------------------------
-	
+
 	task.spawn(function()
 		while true do
 			task.wait(0.5)
@@ -132,11 +121,11 @@ local script = G2L["5"];
 			end)
 		end
 	end)
-	
+
 	--------------------------------------------------
 	-- CHAT
 	--------------------------------------------------
-	
+
 	local function sendChat(message)
 		pcall(function()
 			local channels = TextChatService:WaitForChild("TextChannels", 2)
@@ -156,37 +145,37 @@ local script = G2L["5"];
 			end
 		end)
 	end
-	
+
 	--------------------------------------------------
 	-- PERSISTENT STATE
 	--------------------------------------------------
-	
+
 	local STATE_FILE   = "BotGuiState.json"
 	local BROKEN_FILE  = "BotGuiBroken.json"
 	local VISITED_FILE = "BotGuiVisited.json"
-	
+
 	local function readJson(file)
 		local ok, data = pcall(function()
 			return HttpService:JSONDecode(readfile(file))
 		end)
 		return ok and data or {}
 	end
-	
+
 	local function writeJson(file, data)
 		pcall(function()
 			writefile(file, HttpService:JSONEncode(data))
 		end)
 	end
-	
+
 	local brokenServers  = readJson(BROKEN_FILE)
 	local visitedServers = readJson(VISITED_FILE)
 	local visitCounter   = 0
-	
+
 	local function markBroken(jobId)
 		brokenServers[jobId] = true
 		writeJson(BROKEN_FILE, brokenServers)
 	end
-	
+
 	local function markVisited(jobId)
 		if not visitedServers[jobId] then
 			visitCounter = visitCounter + 1
@@ -194,21 +183,21 @@ local script = G2L["5"];
 			writeJson(VISITED_FILE, visitedServers)
 		end
 	end
-	
+
 	--------------------------------------------------
 	-- UI
 	--------------------------------------------------
-	
+
 	local isOn = false
-	
+
 	local function setStatus(text)
 		ToggleButton.Text = text
 	end
-	
+
 	--------------------------------------------------
 	-- BREAK BKIT
 	--------------------------------------------------
-	
+
 	local function breakBkit()
 		local character = LocalPlayer.Character
 		if not character then return false end
@@ -229,22 +218,22 @@ local script = G2L["5"];
 		end)
 		return ok
 	end
-	
+
 	--------------------------------------------------
 	-- WEBHOOK
 	--------------------------------------------------
-	
+
 	local function sendWebhook(title, description, color, footer)
 		pcall(function()
 			if not shared.BotSendWebhook then return end
 			shared.BotSendWebhook(title, description, color, footer)
 		end)
 	end
-	
+
 	--------------------------------------------------
 	-- GET SERVERS
 	--------------------------------------------------
-	
+
 	local function getServers()
 		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
 		local ok, result = pcall(function()
@@ -256,19 +245,19 @@ local script = G2L["5"];
 		end
 		return {}
 	end
-	
+
 	--------------------------------------------------
 	-- SERVER HOP
 	--------------------------------------------------
-	
+
 	local function hopToNewServer()
 		setStatus("Serverhopping...")
-	
+
 		local target = nil
-	
+
 		while not target and isOn do
 			local servers = getServers()
-	
+
 			-- Unvisited non-broken non-full servers first
 			local unvisited = {}
 			for _, s in ipairs(servers) do
@@ -281,7 +270,7 @@ local script = G2L["5"];
 					table.insert(unvisited, s)
 				end
 			end
-	
+
 			if #unvisited > 0 then
 				target = unvisited[math.random(1, #unvisited)]
 			else
@@ -309,9 +298,9 @@ local script = G2L["5"];
 				end
 			end
 		end
-	
+
 		if not target or not isOn then return end
-	
+
 		-- Queue re-execution
 		pcall(function()
 			local queueFn = queue_on_teleport
@@ -319,36 +308,32 @@ local script = G2L["5"];
 				or (fluxus and fluxus.queue_on_teleport)
 			if queueFn then
 				queueFn([[
-					task.wait(3)
 					pcall(function()
-						loadstring(game:HttpGet("https://pastebin.com/raw/LnAuLdN3"))()
-					end)
-					task.wait(1)
-					pcall(function()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot2"))()
+						loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot102"))()
+						loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/bot101"))()
 					end)
 				]])
 			end
 		end)
-	
+
 		pcall(function()
 			TeleportService:TeleportToPlaceInstance(game.PlaceId, target.id, LocalPlayer)
 		end)
-	
+
 		-- If teleport fails, retry
 		task.wait(10)
 		if isOn then
 			hopToNewServer()
 		end
 	end
-	
+
 	--------------------------------------------------
 	-- ARKENSTONE WATCHER
 	--------------------------------------------------
-	
+
 	local function watchArkenstone()
 		local detected = false
-	
+
 		local function handle()
 			if detected then return end
 			local backpack = LocalPlayer:FindFirstChild("Backpack")
@@ -357,7 +342,7 @@ local script = G2L["5"];
 				or (char and char:FindFirstChild("The Arkenstone"))
 			if not ark then return end
 			detected = true
-	
+
 			task.spawn(function()
 				pcall(function()
 					local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -369,7 +354,7 @@ local script = G2L["5"];
 				sendChat(";bkit")
 			end)
 		end
-	
+
 		local conns = {}
 		local backpack = LocalPlayer:FindFirstChild("Backpack")
 		if backpack then
@@ -386,16 +371,16 @@ local script = G2L["5"];
 		handle()
 		return conns
 	end
-	
+
 	--------------------------------------------------
 	-- MAIN LOOP
 	--------------------------------------------------
-	
+
 	local function mainLoop()
 		markVisited(game.JobId)
 		setStatus("Checking server...")
 		task.wait(2)
-	
+
 		-- Check Brick exists
 		local brick = ReplicatedStorage:FindFirstChild("Brick")
 		if not brick then
@@ -406,10 +391,10 @@ local script = G2L["5"];
 			hopToNewServer()
 			return
 		end
-	
+
 		-- Watch arkenstone
 		local arkConns = watchArkenstone()
-	
+
 		-- Watch brick disappearing
 		local brickGone = false
 		local brickConn = brick.AncestryChanged:Connect(function()
@@ -417,18 +402,18 @@ local script = G2L["5"];
 				brickGone = true
 			end
 		end)
-	
+
 		-- Wait for Delete tool (60s)
 		local waitStart = tick()
 		local WAIT_TIME = 60
 		local gotDelete = false
-	
+
 		local timerConn = RunService.Heartbeat:Connect(function()
 			if not isOn then return end
 			local remaining = math.max(0, WAIT_TIME - (tick() - waitStart))
 			setStatus(string.format("Waiting... (%.1f)", remaining))
 		end)
-	
+
 		while tick() - waitStart < WAIT_TIME and isOn do
 			if brickGone then break end
 			local del = LocalPlayer.Backpack:FindFirstChild("Delete")
@@ -436,29 +421,29 @@ local script = G2L["5"];
 			if del then gotDelete = true break end
 			task.wait(0.2)
 		end
-	
+
 		timerConn:Disconnect()
 		brickConn:Disconnect()
 		for _, c in ipairs(arkConns) do pcall(function() c:Disconnect() end) end
-	
+
 		if not isOn then return end
-	
+
 		if brickGone then
 			setStatus("Bkit Broken...")
 			task.wait(2)
 			hopToNewServer()
 			return
 		end
-	
+
 		if not gotDelete then
 			hopToNewServer()
 			return
 		end
-	
+
 		-- Break bkit
 		setStatus("Breaking Bkit...")
 		local success = breakBkit()
-	
+
 		if success then
 			markBroken(game.JobId)
 			local playerCount = #Players:GetPlayers()
@@ -472,22 +457,22 @@ local script = G2L["5"];
 				display
 			)
 		end
-	
+
 		task.wait(1)
 		hopToNewServer()
 	end
-	
+
 	--------------------------------------------------
 	-- TOGGLE
 	--------------------------------------------------
-	
+
 	local function turnOn()
 		isOn = true
 		writeJson(STATE_FILE, {wasOn = true})
 		ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
 		task.spawn(mainLoop)
 	end
-	
+
 	local function turnOff()
 		isOn = false
 		writeJson(STATE_FILE, {wasOn = false})
@@ -498,11 +483,11 @@ local script = G2L["5"];
 		writeJson(BROKEN_FILE, brokenServers)
 		writeJson(VISITED_FILE, visitedServers)
 	end
-	
+
 	ToggleButton.MouseButton1Click:Connect(function()
 		if isOn then turnOff() else turnOn() end
 	end)
-	
+
 	-- Auto restart after server hop
 	local savedState = readJson(STATE_FILE)
 	if savedState.wasOn then
@@ -511,7 +496,7 @@ local script = G2L["5"];
 		task.wait(4)
 		turnOn()
 	end
-	
+
 	-- Save on teleport
 	LocalPlayer.OnTeleport:Connect(function(state)
 		if state == Enum.TeleportState.Started then
@@ -522,19 +507,19 @@ end;
 task.spawn(C_5);
 -- StarterGui.BotGui.BotMainFrame.ToggleButton.ToggleScript.WebhookScript
 local function C_6()
-local script = G2L["6"];
+	local script = G2L["6"];
 	-- WebhookScript (LocalScript under ToggleButton/ToggleScript)
-	
+
 	local HttpService = game:GetService("HttpService")
-	
+
 	local WEBHOOK = "https://discordapp.com/api/webhooks/1493581974378516490/fxTemv1sP_l5acVQ9t_nhHMA8lwHM7TnC4RYelhtqpFShy2H9VX0U4hwWNDFNBVAnZJL"
-	
+
 	local req = request
 		or (syn and syn.request)
 		or http_request
 		or (fluxus and fluxus.request)
 		or function() end
-	
+
 	shared.BotSendWebhook = function(title, description, color, footer)
 		pcall(function()
 			req({
