@@ -68,7 +68,7 @@ task.delay(3, function()
 			if hrp and hrp.CollisionGroup == "NoClip" then
 				cooldown = true
 				lastRejoinTime = tick()
-				
+
 				-- Reset flag before rejoining
 				_G.MONKEY_GANG_SENT = nil
 
@@ -204,6 +204,11 @@ local function startBang(targetPlayer)
 end
 
 local function flingPlayer(TargetPlayer)
+	-- Check if freeze reset is happening
+	if _G.FREEZE_RESET_IN_PROGRESS then
+		return false
+	end
+
 	local Character = LocalPlayer.Character
 	local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
 	local RootPart = Humanoid and Humanoid.RootPart
