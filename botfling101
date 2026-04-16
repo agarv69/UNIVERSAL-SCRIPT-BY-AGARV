@@ -1,7 +1,11 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
-local flingedPlayers = {} -- Track who's been flinged
+local PLACE_ID = game.PlaceId
+
+-- Fling tracking
+local flingedPlayers = {}
 
 -- Bang variables
 local bangAnim = nil
@@ -9,6 +13,90 @@ local bang = nil
 local bangDied = nil
 local bangLoop = nil
 local isBanging = false
+
+-- Rejoin variables
+local cooldown = false
+local lastRejoinTime = 0
+
+------------------------------------------------
+-- AUTO EXECUTE ON REJOIN
+------------------------------------------------
+local function setupAutoExecute()
+	local queueFn =
+		queue_on_teleport
+		or (syn and syn.queue_on_teleport)
+		or (fluxus and fluxus.queue_on_teleport)
+	if queueFn then
+		queueFn([[
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
+		]])
+	end
+end
+setupAutoExecute()
+
+------------------------------------------------
+-- NOCLIP WATCHER (TURNS ON AFTER 3 SECONDS)
+------------------------------------------------
+task.delay(3, function()
+	-- Send chat message
+	task.spawn(function()
+		local TextChatService = game:GetService("TextChatService")
+		local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+		channel:SendAsync("MONKEY GANG ON TOP")
+	end)
+	
+	-- Start noclip watcher
+	task.spawn(function()
+		while task.wait(0.5) do
+			if cooldown then
+				continue
+			end
+			
+			-- Prevent rejoining more than once every 10 seconds
+			if tick() - lastRejoinTime < 10 then
+				continue
+			end
+			
+			local char = LocalPlayer.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			
+			if hrp and hrp.CollisionGroup == "NoClip" then
+				cooldown = true
+				lastRejoinTime = tick()
+				
+				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+				
+				task.delay(10, function()
+					cooldown = false
+				end)
+			end
+		end
+	end)
+end)
+
+------------------------------------------------
+-- FLING SCRIPT (STARTS IMMEDIATELY)
+------------------------------------------------
+
+-- AUTO ITEM PICKUP (STARTS IMMEDIATELY)
+task.spawn(function()
+	while task.wait(0.1) do
+		local char = LocalPlayer.Character
+		if char then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				for _, item in pairs(workspace:GetChildren()) do
+					if item:IsA("Tool") or item:IsA("Accessory") then
+						pcall(function()
+							item.Handle.CFrame = hrp.CFrame
+						end)
+					end
+				end
+			end
+		end
+	end
+end)
 
 -- Check if a player is noclipped
 local function isNoclipped(player)
@@ -106,17 +194,6 @@ local function startBang(targetPlayer)
 			end)
 		end)
 	end
-end
-
--- Check if there are any valid fling targets
-local function getAdmins()
-	local admins = {}
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and isAdmin(player) then
-			table.insert(admins, player)
-		end
-	end
-	return admins
 end
 
 local function flingPlayer(TargetPlayer)
@@ -244,7 +321,6 @@ end
 local function flingEveryone()
 	local currentAdminIndex = 1
 	local lastAdminSwitchTime = tick()
-	local currentFlingBV = nil -- Track current BodyVelocity
 	
 	while true do
 		local hasFlingTargets = false
@@ -272,7 +348,6 @@ local function flingEveryone()
 				
 				-- Stop banging if we were banging
 				if isBanging then
-					print("Valid fling target found - stopping bang")
 					stopBang()
 				end
 				
@@ -281,7 +356,6 @@ local function flingEveryone()
 				-- Mark as flinged if successful
 				if success then
 					flingedPlayers[player] = true
-					print(player.Name .. " has been flinged!")
 				end
 			end
 		end
@@ -332,7 +406,6 @@ local function flingEveryone()
 				local targetAdmin = admins[currentAdminIndex]
 				
 				if not isBanging then
-					print("No valid fling targets - banging admin: " .. targetAdmin.Name)
 					startBang(targetAdmin)
 				end
 			else
@@ -352,28 +425,23 @@ for _, player in pairs(Players:GetPlayers()) do
 	if player ~= LocalPlayer then
 		player.CharacterAdded:Connect(function()
 			flingedPlayers[player] = false
-			print(player.Name .. " respawned - back in queue")
 		end)
 	end
 end
 
 Players.PlayerAdded:Connect(function(player)
-	-- Mark as unflinged
 	flingedPlayers[player] = false
 	
 	player.CharacterAdded:Connect(function()
-		-- Wait for character to fully load before marking as ready
-		task.wait(2) -- Give them time to spawn
+		task.wait(2)
 		flingedPlayers[player] = false
-		print(player.Name .. " character ready - back in queue")
 	end)
 end)
 
 -- Handle YOUR respawn - reset bang state
 LocalPlayer.CharacterAdded:Connect(function()
-	stopBang() -- Clear old bang state
-	task.wait(1) -- Wait for character to load
-	-- The main loop will automatically restart bang if needed
+	stopBang()
+	task.wait(1)
 end)
 
 flingEveryone()
