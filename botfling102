@@ -386,7 +386,7 @@ local function mainLoop()
 	-- Check Brick exists
 	local brick = ReplicatedStorage:FindFirstChild("Brick")
 	if not brick then
-		task.wait(5)
+		task.wait(30)
 		if not isOn then return end
 		setStatus("Bkit Broken...")
 		task.wait(1)
