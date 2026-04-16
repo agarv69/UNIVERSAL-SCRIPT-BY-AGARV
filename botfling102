@@ -323,7 +323,7 @@ local function hopToNewServer()
 	end)
 
 	-- If teleport fails, retry
-	task.wait(10)
+	task.wait(30)
 	if isOn then
 		hopToNewServer()
 	end
