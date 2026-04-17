@@ -1,19 +1,16 @@
-local Players     = game:GetService("Players")
-local RunService  = game:GetService("RunService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 --------------------------------------------------
 -- AUTO PICKUP
 --------------------------------------------------
-
 task.spawn(function()
 	while true do
 		local char = LocalPlayer.Character
-		local hum  = char and char:FindFirstChildWhichIsA("Humanoid")
-
+		local hum = char and char:FindFirstChildWhichIsA("Humanoid")
 		if hum and hum.Health > 0 then
 			local currentlyEquipped = char:FindFirstChildOfClass("Tool")
-
 			for _, obj in ipairs(workspace:GetChildren()) do
 				if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
 					pcall(function()
@@ -33,7 +30,58 @@ task.spawn(function()
 				end
 			end
 		end
-
 		task.wait(0.1)
+	end
+end)
+
+--------------------------------------------------
+-- AUTO BKIT BREAK (WHEN DELETE TOOL DETECTED)
+--------------------------------------------------
+task.spawn(function()
+	while true do
+		task.wait(0.1)
+		
+		-- Check if Delete tool exists in backpack
+		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+		if deleteTool then
+			pcall(function()
+				local character = LocalPlayer.Character
+				if not character then return end
+				local humanoid = character:FindFirstChild("Humanoid")
+				if not humanoid then return end
+				
+				-- Save currently equipped tool
+				local previousTool = character:FindFirstChildOfClass("Tool")
+				
+				-- Equip Delete tool
+				humanoid:EquipTool(deleteTool)
+				task.wait(0.1)
+				
+				-- Get the event from the equipped tool
+				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+				
+				-- Get Brick from ReplicatedStorage
+				local rs = game:GetService("ReplicatedStorage")
+				local brick = rs:FindFirstChild("Brick")
+				if not brick then return end
+				
+				-- Spam fire delete event until brick is deleted
+				local maxAttempts = 100
+				local attempts = 0
+				while brick.Parent == rs and attempts < maxAttempts do
+					event:FireServer(brick, character.HumanoidRootPart.Position)
+					attempts = attempts + 1
+					task.wait(0.05)
+				end
+				
+				-- Unequip Delete tool
+				humanoid:UnequipTools()
+				
+				-- Re-equip previous tool if there was one
+				if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+					humanoid:EquipTool(previousTool)
+				end
+			end)
+		end
 	end
 end)
