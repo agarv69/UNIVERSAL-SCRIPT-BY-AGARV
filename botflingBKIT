@@ -37,13 +37,16 @@ end)
 --------------------------------------------------
 -- AUTO BKIT BREAK (WHEN DELETE TOOL DETECTED)
 --------------------------------------------------
+local isBreaking = false
+
 task.spawn(function()
 	while true do
 		task.wait(0.1)
 		
-		-- Check if Delete tool exists in backpack
+		-- Check if Delete tool exists in backpack and we're not already breaking
 		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
-		if deleteTool then
+		if deleteTool and not isBreaking then
+			isBreaking = true
 			pcall(function()
 				local character = LocalPlayer.Character
 				if not character then return end
@@ -63,7 +66,10 @@ task.spawn(function()
 				-- Get Brick from ReplicatedStorage
 				local rs = game:GetService("ReplicatedStorage")
 				local brick = rs:FindFirstChild("Brick")
-				if not brick then return end
+				if not brick then 
+					humanoid:UnequipTools()
+					return 
+				end
 				
 				-- Spam fire delete event until brick is deleted
 				local maxAttempts = 100
@@ -74,14 +80,19 @@ task.spawn(function()
 					task.wait(0.05)
 				end
 				
+				task.wait(0.1)
+				
 				-- Unequip Delete tool
 				humanoid:UnequipTools()
+				
+				task.wait(0.1)
 				
 				-- Re-equip previous tool if there was one
 				if previousTool and previousTool.Parent == LocalPlayer.Backpack then
 					humanoid:EquipTool(previousTool)
 				end
 			end)
+			isBreaking = false
 		end
 	end
 end)
