@@ -1,64 +1,197 @@
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local PLACE_ID = game.PlaceId
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
 
-local cooldown = false
+local isProcessingDelete = false
 
-------------------------------------------------
--- AUTO EXECUTE
-------------------------------------------------
-local function setupAutoExecute()
-	local queueFn =
-		queue_on_teleport
-		or (syn and syn.queue_on_teleport)
-		or (fluxus and fluxus.queue_on_teleport)
-
-	if queueFn and not _G._AUTOEXEC_SET then
-		_G._AUTOEXEC_SET = true
-
-		queueFn([[
-			task.wait(1)
-
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
-
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
-
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
-		]])
-	end
-end
-
-setupAutoExecute()
-
-------------------------------------------------
--- NOCLIP WATCHER
-------------------------------------------------
-local function watchNoclip()
-	task.spawn(function()
-		while task.wait(0.05) do
-
-			if cooldown then
-				continue
+--------------------------------------------------
+-- CHAT FUNCTION
+--------------------------------------------------
+local function sendChat(message)
+	pcall(function()
+		local channels = TextChatService:WaitForChild("TextChannels", 2)
+		if channels then
+			local general = channels:FindFirstChild("RBXGeneral")
+			if general then
+				general:SendAsync(message)
+				return
 			end
-
-			local char = LocalPlayer.Character
-			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-			if hrp and hrp.CollisionGroup == "NoClip" then
-				cooldown = true
-
-				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
-
-				task.delay(3, function()
-					cooldown = false
-				end)
-
-				break
+		end
+		local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
+		if chatEvents then
+			local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
+			if sayMessage then
+				sayMessage:FireServer(message, "All")
 			end
 		end
 	end)
 end
 
-watchNoclip()
+--------------------------------------------------
+-- AUTO PICKUP
+--------------------------------------------------
+task.spawn(function()
+	while true do
+		local char = LocalPlayer.Character
+		local hum = char and char:FindFirstChildWhichIsA("Humanoid")
+		if hum and hum.Health > 0 and not isProcessingDelete then
+			local currentlyEquipped = char:FindFirstChildOfClass("Tool")
+			for _, obj in ipairs(workspace:GetChildren()) do
+				if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
+					pcall(function()
+						hum:EquipTool(obj)
+						task.wait(0.05)
+						for i = 1, 3 do
+							if obj.Parent == char then
+								obj.Parent = LocalPlayer.Backpack
+							end
+							task.wait(0.02)
+						end
+						if currentlyEquipped and currentlyEquipped.Parent == LocalPlayer.Backpack then
+							task.wait(0.03)
+							hum:EquipTool(currentlyEquipped)
+						end
+					end)
+				end
+			end
+		end
+		task.wait(0.1)
+	end
+end)
+
+--------------------------------------------------
+-- AUTO BKIT BREAK (WHEN DELETE TOOL DETECTED)
+--------------------------------------------------
+local processedDeleteTools = {}
+
+task.spawn(function()
+	while true do
+		task.wait(0.1)
+		
+		-- Check if Brick exists first
+		local brick = ReplicatedStorage:FindFirstChild("Brick")
+		if not brick then
+			task.wait(0.5)
+			continue
+		end
+		
+		-- Check if Delete tool exists in backpack
+		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+		if deleteTool and not processedDeleteTools[deleteTool] then
+			processedDeleteTools[deleteTool] = true
+			isProcessingDelete = true
+			
+			task.spawn(function()
+				pcall(function()
+					local character = LocalPlayer.Character
+					if not character then return end
+					local humanoid = character:FindFirstChild("Humanoid")
+					if not humanoid then return end
+					
+					-- Save currently equipped tool
+					local previousTool = character:FindFirstChildOfClass("Tool")
+					if previousTool and previousTool.Name == "Delete" then
+						previousTool = nil
+					end
+					
+					-- Equip Delete tool
+					humanoid:EquipTool(deleteTool)
+					task.wait(0.1)
+					
+					-- Get the event from the equipped tool
+					local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+					
+					-- Spam fire delete event for 1 second
+					local startTime = tick()
+					while tick() - startTime < 1 do
+						event:FireServer(brick, character.HumanoidRootPart.Position)
+						task.wait(0.05)
+					end
+					
+					task.wait(0.1)
+					
+					-- Unequip Delete tool
+					humanoid:UnequipTools()
+					
+					task.wait(0.2)
+					
+					isProcessingDelete = false
+					
+					-- Re-equip previous tool if there was one
+					if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+						humanoid:EquipTool(previousTool)
+					end
+				end)
+			end)
+		end
+		
+		-- Clean up table for tools that no longer exist
+		for tool, _ in pairs(processedDeleteTools) do
+			if not tool or not tool.Parent then
+				processedDeleteTools[tool] = nil
+			end
+		end
+	end
+end)
+
+--------------------------------------------------
+-- AUTO ARKENSTONE (WHEN ARKENSTONE DETECTED)
+--------------------------------------------------
+local processedArkenstones = {}
+
+task.spawn(function()
+	while true do
+		task.wait(0.1)
+		
+		-- Check if Brick exists first
+		local brick = ReplicatedStorage:FindFirstChild("Brick")
+		if not brick then
+			task.wait(0.5)
+			continue
+		end
+		
+		-- Check if The Arkenstone exists in backpack OR character
+		local backpack = LocalPlayer:FindFirstChild("Backpack")
+		local char = LocalPlayer.Character
+		local arkenstone = (backpack and backpack:FindFirstChild("The Arkenstone"))
+			or (char and char:FindFirstChild("The Arkenstone"))
+		
+		if arkenstone and not processedArkenstones[arkenstone] then
+			processedArkenstones[arkenstone] = true
+			
+			task.spawn(function()
+				pcall(function()
+					local character = LocalPlayer.Character
+					if not character then return end
+					local humanoid = character:FindFirstChild("Humanoid")
+					if not humanoid then return end
+					
+					-- Find arkenstone again in case it moved
+					local ark = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
+						or (character and character:FindFirstChild("The Arkenstone"))
+					
+					if not ark then return end
+					
+					-- Equip The Arkenstone if it's in backpack
+					if ark.Parent == LocalPlayer.Backpack then
+						humanoid:EquipTool(ark)
+					end
+					
+					task.wait(0.5)
+					
+					-- Say ;bkit in chat
+					sendChat(";bkit")
+				end)
+			end)
+		end
+		
+		-- Clean up table for tools that no longer exist
+		for tool, _ in pairs(processedArkenstones) do
+			if not tool or not tool.Parent then
+				processedArkenstones[tool] = nil
+			end
+		end
+	end
+end)
