@@ -37,62 +37,69 @@ end)
 --------------------------------------------------
 -- AUTO BKIT BREAK (WHEN DELETE TOOL DETECTED)
 --------------------------------------------------
-local isBreaking = false
+local processedTools = {}
 
 task.spawn(function()
 	while true do
 		task.wait(0.1)
 		
-		-- Check if Delete tool exists in backpack and we're not already breaking
+		-- Check if Delete tool exists in backpack
 		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
-		if deleteTool and not isBreaking then
-			isBreaking = true
-			pcall(function()
-				local character = LocalPlayer.Character
-				if not character then return end
-				local humanoid = character:FindFirstChild("Humanoid")
-				if not humanoid then return end
-				
-				-- Save currently equipped tool
-				local previousTool = character:FindFirstChildOfClass("Tool")
-				
-				-- Equip Delete tool
-				humanoid:EquipTool(deleteTool)
-				task.wait(0.1)
-				
-				-- Get the event from the equipped tool
-				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
-				
-				-- Get Brick from ReplicatedStorage
-				local rs = game:GetService("ReplicatedStorage")
-				local brick = rs:FindFirstChild("Brick")
-				if not brick then 
+		if deleteTool and not processedTools[deleteTool] then
+			processedTools[deleteTool] = true
+			
+			task.spawn(function()
+				pcall(function()
+					local character = LocalPlayer.Character
+					if not character then return end
+					local humanoid = character:FindFirstChild("Humanoid")
+					if not humanoid then return end
+					
+					-- Save currently equipped tool
+					local previousTool = character:FindFirstChildOfClass("Tool")
+					
+					-- Equip Delete tool
+					humanoid:EquipTool(deleteTool)
+					task.wait(0.1)
+					
+					-- Get the event from the equipped tool
+					local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+					
+					-- Get Brick from ReplicatedStorage
+					local rs = game:GetService("ReplicatedStorage")
+					local brick = rs:FindFirstChild("Brick")
+					if not brick then 
+						humanoid:UnequipTools()
+						return 
+					end
+					
+					-- Spam fire delete event for 1 second
+					local startTime = tick()
+					while tick() - startTime < 1 do
+						event:FireServer(brick, character.HumanoidRootPart.Position)
+						task.wait(0.05)
+					end
+					
+					task.wait(0.1)
+					
+					-- Unequip Delete tool
 					humanoid:UnequipTools()
-					return 
-				end
-				
-				-- Spam fire delete event until brick is deleted
-				local maxAttempts = 100
-				local attempts = 0
-				while brick.Parent == rs and attempts < maxAttempts do
-					event:FireServer(brick, character.HumanoidRootPart.Position)
-					attempts = attempts + 1
-					task.wait(0.05)
-				end
-				
-				task.wait(0.1)
-				
-				-- Unequip Delete tool
-				humanoid:UnequipTools()
-				
-				task.wait(0.1)
-				
-				-- Re-equip previous tool if there was one
-				if previousTool and previousTool.Parent == LocalPlayer.Backpack then
-					humanoid:EquipTool(previousTool)
-				end
+					
+					task.wait(0.1)
+					
+					-- Re-equip previous tool if there was one
+					if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+						humanoid:EquipTool(previousTool)
+					end
+				end)
 			end)
-			isBreaking = false
+		end
+		
+		-- Clean up table for tools that no longer exist
+		for tool, _ in pairs(processedTools) do
+			if not tool or not tool.Parent then
+				processedTools[tool] = nil
+			end
 		end
 	end
 end)
