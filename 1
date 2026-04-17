@@ -22689,6 +22689,16 @@ local script = G2L["1be"];
 		"🚨AGAR WARE HAS SUCH GOOD UI!",
 	}
 	
+	local function isMuted()
+		local char = LocalPlayer.Character
+		if not char then return false end
+		local tiempo = char:FindFirstChild("Tiempo")
+		if not tiempo then return false end
+		local text1 = tiempo:FindFirstChild("Text1")
+		if not text1 then return false end
+		return string.find(text1.Text, "🤐") ~= nil
+	end
+	
 	local function sendChat(message)
 		pcall(function()
 			local channels = TextChatService:WaitForChild("TextChannels", 2)
@@ -22730,8 +22740,9 @@ local script = G2L["1be"];
 				local shuffledMessages = shuffled(messages)
 				for _, msg in ipairs(shuffledMessages) do
 					if not isActive then break end
-					sendChat(msg)
-					task.wait(15)
+					local finalMsg = isMuted() and (msg .. " SHIT") or msg
+					sendChat(finalMsg)
+					task.wait(10)
 				end
 			end
 		end)
