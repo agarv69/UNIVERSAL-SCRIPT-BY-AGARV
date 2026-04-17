@@ -71,19 +71,19 @@ local processedDeleteTools = {}
 task.spawn(function()
 	while true do
 		task.wait(0.1)
-		
+
 		-- Check if Brick exists first
 		local brick = ReplicatedStorage:FindFirstChild("Brick")
 		if not brick then
 			task.wait(0.5)
 			continue
 		end
-		
+
 		-- Check if Delete tool exists in backpack
 		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
 		if deleteTool and not processedDeleteTools[deleteTool] then
 			processedDeleteTools[deleteTool] = true
-			
+
 			-- Cancel painting if in progress
 			if isProcessingPaint then
 				cancelPaint = true
@@ -92,57 +92,57 @@ task.spawn(function()
 					task.wait(0.1)
 				end
 			end
-			
+
 			isProcessingDelete = true
-			
+
 			task.spawn(function()
 				pcall(function()
 					local character = LocalPlayer.Character
 					if not character then return end
 					local humanoid = character:FindFirstChild("Humanoid")
 					if not humanoid then return end
-					
+
 					-- Save currently equipped tool
 					local previousTool = character:FindFirstChildOfClass("Tool")
 					if previousTool and previousTool.Name == "Delete" then
 						previousTool = nil
 					end
-					
+
 					-- Equip Delete tool
 					humanoid:EquipTool(deleteTool)
 					task.wait(0.1)
-					
+
 					-- Get the event from the equipped tool
 					local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
-					
+
 					-- Spam fire delete event for 1 second
 					local startTime = tick()
 					while tick() - startTime < 1 do
 						event:FireServer(brick, character.HumanoidRootPart.Position)
 						task.wait(0.05)
 					end
-					
+
 					task.wait(0.1)
-					
+
 					-- Unequip Delete tool
 					humanoid:UnequipTools()
-					
+
 					task.wait(0.2)
-					
+
 					isProcessingDelete = false
-					
+
 					-- Re-equip previous tool if there was one
 					if previousTool and previousTool.Parent == LocalPlayer.Backpack then
 						humanoid:EquipTool(previousTool)
 					end
 				end)
-				
+
 				if not pcall(function() end) then
 					isProcessingDelete = false
 				end
 			end)
 		end
-		
+
 		-- Clean up table for tools that no longer exist
 		for tool, _ in pairs(processedDeleteTools) do
 			if not tool or not tool.Parent then
@@ -160,45 +160,45 @@ local processedPaintTools = {}
 task.spawn(function()
 	while true do
 		task.wait(0.1)
-		
+
 		-- Check if Brick exists first
 		local brick = ReplicatedStorage:FindFirstChild("Brick")
 		if not brick then
 			task.wait(0.5)
 			continue
 		end
-		
+
 		-- Check if Paint tool exists in backpack
 		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
 		if paintTool and not processedPaintTools[paintTool] then
 			processedPaintTools[paintTool] = true
 			isProcessingPaint = true
 			cancelPaint = false
-			
+
 			task.spawn(function()
 				pcall(function()
 					local character = LocalPlayer.Character
 					if not character then return end
 					local humanoid = character:FindFirstChild("Humanoid")
 					if not humanoid then return end
-					
+
 					-- Save currently equipped tool
 					local previousTool = character:FindFirstChildOfClass("Tool")
 					if previousTool and previousTool.Name == "Paint" then
 						previousTool = nil
 					end
-					
+
 					-- Equip Paint tool
 					humanoid:EquipTool(paintTool)
 					task.wait(0.1)
-					
+
 					-- Get the event from the equipped tool
 					local paintEvent = paintTool:WaitForChild("Script"):WaitForChild("Event")
-					
+
 					local blueColor = Color3.fromRGB(0, 0, 255)
 					local whiteColor = Color3.fromRGB(255, 255, 255)
 					local sprayText = "MONKEY GANG"
-					
+
 					local sides = {
 						Enum.NormalId.Front,
 						Enum.NormalId.Right,
@@ -207,7 +207,7 @@ task.spawn(function()
 						Enum.NormalId.Top,
 						Enum.NormalId.Bottom
 					}
-					
+
 					-- Paint all 6 sides blue
 					for i, side in ipairs(sides) do
 						if cancelPaint then break end
@@ -216,7 +216,7 @@ task.spawn(function()
 						end)
 						task.wait(0.05)
 					end
-					
+
 					if not cancelPaint then
 						-- Apply Smooth material
 						pcall(function()
@@ -224,7 +224,7 @@ task.spawn(function()
 						end)
 						task.wait(0.1)
 					end
-					
+
 					-- Clear old spray first
 					for i, side in ipairs(sides) do
 						if cancelPaint then break end
@@ -235,7 +235,7 @@ task.spawn(function()
 							task.wait(0.03)
 						end
 					end
-					
+
 					-- Apply spray text
 					if not cancelPaint then
 						for i, side in ipairs(sides) do
@@ -248,7 +248,7 @@ task.spawn(function()
 							end
 						end
 					end
-					
+
 					-- Unanchor the brick
 					if not cancelPaint then
 						-- Clear spray on Top side first
@@ -256,43 +256,43 @@ task.spawn(function()
 							paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "both 🤝", blueColor, "spray", "")
 						end)
 						task.wait(0.1)
-						
+
 						-- Unanchor
 						pcall(function()
 							paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
 						end)
 						task.wait(0.1)
-						
+
 						-- Re-apply spray on Top side
 						pcall(function()
 							paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "both 🤝", whiteColor, "spray", sprayText)
 						end)
 						task.wait(0.05)
 					end
-					
+
 					task.wait(0.1)
-					
+
 					-- Unequip Paint tool
 					humanoid:UnequipTools()
-					
+
 					task.wait(0.2)
-					
+
 					isProcessingPaint = false
 					cancelPaint = false
-					
+
 					-- Re-equip previous tool if there was one
 					if previousTool and previousTool.Parent == LocalPlayer.Backpack then
 						humanoid:EquipTool(previousTool)
 					end
 				end)
-				
+
 				if not pcall(function() end) then
 					isProcessingPaint = false
 					cancelPaint = false
 				end
 			end)
 		end
-		
+
 		-- Clean up table for tools that no longer exist
 		for tool, _ in pairs(processedPaintTools) do
 			if not tool or not tool.Parent then
@@ -310,16 +310,16 @@ local processedArkenstones = {}
 task.spawn(function()
 	while true do
 		task.wait(0.1)
-		
+
 		-- Check if The Arkenstone exists in backpack OR character
 		local backpack = LocalPlayer:FindFirstChild("Backpack")
 		local char = LocalPlayer.Character
 		local arkenstone = (backpack and backpack:FindFirstChild("The Arkenstone"))
 			or (char and char:FindFirstChild("The Arkenstone"))
-		
+
 		if arkenstone and not processedArkenstones[arkenstone] then
 			processedArkenstones[arkenstone] = true
-			
+
 			-- Cancel painting if in progress
 			if isProcessingPaint then
 				cancelPaint = true
@@ -328,44 +328,44 @@ task.spawn(function()
 					task.wait(0.1)
 				end
 			end
-			
+
 			task.spawn(function()
 				pcall(function()
 					local character = LocalPlayer.Character
 					if not character then return end
 					local humanoid = character:FindFirstChild("Humanoid")
 					if not humanoid then return end
-					
+
 					-- Check if Brick exists
 					local brick = ReplicatedStorage:FindFirstChild("Brick")
-					
+
 					-- Find arkenstone again in case it moved
 					local ark = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
 						or (character and character:FindFirstChild("The Arkenstone"))
-					
+
 					if not ark then return end
-					
+
 					-- If Brick exists, say ;bkit first and wait for delete to finish
 					if brick then
 						-- Equip The Arkenstone if it's in backpack
 						if ark.Parent == LocalPlayer.Backpack then
 							humanoid:EquipTool(ark)
 						end
-						
+
 						task.wait(0.5)
-						
+
 						-- Say ;bkit in chat
 						sendChat(";bkit")
-						
+
 						-- Wait for delete to finish processing
 						while isProcessingDelete do
 							task.wait(0.1)
 						end
-						
+
 						-- Re-equip arkenstone after delete is done
 						local arkAfterDelete = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
 							or (character and character:FindFirstChild("The Arkenstone"))
-						
+
 						if arkAfterDelete and arkAfterDelete.Parent == LocalPlayer.Backpack then
 							humanoid:EquipTool(arkAfterDelete)
 							task.wait(0.5)
@@ -377,35 +377,31 @@ task.spawn(function()
 							task.wait(0.5)
 						end
 					end
-					
+
 					-- Say all the commands in order with 0.1 second wait between each
 					-- (Arkenstone is already equipped at this point)
 					local commands = {
 						";delcubes all",
-						";clearinv others",
 						";mapseed nan",
-						";seatide nan",
 						";fog nan",
 						";maptide nan",
-						";reset others",
-						";myopic others",
-						";colorless"
+						";reset others"
 					}
-					
+
 					for _, cmd in ipairs(commands) do
 						sendChat(cmd)
-						task.wait(0.1)
+						task.wait(0.3)
 					end
-					
+
 					-- Wait 1 more second after finishing all commands
 					task.wait(1)
-					
+
 					-- Unequip arkenstone
 					humanoid:UnequipTools()
 				end)
 			end)
 		end
-		
+
 		-- Clean up table for tools that no longer exist
 		for tool, _ in pairs(processedArkenstones) do
 			if not tool or not tool.Parent then
