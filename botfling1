@@ -6,7 +6,6 @@ local Connections = {}
 local isResetting = false
 local watchConn = nil
 
--- Anti-NaN helper functions
 local function isNaN(n)
 	return n ~= n
 end
@@ -27,17 +26,14 @@ local function fixNaNPosition(character)
 	task.wait(0.1)
 	
 	if not isSafe(hrp.CFrame) then
-		print("NaN detected! Fixing position...")
 		hrp.CFrame = CFrame.new(0, 50, 0)
 	end
 	
-	-- Try to teleport to another player's safe position
 	for _, plr in pairs(Players:GetPlayers()) do
 		if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
 			local otherHRP = plr.Character.HumanoidRootPart
 			if isSafe(otherHRP.CFrame) then
 				hrp.CFrame = otherHRP.CFrame + Vector3.new(0, 5, 0)
-				print("Teleported to safe position near " .. plr.Name)
 				break
 			end
 		end
@@ -47,13 +43,11 @@ local function fixNaNPosition(character)
 end
 
 local function disableGodmode()
-	-- Disconnect all godmode connections
 	for _, conn in pairs(Connections) do
 		if conn then conn:Disconnect() end
 	end
 	Connections = {}
 
-	-- Reset health to normal
 	local character = LocalPlayer.Character
 	if character then
 		local humanoid = character:FindFirstChildOfClass("Humanoid")
@@ -66,7 +60,6 @@ local function disableGodmode()
 end
 
 local function enableGodmode()
-	-- Clear old connections
 	for _, conn in pairs(Connections) do
 		if conn then conn:Disconnect() end
 	end
@@ -77,20 +70,17 @@ local function enableGodmode()
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then return end
 
-	-- Set max health
 	humanoid.MaxHealth = math.huge
 	humanoid.Health = math.huge
 
-	-- Keep health at max every frame
 	table.insert(Connections, RunService.RenderStepped:Connect(function()
-		if isResetting then return end -- Don't interfere during reset
+		if isResetting then return end
 		if humanoid and humanoid.Parent then
 			humanoid.MaxHealth = math.huge
 			humanoid.Health = math.huge
 		end
 	end))
 
-	-- Detect health changes
 	table.insert(Connections, humanoid:GetPropertyChangedSignal("Health"):Connect(function()
 		if isResetting then return end
 		if humanoid and humanoid.Parent then
@@ -101,7 +91,6 @@ local function enableGodmode()
 		end
 	end))
 
-	-- Prevent death
 	table.insert(Connections, humanoid.Died:Connect(function()
 		if isResetting then return end
 		task.wait()
@@ -113,68 +102,54 @@ local function doReset()
 	if isResetting then return end
 	isResetting = true
 
-	print("Freeze detected! Disabling godmode and resetting...")
-
-	-- Disable godmode first
 	disableGodmode()
 
 	local char = LocalPlayer.Character
 	if char then
 		local humanoid = char:FindFirstChildOfClass("Humanoid")
 		if humanoid then
-			-- Set health to 0 to trigger reset
 			humanoid.MaxHealth = 100
 			humanoid.Health = 0
 		end
 	end
 
-	-- Wait for respawn
 	LocalPlayer.CharacterAdded:Wait()
 	task.wait(0.3)
 	
-	-- Check if freeze is ACTUALLY gone after reset
 	local newChar = workspace:FindFirstChild(LocalPlayer.Name)
 	if newChar and newChar:FindFirstChild("Hielo") then
-		print("Still frozen after reset! Trying again...")
 		isResetting = false
 		task.wait(0.5)
-		doReset() -- Retry
+		doReset()
 		return
 	end
 	
-	-- Freeze is gone, re-enable godmode
 	enableGodmode()
 	isResetting = false
-	print("Godmode re-enabled after successful reset!")
 end
 
--- Anti-freeze detection loop
 local function startWatching()
 	if watchConn then watchConn:Disconnect() end
 	watchConn = RunService.Heartbeat:Connect(function()
-		if isResetting then return end -- Don't trigger multiple resets at once
+		if isResetting then return end
 		local char = workspace:FindFirstChild(LocalPlayer.Name)
 		if not char then return end
-		-- Check for freeze object (Hielo)
 		if char:FindFirstChild("Hielo") then
 			doReset()
 		end
 	end)
 end
 
--- Handle character respawns
 LocalPlayer.CharacterAdded:Connect(function(character)
-	isResetting = false -- Reset flag cleared
+	isResetting = false
 	character:WaitForChild("HumanoidRootPart")
 	
-	-- Fix NaN position first
 	fixNaNPosition(character)
 	
 	task.wait(0.2)
 	enableGodmode()
 end)
 
--- Start godmode on first character
 if LocalPlayer.Character then
 	fixNaNPosition(LocalPlayer.Character)
 	enableGodmode()
@@ -184,7 +159,4 @@ else
 	enableGodmode()
 end
 
--- Start anti-freeze monitoring
 startWatching()
-
-print("God Mode + Anti-Freeze + Anti-NaN Auto-Exec: ENABLED")
