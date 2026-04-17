@@ -202,7 +202,8 @@ task.spawn(function()
 
 		-- Check if Paint tool exists in backpack
 		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
-		if paintTool and not processedPaintTools[paintTool] then
+		local deleteToolExists = LocalPlayer.Backpack:FindFirstChild("Delete")
+		if paintTool and not processedPaintTools[paintTool] and not deleteToolExists then
 			processedPaintTools[paintTool] = true
 
 			-- Wait if this tool was just picked up from workspace
