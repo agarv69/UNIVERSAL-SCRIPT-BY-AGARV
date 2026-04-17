@@ -12,7 +12,7 @@ task.spawn(function()
 		if hum and hum.Health > 0 then
 			local currentlyEquipped = char:FindFirstChildOfClass("Tool")
 			for _, obj in ipairs(workspace:GetChildren()) do
-				if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
+				if obj:IsA("Tool") and obj:FindFirstChild("Handle") and obj.Name ~= "Delete" then
 					pcall(function()
 						hum:EquipTool(obj)
 						task.wait(0.05)
@@ -88,7 +88,7 @@ task.spawn(function()
 					task.wait(0.1)
 					
 					-- Re-equip previous tool if there was one
-					if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+					if previousTool and previousTool.Parent == LocalPlayer.Backpack and previousTool.Name ~= "Delete" then
 						humanoid:EquipTool(previousTool)
 					end
 				end)
