@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local isProcessingDelete = false
 
@@ -39,16 +40,23 @@ end)
 --------------------------------------------------
 -- AUTO BKIT BREAK (WHEN DELETE TOOL DETECTED)
 --------------------------------------------------
-local processedTools = {}
+local processedDeleteTools = {}
 
 task.spawn(function()
 	while true do
 		task.wait(0.1)
 		
+		-- Check if Brick exists first
+		local brick = ReplicatedStorage:FindFirstChild("Brick")
+		if not brick then
+			task.wait(0.5)
+			continue
+		end
+		
 		-- Check if Delete tool exists in backpack
 		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
-		if deleteTool and not processedTools[deleteTool] then
-			processedTools[deleteTool] = true
+		if deleteTool and not processedDeleteTools[deleteTool] then
+			processedDeleteTools[deleteTool] = true
 			isProcessingDelete = true
 			
 			task.spawn(function()
@@ -70,15 +78,6 @@ task.spawn(function()
 					
 					-- Get the event from the equipped tool
 					local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
-					
-					-- Get Brick from ReplicatedStorage
-					local rs = game:GetService("ReplicatedStorage")
-					local brick = rs:FindFirstChild("Brick")
-					if not brick then 
-						humanoid:UnequipTools()
-						isProcessingDelete = false
-						return 
-					end
 					
 					-- Spam fire delete event for 1 second
 					local startTime = tick()
@@ -105,9 +104,56 @@ task.spawn(function()
 		end
 		
 		-- Clean up table for tools that no longer exist
-		for tool, _ in pairs(processedTools) do
+		for tool, _ in pairs(processedDeleteTools) do
 			if not tool or not tool.Parent then
-				processedTools[tool] = nil
+				processedDeleteTools[tool] = nil
+			end
+		end
+	end
+end)
+
+--------------------------------------------------
+-- AUTO ARKENSTONE (WHEN ARKENSTONE DETECTED)
+--------------------------------------------------
+local processedArkenstones = {}
+
+task.spawn(function()
+	while true do
+		task.wait(0.1)
+		
+		-- Check if Brick exists first
+		local brick = ReplicatedStorage:FindFirstChild("Brick")
+		if not brick then
+			task.wait(0.5)
+			continue
+		end
+		
+		-- Check if The Arkenstone exists in backpack
+		local arkenstone = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
+		if arkenstone and not processedArkenstones[arkenstone] then
+			processedArkenstones[arkenstone] = true
+			
+			task.spawn(function()
+				pcall(function()
+					local character = LocalPlayer.Character
+					if not character then return end
+					local humanoid = character:FindFirstChild("Humanoid")
+					if not humanoid then return end
+					
+					-- Equip The Arkenstone
+					humanoid:EquipTool(arkenstone)
+					task.wait(0.1)
+					
+					-- Say ;bkit in chat
+					game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(";bkit", "All")
+				end)
+			end)
+		end
+		
+		-- Clean up table for tools that no longer exist
+		for tool, _ in pairs(processedArkenstones) do
+			if not tool or not tool.Parent then
+				processedArkenstones[tool] = nil
 			end
 		end
 	end
