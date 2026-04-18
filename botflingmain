@@ -62,6 +62,26 @@ task.delay(6, function()
 					cooldown = false
 				end)
 			end
+			
+			if char then
+				local tiempo = char:FindFirstChild("Tiempo")
+				if tiempo then
+					local text1 = tiempo:FindFirstChild("Text1")
+					if text1 and text1.Text then
+						local timeText = text1.Text
+						if string.match(timeText, "%d+%s+.") then
+							cooldown = true
+							lastRejoinTime = tick()
+
+							TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+
+							task.delay(10, function()
+								cooldown = false
+							end)
+						end
+					end
+				end
+			end
 		end
 	end)
 end)
