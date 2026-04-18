@@ -1,10 +1,75 @@
-local PlayerGui = game:GetService("Players").LocalPlayer.PlayerGui
+local CoreGui = game:GetService("CoreGui")
 
-print("========== ALL GUIs IN PLAYERGUI ==========")
-for _, gui in pairs(PlayerGui:GetChildren()) do
-	print("GUI: " .. gui.Name)
-	for _, child in pairs(gui:GetChildren()) do
-		print("  - " .. child.Name .. " (" .. child.ClassName .. ")")
+local AgarWareGui = CoreGui:FindFirstChild("AgarWareGui")
+
+if not AgarWareGui then
+	warn("Could not find AgarWareGui in CoreGui!")
+	return
+end
+
+print("Found AgarWareGui in CoreGui")
+
+local MainFrame = AgarWareGui:FindFirstChild("MainFrame", true)
+
+if not MainFrame then
+	warn("MainFrame not found in AgarWareGui!")
+	return
+end
+
+print("Found MainFrame at: " .. MainFrame:GetFullName())
+
+local ContentArea = MainFrame:FindFirstChild("ContentArea")
+
+if not ContentArea then
+	warn("ContentArea not found!")
+	return
+end
+
+local function isTickBox(child)
+	if not child:IsA("TextButton") then return false end
+	if not child.Name:match("TickBox$") then return false end
+	return true
+end
+
+local function isTickBoxEnabled(tickBox)
+	local color = tickBox.BackgroundColor3
+	return color.R == 0 and math.abs(color.G - 123/255) < 0.01 and color.B == 1
+end
+
+print("========== CURRENTLY ENABLED TICKBOXES ==========")
+
+for _, page in pairs(ContentArea:GetChildren()) do
+	if page:IsA("Frame") then
+		for _, side in pairs(page:GetChildren()) do
+			if side:IsA("Frame") then
+				for _, group in pairs(side:GetChildren()) do
+					if group:IsA("Frame") then
+						for _, row in pairs(group:GetChildren()) do
+							if row:IsA("Frame") then
+								for _, child in pairs(row:GetChildren()) do
+									if isTickBox(child) then
+										if isTickBoxEnabled(child) then
+											print("[ENABLED] " .. row.Name .. " -> " .. child.Name)
+										end
+										
+										-- Listen for changes
+										child:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
+											local nowEnabled = isTickBoxEnabled(child)
+											if nowEnabled then
+												print("[TOGGLED ON] " .. row.Name .. " -> " .. child.Name)
+											else
+												print("[TOGGLED OFF] " .. row.Name .. " -> " .. child.Name)
+											end
+										end)
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
 	end
 end
-print("==========================================")
+
+print("========== MONITORING TICKBOX CHANGES ==========")
