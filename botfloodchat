@@ -1,0 +1,31 @@
+task.spawn(function()
+	task.wait(15)
+	
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local TextChatService = game:GetService("TextChatService")
+	
+	local function sendChat(message)
+		pcall(function()
+			local channels = TextChatService:WaitForChild("TextChannels", 2)
+			if channels then
+				local general = channels:FindFirstChild("RBXGeneral")
+				if general then
+					general:SendAsync(message)
+					return
+				end
+			end
+			local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
+			if chatEvents then
+				local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
+				if sayMessage then
+					sayMessage:FireServer(message, "All")
+				end
+			end
+		end)
+	end
+	
+	while true do
+		sendChat("🔥MONKEY FOREVER🔥")
+		task.wait(15)
+	end
+end)
