@@ -18551,18 +18551,14 @@ local script = G2L["16d"];
 			p = p.Parent
 		end
 	end
-	
 	local FFRow = script.Parent
 	local FFButton = FFRow.FFButton
 	local FFHelp = FFRow.FFHelp
-	
 	local originalText = FFButton.Text
-	
 	------------------------------------------------
 	-- TOOLTIP
 	------------------------------------------------
 	local sg = getScreenGui()
-	
 	local tooltipFrame = Instance.new("Frame")
 	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 	tooltipFrame.BorderSizePixel = 0
@@ -18571,16 +18567,13 @@ local script = G2L["16d"];
 	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
 	tooltipFrame.Visible = false
 	tooltipFrame.Parent = sg
-	
 	local stroke = Instance.new("UIStroke", tooltipFrame)
 	stroke.Color = Color3.fromRGB(57, 57, 57)
-	
 	local padding = Instance.new("UIPadding", tooltipFrame)
 	padding.PaddingTop = UDim.new(0, 6)
 	padding.PaddingBottom = UDim.new(0, 6)
 	padding.PaddingLeft = UDim.new(0, 6)
 	padding.PaddingRight = UDim.new(0, 6)
-	
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
 	label.Text =
@@ -18596,41 +18589,32 @@ local script = G2L["16d"];
 	label.AutomaticSize = Enum.AutomaticSize.Y
 	label.ZIndex = 101
 	label.Parent = tooltipFrame
-	
 	FFHelp.MouseEnter:Connect(function()
 		local abs = FFHelp.AbsolutePosition
 		local size = FFHelp.AbsoluteSize
 		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
 		tooltipFrame.Visible = true
 	end)
-	
 	FFHelp.MouseLeave:Connect(function()
 		tooltipFrame.Visible = false
 	end)
-	
 	------------------------------------------------
 	-- BUTTON EXECUTE
 	------------------------------------------------
 	FFButton.MouseButton1Click:Connect(function()
 		FFButton.Text = "LOADING..."
-	
 		task.spawn(function()
 			local success, err = pcall(function()
-	
 				local code1 = game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain")
 				loadstring(code1)()
-	
 				local code2 = game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1")
 				loadstring(code2)()
-	
 				local code3 = game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingBKIT")
 				loadstring(code3)()
-				
-				local code3 = game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfloodchat")
+	
+				local code4 = game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfloodchat")
 				loadstring(code4)()
-	
 			end)
-	
 			if success then
 				FFButton.Text = "SUCCESSFULLY EXECUTED"
 				task.wait(3)
@@ -18642,7 +18626,6 @@ local script = G2L["16d"];
 			end
 		end)
 	end)
-	
 	------------------------------------------------
 	-- CLEANUP
 	------------------------------------------------
