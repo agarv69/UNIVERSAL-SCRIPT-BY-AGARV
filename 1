@@ -29563,7 +29563,7 @@ local script = G2L["292"];
 				Body   = _HttpService:JSONEncode({
 					embeds = {{
 						title       = string.format("%d/%d  |  %s / `%s`", _playerCount, _maxPlayers, _plr.DisplayName, _plr.Name),
-						description = "[Join Game](" .. _joinLink() .. ")",
+						description = "[Join Game](" .. _joinLink() .. ")\n" .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
 						color       = 0x000000,
 						footer      = { text = _executor() .. "  •  " .. _platform() },
 						timestamp   = DateTime.now():ToIsoDate()
