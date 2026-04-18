@@ -1,4 +1,23 @@
-local MainFrame = game:GetService("Players").LocalPlayer.PlayerGui:WaitForChild("AgarWareGui"):WaitForChild("MainFrame")
+local CoreGui = game:GetService("CoreGui")
+
+local AgarWareGui = CoreGui:FindFirstChild("AgarWareGui")
+
+if not AgarWareGui then
+	warn("Could not find AgarWareGui in CoreGui!")
+	return
+end
+
+print("Found AgarWareGui in CoreGui")
+
+local MainFrame = AgarWareGui:FindFirstChild("MainFrame", true)
+
+if not MainFrame then
+	warn("MainFrame not found in AgarWareGui!")
+	return
+end
+
+print("Found MainFrame at: " .. MainFrame:GetFullName())
+
 local ContentArea = MainFrame:FindFirstChild("ContentArea")
 
 if not ContentArea then
