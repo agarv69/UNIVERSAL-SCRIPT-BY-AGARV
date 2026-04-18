@@ -14024,7 +14024,24 @@ local script = G2L["c6"];
 	local localPlayer = Players.LocalPlayer
 	
 	local SaveScriptsTickBox = script.Parent:WaitForChild("SaveScriptsTickBox")
-	local MainFrame = script.Parent.Parent.Parent.Parent.Parent.Parent -- SaveScriptsRow -> MainSettingsGroup -> SettingsLeftSide -> SettingsPage -> ContentArea -> MainFrame
+	
+	local function findMainFrame()
+		local current = script.Parent
+		while current do
+			if current.Name == "MainFrame" then
+				return current
+			end
+			current = current.Parent
+		end
+		return nil
+	end
+	
+	local MainFrame = findMainFrame()
+	
+	if not MainFrame then
+		warn("[SaveScripts] Could not find MainFrame!")
+		return
+	end
 	
 	local FILE_NAME = "universalscript_save.txt"
 	local saveEnabled = false
@@ -14071,46 +14088,42 @@ local script = G2L["c6"];
 	end
 	
 	local function isTickBoxEnabled(tickBox)
-		-- Check if BackgroundColor3 is the enabled color (0, 123, 255)
 		local color = tickBox.BackgroundColor3
 		return color.R == 0 and math.abs(color.G - 123/255) < 0.01 and color.B == 1
 	end
 	
 	local function saveData()
 		if not saveEnabled then return end
-		local lines = {}
+		if not MainFrame or not MainFrame.Parent then return end
 	
+		local lines = {}
 		table.insert(lines, "saveEnabled=true")
 	
+		-- Save BOTH Scale and Offset for position
 		local pos = MainFrame.Position
-		table.insert(lines, "posX=" .. pos.X.Offset)
-		table.insert(lines, "posY=" .. pos.Y.Offset)
+		table.insert(lines, "posXScale=" .. pos.X.Scale)
+		table.insert(lines, "posXOffset=" .. pos.X.Offset)
+		table.insert(lines, "posYScale=" .. pos.Y.Scale)
+		table.insert(lines, "posYOffset=" .. pos.Y.Offset)
 	
 		local ContentArea = MainFrame:FindFirstChild("ContentArea")
 		if not ContentArea then return end
 	
-		-- Traverse all pages
 		for _, page in pairs(ContentArea:GetChildren()) do
 			if page:IsA("Frame") then
-				-- Traverse left and right sides
 				for _, side in pairs(page:GetChildren()) do
 					if side:IsA("Frame") then
-						-- Traverse groups
 						for _, group in pairs(side:GetChildren()) do
 							if group:IsA("Frame") then
-								-- Traverse rows
 								for _, row in pairs(group:GetChildren()) do
 									if row:IsA("Frame") then
-										-- Check for TickBox
 										for _, child in pairs(row:GetChildren()) do
 											if isTickBox(child) then
 												local enabled = isTickBoxEnabled(child)
 												table.insert(lines, row.Name .. "_" .. child.Name .. "=" .. tostring(enabled))
 											end
 	
-											-- Check for Changer TextBox
 											if isChanger(child) then
-												-- Only save if text is not the placeholder
 												if child.Text ~= "" and child.Text ~= child.PlaceholderText then
 													table.insert(lines, row.Name .. "_" .. child.Name .. "_text=" .. child.Text)
 												end
@@ -14130,19 +14143,22 @@ local script = G2L["c6"];
 	
 	local function applyLoad(data)
 		if not data or isApplyingLoad then return end
-		isApplyingLoad = true
+		if not MainFrame or not MainFrame.Parent then return end
 	
-		-- Set attribute to prevent drag script from interfering
+		isApplyingLoad = true
 		MainFrame:SetAttribute("IsLoading", true)
 	
-		-- Disable built-in dragging during load to prevent conflicts
 		local wasDraggable = MainFrame.Draggable
 		MainFrame.Draggable = false
 	
-		local x = tonumber(data["posX"])
-		local y = tonumber(data["posY"])
-		if x and y then
-			MainFrame.Position = UDim2.new(0, x, 0, y)
+		-- Load BOTH Scale and Offset for position
+		local xScale = tonumber(data["posXScale"])
+		local xOffset = tonumber(data["posXOffset"])
+		local yScale = tonumber(data["posYScale"])
+		local yOffset = tonumber(data["posYOffset"])
+	
+		if xScale and xOffset and yScale and yOffset then
+			MainFrame.Position = UDim2.new(xScale, xOffset, yScale, yOffset)
 		end
 	
 		task.wait(0.5)
@@ -14155,37 +14171,16 @@ local script = G2L["c6"];
 			return 
 		end
 	
-		-- Traverse all pages
+		-- First: Load TextBox values
 		for _, page in pairs(ContentArea:GetChildren()) do
 			if page:IsA("Frame") then
-				-- Traverse left and right sides
 				for _, side in pairs(page:GetChildren()) do
 					if side:IsA("Frame") then
-						-- Traverse groups
 						for _, group in pairs(side:GetChildren()) do
 							if group:IsA("Frame") then
-								-- Traverse rows
 								for _, row in pairs(group:GetChildren()) do
 									if row:IsA("Frame") then
-										-- Check for TickBox
 										for _, child in pairs(row:GetChildren()) do
-											if isTickBox(child) then
-												local savedValue = data[row.Name .. "_" .. child.Name]
-												if savedValue then
-													local shouldBeEnabled = savedValue == "true"
-													local currentlyEnabled = isTickBoxEnabled(child)
-	
-													-- Only click if states don't match
-													if shouldBeEnabled and not currentlyEnabled then
-														pcall(function()
-															firesignal(child.MouseButton1Click)
-														end)
-														task.wait(0.15)
-													end
-												end
-											end
-	
-											-- Check for Changer TextBox
 											if isChanger(child) then
 												local savedText = data[row.Name .. "_" .. child.Name .. "_text"]
 												if savedText then
@@ -14202,41 +14197,82 @@ local script = G2L["c6"];
 			end
 		end
 	
+		task.wait(0.3)
+	
+		-- Second: Click TickBoxes
+		for _, page in pairs(ContentArea:GetChildren()) do
+			if not MainFrame or not MainFrame.Parent then break end
+	
+			if page:IsA("Frame") then
+				for _, side in pairs(page:GetChildren()) do
+					if not MainFrame or not MainFrame.Parent then break end
+	
+					if side:IsA("Frame") then
+						for _, group in pairs(side:GetChildren()) do
+							if not MainFrame or not MainFrame.Parent then break end
+	
+							if group:IsA("Frame") then
+								for _, row in pairs(group:GetChildren()) do
+									if not MainFrame or not MainFrame.Parent then break end
+	
+									if row:IsA("Frame") then
+										for _, child in pairs(row:GetChildren()) do
+											if not MainFrame or not MainFrame.Parent then break end
+	
+											if isTickBox(child) then
+												local savedValue = data[row.Name .. "_" .. child.Name]
+												if savedValue then
+													local shouldBeEnabled = savedValue == "true"
+													local currentlyEnabled = isTickBoxEnabled(child)
+	
+													if shouldBeEnabled and not currentlyEnabled then
+														pcall(function()
+															firesignal(child.MouseButton1Click)
+														end)
+														task.wait(0.2)
+													end
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	
 		task.wait(0.5)
 		isApplyingLoad = false
 	
-		-- Clear attribute to allow dragging again
-		MainFrame:SetAttribute("IsLoading", false)
-	
-		-- Re-enable dragging after load is complete
-		MainFrame.Draggable = wasDraggable
+		if MainFrame and MainFrame.Parent then
+			MainFrame:SetAttribute("IsLoading", false)
+			MainFrame.Draggable = wasDraggable
+		end
 	end
 	
-	-- Auto-save every 2 seconds when enabled
 	task.spawn(function()
 		while true do
 			task.wait(2)
-			if saveEnabled then
+			if saveEnabled and MainFrame and MainFrame.Parent then
 				saveData()
 			end
 		end
 	end)
 	
-	-- Save when script is destroyed
 	script.Parent.AncestryChanged:Connect(function()
-		if not script:IsDescendantOf(game) then
+		if not script:IsDescendantOf(game) and saveEnabled then
 			saveData()
 		end
 	end)
 	
-	-- Save when player leaves
 	localPlayer.AncestryChanged:Connect(function()
-		if saveEnabled then
+		if saveEnabled and MainFrame and MainFrame.Parent then
 			saveData()
 		end
 	end)
 	
-	-- Toggle button
 	SaveScriptsTickBox.MouseButton1Click:Connect(function()
 		saveEnabled = not saveEnabled
 		if saveEnabled then
@@ -14249,9 +14285,11 @@ local script = G2L["c6"];
 		end
 	end)
 	
-	-- Auto-load on join (completely silent)
 	task.spawn(function()
-		task.wait(1.5)
+		task.wait(3)
+	
+		if not MainFrame or not MainFrame.Parent then return end
+	
 		local data = loadSave()
 		if not data then return end
 	
