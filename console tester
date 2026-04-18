@@ -1,63 +1,28 @@
-local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local LocalPlayer = Players.LocalPlayer
-local PLACE_ID = game.PlaceId
-local cooldown = false
-local lastRejoinTime = 0
+local CoreGui = game:GetService("CoreGui")
+local AgarWareGui = CoreGui:FindFirstChild("AgarWareGui")
 
-------------------------------------------------
--- AUTO EXECUTE
-------------------------------------------------
-local function setupAutoExecute()
-	local queueFn =
-		queue_on_teleport
-		or (syn and syn.queue_on_teleport)
-		or (fluxus and fluxus.queue_on_teleport)
-	if queueFn then
-		queueFn([[
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1"))()
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling2"))()
-			task.wait(3)
-			task.spawn(function()
-				local TextChatService = game:GetService("TextChatService")
-				local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-				channel:SendAsync("MONKEY GANG ON TOP")
-			end)
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain"))()
-		]])
-	end
+if not AgarWareGui then
+	warn("Could not find AgarWareGui in CoreGui!")
+	return
 end
-setupAutoExecute()
 
-------------------------------------------------
--- NOCLIP WATCHER
-------------------------------------------------
-local function watchNoclip()
-	task.spawn(function()
-		while task.wait(0.5) do
-			if cooldown then
-				continue
-			end
-			
-			-- Prevent rejoining more than once every 10 seconds
-			if tick() - lastRejoinTime < 10 then
-				continue
-			end
-			
-			local char = LocalPlayer.Character
-			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-			
-			if hrp and hrp.CollisionGroup == "NoClip" then
-				cooldown = true
-				lastRejoinTime = tick()
-				
-				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
-				
-				task.delay(10, function()
-					cooldown = false
-				end)
+local MainFrame = AgarWareGui:FindFirstChild("MainFrame", true)
+local ContentArea = MainFrame:FindFirstChild("ContentArea")
+
+print("========== CONTENTAREA STRUCTURE ==========")
+print("ContentArea children:")
+for _, child in pairs(ContentArea:GetChildren()) do
+	print("  " .. child.Name .. " (" .. child.ClassName .. ")")
+	if child:IsA("Frame") then
+		print("    Children of " .. child.Name .. ":")
+		for _, subchild in pairs(child:GetChildren()) do
+			print("      " .. subchild.Name .. " (" .. subchild.ClassName .. ")")
+			if subchild:IsA("Frame") then
+				print("        Children of " .. subchild.Name .. ":")
+				for _, subsubchild in pairs(subchild:GetChildren()) do
+					print("          " .. subsubchild.Name .. " (" .. subsubchild.ClassName .. ")")
+				end
 			end
 		end
-	end)
+	end
 end
-watchNoclip()
