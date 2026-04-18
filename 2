@@ -1,13 +1,57 @@
-local CoreGui = game:GetService("CoreGui")
-local AgarWareGui = CoreGui:FindFirstChild("AgarWareGui")
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
 
-if not AgarWareGui then
-	warn("Could not find AgarWareGui in CoreGui!")
+local SaveScriptsTickBox = script.Parent:WaitForChild("SaveScriptsTickBox")
+
+local function findMainFrame()
+	local current = script.Parent
+	while current do
+		if current.Name == "MainFrame" then
+			return current
+		end
+		current = current.Parent
+	end
+	return nil
+end
+
+local MainFrame = findMainFrame()
+
+if not MainFrame then
+	warn("[SaveScripts] Could not find MainFrame!")
 	return
 end
 
-local MainFrame = AgarWareGui:FindFirstChild("MainFrame", true)
-local ContentArea = MainFrame:FindFirstChild("ContentArea")
+local FILE_NAME = "universalscript_save.txt"
+local saveEnabled = false
+local isApplyingLoad = false
+
+local function readFile()
+	local success, result = pcall(function()
+		return readfile(FILE_NAME)
+	end)
+	if success and result and result ~= "" then return result end
+	return nil
+end
+
+local function writeFile(content)
+	pcall(function()
+		writefile(FILE_NAME, content)
+	end)
+end
+
+local function loadSave()
+	local data = readFile()
+	if not data then return nil end
+	local decoded = {}
+	for line in data:gmatch("[^\n]+") do
+		local key, value = line:match("(.-)=(.+)")
+		if key and value then
+			decoded[key] = value
+		end
+	end
+	if decoded["saveEnabled"] ~= "true" then return nil end
+	return next(decoded) and decoded or nil
+end
 
 local function isTickBox(child)
 	if not child:IsA("TextButton") then return false end
@@ -15,20 +59,53 @@ local function isTickBox(child)
 	return true
 end
 
-local tickBoxCount = 0
+local function isChanger(child)
+	if not child:IsA("TextBox") then return false end
+	if not child.Name:match("Changer$") then return false end
+	return true
+end
 
-for _, page in pairs(ContentArea:GetChildren()) do
-	if page:IsA("Frame") then
-		for _, side in pairs(page:GetChildren()) do
-			if side:IsA("Frame") then
-				for _, group in pairs(side:GetChildren()) do
-					if group:IsA("Frame") then
-						for _, row in pairs(group:GetChildren()) do
-							if row:IsA("Frame") then
-								for _, child in pairs(row:GetChildren()) do
-									if isTickBox(child) then
-										tickBoxCount = tickBoxCount + 1
-										print("Found TickBox #" .. tickBoxCount .. ": " .. row.Name .. " -> " .. child.Name)
+local function isTickBoxEnabled(tickBox)
+	local color = tickBox.BackgroundColor3
+	return color.R == 0 and math.abs(color.G - 123/255) < 0.01 and color.B == 1
+end
+
+local function saveData()
+	if not saveEnabled then return end
+	if not MainFrame or not MainFrame.Parent then return end
+	
+	local lines = {}
+	table.insert(lines, "saveEnabled=true")
+
+	local pos = MainFrame.Position
+	table.insert(lines, "posXScale=" .. pos.X.Scale)
+	table.insert(lines, "posXOffset=" .. pos.X.Offset)
+	table.insert(lines, "posYScale=" .. pos.Y.Scale)
+	table.insert(lines, "posYOffset=" .. pos.Y.Offset)
+
+	local ContentArea = MainFrame:FindFirstChild("ContentArea")
+	if not ContentArea then return end
+
+	-- Traverse: ContentArea -> ScrollingFrame (pages) -> Frame (sides) -> Frame (groups) -> Frame (rows) -> TickBox/Changer
+	for _, page in pairs(ContentArea:GetChildren()) do
+		if page:IsA("ScrollingFrame") then  -- CHANGED: Check for ScrollingFrame instead of Frame
+			for _, side in pairs(page:GetChildren()) do
+				if side:IsA("Frame") then
+					for _, group in pairs(side:GetChildren()) do
+						if group:IsA("Frame") then
+							for _, row in pairs(group:GetChildren()) do
+								if row:IsA("Frame") then
+									for _, child in pairs(row:GetChildren()) do
+										if isTickBox(child) then
+											local enabled = isTickBoxEnabled(child)
+											table.insert(lines, row.Name .. "_" .. child.Name .. "=" .. tostring(enabled))
+										end
+										
+										if isChanger(child) then
+											if child.Text ~= "" and child.Text ~= child.PlaceholderText then
+												table.insert(lines, row.Name .. "_" .. child.Name .. "_text=" .. child.Text)
+											end
+										end
 									end
 								end
 							end
@@ -38,6 +115,163 @@ for _, page in pairs(ContentArea:GetChildren()) do
 			end
 		end
 	end
+
+	writeFile(table.concat(lines, "\n"))
 end
 
-print("Total TickBoxes found: " .. tickBoxCount)
+local function applyLoad(data)
+	if not data or isApplyingLoad then return end
+	if not MainFrame or not MainFrame.Parent then return end
+	
+	isApplyingLoad = true
+	MainFrame:SetAttribute("IsLoading", true)
+	
+	local wasDraggable = MainFrame.Draggable
+	MainFrame.Draggable = false
+
+	local xScale = tonumber(data["posXScale"])
+	local xOffset = tonumber(data["posXOffset"])
+	local yScale = tonumber(data["posYScale"])
+	local yOffset = tonumber(data["posYOffset"])
+	
+	if xScale and xOffset and yScale and yOffset then
+		MainFrame.Position = UDim2.new(xScale, xOffset, yScale, yOffset)
+	end
+
+	task.wait(0.5)
+
+	local ContentArea = MainFrame:FindFirstChild("ContentArea")
+	if not ContentArea then 
+		isApplyingLoad = false
+		MainFrame:SetAttribute("IsLoading", false)
+		MainFrame.Draggable = wasDraggable
+		return 
+	end
+
+	-- First: Load TextBox values
+	for _, page in pairs(ContentArea:GetChildren()) do
+		if page:IsA("ScrollingFrame") then  -- CHANGED
+			for _, side in pairs(page:GetChildren()) do
+				if side:IsA("Frame") then
+					for _, group in pairs(side:GetChildren()) do
+						if group:IsA("Frame") then
+							for _, row in pairs(group:GetChildren()) do
+								if row:IsA("Frame") then
+									for _, child in pairs(row:GetChildren()) do
+										if isChanger(child) then
+											local savedText = data[row.Name .. "_" .. child.Name .. "_text"]
+											if savedText then
+												child.Text = savedText
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	task.wait(0.3)
+
+	-- Second: Click TickBoxes
+	for _, page in pairs(ContentArea:GetChildren()) do
+		if not MainFrame or not MainFrame.Parent then break end
+		
+		if page:IsA("ScrollingFrame") then  -- CHANGED
+			for _, side in pairs(page:GetChildren()) do
+				if not MainFrame or not MainFrame.Parent then break end
+				
+				if side:IsA("Frame") then
+					for _, group in pairs(side:GetChildren()) do
+						if not MainFrame or not MainFrame.Parent then break end
+						
+						if group:IsA("Frame") then
+							for _, row in pairs(group:GetChildren()) do
+								if not MainFrame or not MainFrame.Parent then break end
+								
+								if row:IsA("Frame") then
+									for _, child in pairs(row:GetChildren()) do
+										if not MainFrame or not MainFrame.Parent then break end
+										
+										if isTickBox(child) then
+											local savedValue = data[row.Name .. "_" .. child.Name]
+											if savedValue then
+												local shouldBeEnabled = savedValue == "true"
+												local currentlyEnabled = isTickBoxEnabled(child)
+												
+												if shouldBeEnabled and not currentlyEnabled then
+													pcall(function()
+														firesignal(child.MouseButton1Click)
+													end)
+													task.wait(0.2)
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	task.wait(0.5)
+	isApplyingLoad = false
+	
+	if MainFrame and MainFrame.Parent then
+		MainFrame:SetAttribute("IsLoading", false)
+		MainFrame.Draggable = wasDraggable
+	end
+end
+
+task.spawn(function()
+	while true do
+		task.wait(2)
+		if saveEnabled and MainFrame and MainFrame.Parent then
+			saveData()
+		end
+	end
+end)
+
+script.Parent.AncestryChanged:Connect(function()
+	if not script:IsDescendantOf(game) and saveEnabled then
+		saveData()
+	end
+end)
+
+localPlayer.AncestryChanged:Connect(function()
+	if saveEnabled and MainFrame and MainFrame.Parent then
+		saveData()
+	end
+end)
+
+SaveScriptsTickBox.MouseButton1Click:Connect(function()
+	saveEnabled = not saveEnabled
+	if saveEnabled then
+		SaveScriptsTickBox.BackgroundColor3 = Color3.fromRGB(0, 123, 255)
+		saveData()
+	else
+		saveEnabled = false
+		SaveScriptsTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		writeFile("saveEnabled=false")
+	end
+end)
+
+task.spawn(function()
+	task.wait(3)
+	
+	if not MainFrame or not MainFrame.Parent then return end
+	
+	local data = loadSave()
+	if not data then return end
+
+	saveEnabled = true
+	SaveScriptsTickBox.BackgroundColor3 = Color3.fromRGB(0, 123, 255)
+
+	applyLoad(data)
+end)
