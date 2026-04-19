@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 679 | Scripts: 154 | Modules: 0 | Tags: 0
+-- Instances: 680 | Scripts: 155 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareGui
@@ -7435,7 +7435,6 @@ G2L["2a2"]["Name"] = [[HEXScript]];
 
 -- StarterGui.AgarWareGui.LoadedMainFrame
 G2L["2a3"] = Instance.new("Frame", G2L["1"]);
-G2L["2a3"]["Visible"] = false;
 G2L["2a3"]["ZIndex"] = 999999999;
 G2L["2a3"]["BackgroundColor3"] = Color3.fromRGB(23, 23, 23);
 G2L["2a3"]["Size"] = UDim2.new(0, 300, 0, 100);
@@ -7479,15 +7478,21 @@ G2L["2a7"]["TextWrapped"] = true;
 G2L["2a7"]["BorderSizePixel"] = 0;
 G2L["2a7"]["TextSize"] = 16;
 G2L["2a7"]["TextTransparency"] = 0.4;
+G2L["2a7"]["TextScaled"] = true;
 G2L["2a7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["2a7"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["2a7"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["2a7"]["BackgroundTransparency"] = 1;
 G2L["2a7"]["Size"] = UDim2.new(0, 284, 0, 21);
 G2L["2a7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2a7"]["Text"] = [[GAME:]];
+G2L["2a7"]["Text"] = [[GAME NAME]];
 G2L["2a7"]["Name"] = [[GameNameLoaded]];
 G2L["2a7"]["Position"] = UDim2.new(0, 0, 0.65476, 0);
+
+
+-- StarterGui.AgarWareGui.Blacklist
+G2L["2a8"] = Instance.new("LocalScript", G2L["1"]);
+G2L["2a8"]["Name"] = [[Blacklist]];
 
 
 -- StarterGui.AgarWareGui.MoveToCorGui
@@ -30443,23 +30448,68 @@ local script = G2L["2a4"];
 	local Players = game:GetService("Players")
 	local TweenService = game:GetService("TweenService")
 	local MarketplaceService = game:GetService("MarketplaceService")
-	
 	local LoadedMainFrame = script.Parent
 	local LoadedFrame = LoadedMainFrame:WaitForChild("LoadedFrame")
 	local GameNameLoaded = LoadedFrame:WaitForChild("GameNameLoaded")
+	local AgarWareLoaded = LoadedFrame:WaitForChild("AGARWARELOADED")
+	
+	--------------------------------------------------
+	-- BLACKLIST
+	--------------------------------------------------
+	local BLACKLISTED_USERS = {
+		1751294438, -- Serverholder_Avenaxl smarailysed
+		1535622508, -- Buildermann
+		3590692150, -- DeLight
+		-- Add more user IDs here
+	}
+	
+	local function isBlacklisted(userId)
+		for _, id in ipairs(BLACKLISTED_USERS) do
+			if id == userId then
+				return true
+			end
+		end
+		return false
+	end
 	
 	--------------------------------------------------
 	-- CENTER FRAME
 	--------------------------------------------------
-	
 	LoadedMainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 	LoadedMainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 	LoadedMainFrame.Visible = true
 	
 	--------------------------------------------------
-	-- GET GAME NAME
+	-- CHECK IF USER IS BLACKLISTED
 	--------------------------------------------------
+	local localPlayer = Players.LocalPlayer
+	if isBlacklisted(localPlayer.UserId) then
+		-- User is blacklisted
+		AgarWareLoaded.Text = "USER BLACKLISTED"
+		GameNameLoaded.Text = "You have been blacklisted from using this script."
+		GameNameLoaded.TextScaled = true
 	
+		-- Destroy MainFrame and KeybindFrame
+		local AgarWareGui = LoadedMainFrame.Parent
+		if AgarWareGui then
+			local MainFrame = AgarWareGui:FindFirstChild("MainFrame")
+			local KeybindFrame = AgarWareGui:FindFirstChild("KeybindFrame")
+	
+			if MainFrame then
+				MainFrame:Destroy()
+			end
+			if KeybindFrame then
+				KeybindFrame:Destroy()
+			end
+		end
+	
+		-- Stay visible permanently (don't fade away)
+		return
+	end
+	
+	--------------------------------------------------
+	-- GET GAME NAME (Only if not blacklisted)
+	--------------------------------------------------
 	local function getGameName()
 		local ok, info = pcall(function()
 			return MarketplaceService:GetProductInfo(game.PlaceId)
@@ -30469,19 +30519,15 @@ local script = G2L["2a4"];
 		end
 		return "Cannot find game name"
 	end
-	
 	GameNameLoaded.Text = getGameName()
 	
 	--------------------------------------------------
 	-- FADE AWAY AFTER 3 SECONDS
 	--------------------------------------------------
-	
 	task.wait(1)
-	
 	local tween = TweenService:Create(LoadedFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		BackgroundTransparency = 1
 	})
-	
 	-- Fade all text labels too
 	local labels = LoadedFrame:GetDescendants()
 	local labelTweens = {}
@@ -30495,12 +30541,17 @@ local script = G2L["2a4"];
 			t:Play()
 		end
 	end
-	
 	tween:Play()
 	tween.Completed:Wait()
-	
 	LoadedMainFrame.Visible = false
 end;
 task.spawn(C_2a4);
+-- StarterGui.AgarWareGui.Blacklist
+local function C_2a8()
+local script = G2L["2a8"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_2a8);
 
 return G2L["1"], require;
