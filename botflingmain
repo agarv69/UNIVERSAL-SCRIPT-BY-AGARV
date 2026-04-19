@@ -32,51 +32,57 @@ local function setupAutoExecute()
 end
 setupAutoExecute()
 
-	task.spawn(function()
-		while task.wait(0.5) do
-			if cooldown then
-				continue
-			end
+task.delay(6, function()
+	local TextChatService = game:GetService("TextChatService")
+	local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+	channel:SendAsync("MONKEY GANG ON TOP")
+end)
 
-			if tick() - lastRejoinTime < 10 then
-				continue
-			end
+task.spawn(function()
+	while task.wait(0.5) do
+		if cooldown then
+			continue
+		end
 
-			local char = LocalPlayer.Character
-			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if tick() - lastRejoinTime < 10 then
+			continue
+		end
 
-			if hrp and hrp.CollisionGroup == "NoClip" then
-				cooldown = true
-				lastRejoinTime = tick()
+		local char = LocalPlayer.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+		if hrp and hrp.CollisionGroup == "NoClip" then
+			cooldown = true
+			lastRejoinTime = tick()
 
-				task.delay(10, function()
-					cooldown = false
-				end)
-			end
+			TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
 
-			if char then
-				local tiempo = char:FindFirstChild("Tiempo")
-				if tiempo then
-					local text1 = tiempo:FindFirstChild("Text1")
-					if text1 and text1.Text then
-						local timeText = text1.Text
-						if string.match(timeText, "%d+%s+.") then
-							cooldown = true
-							lastRejoinTime = tick()
+			task.delay(10, function()
+				cooldown = false
+			end)
+		end
 
-							TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+		if char then
+			local tiempo = char:FindFirstChild("Tiempo")
+			if tiempo then
+				local text1 = tiempo:FindFirstChild("Text1")
+				if text1 and text1.Text then
+					local timeText = text1.Text
+					if string.match(timeText, "%d+%s+.") then
+						cooldown = true
+						lastRejoinTime = tick()
 
-							task.delay(10, function()
-								cooldown = false
-							end)
-						end
+						TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+
+						task.delay(10, function()
+							cooldown = false
+						end)
 					end
 				end
 			end
 		end
-	end)
+	end
+end)
 
 local function isNoclipped(player)
 	local character = player.Character
