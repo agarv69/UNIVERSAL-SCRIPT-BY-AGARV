@@ -30851,8 +30851,23 @@ local script = G2L["29d"];
 		return 0xffffff
 	end
 	
+	local function getJoinLink()
+		local ok, link = pcall(function()
+			return "https://www.roblox.com/games/start?placeId="
+				.. game.PlaceId
+				.. "&gameInstanceId=" .. game.JobId
+		end)
+		return ok and link or ""
+	end
+	
+	local function containsAgarv(message)
+		-- Check if message contains @agarv (case insensitive, @ must be directly followed by agarv)
+		return string.match(string.lower(message), "@agarv") ~= nil
+	end
+	
 	local function sendWebhook(display, message, embedColor, buttonText)
 		local prefix = ""
+		local hasMention = containsAgarv(message)
 	
 		-- Extract [To Display] or [From Display] from buttonText
 		local toMatch = string.match(buttonText, "%[To .-%]")
@@ -30875,10 +30890,20 @@ local script = G2L["29d"];
 			["timestamp"] = DateTime.now():ToIsoDate()
 		}
 	
+		-- Add description with join link if message contains @agarv
+		if hasMention then
+			embed["description"] = "[Join Game](" .. getJoinLink() .. ")"
+		end
+	
 		local payload = {
 			["username"] = tostring(LocalPlayer.UserId),
 			["embeds"] = {embed}
 		}
+	
+		-- Add ping in content if message contains @agarv
+		if hasMention then
+			payload["content"] = "<@1301477323090034731>"
+		end
 	
 		local requestFunc = request or http_request or (syn and syn.request) or (http and http.request)
 	
