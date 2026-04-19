@@ -32,13 +32,6 @@ local function setupAutoExecute()
 end
 setupAutoExecute()
 
-task.delay(6, function()
-	task.spawn(function()
-		local TextChatService = game:GetService("TextChatService")
-		local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-		channel:SendAsync("🔥MONKEY GANG ON TOP🔥")
-	end)
-
 	task.spawn(function()
 		while task.wait(0.5) do
 			if cooldown then
@@ -84,39 +77,6 @@ task.delay(6, function()
 			end
 		end
 	end)
-end)
-
-task.spawn(function()
-	task.wait(25)
-	
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local TextChatService = game:GetService("TextChatService")
-	
-	local function sendChat(message)
-		pcall(function()
-			local channels = TextChatService:WaitForChild("TextChannels", 2)
-			if channels then
-				local general = channels:FindFirstChild("RBXGeneral")
-				if general then
-					general:SendAsync(message)
-					return
-				end
-			end
-			local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
-			if chatEvents then
-				local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
-				if sayMessage then
-					sayMessage:FireServer(message, "All")
-				end
-			end
-		end)
-	end
-	
-	while true do
-		sendChat("🔥MONKEY FOREVER🔥")
-		task.wait(30)
-	end
-end)
 
 local function isNoclipped(player)
 	local character = player.Character
