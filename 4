@@ -27,7 +27,7 @@ local function getEmbedColor(buttonText)
 	-- Extract RGB from font color
 	local r, g, b = string.match(buttonText, "rgb%((%d+),(%d+),(%d+)%)")
 	if r and g and b then
-		r, g, b = tonumber(r), tonumber(g), tonumber(b)
+		r, g, b = tonumber(r), tonumber(g), tonumber(b)  -- FIXED: was tonumber(g) twice
 		-- Convert RGB to hex color
 		return (r * 65536) + (g * 256) + b
 	end
@@ -39,13 +39,13 @@ end
 local function sendWebhook(display, message, embedColor, buttonText)
 	local prefix = ""
 	
-	if string.match(buttonText, "HIDDEN CHAT") then
-		prefix = "*(HIDDEN)* "
-	elseif string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
+	-- Only add (PRIVATE) prefix for private messages
+	if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
 		prefix = "*(PRIVATE)* "
 	end
+	-- Hidden chats don't get a prefix, just red embed color
 	
-	local title = prefix .. "**" .. display .. ":** " .. message
+	local title = prefix .. "**" .. display .. "** " .. message
 	
 	local embed = {
 		["title"] = title,
@@ -96,18 +96,40 @@ local function onFrameAdded(frame)
 	-- Get the display name from PrefixText
 	local display = prefixText.ContentText
 	
+	-- Remove [To display] or [From display] from prefix if it's a private message
+	display = string.gsub(display, "%[To .-%] ", "")
+	display = string.gsub(display, "%[From .-%] ", "")
+	
 	-- Get the full message from BodyText
 	local fullMessage = bodyText.ContentText
 	
-	-- Remove the display prefix from the message
-	local message = fullMessage
-	if string.sub(fullMessage, 1, #display) == display then
-		message = string.sub(fullMessage, #display + 1) -- Remove display prefix
-		message = string.match(message, "^%s*(.-)%s*$") -- Trim whitespace
-	end
-	
 	-- Get the button text for color/type detection
 	local buttonText = textButtonButton.Text
+	
+	-- Check if it's a private message
+	local isPrivate = string.match(buttonText, "%[From") or string.match(buttonText, "%[To")
+	
+	-- Remove the display prefix from the message
+	local message = fullMessage
+	
+	if isPrivate then
+		-- For private messages: remove [To/From Display] and the PrefixText
+		message = string.gsub(message, "%[To .-%] ", "")
+		message = string.gsub(message, "%[From .-%] ", "")
+		
+		-- Remove the display prefix
+		if string.sub(message, 1, #display) == display then
+			message = string.sub(message, #display + 1)
+		end
+	else
+		-- For normal/hidden messages: just remove the display prefix
+		if string.sub(fullMessage, 1, #display) == display then
+			message = string.sub(fullMessage, #display + 1)
+		end
+	end
+	
+	-- Trim whitespace
+	message = string.match(message, "^%s*(.-)%s*$")
 	
 	-- Determine embed color based on button text
 	local embedColor = getEmbedColor(buttonText)
