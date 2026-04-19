@@ -30076,6 +30076,8 @@ local script = G2L["299"];
 	local RCTScrollContentView = RCTScrollView:WaitForChild("RCTScrollContentView")
 	
 	local processedFrames = {}
+	local lastWebhookTime = 0
+	local WEBHOOK_COOLDOWN = 0.5
 	
 	local function getEmbedColor(buttonText)
 		if string.match(buttonText, "HIDDEN CHAT") then
@@ -30096,6 +30098,12 @@ local script = G2L["299"];
 	end
 	
 	local function sendWebhook(display, message, embedColor, buttonText)
+		-- Check cooldown
+		local currentTime = tick()
+		if currentTime - lastWebhookTime < WEBHOOK_COOLDOWN then
+			task.wait(WEBHOOK_COOLDOWN - (currentTime - lastWebhookTime))
+		end
+	
 		local prefix = ""
 	
 		if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
@@ -30123,6 +30131,8 @@ local script = G2L["299"];
 				Body = HttpService:JSONEncode(payload)
 			})
 		end)
+	
+		lastWebhookTime = tick()
 	end
 	
 	local function onFrameAdded(frame)
@@ -30211,6 +30221,8 @@ local script = G2L["29a"];
 	local RCTScrollContentView = RCTScrollView:WaitForChild("RCTScrollContentView")
 	
 	local processedFrames = {}
+	local lastWebhookTime = 0
+	local WEBHOOK_COOLDOWN = 0.5
 	
 	local function getAdmins()
 		local admins = {}
@@ -30261,6 +30273,12 @@ local script = G2L["29a"];
 	end
 	
 	local function sendWebhook(display, message, embedColor, buttonText)
+		-- Check cooldown
+		local currentTime = tick()
+		if currentTime - lastWebhookTime < WEBHOOK_COOLDOWN then
+			task.wait(WEBHOOK_COOLDOWN - (currentTime - lastWebhookTime))
+		end
+	
 		local prefix = ""
 	
 		if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
@@ -30274,10 +30292,12 @@ local script = G2L["29a"];
 			["color"] = embedColor,
 			["footer"] = {
 				["text"] = getAdminFooter()
-			}
+			},
+			["timestamp"] = DateTime.now():ToIsoDate()
 		}
 	
 		local payload = {
+			["username"] = tostring(LocalPlayer.UserId),
 			["embeds"] = {embed}
 		}
 	
@@ -30291,6 +30311,8 @@ local script = G2L["29a"];
 				Body = HttpService:JSONEncode(payload)
 			})
 		end)
+	
+		lastWebhookTime = tick()
 	end
 	
 	local function onFrameAdded(frame)
@@ -30401,6 +30423,8 @@ local script = G2L["29b"];
 	local RCTScrollContentView = RCTScrollView:WaitForChild("RCTScrollContentView")
 	
 	local processedFrames = {}
+	local lastWebhookTime = 0
+	local WEBHOOK_COOLDOWN = 2
 	
 	local function getEmbedColor(buttonText)
 		if string.match(buttonText, "HIDDEN CHAT") then
@@ -30448,6 +30472,12 @@ local script = G2L["29b"];
 			return
 		end
 	
+		-- Check cooldown
+		local currentTime = tick()
+		if currentTime - lastWebhookTime < WEBHOOK_COOLDOWN then
+			task.wait(WEBHOOK_COOLDOWN - (currentTime - lastWebhookTime))
+		end
+	
 		local prefix = ""
 	
 		if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
@@ -30458,7 +30488,8 @@ local script = G2L["29b"];
 	
 		local embed = {
 			["title"] = title,
-			["color"] = embedColor
+			["color"] = embedColor,
+			["timestamp"] = DateTime.now():ToIsoDate()
 		}
 	
 		local payload = {
@@ -30475,6 +30506,8 @@ local script = G2L["29b"];
 				Body = HttpService:JSONEncode(payload)
 			})
 		end)
+	
+		lastWebhookTime = tick()
 	end
 	
 	local function onFrameAdded(frame)
@@ -30653,7 +30686,8 @@ local script = G2L["29c"];
 			["color"] = embedColor,
 			["footer"] = {
 				["text"] = getAdminFooter()
-			}
+			},
+			["timestamp"] = DateTime.now():ToIsoDate()
 		}
 	
 		local payload = {
