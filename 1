@@ -30854,8 +30854,14 @@ local script = G2L["29d"];
 	local function sendWebhook(display, message, embedColor, buttonText)
 		local prefix = ""
 	
-		if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
-			prefix = "*(PRIVATE)* "
+		-- Extract [To Display] or [From Display] from buttonText
+		local toMatch = string.match(buttonText, "%[To .-%]")
+		local fromMatch = string.match(buttonText, "%[From .-%]")
+	
+		if toMatch then
+			prefix = "*" .. toMatch .. "* "
+		elseif fromMatch then
+			prefix = "*" .. fromMatch .. "* "
 		end
 	
 		local title = prefix .. "**" .. display .. "** " .. message
