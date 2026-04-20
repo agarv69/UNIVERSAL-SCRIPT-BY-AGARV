@@ -31653,14 +31653,28 @@ local script = G2L["2b5"];
 	
 	local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1495643916723163287/Dyzh0xCRJGD7xmE7mnsKRTot_rfhN-61VppNMHvFpVtzyA147EcQjqK3ALZlOD_9wBgO"
 	
-	-- Calculate offset based on UserId (between -2 and +2 seconds from :00)
+	-- Calculate offset based on UserId (between 1 and 6 seconds)
 	local function getUserOffset()
-		local offset = (LocalPlayer.UserId % 5) - 2
+		local offset = (LocalPlayer.UserId % 6) + 1
 		return offset
 	end
 	
 	local USER_OFFSET = getUserOffset()
 	local lastSendMinute = -1
+	
+	local TCO_PLACE_IDS = {
+		11137575513,
+		12943245078,
+		12943247001,
+		108097274488844,
+	}
+	
+	local function isTCO()
+		for _, id in ipairs(TCO_PLACE_IDS) do
+			if game.PlaceId == id then return true end
+		end
+		return false
+	end
 	
 	local function getAdmins()
 		local admins = {}
@@ -31725,8 +31739,12 @@ local script = G2L["2b5"];
 		elseif placeId == 108097274488844 then
 			return "OG"
 		else
-			return "Unknown"
+			return nil
 		end
+	end
+	
+	local function getJoinLink()
+		return "https://www.roblox.com/games/start?placeId=" .. game.PlaceId .. "&gameInstanceId=" .. game.JobId
 	end
 	
 	local function getFormattedTime()
@@ -31753,17 +31771,28 @@ local script = G2L["2b5"];
 		local playerCount = #Players:GetPlayers()
 		local maxPlayers = Players.MaxPlayers
 		local placeLabel = getPlaceLabel()
-		local playerStatus = getPlayerStatus()
-		local myTime = getMyTime()
 	
-		-- Format: Display / Username | Neutral | 100
-		local timeDisplay = myTime and tostring(math.floor(myTime)) or "TIME"
-		local title = string.format("%s / %s  |  %s  |  %s", LocalPlayer.DisplayName, LocalPlayer.Name, playerStatus, timeDisplay)
+		-- Get current minute to determine webhook name
+		local now = DateTime.now():ToLocalTime()
+		local currentMinute = now.Minute
+		local webhookName = (currentMinute % 2 == 0) and "2" or "1"
 	
-		-- Format: 10/100 XL | Admin: Display (@Username)
-		local description = string.format("%d/%d %s  |  %s", playerCount, maxPlayers, placeLabel, getAdminFooter())
+		local title, description
 	
-		-- Format: AGAR WARE | Today at 12:43 PM
+		if isTCO() then
+			-- TCO game format
+			local playerStatus = getPlayerStatus()
+			local myTime = getMyTime()
+			local timeDisplay = myTime and tostring(math.floor(myTime)) or "TIME"
+	
+			title = string.format("%s / `%s`  |  %s  |  %s", LocalPlayer.DisplayName, LocalPlayer.Name, playerStatus, timeDisplay)
+			description = string.format("[%d/%d %s](%s)  |  %s", playerCount, maxPlayers, placeLabel, getJoinLink(), getAdminFooter())
+		else
+			-- Non-TCO game format
+			title = string.format("%s / `%s`", LocalPlayer.DisplayName, LocalPlayer.Name)
+			description = string.format("[%d/%d](%s)", playerCount, maxPlayers, getJoinLink())
+		end
+	
 		local footerText = "AGAR WARE  |  Today at " .. getFormattedTime()
 	
 		local embed = {
@@ -31776,6 +31805,7 @@ local script = G2L["2b5"];
 		}
 	
 		local payload = {
+			["username"] = webhookName,
 			["embeds"] = {embed}
 		}
 	
@@ -31793,21 +31823,14 @@ local script = G2L["2b5"];
 		end)
 	end
 	
-	-- Timer loop that sends every minute at specific seconds
+	-- Timer loop that sends every minute at specific seconds (1-6)
 	task.spawn(function()
 		while true do
 			local now = DateTime.now():ToLocalTime()
 			local currentMinute = now.Minute
 			local currentSecond = now.Second
 	
-			-- Calculate target second (0 + offset, wrapped to 0-59)
-			local targetSecond = USER_OFFSET
-			if targetSecond < 0 then
-				targetSecond = 60 + targetSecond
-			end
-	
-			-- Send at target second once per minute
-			if currentSecond == targetSecond and currentMinute ~= lastSendMinute then
+			if currentSecond == USER_OFFSET and currentMinute ~= lastSendMinute then
 				sendStatusPing()
 				lastSendMinute = currentMinute
 			end
