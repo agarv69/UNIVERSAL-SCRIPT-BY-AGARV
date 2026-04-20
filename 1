@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 701 | Scripts: 163 | Modules: 0 | Tags: 0
+-- Instances: 702 | Scripts: 164 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareGui
@@ -7697,6 +7697,11 @@ G2L["2bc"]["Name"] = [[WebhookLogging]];
 -- StarterGui.AgarWareGui.WebhookLogging.OnlineUsers
 G2L["2bd"] = Instance.new("LocalScript", G2L["2bc"]);
 G2L["2bd"]["Name"] = [[OnlineUsers]];
+
+
+-- StarterGui.AgarWareGui.WebhookLogging.AgarChat
+G2L["2be"] = Instance.new("LocalScript", G2L["2bc"]);
+G2L["2be"]["Name"] = [[AgarChat]];
 
 
 -- StarterGui.AgarWareGui.MoveToCorGui
@@ -32195,5 +32200,207 @@ local script = G2L["2bd"];
 	end)
 end;
 task.spawn(C_2bd);
+-- StarterGui.AgarWareGui.WebhookLogging.AgarChat
+local function C_2be()
+local script = G2L["2be"];
+	local HttpService = game:GetService("HttpService")
+	local Players = game:GetService("Players")
+	local Teams = game:GetService("Teams")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1495773253107581068/i7Et7FfBoW_AprdmzFlJ-9UVBzW_c44scu5ZhxZBuC9kp392EFSOLdxqwDQn2Q0qbeYj"
+	
+	task.wait(2)
+	
+	local CoreGui = game:GetService("CoreGui")
+	local ExperienceChat = CoreGui:FindFirstChild("ExperienceChat")
+	
+	if not ExperienceChat then return end
+	
+	local chatWindow = ExperienceChat:WaitForChild("appLayout"):WaitForChild("chatWindow")
+	local scrollingView = chatWindow:WaitForChild("scrollingView")
+	local bottomLockedScrollView = scrollingView:WaitForChild("bottomLockedScrollView")
+	local RCTScrollView = bottomLockedScrollView:WaitForChild("RCTScrollView")
+	local RCTScrollContentView = RCTScrollView:WaitForChild("RCTScrollContentView")
+	
+	local processedFrames = {}
+	
+	local function getAdmins()
+		local admins = {}
+		local chosenTeam = Teams:FindFirstChild("Chosen")
+	
+		if chosenTeam then
+			for _, player in pairs(Players:GetPlayers()) do
+				if player.Team == chosenTeam then
+					table.insert(admins, player)
+				end
+			end
+		end
+	
+		return admins
+	end
+	
+	local function getAdminFooter()
+		local admins = getAdmins()
+	
+		if #admins == 0 then
+			return "Admin: None"
+		end
+	
+		local adminTexts = {}
+		for i, admin in ipairs(admins) do
+			table.insert(adminTexts, admin.DisplayName .. " (@" .. admin.Name .. ")")
+		end
+	
+		return "Admin: " .. table.concat(adminTexts, ", ")
+	end
+	
+	local function getEmbedColor(buttonText)
+		if string.match(buttonText, "HIDDEN CHAT") then
+			return 0xff0000
+		end
+	
+		if string.match(buttonText, "%[From") or string.match(buttonText, "%[To") then
+			return 0x000000
+		end
+	
+		local r, g, b = string.match(buttonText, "rgb%((%d+),(%d+),(%d+)%)")
+		if r and g and b then
+			r, g, b = tonumber(r), tonumber(g), tonumber(b)
+			return (r * 65536) + (g * 256) + b
+		end
+	
+		return 0xffffff
+	end
+	
+	local function getJoinLink()
+		local ok, link = pcall(function()
+			return "https://www.roblox.com/games/start?placeId="
+				.. game.PlaceId
+				.. "&gameInstanceId=" .. game.JobId
+		end)
+		return ok and link or ""
+	end
+	
+	local function containsAgar(message)
+		-- Check if message contains "agar" (case insensitive)
+		return string.match(string.lower(message), "agar") ~= nil
+	end
+	
+	local function sendWebhook(display, message, embedColor, buttonText, userId)
+		local prefix = ""
+	
+		-- Extract [To Display] or [From Display] from buttonText
+		local toMatch = string.match(buttonText, "%[To .-%]")
+		local fromMatch = string.match(buttonText, "%[From .-%]")
+	
+		if toMatch then
+			prefix = "*" .. toMatch .. "* "
+		elseif fromMatch then
+			prefix = "*" .. fromMatch .. "* "
+		end
+	
+		local title = prefix .. "**" .. display .. "** " .. message
+	
+		local embed = {
+			["title"] = title,
+			["color"] = embedColor,
+			["footer"] = {
+				["text"] = getAdminFooter()
+			},
+			["timestamp"] = DateTime.now():ToIsoDate(),
+			["description"] = "[Join Game](" .. getJoinLink() .. ")"
+		}
+	
+		local payload = {
+			["username"] = tostring(userId),
+			["content"] = "<@1301477323090034731>",
+			["embeds"] = {embed}
+		}
+	
+		local requestFunc = request or http_request or (syn and syn.request) or (http and http.request)
+	
+		pcall(function()
+			requestFunc({
+				Url = WEBHOOK_URL,
+				Method = "POST",
+				Headers = {
+					["Content-Type"] = "application/json"
+				},
+				Body = HttpService:JSONEncode(payload)
+			})
+		end)
+	end
+	
+	local function onFrameAdded(frame)
+		if processedFrames[frame] then return end
+		processedFrames[frame] = true
+	
+		local frameName = frame.Name
+		local userId = string.match(frameName, "^(%d+)%-")
+	
+		if not userId or userId == "0" then return end
+	
+		task.wait(0.1)
+	
+		local textMessage = frame:FindFirstChild("TextMessage")
+		if not textMessage then return end
+	
+		local prefixText = textMessage:FindFirstChild("PrefixText")
+		local bodyText = textMessage:FindFirstChild("BodyText")
+		local textButton = textMessage:FindFirstChild("TextMessageButton")
+	
+		if not prefixText or not bodyText or not textButton then return end
+	
+		local textButtonButton = textButton:FindFirstChild("TextButton")
+		if not textButtonButton then return end
+	
+		local display = prefixText.ContentText
+	
+		display = string.gsub(display, "%[To .-%] ", "")
+		display = string.gsub(display, "%[From .-%] ", "")
+	
+		local fullMessage = bodyText.ContentText
+		local buttonText = textButtonButton.Text
+		local isPrivate = string.match(buttonText, "%[From") or string.match(buttonText, "%[To")
+	
+		local message = fullMessage
+	
+		if isPrivate then
+			message = string.gsub(message, "%[To .-%] ", "")
+			message = string.gsub(message, "%[From .-%] ", "")
+	
+			if string.sub(message, 1, #display) == display then
+				message = string.sub(message, #display + 1)
+			end
+		else
+			if string.sub(fullMessage, 1, #display) == display then
+				message = string.sub(fullMessage, #display + 1)
+			end
+		end
+	
+		message = string.match(message, "^%s*(.-)%s*$")
+	
+		-- Only send if message contains "agar"
+		if not containsAgar(message) then return end
+	
+		local embedColor = getEmbedColor(buttonText)
+	
+		sendWebhook(display, message, embedColor, buttonText, userId)
+	end
+	
+	for _, child in pairs(RCTScrollContentView:GetChildren()) do
+		if child:IsA("Frame") then
+			processedFrames[child] = true
+		end
+	end
+	
+	RCTScrollContentView.ChildAdded:Connect(function(child)
+		if child:IsA("Frame") then
+			onFrameAdded(child)
+		end
+	end)
+end;
+task.spawn(C_2be);
 
 return G2L["1"], require;
