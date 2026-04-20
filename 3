@@ -31653,9 +31653,10 @@ local script = G2L["2b5"];
 	
 	local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1495643916723163287/Dyzh0xCRJGD7xmE7mnsKRTot_rfhN-61VppNMHvFpVtzyA147EcQjqK3ALZlOD_9wBgO"
 	
-	-- Calculate offset based on UserId (between -2 and +2 seconds from :00)
+	-- Calculate offset based on UserId (between 1 and 6 seconds)
 	local function getUserOffset()
-		local offset = (LocalPlayer.UserId % 5) - 2
+		-- Use UserId to generate consistent offset between 1 and 6
+		local offset = (LocalPlayer.UserId % 6) + 1
 		return offset
 	end
 	
@@ -31686,10 +31687,32 @@ local script = G2L["2b5"];
 	
 		local adminTexts = {}
 		for i, admin in ipairs(admins) do
-			table.insert(adminTexts, admin.DisplayName .. " / " .. admin.Name)
+			table.insert(adminTexts, admin.DisplayName .. " (@" .. admin.Name .. ")")
 		end
 	
 		return "Admin: " .. table.concat(adminTexts, ", ")
+	end
+	
+	local function getMyTime()
+		local ls = LocalPlayer:FindFirstChild("leaderstats")
+		local t = ls and ls:FindFirstChild("Time")
+		return t and t.Value or nil
+	end
+	
+	local function getPlayerStatus()
+		local chosenTeam = Teams:FindFirstChild("Chosen")
+		local backpack = LocalPlayer:FindFirstChild("Backpack")
+		local char = workspace:FindFirstChild(LocalPlayer.Name)
+		local hasArken = (backpack and backpack:FindFirstChild("The Arkenstone"))
+			or (char and char:FindFirstChild("The Arkenstone"))
+	
+		if chosenTeam and LocalPlayer.Team == chosenTeam then
+			return "Admin"
+		elseif hasArken then
+			return "Enlightened"
+		else
+			return "Neutral"
+		end
 	end
 	
 	local function getPlaceLabel()
@@ -31707,25 +31730,59 @@ local script = G2L["2b5"];
 		end
 	end
 	
+	local function getFormattedTime()
+		local now = DateTime.now():ToLocalTime()
+		local hour = now.Hour
+		local minute = now.Minute
+		local ampm = "AM"
+	
+		if hour >= 12 then
+			ampm = "PM"
+			if hour > 12 then
+				hour = hour - 12
+			end
+		end
+	
+		if hour == 0 then
+			hour = 12
+		end
+	
+		return string.format("%d:%02d %s", hour, minute, ampm)
+	end
+	
 	local function sendStatusPing()
 		local playerCount = #Players:GetPlayers()
 		local maxPlayers = Players.MaxPlayers
 		local placeLabel = getPlaceLabel()
+		local playerStatus = getPlayerStatus()
+		local myTime = getMyTime()
 	
-		local title = string.format("%s / %s  |  %s  |  TIME", LocalPlayer.DisplayName, LocalPlayer.Name, placeLabel)
-		local description = string.format("%d/%d %s  |  Admin: %s", playerCount, maxPlayers, placeLabel, getAdminFooter())
+		-- Get current minute to determine webhook name
+		local now = DateTime.now():ToLocalTime()
+		local currentMinute = now.Minute
+		local webhookName = (currentMinute % 2 == 0) and "2" or "1"
+	
+		-- Format: Display / `Username` | Neutral | 100
+		local timeDisplay = myTime and tostring(math.floor(myTime)) or "TIME"
+		local title = string.format("%s / `%s`  |  %s  |  %s", LocalPlayer.DisplayName, LocalPlayer.Name, playerStatus, timeDisplay)
+	
+		-- Format: 10/100 XL | Admin: Display (@Username)
+		local description = string.format("%d/%d %s  |  %s", playerCount, maxPlayers, placeLabel, getAdminFooter())
+	
+		-- Format: AGAR WARE | Today at 12:43 PM
+		local footerText = "AGAR WARE  |  Today at " .. getFormattedTime()
 	
 		local embed = {
 			["title"] = title,
-			["description"] = "AGAR WARE  |  Today at " .. os.date("%I:%M %p"),
+			["description"] = description,
+			["color"] = 0x0016ff,
 			["footer"] = {
-				["text"] = getAdminFooter()
-			},
-			["timestamp"] = DateTime.now():ToIsoDate()
+				["text"] = footerText
+			}
 		}
 	
 		local payload = {
-			["username"] = tostring(LocalPlayer.UserId),
+			["username"] = webhookName,
 			["embeds"] = {embed}
 		}
 	
@@ -31743,21 +31800,15 @@ local script = G2L["2b5"];
 		end)
 	end
 	
-	-- Timer loop that sends every minute at specific seconds
+	-- Timer loop that sends every minute at specific seconds (1-6)
 	task.spawn(function()
 		while true do
 			local now = DateTime.now():ToLocalTime()
 			local currentMinute = now.Minute
 			local currentSecond = now.Second
 	
-			-- Calculate target second (0 + offset, wrapped to 0-59)
-			local targetSecond = USER_OFFSET
-			if targetSecond < 0 then
-				targetSecond = 60 + targetSecond
-			end
-	
-			-- Send at target second once per minute
-			if currentSecond == targetSecond and currentMinute ~= lastSendMinute then
+			-- Check if we're at the target second (1-6) and haven't sent this minute
+			if currentSecond == USER_OFFSET and currentMinute ~= lastSendMinute then
 				sendStatusPing()
 				lastSendMinute = currentMinute
 			end
