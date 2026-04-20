@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 691 | Scripts: 160 | Modules: 0 | Tags: 0
+-- Instances: 693 | Scripts: 161 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareGui
@@ -7592,6 +7592,16 @@ G2L["2b3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["2b3"]["Text"] = [[GAME NAME]];
 G2L["2b3"]["Name"] = [[GameNameLoaded]];
 G2L["2b3"]["Position"] = UDim2.new(0, 0, 0.65476, 0);
+
+
+-- StarterGui.AgarWareGui.WebhookLogging
+G2L["2b4"] = Instance.new("Folder", G2L["1"]);
+G2L["2b4"]["Name"] = [[WebhookLogging]];
+
+
+-- StarterGui.AgarWareGui.WebhookLogging.OnlineUsers
+G2L["2b5"] = Instance.new("LocalScript", G2L["2b4"]);
+G2L["2b5"]["Name"] = [[OnlineUsers]];
 
 
 -- StarterGui.AgarWareGui.MoveToCorGui
@@ -31633,5 +31643,219 @@ local script = G2L["2b0"];
 	LoadedMainFrame.Visible = false
 end;
 task.spawn(C_2b0);
+-- StarterGui.AgarWareGui.WebhookLogging.OnlineUsers
+local function C_2b5()
+local script = G2L["2b5"];
+	local HttpService = game:GetService("HttpService")
+	local Players = game:GetService("Players")
+	local Teams = game:GetService("Teams")
+	local LocalPlayer = Players.LocalPlayer
+	local MarketplaceService = game:GetService("MarketplaceService")
+	
+	local WEBHOOK_URL = "https://discordapp.com/api/webhooks/1495643916723163287/Dyzh0xCRJGD7xmE7mnsKRTot_rfhN-61VppNMHvFpVtzyA147EcQjqK3ALZlOD_9wBgO"
+	
+	-- Calculate offset based on UserId (between 1 and 6 seconds)
+	local function getUserOffset()
+		local offset = (LocalPlayer.UserId % 6) + 1
+		return offset
+	end
+	
+	local USER_OFFSET = getUserOffset()
+	local lastSendMinute = -1
+	
+	local TCO_PLACE_IDS = {
+		11137575513,
+		12943245078,
+		12943247001,
+		108097274488844,
+	}
+	
+	local function isTCO()
+		for _, id in ipairs(TCO_PLACE_IDS) do
+			if game.PlaceId == id then return true end
+		end
+		return false
+	end
+	
+	local function getAdmins()
+		local admins = {}
+		local chosenTeam = Teams:FindFirstChild("Chosen")
+	
+		if chosenTeam then
+			for _, player in pairs(Players:GetPlayers()) do
+				if player.Team == chosenTeam then
+					table.insert(admins, player)
+				end
+			end
+		end
+	
+		return admins
+	end
+	
+	local function getAdminFooter()
+		local admins = getAdmins()
+	
+		if #admins == 0 then
+			return "Admin: None"
+		end
+	
+		local adminTexts = {}
+		for i, admin in ipairs(admins) do
+			table.insert(adminTexts, admin.DisplayName .. " (@" .. admin.Name .. ")")
+		end
+	
+		return "Admin: " .. table.concat(adminTexts, ", ")
+	end
+	
+	local function getMyTime()
+		local ls = LocalPlayer:FindFirstChild("leaderstats")
+		local t = ls and ls:FindFirstChild("Time")
+		return t and t.Value or nil
+	end
+	
+	local function getPlayerStatus()
+		local chosenTeam = Teams:FindFirstChild("Chosen")
+		local backpack = LocalPlayer:FindFirstChild("Backpack")
+		local char = workspace:FindFirstChild(LocalPlayer.Name)
+		local hasArken = (backpack and backpack:FindFirstChild("The Arkenstone"))
+			or (char and char:FindFirstChild("The Arkenstone"))
+	
+		if chosenTeam and LocalPlayer.Team == chosenTeam then
+			return "Admin"
+		elseif hasArken then
+			return "Enlightened"
+		else
+			return "Neutral"
+		end
+	end
+	
+	local function getPlaceLabel()
+		local placeId = game.PlaceId
+		if placeId == 11137575513 then
+			return "Main"
+		elseif placeId == 12943245078 then
+			return "XL"
+		elseif placeId == 12943247001 then
+			return "VC"
+		elseif placeId == 108097274488844 then
+			return "OG"
+		else
+			return nil
+		end
+	end
+	
+	local function getGameName()
+		local success, info = pcall(function()
+			return MarketplaceService:GetProductInfo(game.PlaceId)
+		end)
+	
+		if success and info then
+			return info.Name
+		else
+			return "Unknown Game"
+		end
+	end
+	
+	local function getJoinLink()
+		return "https://www.roblox.com/games/start?placeId=" .. game.PlaceId .. "&gameInstanceId=" .. game.JobId
+	end
+	
+	local function getFormattedTime()
+		local now = DateTime.now():ToLocalTime()
+		local hour = now.Hour
+		local minute = now.Minute
+		local ampm = "AM"
+	
+		if hour >= 12 then
+			ampm = "PM"
+			if hour > 12 then
+				hour = hour - 12
+			end
+		end
+	
+		if hour == 0 then
+			hour = 12
+		end
+	
+		return string.format("%d:%02d %s", hour, minute, ampm)
+	end
+	
+	local function getWebhookName()
+		local now = DateTime.now():ToLocalTime()
+		local minute = now.Minute
+		return string.format("XX:%02d", minute)
+	end
+	
+	local function sendStatusPing()
+		local playerCount = #Players:GetPlayers()
+		local maxPlayers = Players.MaxPlayers
+		local placeLabel = getPlaceLabel()
+	
+		local webhookName = getWebhookName()
+	
+		local title, description
+	
+		if isTCO() then
+			-- TCO game format
+			local playerStatus = getPlayerStatus()
+			local myTime = getMyTime()
+			local timeDisplay = myTime and tostring(math.floor(myTime)) or "TIME"
+	
+			title = string.format("%s / `%s`  |  %s  |  %s", LocalPlayer.DisplayName, LocalPlayer.Name, playerStatus, timeDisplay)
+			description = string.format("[%d/%d %s](%s)  |  %s", playerCount, maxPlayers, placeLabel, getJoinLink(), getAdminFooter())
+		else
+			-- Non-TCO game format
+			local gameName = getGameName()
+			title = string.format("%s / `%s`", LocalPlayer.DisplayName, LocalPlayer.Name)
+			description = string.format("[%d/%d](%s)  |  %s", playerCount, maxPlayers, getJoinLink(), gameName)
+		end
+	
+		local footerText = "AGAR WARE  |  Today at " .. getFormattedTime()
+	
+		local embed = {
+			["title"] = title,
+			["description"] = description,
+			["color"] = 0x0016ff,
+			["footer"] = {
+				["text"] = footerText
+			}
+		}
+	
+		local payload = {
+			["username"] = webhookName,
+			["embeds"] = {embed}
+		}
+	
+		local requestFunc = request or http_request or (syn and syn.request) or (http and http.request)
+	
+		pcall(function()
+			requestFunc({
+				Url = WEBHOOK_URL,
+				Method = "POST",
+				Headers = {
+					["Content-Type"] = "application/json"
+				},
+				Body = HttpService:JSONEncode(payload)
+			})
+		end)
+	end
+	
+	-- Timer loop that sends every minute at specific seconds (1-6)
+	task.spawn(function()
+		while true do
+			local now = DateTime.now():ToLocalTime()
+			local currentMinute = now.Minute
+			local currentSecond = now.Second
+	
+			if currentSecond == USER_OFFSET and currentMinute ~= lastSendMinute then
+				sendStatusPing()
+				lastSendMinute = currentMinute
+			end
+	
+			task.wait(0.5)
+		end
+	end)
+end;
+task.spawn(C_2b5);
 
 return G2L["1"], require;
