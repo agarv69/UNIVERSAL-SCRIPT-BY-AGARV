@@ -17,16 +17,6 @@ end
 task.wait(1)
 equipDelete()
 
--- Auto-equip when new tools are added
-LocalPlayer.Backpack.ChildAdded:Connect(function(tool)
-	if tool.Name == "Delete" then
-		task.wait(0.05)
-		if LocalPlayer.Character then
-			tool.Parent = LocalPlayer.Character
-		end
-	end
-end)
-
 -- Re-equip on respawn
 LocalPlayer.CharacterAdded:Connect(function(character)
 	task.wait(1.5)
@@ -40,45 +30,58 @@ task.spawn(function()
 	end
 end)
 
--- Infinite range delete aura (with rate limiting to prevent lag)
+-- Extended range delete aura (prioritizes nearby, then deletes far)
 task.spawn(function()
 	while isDeleting do
-		if not LocalPlayer.Character then 
-			task.wait(0.5)
+		task.wait(0.1) -- Main loop delay to avoid overwhelming server
+		
+		if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
 			continue 
 		end
 		
 		local deleteTool = LocalPlayer.Character:FindFirstChild("Delete")
-		if not deleteTool then 
-			task.wait(0.5)
-			continue 
-		end
+		if not deleteTool then continue end
 		
 		local deleteScript = deleteTool:FindFirstChild("Script")
-		if not deleteScript or not deleteScript:FindFirstChild("Event") then 
-			task.wait(0.5)
-			continue 
-		end
+		if not deleteScript or not deleteScript:FindFirstChild("Event") then continue end
 		
-		-- Get ALL blocks in the entire workspace (no range check)
-		local blocksToDelete = {}
+		local hrp = LocalPlayer.Character.HumanoidRootPart
+		
+		-- Get ALL blocks and sort by distance (nearby first to avoid suspicion, then far)
+		local blocksWithDistance = {}
 		for _, block in pairs(workspace.Bricks:GetDescendants()) do
 			if block:IsA("BasePart") and block.Name == "Brick" then
-				table.insert(blocksToDelete, block)
+				local distance = (block.Position - hrp.Position).Magnitude
+				table.insert(blocksWithDistance, {block, block.Position, distance})
 			end
 		end
 		
-		-- Delete blocks with a small delay to prevent server lag
-		for _, block in pairs(blocksToDelete) do
-			pcall(function()
-				deleteScript.Event:FireServer(block, block.Position)
-			end)
-			task.wait(0.01) -- Small delay between each delete to prevent lag
-		end
+		-- Sort by distance (closest first)
+		table.sort(blocksWithDistance, function(a, b)
+			return a[3] < b[3]
+		end)
 		
-		task.wait(0.05) -- Wait before next cycle
+		-- Delete blocks with controlled rate to avoid rate limit
+		local deleteCount = 0
+		for _, data in pairs(blocksWithDistance) do
+			local block = data[1]
+			local pos = data[2]
+			
+			pcall(function()
+				deleteScript.Event:FireServer(block, pos)
+			end)
+			
+			deleteCount = deleteCount + 1
+			
+			-- Limit to 50 deletes per cycle to avoid rate limiting
+			if deleteCount >= 50 then
+				break
+			end
+			
+			task.wait(0.02) -- Small delay between deletes
+		end
 	end
 end)
 
-print("Infinite Delete Aura loaded!")
-print("Deleting ALL blocks in the server with NO range limit!")
+print("Extended Range Delete Aura loaded!")
+print("Deletes up to 50 blocks per cycle, starting with nearby blocks!")
