@@ -19,46 +19,40 @@ local function shouldEquip(toolName)
 	return false
 end
 
-local function equipTool(tool)
-	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-		LocalPlayer.Character.Humanoid:EquipTool(tool)
+local function equipAllTools()
+	if not LocalPlayer.Character then return end
+	
+	for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+		if tool:IsA("Tool") and shouldEquip(tool.Name) then
+			tool.Parent = LocalPlayer.Character
+		end
 	end
 end
 
--- Check existing tools in backpack
-for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-	if tool:IsA("Tool") and shouldEquip(tool.Name) then
-		equipTool(tool)
-	end
-end
+-- Equip existing tools
+equipAllTools()
 
 -- Auto-equip when new tools are added to backpack
 LocalPlayer.Backpack.ChildAdded:Connect(function(tool)
 	if tool:IsA("Tool") and shouldEquip(tool.Name) then
-		task.wait(0.1) -- Small delay to ensure it's fully loaded
-		equipTool(tool)
+		task.wait(0.1)
+		tool.Parent = LocalPlayer.Character
 	end
 end)
 
 -- Re-equip when character respawns
 LocalPlayer.CharacterAdded:Connect(function(character)
-	character:WaitForChild("Humanoid")
-	
 	task.wait(1) -- Wait for backpack to load
 	
-	for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-		if tool:IsA("Tool") and shouldEquip(tool.Name) then
-			equipTool(tool)
-		end
-	end
+	equipAllTools()
 	
 	-- Listen for new tools after respawn
 	LocalPlayer.Backpack.ChildAdded:Connect(function(tool)
 		if tool:IsA("Tool") and shouldEquip(tool.Name) then
 			task.wait(0.1)
-			equipTool(tool)
+			tool.Parent = LocalPlayer.Character
 		end
 	end)
 end)
 
-print("Auto-equip script loaded! Will auto-equip: Build, Delete, Paint, Shape, Shovel, Sign")
+print("Auto-equip all script loaded! Will equip all: Build, Delete, Paint, Shape, Shovel, Sign")
