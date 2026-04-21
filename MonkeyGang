@@ -409,6 +409,31 @@ local script = G2L["9"];
 	local flingedPlayers = {}
 	local flingLoop = nil
 	
+	-- ============================================================
+	-- FIND MONKEYTITLE (using same method as tooltip script)
+	-- ============================================================
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then
+				return v
+			end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	
 	local function isNoclipped(player)
 		local character = player.Character
 		if not character then return false end
@@ -598,6 +623,17 @@ local script = G2L["9"];
 		end)
 	end)
 	
+	-- Hover effects - change MonkeyTitle text
+	if MonkeyTitle then
+		Fling.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "FLINGS PLAYERS NONSTOP, EXCLUDES NOCLIPPED OR FROZEN PLAYERS"
+		end)
+	
+		Fling.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+	
 	-- Button toggle
 	Fling.MouseButton1Click:Connect(function()
 		isOn = not isOn
@@ -614,6 +650,11 @@ local script = G2L["9"];
 	
 			-- Stop flinging and reset
 			flingedPlayers = {}
+	
+			-- Reset character
+			if LocalPlayer.Character then
+				LocalPlayer.Character:BreakJoints()
+			end
 		end
 	end)
 end;
