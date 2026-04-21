@@ -1,73 +1,80 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-local isDeleting = true
-local deleteRange = 500 -- Adjust this for how far you want to delete
+local deleteRange = 500 -- Range to delete
 
--- Auto-equip Delete tool
-local function equipDelete()
-	if not LocalPlayer.Character then return end
+-- Function to modify the Delete tool's script
+local function modifyDeleteTool()
+	local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete") or 
+	                   (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
 	
-	local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
-	if deleteTool then
-		deleteTool.Parent = LocalPlayer.Character
-	end
+	if not deleteTool then return false end
+	
+	local deleteScript = deleteTool:FindFirstChild("Script")
+	if not deleteScript then return false end
+	
+	-- Try to modify the script's range check
+	local success = pcall(function()
+		-- Replace the Magnitude < 24 check with a huge number
+		local scriptSource = deleteScript.Source
+		if scriptSource then
+			scriptSource = scriptSource:gsub("Magnitude < 24", "Magnitude < 99999")
+			deleteScript.Source = scriptSource
+			print("Modified Delete tool range check!")
+		end
+	end)
+	
+	return true
 end
 
--- Initial equip
-task.wait(1)
-equipDelete()
-
--- Re-equip on respawn
-LocalPlayer.CharacterAdded:Connect(function(character)
-	task.wait(1.5)
-	equipDelete()
-end)
-
--- Keep Delete equipped
+-- Auto-equip Delete and modify it
 task.spawn(function()
-	while task.wait(0.5) do
-		equipDelete()
+	task.wait(1)
+	if LocalPlayer.Backpack:FindFirstChild("Delete") and LocalPlayer.Character then
+		LocalPlayer.Backpack.Delete.Parent = LocalPlayer.Character
+		task.wait(0.5)
+		modifyDeleteTool()
 	end
 end)
 
--- Extended range delete aura (fires all at once with coroutines)
+-- Keep trying to modify if not done yet
 task.spawn(function()
-	while isDeleting do
-		task.wait() -- Run every frame
+	while task.wait(1) do
+		modifyDeleteTool()
+	end
+end)
+
+-- Delete aura
+RunService.Heartbeat:Connect(function()
+	pcall(function()
+		if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
+			return 
+		end
 		
-		pcall(function()
-			if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
-				return
-			end
-			
-			local deleteTool = LocalPlayer.Character:FindFirstChild("Delete")
-			if not deleteTool then return end
-			
-			local deleteScript = deleteTool:FindFirstChild("Script")
-			if not deleteScript or not deleteScript:FindFirstChild("Event") then return end
-			
-			local hrp = LocalPlayer.Character.HumanoidRootPart
-			
-			-- Get all blocks within range
-			for _, block in pairs(workspace.Bricks:GetDescendants()) do
-				if block:IsA("BasePart") and block.Name == "Brick" then
-					local distance = (block.Position - hrp.Position).Magnitude
-					
-					if distance < deleteRange then
-						-- Fire each delete in a separate coroutine (all at once)
-						coroutine.wrap(function()
-							pcall(function()
-								deleteScript.Event:FireServer(block, block.Position)
-							end)
-						end)()
-					end
+		if not LocalPlayer.Character:FindFirstChild("Delete") then return end
+		
+		local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
+		if not deleteScript or not deleteScript:FindFirstChild("Event") then return end
+		
+		local myPos = LocalPlayer.Character.HumanoidRootPart.Position
+		
+		-- Delete all blocks within range
+		for _, block in pairs(workspace.Bricks:GetDescendants()) do
+			if block:IsA("BasePart") and block.Name == "Brick" then
+				local distance = (block.Position - myPos).Magnitude
+				
+				if distance <= deleteRange then
+					task.spawn(function()
+						pcall(function()
+							deleteScript.Event:FireServer(block, block.Position)
+						end)
+					end)
 				end
 			end
-		end)
-	end
+		end
+	end)
 end)
 
-print("Extended Range Delete Aura loaded!")
-print("Range: " .. deleteRange .. " studs")
-print("Fires all deletes simultaneously using coroutines!")
+print("Delete aura with modified range loaded!")
+print("Attempting to change Magnitude < 24 to Magnitude < 99999")
