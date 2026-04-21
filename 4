@@ -1,76 +1,131 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
-local deleteEvent = nil
-local isDeleting = true
+local deleteRange = 500
+local brick = ReplicatedStorage:FindFirstChild("Brick")
 
--- Capture the delete event when tool is equipped
-local function captureDeleteEvent()
-	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete") then
-		local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
-		if deleteScript and deleteScript:FindFirstChild("Event") then
-			deleteEvent = deleteScript.Event
-			print("Delete event captured! You can now unequip the tool.")
-			return true
-		end
-	end
-	return false
-end
+print("=== SIMPLE MULTI-METHOD DELETE ===")
 
--- Try to capture event on start
+-- Auto-equip Delete
 task.spawn(function()
-	task.wait(1)
-	-- Equip delete first
-	if LocalPlayer.Backpack:FindFirstChild("Delete") and LocalPlayer.Character then
-		LocalPlayer.Backpack.Delete.Parent = LocalPlayer.Character
-		task.wait(0.5)
-	end
-	
-	if captureDeleteEvent() then
-		print("Ready to delete!")
-	else
-		print("Waiting for Delete tool to be equipped...")
-	end
-end)
-
--- Recapture if character respawns
-LocalPlayer.CharacterAdded:Connect(function(char)
-	deleteEvent = nil
-	task.wait(2)
-	if LocalPlayer.Backpack:FindFirstChild("Delete") then
-		LocalPlayer.Backpack.Delete.Parent = char
-		task.wait(0.5)
-		captureDeleteEvent()
-	end
-end)
-
--- Try to capture event if tool gets equipped manually
-task.spawn(function()
-	while task.wait(1) do
-		if not deleteEvent then
-			captureDeleteEvent()
+	while task.wait(0.5) do
+		if LocalPlayer.Backpack:FindFirstChild("Delete") and LocalPlayer.Character then
+			LocalPlayer.Backpack.Delete.Parent = LocalPlayer.Character
 		end
 	end
 end)
 
--- Delete aura - fires continuously even without tool equipped
+-- Method 1: Normal firing
+local method1Active = true
 RunService.Heartbeat:Connect(function()
-	if not isDeleting or not deleteEvent then return end
+	if not method1Active then return end
 	
 	pcall(function()
-		-- Fire delete for ALL blocks in workspace
+		if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+		if not LocalPlayer.Character:FindFirstChild("Delete") then return end
+		
+		local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
+		if not deleteScript or not deleteScript:FindFirstChild("Event") then return end
+		
+		local myPos = LocalPlayer.Character.HumanoidRootPart.Position
+		
 		for _, block in pairs(workspace.Bricks:GetDescendants()) do
 			if block:IsA("BasePart") and block.Name == "Brick" then
-				task.spawn(function()
-					pcall(function()
-						deleteEvent:FireServer(block, block.Position)
-					end)
-				end)
+				local distance = (block.Position - myPos).Magnitude
+				
+				if distance <= deleteRange then
+					coroutine.wrap(function()
+						pcall(function()
+							deleteScript.Event:FireServer(block, block.Position)
+						end)
+					end)()
+				end
 			end
 		end
 	end)
 end)
 
-print("Delete Aura loaded!")
-print("Equip Delete tool once to capture the event, then you can unequip it!")
+-- Method 2: Delayed batch delete
+local method2Active = true
+task.spawn(function()
+	while task.wait(0.05) do
+		if not method2Active then continue end
+		
+		pcall(function()
+			if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+			if not LocalPlayer.Character:FindFirstChild("Delete") then return end
+			
+			local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
+			if not deleteScript or not deleteScript:FindFirstChild("Event") then return end
+			
+			local myPos = LocalPlayer.Character.HumanoidRootPart.Position
+			
+			for _, block in pairs(workspace.Bricks:GetDescendants()) do
+				if block:IsA("BasePart") and block.Name == "Brick" then
+					local distance = (block.Position - myPos).Magnitude
+					
+					if distance <= deleteRange then
+						task.spawn(function()
+							pcall(function()
+								-- Just use the actual block, not ReplicatedStorage.Brick
+								deleteScript.Event:FireServer(block, block.Position)
+							end)
+						end)
+					end
+				end
+			end
+		end)
+	end
+end)
+
+-- Method 3: Slower, batched deletes
+local method3Active = true
+task.spawn(function()
+	while task.wait(0.2) do
+		if not method3Active then continue end
+		
+		pcall(function()
+			if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+			if not LocalPlayer.Character:FindFirstChild("Delete") then return end
+			
+			local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
+			if not deleteScript or not deleteScript:FindFirstChild("Event") then return end
+			
+			local myPos = LocalPlayer.Character.HumanoidRootPart.Position
+			local blocksToDelete = {}
+			
+			for _, block in pairs(workspace.Bricks:GetDescendants()) do
+				if block:IsA("BasePart") and block.Name == "Brick" then
+					local distance = (block.Position - myPos).Magnitude
+					if distance <= deleteRange then
+						table.insert(blocksToDelete, {block, block.Position})
+					end
+				end
+			end
+			
+			-- Delete in batches
+			for i, data in ipairs(blocksToDelete) do
+				if i > 50 then break end -- Limit to 50 per cycle
+				
+				local block = data[1]
+				local pos = data[2]
+				
+				task.spawn(function()
+					pcall(function()
+						deleteScript.Event:FireServer(block, pos)
+					end)
+				end)
+				
+				task.wait(0.01)
+			end
+		end)
+	end
+end)
+
+print("3 methods running simultaneously!")
+print("Method 1: Every frame with coroutines")
+print("Method 2: Every 0.05s with task.spawn")
+print("Method 3: Every 0.2s, batched 50 blocks with delays")
+print("Range: " .. deleteRange .. " studs")
