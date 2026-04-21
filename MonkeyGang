@@ -715,6 +715,7 @@ local script = G2L["19"];
 	local lastRejoinTime = 0
 	
 	local FILE_NAME = "monkeygang_rejoin_state.txt"
+	local TIMESTAMP_FILE = "monkeygang_rejoin_timestamp.txt"
 	
 	-- ============================================================
 	-- FIND MONKEYTITLE AND SCREENGUI
@@ -778,9 +779,39 @@ local script = G2L["19"];
 		end
 	
 		writeFile(table.concat(lines, "\n"))
+	
+		-- Save timestamp of when we triggered the rejoin
+		pcall(function()
+			writefile(TIMESTAMP_FILE, tostring(tick()))
+		end)
 	end
 	
 	local function loadAndApplyStates()
+		-- Check if rejoin timestamp exists and is recent (within 30 seconds)
+		local timestampData = nil
+		pcall(function()
+			timestampData = readfile(TIMESTAMP_FILE)
+		end)
+	
+		if not timestampData then 
+			-- No timestamp = manual rejoin, don't restore
+			return 
+		end
+	
+		local rejoinTime = tonumber(timestampData)
+		if not rejoinTime then return end
+	
+		local timeSinceRejoin = tick() - rejoinTime
+	
+		-- If more than 30 seconds, this is a manual rejoin
+		if timeSinceRejoin > 30 then
+			pcall(function()
+				delfile(TIMESTAMP_FILE)
+			end)
+			return
+		end
+	
+		-- This is an auto-rejoin, restore states
 		local data = readFile()
 		if not data then return end
 	
@@ -814,8 +845,11 @@ local script = G2L["19"];
 			end
 		end
 	
-		-- Clear the auto-rejoin flag so manual rejoins don't re-enable
+		-- Clear the files after restoring
 		writeFile("")
+		pcall(function()
+			delfile(TIMESTAMP_FILE)
+		end)
 	end
 	
 	-- ============================================================
