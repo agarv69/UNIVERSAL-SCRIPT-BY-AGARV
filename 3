@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local isDeleting = true
+local deleteRange = 500 -- Adjust this for how far you want to delete
 
 -- Auto-equip Delete tool
 local function equipDelete()
@@ -17,16 +18,6 @@ end
 task.wait(1)
 equipDelete()
 
--- Auto-equip when new tools are added
-LocalPlayer.Backpack.ChildAdded:Connect(function(tool)
-	if tool.Name == "Delete" then
-		task.wait(0.05)
-		if LocalPlayer.Character then
-			tool.Parent = LocalPlayer.Character
-		end
-	end
-end)
-
 -- Re-equip on respawn
 LocalPlayer.CharacterAdded:Connect(function(character)
 	task.wait(1.5)
@@ -40,47 +31,43 @@ task.spawn(function()
 	end
 end)
 
--- Infinite range delete aura (with rate limiting to prevent lag)
+-- Extended range delete aura (fires all at once with coroutines)
 task.spawn(function()
 	while isDeleting do
-		if not LocalPlayer.Character then 
-			task.wait(0.5)
-			continue 
-		end
+		task.wait() -- Run every frame
 		
-		local deleteTool = LocalPlayer.Character:FindFirstChild("Delete")
-		if not deleteTool then 
-			task.wait(0.5)
-			continue 
-		end
-		
-		local deleteScript = deleteTool:FindFirstChild("Script")
-		if not deleteScript or not deleteScript:FindFirstChild("Event") then 
-			task.wait(0.5)
-			continue 
-		end
-		
-		-- Get ALL blocks in the entire workspace (no range check)
-		local blockPositions = {}
-		for _, block in pairs(workspace.Bricks:GetDescendants()) do
-			if block:IsA("BasePart") and block.Name == "Brick" then
-				table.insert(blockPositions, {block, block.Position})
+		pcall(function()
+			if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
+				return
 			end
-		end
-		
-		-- Delete blocks by position (this bypasses range check)
-		for _, data in pairs(blockPositions) do
-			local block = data[1]
-			local pos = data[2]
-			pcall(function()
-				deleteScript.Event:FireServer(block, pos)
-			end)
-			task.wait(0.01) -- Small delay between each delete to prevent lag
-		end
-		
-		task.wait(0.05) -- Wait before next cycle
+			
+			local deleteTool = LocalPlayer.Character:FindFirstChild("Delete")
+			if not deleteTool then return end
+			
+			local deleteScript = deleteTool:FindFirstChild("Script")
+			if not deleteScript or not deleteScript:FindFirstChild("Event") then return end
+			
+			local hrp = LocalPlayer.Character.HumanoidRootPart
+			
+			-- Get all blocks within range
+			for _, block in pairs(workspace.Bricks:GetDescendants()) do
+				if block:IsA("BasePart") and block.Name == "Brick" then
+					local distance = (block.Position - hrp.Position).Magnitude
+					
+					if distance < deleteRange then
+						-- Fire each delete in a separate coroutine (all at once)
+						coroutine.wrap(function()
+							pcall(function()
+								deleteScript.Event:FireServer(block, block.Position)
+							end)
+						end)()
+					end
+				end
+			end
+		end)
 	end
 end)
 
-print("Infinite Delete Aura loaded!")
-print("Deleting ALL blocks in the server with NO range limit!")
+print("Extended Range Delete Aura loaded!")
+print("Range: " .. deleteRange .. " studs")
+print("Fires all deletes simultaneously using coroutines!")
