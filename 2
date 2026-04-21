@@ -1,10 +1,65 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
-local deleteRange = 500 -- 500 studs around you
+local deleteRange = 500
+local deleteEvent = nil
+local brick = ReplicatedStorage:FindFirstChild("Brick")
 
--- Auto-equip Delete
+print("=== MULTI-METHOD DELETE AURA ===")
+
+-- METHOD 1: Capture event reference
+local function captureEvent()
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete") then
+		local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
+		if deleteScript and deleteScript:FindFirstChild("Event") then
+			deleteEvent = deleteScript.Event
+			print("[Method 1] Event captured!")
+			return true
+		end
+	end
+	return false
+end
+
+-- METHOD 2: Modify tool script range
+local function modifyToolScript()
+	local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete") or 
+	                   (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
+	if deleteTool then
+		local deleteScript = deleteTool:FindFirstChild("Script")
+		if deleteScript then
+			pcall(function()
+				local src = deleteScript.Source
+				if src then
+					deleteScript.Source = src:gsub("Magnitude < 24", "Magnitude < 99999")
+					print("[Method 2] Tool script modified!")
+				end
+			end)
+		end
+	end
+end
+
+-- Auto-equip and setup
+task.spawn(function()
+	task.wait(1)
+	if LocalPlayer.Backpack:FindFirstChild("Delete") and LocalPlayer.Character then
+		LocalPlayer.Backpack.Delete.Parent = LocalPlayer.Character
+		task.wait(0.5)
+		captureEvent()
+		modifyToolScript()
+	end
+end)
+
+-- Keep trying to capture/modify
+task.spawn(function()
+	while task.wait(1) do
+		if not deleteEvent then captureEvent() end
+		modifyToolScript()
+	end
+end)
+
+-- Keep tool equipped
 task.spawn(function()
 	while task.wait(0.5) do
 		if LocalPlayer.Backpack:FindFirstChild("Delete") and LocalPlayer.Character then
@@ -13,36 +68,81 @@ task.spawn(function()
 	end
 end)
 
--- Delete aura (500 stud radius around YOU)
+-- METHOD 3: Fire from backpack (no equip needed)
+local function deleteFromBackpack(block, pos)
+	local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+	if deleteTool then
+		local script = deleteTool:FindFirstChild("Script")
+		if script and script:FindFirstChild("Event") then
+			pcall(function()
+				script.Event:FireServer(block, pos)
+			end)
+		end
+	end
+end
+
+-- MAIN DELETE LOOP - Uses ALL methods
+local methodIndex = 1
 RunService.Heartbeat:Connect(function()
 	pcall(function()
 		if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
 			return 
 		end
 		
-		if not LocalPlayer.Character:FindFirstChild("Delete") then return end
-		
-		local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
-		if not deleteScript or not deleteScript:FindFirstChild("Event") then return end
-		
 		local myPos = LocalPlayer.Character.HumanoidRootPart.Position
+		local deleteTool = LocalPlayer.Character:FindFirstChild("Delete")
+		local deleteScript = deleteTool and deleteTool:FindFirstChild("Script")
+		local currentEvent = deleteScript and deleteScript:FindFirstChild("Event")
 		
-		-- Delete all blocks within 500 studs of YOUR position
+		-- Collect blocks in range
+		local blocksToDelete = {}
 		for _, block in pairs(workspace.Bricks:GetDescendants()) do
 			if block:IsA("BasePart") and block.Name == "Brick" then
 				local distance = (block.Position - myPos).Magnitude
-				
 				if distance <= deleteRange then
-					task.spawn(function()
-						pcall(function()
-							deleteScript.Event:FireServer(block, block.Position)
-						end)
-					end)
+					table.insert(blocksToDelete, {block, block.Position})
 				end
 			end
+		end
+		
+		-- Try different methods in rotation
+		for _, data in pairs(blocksToDelete) do
+			local block = data[1]
+			local pos = data[2]
+			
+			-- Rotate through methods
+			methodIndex = methodIndex + 1
+			if methodIndex > 6 then methodIndex = 1 end
+			
+			task.spawn(function()
+				pcall(function()
+					if methodIndex == 1 and currentEvent then
+						-- Method: Current tool event with workspace block
+						currentEvent:FireServer(block, pos)
+					elseif methodIndex == 2 and deleteEvent then
+						-- Method: Captured event with workspace block
+						deleteEvent:FireServer(block, pos)
+					elseif methodIndex == 3 and currentEvent and brick then
+						-- Method: Current event with ReplicatedStorage.Brick
+						currentEvent:FireServer(brick, pos)
+					elseif methodIndex == 4 and deleteEvent and brick then
+						-- Method: Captured event with ReplicatedStorage.Brick
+						deleteEvent:FireServer(brick, pos)
+					elseif methodIndex == 5 then
+						-- Method: Fire from backpack (unequipped)
+						deleteFromBackpack(block, pos)
+					elseif methodIndex == 6 and currentEvent then
+						-- Method: Coroutine wrapped fire
+						coroutine.wrap(function()
+							currentEvent:FireServer(block, pos)
+						end)()
+					end
+				end)
+			end)
 		end
 	end)
 end)
 
-print("Delete aura loaded!")
-print("Deletes all blocks within " .. deleteRange .. " studs of YOU!")
+print("All methods loaded!")
+print("Range: " .. deleteRange .. " studs")
+print("Trying 6 different firing methods simultaneously!")
