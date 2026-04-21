@@ -1,33 +1,76 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
+local deleteEvent = nil
 local isDeleting = true
 
--- Infinite range delete aura (TRUE infinite range, no tool equip needed)
+-- Capture the delete event when tool is equipped
+local function captureDeleteEvent()
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete") then
+		local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
+		if deleteScript and deleteScript:FindFirstChild("Event") then
+			deleteEvent = deleteScript.Event
+			print("Delete event captured! You can now unequip the tool.")
+			return true
+		end
+	end
+	return false
+end
+
+-- Try to capture event on start
 task.spawn(function()
-	while isDeleting do
-		task.wait(0.05) -- Main loop delay
-		
-		-- Get delete tool from backpack OR character (doesn't matter)
-		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete") or 
-		                   (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
-		
-		if not deleteTool then continue end
-		
-		local deleteScript = deleteTool:FindFirstChild("Script")
-		if not deleteScript or not deleteScript:FindFirstChild("Event") then continue end
-		
-		-- Get ALL blocks in the entire workspace
-		for _, block in pairs(workspace.Bricks:GetDescendants()) do
-			if block:IsA("BasePart") and block.Name == "Brick" then
-				-- Fire delete event (server doesn't check range or if tool is equipped)
-				pcall(function()
-					deleteScript.Event:FireServer(block, block.Position)
-				end)
-			end
+	task.wait(1)
+	-- Equip delete first
+	if LocalPlayer.Backpack:FindFirstChild("Delete") and LocalPlayer.Character then
+		LocalPlayer.Backpack.Delete.Parent = LocalPlayer.Character
+		task.wait(0.5)
+	end
+	
+	if captureDeleteEvent() then
+		print("Ready to delete!")
+	else
+		print("Waiting for Delete tool to be equipped...")
+	end
+end)
+
+-- Recapture if character respawns
+LocalPlayer.CharacterAdded:Connect(function(char)
+	deleteEvent = nil
+	task.wait(2)
+	if LocalPlayer.Backpack:FindFirstChild("Delete") then
+		LocalPlayer.Backpack.Delete.Parent = char
+		task.wait(0.5)
+		captureDeleteEvent()
+	end
+end)
+
+-- Try to capture event if tool gets equipped manually
+task.spawn(function()
+	while task.wait(1) do
+		if not deleteEvent then
+			captureDeleteEvent()
 		end
 	end
 end)
 
-print("True Infinite Delete Aura loaded!")
-print("No range limit! Tool doesn't need to be equipped!")
+-- Delete aura - fires continuously even without tool equipped
+RunService.Heartbeat:Connect(function()
+	if not isDeleting or not deleteEvent then return end
+	
+	pcall(function()
+		-- Fire delete for ALL blocks in workspace
+		for _, block in pairs(workspace.Bricks:GetDescendants()) do
+			if block:IsA("BasePart") and block.Name == "Brick" then
+				task.spawn(function()
+					pcall(function()
+						deleteEvent:FireServer(block, block.Position)
+					end)
+				end)
+			end
+		end
+	end)
+end)
+
+print("Delete Aura loaded!")
+print("Equip Delete tool once to capture the event, then you can unequip it!")
