@@ -148,7 +148,7 @@ G2L["f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], 
 G2L["f"]["Size"] = UDim2.new(0, 150, 0, 40);
 G2L["f"]["LayoutOrder"] = 1;
 G2L["f"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["f"]["Text"] = [[ANTI GLOW: OFF]];
+G2L["f"]["Text"] = [[ANTI GLOW, TOXIFY: OFF]];
 G2L["f"]["Name"] = [[AntiGlow]];
 
 
@@ -242,9 +242,9 @@ G2L["18"]["Text"] = [[REJOIN ON NOCLIP: OFF]];
 G2L["18"]["Name"] = [[RejoinNoclip]];
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip.LocalScript
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip.RejoinNoclipScript
 G2L["19"] = Instance.new("LocalScript", G2L["18"]);
-
+G2L["19"]["Name"] = [[RejoinNoclipScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.UIListLayout
@@ -701,11 +701,209 @@ local script = G2L["16"];
 	
 end;
 task.spawn(C_16);
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip.LocalScript
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip.RejoinNoclipScript
 local function C_19()
 local script = G2L["19"];
-	print("Hello world!")
+	local Players = game:GetService("Players")
+	local TeleportService = game:GetService("TeleportService")
+	local LocalPlayer = Players.LocalPlayer
+	local PLACE_ID = game.PlaceId
 	
+	local RejoinNoclip = script.Parent
+	local isOn = false
+	local cooldown = false
+	local lastRejoinTime = 0
+	
+	local FILE_NAME = "monkeygang_rejoin_state.txt"
+	
+	-- ============================================================
+	-- FIND MONKEYTITLE AND SCREENGUI
+	-- ============================================================
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then
+				return v
+			end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	local ScreenGui = getScreenGui()
+	
+	-- ============================================================
+	-- FILE SAVE/LOAD FUNCTIONS
+	-- ============================================================
+	local function readFile()
+		local success, result = pcall(function()
+			return readfile(FILE_NAME)
+		end)
+		if success and result and result ~= "" then return result end
+		return nil
+	end
+	
+	local function writeFile(content)
+		pcall(function()
+			writefile(FILE_NAME, content)
+		end)
+	end
+	
+	local function saveButtonStates()
+		if not ScreenGui then return end
+	
+		local lines = {}
+		table.insert(lines, "autoRejoin=true")
+	
+		-- Find all TextButtons that are toggle buttons (have ON/OFF in text)
+		for _, descendant in pairs(ScreenGui:GetDescendants()) do
+			if descendant:IsA("TextButton") then
+				local text = descendant.Text
+				-- Check if it's a toggle button by looking for "ON" or "OFF" in the text
+				if text:match(": ON$") or text:match(": OFF$") then
+					local isEnabled = descendant.TextColor3 == Color3.fromRGB(0, 255, 0)
+					table.insert(lines, descendant.Name .. "=" .. tostring(isEnabled))
+				end
+			end
+		end
+	
+		writeFile(table.concat(lines, "\n"))
+	end
+	
+	local function loadAndApplyStates()
+		local data = readFile()
+		if not data then return end
+	
+		local states = {}
+		for line in data:gmatch("[^\n]+") do
+			local key, value = line:match("(.-)=(.+)")
+			if key and value then
+				states[key] = value
+			end
+		end
+	
+		-- Only apply if this was an auto-rejoin
+		if states["autoRejoin"] ~= "true" then return end
+	
+		if not ScreenGui then return end
+	
+		-- Re-toggle buttons that were ON instantly (no waiting for GUI load)
+		for _, descendant in pairs(ScreenGui:GetDescendants()) do
+			if descendant:IsA("TextButton") then
+				local savedState = states[descendant.Name]
+				if savedState == "true" then
+					-- Check if button is currently OFF (white text)
+					if descendant.TextColor3 == Color3.fromRGB(255, 255, 255) then
+						-- Click the button to turn it ON
+						pcall(function()
+							firesignal(descendant.MouseButton1Click)
+						end)
+						task.wait(0.1) -- Wait 0.1 seconds before next button
+					end
+				end
+			end
+		end
+	
+		-- Clear the auto-rejoin flag so manual rejoins don't re-enable
+		writeFile("")
+	end
+	
+	-- ============================================================
+	-- AUTO-EXECUTE SETUP
+	-- ============================================================
+	local function setupAutoExecute()
+		local queueFn = queue_on_teleport
+			or (syn and syn.queue_on_teleport)
+			or (fluxus and fluxus.queue_on_teleport)
+	
+		if queueFn then
+			queueFn([[
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/MonkeyGang"))()
+			]])
+		end
+	end
+	
+	-- ============================================================
+	-- NOCLIP DETECTION AND AUTO REJOIN
+	-- ============================================================
+	local function checkNoclipAndRejoin()
+		while task.wait(0.5) do
+			if not isOn then continue end
+	
+			if cooldown then continue end
+	
+			if tick() - lastRejoinTime < 10 then continue end
+	
+			local char = LocalPlayer.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	
+			if hrp and hrp.CollisionGroup == "NoClip" then
+				cooldown = true
+				lastRejoinTime = tick()
+	
+				-- Save button states before rejoining
+				saveButtonStates()
+	
+				-- Setup auto-execute
+				setupAutoExecute()
+	
+				-- Rejoin the server
+				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+	
+				task.delay(10, function()
+					cooldown = false
+				end)
+			end
+		end
+	end
+	
+	-- ============================================================
+	-- HOVER EFFECTS
+	-- ============================================================
+	if MonkeyTitle then
+		RejoinNoclip.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "REJOIN ON NOCLIP"
+		end)
+	
+		RejoinNoclip.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+	
+	-- ============================================================
+	-- BUTTON TOGGLE
+	-- ============================================================
+	RejoinNoclip.MouseButton1Click:Connect(function()
+		isOn = not isOn
+	
+		if isOn then
+			RejoinNoclip.Text = "REJOIN ON NOCLIP: ON"
+			RejoinNoclip.TextColor3 = Color3.fromRGB(0, 255, 0)
+		else
+			RejoinNoclip.Text = "REJOIN ON NOCLIP: OFF"
+			RejoinNoclip.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end)
+	
+	-- ============================================================
+	-- START NOCLIP MONITORING
+	-- ============================================================
+	task.spawn(checkNoclipAndRejoin)
+	
+	-- ============================================================
+	-- LOAD STATES ON JOIN (if this was an auto-rejoin)
+	-- ============================================================
+	task.spawn(loadAndApplyStates)
 end;
 task.spawn(C_19);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinMute.LocalScript
