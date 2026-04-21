@@ -1,43 +1,33 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 local toolsToEquip = {
-	"Build",
 	"Delete",
-	"Paint",
-	"Shape",
-	"Shovel",
-	"Sign"
+	"Paint"
 }
 
-local function shouldEquip(toolName)
-	for _, name in pairs(toolsToEquip) do
-		if toolName == name then
-			return true
-		end
-	end
-	return false
-end
+local isSpamming = true
+local range = 50 -- Range around you to spam
 
+-- Auto-equip all tools
 local function equipAllTools()
 	if not LocalPlayer.Character then return end
 	
-	-- Move all tools to character at once without humanoid equipping
 	for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-		if tool:IsA("Tool") and shouldEquip(tool.Name) then
-			-- Directly parent to character (bypasses the equip limit)
+		if tool:IsA("Tool") and table.find(toolsToEquip, tool.Name) then
 			tool.Parent = LocalPlayer.Character
 		end
 	end
 end
 
--- Equip existing tools
-task.wait(0.5)
+-- Initial equip
+task.wait(1)
 equipAllTools()
 
--- Auto-equip when new tools are added to backpack
+-- Auto-equip when new tools are added
 LocalPlayer.Backpack.ChildAdded:Connect(function(tool)
-	if tool:IsA("Tool") and shouldEquip(tool.Name) then
+	if tool:IsA("Tool") and table.find(toolsToEquip, tool.Name) then
 		task.wait(0.05)
 		if LocalPlayer.Character then
 			tool.Parent = LocalPlayer.Character
@@ -45,23 +35,69 @@ LocalPlayer.Backpack.ChildAdded:Connect(function(tool)
 	end
 end)
 
--- Re-equip when character respawns
+-- Re-equip on respawn
 LocalPlayer.CharacterAdded:Connect(function(character)
-	task.wait(1.5) -- Wait for backpack to load
+	task.wait(1.5)
 	equipAllTools()
 end)
 
--- Keep tools equipped (re-equip if they go back to backpack)
+-- Keep tools equipped
 task.spawn(function()
-	while task.wait(0.1) do
-		if LocalPlayer.Character then
-			for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-				if tool:IsA("Tool") and shouldEquip(tool.Name) then
-					tool.Parent = LocalPlayer.Character
+	while task.wait(0.5) do
+		equipAllTools()
+	end
+end)
+
+-- Spam Delete and Paint together
+task.spawn(function()
+	while isSpamming do
+		task.wait(0.05)
+		
+		if not LocalPlayer.Character then continue end
+		local character = LocalPlayer.Character
+		if not character:FindFirstChild("HumanoidRootPart") then continue end
+		
+		local deleteTool = character:FindFirstChild("Delete")
+		local paintTool = character:FindFirstChild("Paint")
+		
+		if not deleteTool or not paintTool then continue end
+		
+		local deleteScript = deleteTool:FindFirstChild("Script")
+		local paintScript = paintTool:FindFirstChild("Script")
+		
+		if not deleteScript or not deleteScript:FindFirstChild("Event") then continue end
+		if not paintScript or not paintScript:FindFirstChild("Event") then continue end
+		
+		-- Get all blocks in range
+		local blocksInRange = {}
+		for _, block in pairs(workspace.Bricks:GetDescendants()) do
+			if block:IsA("BasePart") and block.Name == "Brick" then
+				if (block.Position - character.HumanoidRootPart.Position).Magnitude < range then
+					table.insert(blocksInRange, block)
 				end
 			end
+		end
+		
+		-- Fire Delete and Paint at the SAME TIME for all blocks
+		for _, block in pairs(blocksInRange) do
+			-- Fire Delete
+			pcall(function()
+				deleteScript.Event:FireServer(block, block.Position)
+			end)
+			
+			-- Fire Paint (unanchor)
+			pcall(function()
+				paintScript.Event:FireServer(block, Enum.NormalId.Top, block.Position, "material", nil, "anchor", "")
+			end)
+			
+			-- Fire Paint (toxify)
+			pcall(function()
+				paintScript.Event:FireServer(block, Enum.NormalId.Top, block.Position, "material", Color3.fromRGB(0, 0, 0), "neon", "")
+			end)
 		end
 	end
 end)
 
-print("Auto-equip all tools script loaded! All tools will be equipped simultaneously.")
+print("Delete + Paint spam script loaded!")
+print("Delete and Paint tools equipped and spamming!")
+print("Range: " .. range .. " studs")
