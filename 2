@@ -1,87 +1,48 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-local isDeleting = true
+local deleteRange = 500 -- 500 studs around you
 
--- Auto-equip Delete tool
-local function equipDelete()
-	if not LocalPlayer.Character then return end
-	
-	local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
-	if deleteTool then
-		deleteTool.Parent = LocalPlayer.Character
-	end
-end
-
--- Initial equip
-task.wait(1)
-equipDelete()
-
--- Re-equip on respawn
-LocalPlayer.CharacterAdded:Connect(function(character)
-	task.wait(1.5)
-	equipDelete()
-end)
-
--- Keep Delete equipped
+-- Auto-equip Delete
 task.spawn(function()
 	while task.wait(0.5) do
-		equipDelete()
+		if LocalPlayer.Backpack:FindFirstChild("Delete") and LocalPlayer.Character then
+			LocalPlayer.Backpack.Delete.Parent = LocalPlayer.Character
+		end
 	end
 end)
 
--- Extended range delete aura (prioritizes nearby, then deletes far)
-task.spawn(function()
-	while isDeleting do
-		task.wait(0.1) -- Main loop delay to avoid overwhelming server
-		
+-- Delete aura (500 stud radius around YOU)
+RunService.Heartbeat:Connect(function()
+	pcall(function()
 		if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
-			continue 
+			return 
 		end
 		
-		local deleteTool = LocalPlayer.Character:FindFirstChild("Delete")
-		if not deleteTool then continue end
+		if not LocalPlayer.Character:FindFirstChild("Delete") then return end
 		
-		local deleteScript = deleteTool:FindFirstChild("Script")
-		if not deleteScript or not deleteScript:FindFirstChild("Event") then continue end
+		local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
+		if not deleteScript or not deleteScript:FindFirstChild("Event") then return end
 		
-		local hrp = LocalPlayer.Character.HumanoidRootPart
+		local myPos = LocalPlayer.Character.HumanoidRootPart.Position
 		
-		-- Get ALL blocks and sort by distance (nearby first to avoid suspicion, then far)
-		local blocksWithDistance = {}
+		-- Delete all blocks within 500 studs of YOUR position
 		for _, block in pairs(workspace.Bricks:GetDescendants()) do
 			if block:IsA("BasePart") and block.Name == "Brick" then
-				local distance = (block.Position - hrp.Position).Magnitude
-				table.insert(blocksWithDistance, {block, block.Position, distance})
+				local distance = (block.Position - myPos).Magnitude
+				
+				if distance <= deleteRange then
+					task.spawn(function()
+						pcall(function()
+							deleteScript.Event:FireServer(block, block.Position)
+						end)
+					end)
+				end
 			end
 		end
-		
-		-- Sort by distance (closest first)
-		table.sort(blocksWithDistance, function(a, b)
-			return a[3] < b[3]
-		end)
-		
-		-- Delete blocks with controlled rate to avoid rate limit
-		local deleteCount = 0
-		for _, data in pairs(blocksWithDistance) do
-			local block = data[1]
-			local pos = data[2]
-			
-			pcall(function()
-				deleteScript.Event:FireServer(block, pos)
-			end)
-			
-			deleteCount = deleteCount + 1
-			
-			-- Limit to 50 deletes per cycle to avoid rate limiting
-			if deleteCount >= 50 then
-				break
-			end
-			
-			task.wait(0.02) -- Small delay between deletes
-		end
-	end
+	end)
 end)
 
-print("Extended Range Delete Aura loaded!")
-print("Deletes up to 50 blocks per cycle, starting with nearby blocks!")
+print("Delete aura loaded!")
+print("Deletes all blocks within " .. deleteRange .. " studs of YOU!")
