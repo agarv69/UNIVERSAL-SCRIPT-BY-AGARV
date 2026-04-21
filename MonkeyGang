@@ -98,7 +98,7 @@ G2L["a"] = Instance.new("UIListLayout", G2L["7"]);
 G2L["a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.GrabItems
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit
 G2L["b"] = Instance.new("TextButton", G2L["7"]);
 G2L["b"]["TextWrapped"] = true;
 G2L["b"]["TextSize"] = 14;
@@ -109,12 +109,12 @@ G2L["b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], 
 G2L["b"]["Size"] = UDim2.new(0, 150, 0, 40);
 G2L["b"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["b"]["Text"] = [[AUTO DISABLE BKIT: OFF]];
-G2L["b"]["Name"] = [[GrabItems]];
+G2L["b"]["Name"] = [[Bkit]];
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.GrabItems.LocalScript
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit.BkitScript
 G2L["c"] = Instance.new("LocalScript", G2L["b"]);
-
+G2L["c"]["Name"] = [[BkitScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze
@@ -402,15 +402,21 @@ task.spawn(C_3);
 local function C_9()
 local script = G2L["9"];
 	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
 	
 	local Fling = script.Parent
 	local isOn = false
 	local flingedPlayers = {}
-	local flingLoop = nil
+	
+	local bangAnim = nil
+	local bang = nil
+	local bangDied = nil
+	local bangLoop = nil
+	local isBanging = false
 	
 	-- ============================================================
-	-- FIND MONKEYTITLE (using same method as tooltip script)
+	-- FIND MONKEYTITLE
 	-- ============================================================
 	local function getScreenGui()
 		local p = script.Parent
@@ -449,6 +455,80 @@ local script = G2L["9"];
 		if not character then return false end
 	
 		return character:FindFirstChild("Hielo") ~= nil
+	end
+	
+	local function isAdmin(player)
+		return player.Team and player.Team.Name == "Chosen"
+	end
+	
+	local function getAdmins()
+		local admins = {}
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and isAdmin(player) then
+				table.insert(admins, player)
+			end
+		end
+		return admins
+	end
+	
+	local function getTorso(character)
+		character = character or LocalPlayer.Character
+		return character:FindFirstChild("Torso") 
+			or character:FindFirstChild("UpperTorso") 
+			or character:FindFirstChild("LowerTorso") 
+			or character:FindFirstChild("HumanoidRootPart")
+	end
+	
+	local function stopBang()
+		if bangDied then bangDied:Disconnect() end
+		if bang then bang:Stop() end
+		if bangAnim then bangAnim:Destroy() end
+		if bangLoop then bangLoop:Disconnect() end
+		bangDied = nil
+		bang = nil
+		bangAnim = nil
+		bangLoop = nil
+		isBanging = false
+	end
+	
+	local function startBang(targetPlayer)
+		if isBanging then return end
+	
+		stopBang()
+		task.wait(0.1)
+	
+		local character = LocalPlayer.Character
+		if not character then return end
+	
+		local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+		if not humanoid then return end
+	
+		local isR15 = character:FindFirstChild("UpperTorso") ~= nil
+	
+		bangAnim = Instance.new("Animation")
+		bangAnim.AnimationId = isR15 and "rbxassetid://5918726674" or "rbxassetid://148840371"
+		bang = humanoid:LoadAnimation(bangAnim)
+		bang:Play(0.1, 1, 1)
+		bang:AdjustSpeed(3)
+	
+		isBanging = true
+	
+		bangDied = humanoid.Died:Connect(function()
+			stopBang()
+		end)
+	
+		if targetPlayer then
+			local bangOffset = CFrame.new(0, 0, 1.1)
+			bangLoop = RunService.Stepped:Connect(function()
+				pcall(function()
+					local myRoot = getTorso(LocalPlayer.Character)
+					local otherRoot = getTorso(targetPlayer.Character)
+					if myRoot and otherRoot then
+						myRoot.CFrame = otherRoot.CFrame * bangOffset
+					end
+				end)
+			end)
+		end
 	end
 	
 	local function flingPlayer(TargetPlayer)
@@ -574,7 +654,12 @@ local script = G2L["9"];
 	end
 	
 	local function loopFling()
+		local currentAdminIndex = 1
+		local lastAdminSwitchTime = tick()
+	
 		while isOn do
+			local hasFlingTargets = false
+	
 			for _, player in pairs(Players:GetPlayers()) do
 				if player ~= LocalPlayer then
 					-- Skip if already flinged
@@ -592,11 +677,69 @@ local script = G2L["9"];
 						continue
 					end
 	
+					hasFlingTargets = true
+	
+					-- Stop banging if we have targets to fling
+					if isBanging then
+						stopBang()
+					end
+	
 					-- Fling the player
 					local success = flingPlayer(player)
 	
 					if success then
 						flingedPlayers[player] = true
+					end
+				end
+			end
+	
+			-- If no one to fling, bang admin
+			if not hasFlingTargets then
+				local character = LocalPlayer.Character
+				if character then
+					local rootPart = character:FindFirstChild("HumanoidRootPart")
+					if rootPart then
+						for _, obj in pairs(rootPart:GetChildren()) do
+							if obj:IsA("BodyVelocity") then
+								obj:Destroy()
+							end
+						end
+	
+						rootPart.Velocity = Vector3.new()
+						rootPart.RotVelocity = Vector3.new()
+					end
+	
+					local humanoid = character:FindFirstChildOfClass("Humanoid")
+					if humanoid then
+						humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+					end
+				end
+	
+				local admins = getAdmins()
+	
+				if #admins > 0 then
+					-- Switch admin every 1 second if there are multiple
+					if #admins > 1 and tick() - lastAdminSwitchTime >= 1 then
+						currentAdminIndex = currentAdminIndex + 1
+						if currentAdminIndex > #admins then
+							currentAdminIndex = 1
+						end
+						lastAdminSwitchTime = tick()
+	
+						if isBanging then
+							stopBang()
+							task.wait(0.1)
+						end
+					end
+	
+					local targetAdmin = admins[currentAdminIndex]
+	
+					if not isBanging then
+						startBang(targetAdmin)
+					end
+				else
+					if isBanging then
+						stopBang()
 					end
 				end
 			end
@@ -621,6 +764,11 @@ local script = G2L["9"];
 			task.wait(2)
 			flingedPlayers[player] = false
 		end)
+	end)
+	
+	LocalPlayer.CharacterAdded:Connect(function()
+		stopBang()
+		task.wait(1)
 	end)
 	
 	-- Hover effects - change MonkeyTitle text
@@ -651,6 +799,9 @@ local script = G2L["9"];
 			-- Stop flinging and reset
 			flingedPlayers = {}
 	
+			-- Stop banging
+			stopBang()
+	
 			-- Reset character
 			if LocalPlayer.Character then
 				LocalPlayer.Character:BreakJoints()
@@ -659,11 +810,502 @@ local script = G2L["9"];
 	end)
 end;
 task.spawn(C_9);
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.GrabItems.LocalScript
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit.BkitScript
 local function C_c()
 local script = G2L["c"];
-	print("Hello world!")
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local TextChatService = game:GetService("TextChatService")
 	
+	local Bkit = script.Parent
+	local isOn = false
+	
+	local isProcessingDelete = false
+	local isProcessingPaint = false
+	local isProcessingArkenstone = false
+	local cancelPaint = false
+	
+	-- ============================================================
+	-- FIND MONKEYTITLE
+	-- ============================================================
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then
+				return v
+			end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	
+	-- ============================================================
+	-- CHAT FUNCTION
+	-- ============================================================
+	local function sendChat(message)
+		pcall(function()
+			local channels = TextChatService:WaitForChild("TextChannels", 2)
+			if channels then
+				local general = channels:FindFirstChild("RBXGeneral")
+				if general then
+					general:SendAsync(message)
+					return
+				end
+			end
+			local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
+			if chatEvents then
+				local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
+				if sayMessage then
+					sayMessage:FireServer(message, "All")
+				end
+			end
+		end)
+	end
+	
+	-- ============================================================
+	-- AUTO TOOL PICKUP
+	-- ============================================================
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			local char = LocalPlayer.Character
+			local hum = char and char:FindFirstChildWhichIsA("Humanoid")
+			if hum and hum.Health > 0 and not isProcessingDelete and not isProcessingPaint and not isProcessingArkenstone then
+				local currentlyEquipped = char:FindFirstChildOfClass("Tool")
+				for _, obj in ipairs(workspace:GetChildren()) do
+					if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
+						pcall(function()
+							hum:EquipTool(obj)
+							task.wait(0.05)
+							for i = 1, 3 do
+								if obj.Parent == char then
+									obj.Parent = LocalPlayer.Backpack
+								end
+								task.wait(0.02)
+							end
+							if currentlyEquipped and currentlyEquipped.Parent == LocalPlayer.Backpack then
+								task.wait(0.03)
+								hum:EquipTool(currentlyEquipped)
+							end
+						end)
+					end
+				end
+			end
+			task.wait(0.1)
+		end
+	end)
+	
+	-- ============================================================
+	-- AUTO DELETE TOOL (BREAK BKIT)
+	-- ============================================================
+	local processedDeleteTools = {}
+	local justPickedUpDelete = {}
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+			for _, obj in ipairs(workspace:GetChildren()) do
+				if obj:IsA("Tool") and obj.Name == "Delete" and obj:FindFirstChild("Handle") then
+					justPickedUpDelete[obj] = true
+				end
+			end
+		end
+	end)
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+	
+			local brick = ReplicatedStorage:FindFirstChild("Brick")
+			if not brick then
+				task.wait(0.5)
+				continue
+			end
+	
+			local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+			if deleteTool and not processedDeleteTools[deleteTool] then
+				processedDeleteTools[deleteTool] = true
+	
+				if isProcessingPaint then
+					cancelPaint = true
+					while isProcessingPaint do
+						task.wait(0.1)
+					end
+				end
+	
+				if justPickedUpDelete[deleteTool] then
+					task.wait(0.5)
+					justPickedUpDelete[deleteTool] = nil
+				end
+	
+				isProcessingDelete = true
+	
+				task.spawn(function()
+					pcall(function()
+						local character = LocalPlayer.Character
+						if not character then return end
+						local humanoid = character:FindFirstChild("Humanoid")
+						if not humanoid then return end
+	
+						local previousTool = character:FindFirstChildOfClass("Tool")
+						if previousTool and previousTool.Name == "Delete" then
+							previousTool = nil
+						end
+	
+						humanoid:EquipTool(deleteTool)
+						task.wait(0.1)
+	
+						local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+	
+						local startTime = tick()
+						while tick() - startTime < 1 do
+							event:FireServer(brick, character.HumanoidRootPart.Position)
+							task.wait(0.05)
+						end
+	
+						task.wait(0.1)
+	
+						humanoid:UnequipTools()
+	
+						task.wait(0.2)
+	
+						sendChat("🔥BKIT BROKEN🔥")
+	
+						isProcessingDelete = false
+	
+						if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+							humanoid:EquipTool(previousTool)
+						end
+					end)
+				end)
+			end
+	
+			for tool, _ in pairs(processedDeleteTools) do
+				if not tool or not tool.Parent then
+					processedDeleteTools[tool] = nil
+				end
+			end
+		end
+	end)
+	
+	-- ============================================================
+	-- AUTO PAINT TOOL (MONKEY GANG GRAFFITI)
+	-- ============================================================
+	local processedPaintTools = {}
+	local justPickedUpPaint = {}
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+			for _, obj in ipairs(workspace:GetChildren()) do
+				if obj:IsA("Tool") and obj.Name == "Paint" and obj:FindFirstChild("Handle") then
+					justPickedUpPaint[obj] = true
+				end
+			end
+		end
+	end)
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+	
+			local brick = ReplicatedStorage:FindFirstChild("Brick")
+			if not brick then
+				task.wait(0.5)
+				continue
+			end
+	
+			local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
+			local deleteToolExists = LocalPlayer.Backpack:FindFirstChild("Delete")
+			if paintTool and not processedPaintTools[paintTool] and not deleteToolExists then
+				processedPaintTools[paintTool] = true
+	
+				if justPickedUpPaint[paintTool] then
+					task.wait(0.5)
+					justPickedUpPaint[paintTool] = nil
+				end
+	
+				isProcessingPaint = true
+				cancelPaint = false
+	
+				task.spawn(function()
+					pcall(function()
+						local character = LocalPlayer.Character
+						if not character then return end
+						local humanoid = character:FindFirstChild("Humanoid")
+						if not humanoid then return end
+	
+						local previousTool = character:FindFirstChildOfClass("Tool")
+						if previousTool and previousTool.Name == "Paint" then
+							previousTool = nil
+						end
+	
+						humanoid:EquipTool(paintTool)
+						task.wait(0.1)
+	
+						local paintEvent = paintTool:WaitForChild("Script"):WaitForChild("Event")
+	
+						local blueColor = Color3.fromRGB(0, 0, 255)
+						local whiteColor = Color3.fromRGB(255, 255, 255)
+						local sprayText = "MONKEY GANG"
+	
+						local sides = {
+							Enum.NormalId.Front,
+							Enum.NormalId.Right,
+							Enum.NormalId.Back,
+							Enum.NormalId.Left,
+							Enum.NormalId.Top,
+							Enum.NormalId.Bottom
+						}
+	
+						for i, side in ipairs(sides) do
+							if cancelPaint then break end
+							pcall(function()
+								paintEvent:FireServer(brick, side, brick.Position, "both 🤝", blueColor, "", "")
+							end)
+							task.wait(0.05)
+						end
+	
+						if not cancelPaint then
+							pcall(function()
+								paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "material", blueColor, "Smooth", "")
+							end)
+							task.wait(0.1)
+						end
+	
+						for i, side in ipairs(sides) do
+							if cancelPaint then break end
+							for retry = 1, 2 do
+								pcall(function()
+									paintEvent:FireServer(brick, side, brick.Position, "both 🤝", blueColor, "spray", "")
+								end)
+								task.wait(0.03)
+							end
+						end
+	
+						if not cancelPaint then
+							for i, side in ipairs(sides) do
+								if cancelPaint then break end
+								for retry = 1, 2 do
+									pcall(function()
+										paintEvent:FireServer(brick, side, brick.Position, "both 🤝", whiteColor, "spray", sprayText)
+									end)
+									task.wait(0.03)
+								end
+							end
+						end
+	
+						if not cancelPaint then
+							pcall(function()
+								paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "both 🤝", blueColor, "spray", "")
+							end)
+							task.wait(0.1)
+	
+							pcall(function()
+								paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
+							end)
+							task.wait(0.1)
+	
+							pcall(function()
+								paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "both 🤝", whiteColor, "spray", sprayText)
+							end)
+							task.wait(0.05)
+						end
+	
+						task.wait(0.1)
+	
+						humanoid:UnequipTools()
+	
+						task.wait(0.2)
+	
+						isProcessingPaint = false
+						cancelPaint = false
+	
+						if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+							humanoid:EquipTool(previousTool)
+						end
+					end)
+	
+					if not pcall(function() end) then
+						isProcessingPaint = false
+						cancelPaint = false
+					end
+				end)
+			end
+	
+			for tool, _ in pairs(processedPaintTools) do
+				if not tool or not tool.Parent then
+					processedPaintTools[tool] = nil
+				end
+			end
+		end
+	end)
+	
+	-- ============================================================
+	-- AUTO ARKENSTONE (AUTO BKIT COMMAND)
+	-- ============================================================
+	local processedArkenstones = {}
+	local justPickedUpArkenstone = {}
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+			for _, obj in ipairs(workspace:GetChildren()) do
+				if obj:IsA("Tool") and obj.Name == "The Arkenstone" and obj:FindFirstChild("Handle") then
+					justPickedUpArkenstone[obj] = true
+				end
+			end
+		end
+	end)
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+	
+			local brick = ReplicatedStorage:FindFirstChild("Brick")
+			if not brick then
+				task.wait(0.5)
+				continue
+			end
+	
+			local backpack = LocalPlayer:FindFirstChild("Backpack")
+			local char = LocalPlayer.Character
+			local arkenstone = (backpack and backpack:FindFirstChild("The Arkenstone"))
+				or (char and char:FindFirstChild("The Arkenstone"))
+	
+			if arkenstone and not processedArkenstones[arkenstone] then
+				processedArkenstones[arkenstone] = true
+	
+				if isProcessingPaint then
+					cancelPaint = true
+					while isProcessingPaint do
+						task.wait(0.1)
+					end
+				end
+	
+				if justPickedUpArkenstone[arkenstone] then
+					task.wait(0.5)
+					justPickedUpArkenstone[arkenstone] = nil
+				end
+	
+				isProcessingArkenstone = true
+	
+				task.spawn(function()
+					pcall(function()
+						local character = LocalPlayer.Character
+						if not character then return end
+						local humanoid = character:FindFirstChild("Humanoid")
+						if not humanoid then return end
+	
+						local ark = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
+							or (character and character:FindFirstChild("The Arkenstone"))
+	
+						if not ark then return end
+	
+						if ark.Parent == LocalPlayer.Backpack then
+							humanoid:EquipTool(ark)
+						end
+	
+						task.wait(0.5)
+	
+						sendChat(";bkit")
+	
+						isProcessingArkenstone = false
+					end)
+	
+					if not pcall(function() end) then
+						isProcessingArkenstone = false
+					end
+				end)
+			end
+	
+			for tool, _ in pairs(processedArkenstones) do
+				if not tool or not tool.Parent then
+					processedArkenstones[tool] = nil
+				end
+			end
+		end
+	end)
+	
+	-- ============================================================
+	-- HOVER EFFECTS
+	-- ============================================================
+	if MonkeyTitle then
+		Bkit.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "AUTO DISABLE BKIT"
+		end)
+	
+		Bkit.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+	
+	-- ============================================================
+	-- BUTTON TOGGLE
+	-- ============================================================
+	Bkit.MouseButton1Click:Connect(function()
+		isOn = not isOn
+	
+		if isOn then
+			Bkit.Text = "AUTO DISABLE BKIT: ON"
+			Bkit.TextColor3 = Color3.fromRGB(0, 255, 0)
+		else
+			Bkit.Text = "AUTO DISABLE BKIT: OFF"
+			Bkit.TextColor3 = Color3.fromRGB(255, 255, 255)
+	
+			-- Reset processing flags when turning off
+			isProcessingDelete = false
+			isProcessingPaint = false
+			isProcessingArkenstone = false
+			cancelPaint = false
+		end
+	end)
 end;
 task.spawn(C_c);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze.LocalScript
@@ -906,7 +1548,7 @@ local script = G2L["19"];
 	-- ============================================================
 	if MonkeyTitle then
 		RejoinNoclip.MouseEnter:Connect(function()
-			MonkeyTitle.Text = "REJOIN ON NOCLIP"
+			MonkeyTitle.Text = "REJOINS ON NOCLIP"
 		end)
 	
 		RejoinNoclip.MouseLeave:Connect(function()
