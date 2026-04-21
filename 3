@@ -1,33 +1,25 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-local toolsToEquip = {
-	"Delete",
-	"Paint"
-}
+local isDeleting = true
 
-local isSpamming = true
-local range = 50 -- Range around you to spam
-
--- Auto-equip all tools
-local function equipAllTools()
+-- Auto-equip Delete tool
+local function equipDelete()
 	if not LocalPlayer.Character then return end
 	
-	for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-		if tool:IsA("Tool") and table.find(toolsToEquip, tool.Name) then
-			tool.Parent = LocalPlayer.Character
-		end
+	local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+	if deleteTool then
+		deleteTool.Parent = LocalPlayer.Character
 	end
 end
 
 -- Initial equip
 task.wait(1)
-equipAllTools()
+equipDelete()
 
 -- Auto-equip when new tools are added
 LocalPlayer.Backpack.ChildAdded:Connect(function(tool)
-	if tool:IsA("Tool") and table.find(toolsToEquip, tool.Name) then
+	if tool.Name == "Delete" then
 		task.wait(0.05)
 		if LocalPlayer.Character then
 			tool.Parent = LocalPlayer.Character
@@ -38,66 +30,57 @@ end)
 -- Re-equip on respawn
 LocalPlayer.CharacterAdded:Connect(function(character)
 	task.wait(1.5)
-	equipAllTools()
+	equipDelete()
 end)
 
--- Keep tools equipped
+-- Keep Delete equipped
 task.spawn(function()
 	while task.wait(0.5) do
-		equipAllTools()
+		equipDelete()
 	end
 end)
 
--- Spam Delete and Paint together
+-- Infinite range delete aura (with rate limiting to prevent lag)
 task.spawn(function()
-	while isSpamming do
-		task.wait(0.05)
+	while isDeleting do
+		if not LocalPlayer.Character then 
+			task.wait(0.5)
+			continue 
+		end
 		
-		if not LocalPlayer.Character then continue end
-		local character = LocalPlayer.Character
-		if not character:FindFirstChild("HumanoidRootPart") then continue end
-		
-		local deleteTool = character:FindFirstChild("Delete")
-		local paintTool = character:FindFirstChild("Paint")
-		
-		if not deleteTool or not paintTool then continue end
+		local deleteTool = LocalPlayer.Character:FindFirstChild("Delete")
+		if not deleteTool then 
+			task.wait(0.5)
+			continue 
+		end
 		
 		local deleteScript = deleteTool:FindFirstChild("Script")
-		local paintScript = paintTool:FindFirstChild("Script")
+		if not deleteScript or not deleteScript:FindFirstChild("Event") then 
+			task.wait(0.5)
+			continue 
+		end
 		
-		if not deleteScript or not deleteScript:FindFirstChild("Event") then continue end
-		if not paintScript or not paintScript:FindFirstChild("Event") then continue end
-		
-		-- Get all blocks in range
-		local blocksInRange = {}
+		-- Get ALL blocks in the entire workspace (no range check)
+		local blockPositions = {}
 		for _, block in pairs(workspace.Bricks:GetDescendants()) do
 			if block:IsA("BasePart") and block.Name == "Brick" then
-				if (block.Position - character.HumanoidRootPart.Position).Magnitude < range then
-					table.insert(blocksInRange, block)
-				end
+				table.insert(blockPositions, {block, block.Position})
 			end
 		end
 		
-		-- Fire Delete and Paint at the SAME TIME for all blocks
-		for _, block in pairs(blocksInRange) do
-			-- Fire Delete
+		-- Delete blocks by position (this bypasses range check)
+		for _, data in pairs(blockPositions) do
+			local block = data[1]
+			local pos = data[2]
 			pcall(function()
-				deleteScript.Event:FireServer(block, block.Position)
+				deleteScript.Event:FireServer(block, pos)
 			end)
-			
-			-- Fire Paint (unanchor)
-			pcall(function()
-				paintScript.Event:FireServer(block, Enum.NormalId.Top, block.Position, "material", nil, "anchor", "")
-			end)
-			
-			-- Fire Paint (toxify)
-			pcall(function()
-				paintScript.Event:FireServer(block, Enum.NormalId.Top, block.Position, "material", Color3.fromRGB(0, 0, 0), "neon", "")
-			end)
+			task.wait(0.01) -- Small delay between each delete to prevent lag
 		end
+		
+		task.wait(0.05) -- Wait before next cycle
 	end
 end)
 
-print("Delete + Paint spam script loaded!")
-print("Delete and Paint tools equipped and spamming!")
-print("Range: " .. range .. " studs")
+print("Infinite Delete Aura loaded!")
+print("Deleting ALL blocks in the server with NO range limit!")
