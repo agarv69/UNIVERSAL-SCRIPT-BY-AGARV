@@ -401,19 +401,21 @@ task.spawn(C_3);
 local function C_9()
 local script = G2L["9"];
 	local Players = game:GetService("Players")
-	local TeleportService = game:GetService("TeleportService")
+	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
-	local PLACE_ID = game.PlaceId
 	
-	local AntiFreeze = script.Parent
+	local Fling = script.Parent
 	local isOn = false
-	local isResetting = false
+	local flingedPlayers = {}
 	
-	local FILE_NAME = "monkeygang_rejoin_state.txt"
-	local TIMESTAMP_FILE = "monkeygang_rejoin_timestamp.txt"
+	local bangAnim = nil
+	local bang = nil
+	local bangDied = nil
+	local bangLoop = nil
+	local isBanging = false
 	
 	-- ============================================================
-	-- FIND MONKEYTITLE AND SCREENGUI
+	-- FIND MONKEYTITLE
 	-- ============================================================
 	local function getScreenGui()
 		local p = script.Parent
@@ -436,200 +438,379 @@ local script = G2L["9"];
 	end
 	
 	local MonkeyTitle = findDescendant("MonkeyTitle")
-	local ScreenGui = getScreenGui()
 	
-	-- ============================================================
-	-- FILE SAVE/LOAD FUNCTIONS
-	-- ============================================================
-	local function readFile()
-		local success, result = pcall(function()
-			return readfile(FILE_NAME)
-		end)
-		if success and result and result ~= "" then return result end
-		return nil
+	local function isNoclipped(player)
+		local character = player.Character
+		if not character then return false end
+	
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return false end
+	
+		return hrp.CollisionGroup == "NoClip"
 	end
 	
-	local function writeFile(content)
-		pcall(function()
-			writefile(FILE_NAME, content)
-		end)
+	local function isFrozen(player)
+		local character = workspace:FindFirstChild(player.Name)
+		if not character then return false end
+	
+		return character:FindFirstChild("Hielo") ~= nil
 	end
 	
-	local function saveButtonStates()
-		if not ScreenGui then return end
+	local function isAdmin(player)
+		return player.Team and player.Team.Name == "Chosen"
+	end
 	
-		local lines = {}
-		table.insert(lines, "autoRejoin=true")
-	
-		for _, descendant in pairs(ScreenGui:GetDescendants()) do
-			if descendant:IsA("TextButton") then
-				local text = descendant.Text
-				if text:match(": ON$") or text:match(": OFF$") then
-					local isEnabled = descendant.TextColor3 == Color3.fromRGB(0, 255, 0)
-					table.insert(lines, descendant.Name .. "=" .. tostring(isEnabled))
-				end
+	local function getAdmins()
+		local admins = {}
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and isAdmin(player) then
+				table.insert(admins, player)
 			end
 		end
-	
-		writeFile(table.concat(lines, "\n"))
-	
-		pcall(function()
-			writefile(TIMESTAMP_FILE, tostring(tick()))
-		end)
+		return admins
 	end
 	
-	local function loadAndApplyStates()
-		local timestampData = nil
-		pcall(function()
-			timestampData = readfile(TIMESTAMP_FILE)
+	local function getTorso(character)
+		character = character or LocalPlayer.Character
+		return character:FindFirstChild("Torso") 
+			or character:FindFirstChild("UpperTorso") 
+			or character:FindFirstChild("LowerTorso") 
+			or character:FindFirstChild("HumanoidRootPart")
+	end
+	
+	local function stopBang()
+		if bangDied then bangDied:Disconnect() end
+		if bang then bang:Stop() end
+		if bangAnim then bangAnim:Destroy() end
+		if bangLoop then bangLoop:Disconnect() end
+		bangDied = nil
+		bang = nil
+		bangAnim = nil
+		bangLoop = nil
+		isBanging = false
+	end
+	
+	local function startBang(targetPlayer)
+		if isBanging then return end
+	
+		stopBang()
+		task.wait(0.1)
+	
+		local character = LocalPlayer.Character
+		if not character then return end
+	
+		local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+		if not humanoid then return end
+	
+		local isR15 = character:FindFirstChild("UpperTorso") ~= nil
+	
+		bangAnim = Instance.new("Animation")
+		bangAnim.AnimationId = isR15 and "rbxassetid://5918726674" or "rbxassetid://148840371"
+		bang = humanoid:LoadAnimation(bangAnim)
+		bang:Play(0.1, 1, 1)
+		bang:AdjustSpeed(3)
+	
+		isBanging = true
+	
+		bangDied = humanoid.Died:Connect(function()
+			stopBang()
 		end)
 	
-		if not timestampData then return end
-	
-		local rejoinTime = tonumber(timestampData)
-		if not rejoinTime then return end
-	
-		local timeSinceRejoin = tick() - rejoinTime
-	
-		if timeSinceRejoin > 30 then
-			pcall(function()
-				delfile(TIMESTAMP_FILE)
+		if targetPlayer then
+			local bangOffset = CFrame.new(0, 0, 1.1)
+			bangLoop = RunService.Stepped:Connect(function()
+				pcall(function()
+					local myRoot = getTorso(LocalPlayer.Character)
+					local otherRoot = getTorso(targetPlayer.Character)
+					if myRoot and otherRoot then
+						myRoot.CFrame = otherRoot.CFrame * bangOffset
+					end
+				end)
 			end)
-			return
+		end
+	end
+	
+	local function flingPlayer(TargetPlayer)
+		local Character = LocalPlayer.Character
+		local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+		local RootPart = Humanoid and Humanoid.RootPart
+	
+		local TCharacter = TargetPlayer.Character
+		if not TCharacter then return false end
+	
+		local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+		local TRootPart = THumanoid and THumanoid.RootPart
+		local THead = TCharacter:FindFirstChild("Head")
+		local Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+		local Handle = Accessory and Accessory:FindFirstChild("Handle")
+	
+		if not (Character and Humanoid and RootPart) then return false end
+	
+		if RootPart.Velocity.Magnitude < 50 then
+			getgenv().OldPos = RootPart.CFrame
 		end
 	
-		local data = readFile()
-		if not data then return end
+		if THumanoid and THumanoid.Sit then return false end
+		if not TCharacter:FindFirstChildWhichIsA("BasePart") then return false end
 	
-		local states = {}
-		for line in data:gmatch("[^\n]+") do
-			local key, value = line:match("(.-)=(.+)")
-			if key and value then
-				states[key] = value
+		local flinged = false
+		local startTime = tick()
+		local maxTime = 0.5
+	
+		local BV = Instance.new("BodyVelocity")
+		BV.Name = "FlingVel"
+		BV.Parent = RootPart
+		BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
+		BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+	
+		local FPos = function(BasePart, Pos, Ang)
+			RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+			Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+			RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+			RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		end
+	
+		local SFBasePart = function(BasePart)
+			local Angle = 0
+			repeat
+				if RootPart and THumanoid then
+					if BasePart.Velocity.Magnitude < 50 then
+						Angle = Angle + 100
+						FPos(BasePart, CFrame.new(0, 1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+					else
+						if not TRootPart then break end
+						FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(-90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+						task.wait()
+					end
+				else
+					break
+				end
+			until (BasePart.Velocity.Magnitude > 500)
+				or (BasePart.Parent ~= TargetPlayer.Character)
+				or (TargetPlayer.Parent ~= Players)
+				or THumanoid.Sit
+				or (Humanoid.Health <= 0)
+				or (tick() - startTime > maxTime)
+				or not isOn  -- ADDED: Stop if toggle is turned off
+	
+			if BasePart.Velocity.Magnitude > 500 then
+				flinged = true
 			end
 		end
 	
-		if states["autoRejoin"] ~= "true" then return end
+		local savedFPDH = workspace.FallenPartsDestroyHeight
+		workspace.FallenPartsDestroyHeight = 0/0
 	
-		if not ScreenGui then return end
+		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 	
-		for _, descendant in pairs(ScreenGui:GetDescendants()) do
-			if descendant:IsA("TextButton") then
-				local savedState = states[descendant.Name]
-				if savedState == "true" then
-					if descendant.TextColor3 == Color3.fromRGB(255, 255, 255) then
-						pcall(function()
-							firesignal(descendant.MouseButton1Click)
-						end)
-						task.wait(0.1)
+		if TRootPart and THead then
+			if (TRootPart.CFrame.p - THead.CFrame.p).Magnitude > 5 then
+				SFBasePart(THead)
+			else
+				SFBasePart(TRootPart)
+			end
+		elseif TRootPart and not THead then
+			SFBasePart(TRootPart)
+		elseif not TRootPart and THead then
+			SFBasePart(THead)
+		elseif not TRootPart and not THead and Accessory and Handle then
+			SFBasePart(Handle)
+		end
+	
+		BV:Destroy()
+		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+		workspace.FallenPartsDestroyHeight = savedFPDH
+	
+		return flinged
+	end
+	
+	local function loopFling()
+		local currentAdminIndex = 1
+		local lastAdminSwitchTime = tick()
+	
+		while isOn do
+			local hasFlingTargets = false
+	
+			for _, player in pairs(Players:GetPlayers()) do
+				if player ~= LocalPlayer then
+					-- Skip if already flinged
+					if flingedPlayers[player] then
+						continue
+					end
+	
+					-- Don't fling players with NoClip
+					if isNoclipped(player) then
+						continue
+					end
+	
+					-- Don't fling players with Hielo (frozen)
+					if isFrozen(player) then
+						continue
+					end
+	
+					hasFlingTargets = true
+	
+					-- Stop banging if we have targets to fling
+					if isBanging then
+						stopBang()
+					end
+	
+					-- Fling the player
+					local success = flingPlayer(player)
+	
+					if success then
+						flingedPlayers[player] = true
 					end
 				end
 			end
-		end
 	
-		writeFile("")
-		pcall(function()
-			delfile(TIMESTAMP_FILE)
-		end)
-	end
+			-- If no one to fling, bang admin
+			if not hasFlingTargets then
+				local character = LocalPlayer.Character
+				if character then
+					local rootPart = character:FindFirstChild("HumanoidRootPart")
+					if rootPart then
+						for _, obj in pairs(rootPart:GetChildren()) do
+							if obj:IsA("BodyVelocity") then
+								obj:Destroy()
+							end
+						end
 	
-	-- ============================================================
-	-- AUTO-EXECUTE SETUP
-	-- ============================================================
-	local function setupAutoExecute()
-		local queueFn = queue_on_teleport
-			or (syn and syn.queue_on_teleport)
-			or (fluxus and fluxus.queue_on_teleport)
+						rootPart.Velocity = Vector3.new()
+						rootPart.RotVelocity = Vector3.new()
+					end
 	
-		if queueFn then
-			queueFn([[
-				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/MonkeyGang"))()
-			]])
-		end
-	end
-	
-	-- ============================================================
-	-- HIELO DETECTION AND AUTO RESET/REJOIN
-	-- ============================================================
-	local function checkHielo()
-		while task.wait(0.5) do
-			if not isOn then continue end
-			if isResetting then continue end
-	
-			local char = workspace:FindFirstChild(LocalPlayer.Name)
-			if not char then continue end
-	
-			-- Check if Hielo exists
-			if char:FindFirstChild("Hielo") then
-				isResetting = true
-	
-				-- Reset character using BreakJoints (works even with god mode on)
-				if LocalPlayer.Character then
-					LocalPlayer.Character:BreakJoints()
+					local humanoid = character:FindFirstChildOfClass("Humanoid")
+					if humanoid then
+						humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+					end
 				end
 	
-				-- Wait for respawn
-				LocalPlayer.CharacterAdded:Wait()
-				task.wait(5) -- Wait 5 seconds after respawn
+				local admins = getAdmins()
 	
-				-- Check if Hielo is still there
-				local newChar = workspace:FindFirstChild(LocalPlayer.Name)
-				if newChar and newChar:FindFirstChild("Hielo") then
-					-- Still frozen, rejoin server
+				if #admins > 0 then
+					-- Switch admin every 1 second if there are multiple
+					if #admins > 1 and tick() - lastAdminSwitchTime >= 1 then
+						currentAdminIndex = currentAdminIndex + 1
+						if currentAdminIndex > #admins then
+							currentAdminIndex = 1
+						end
+						lastAdminSwitchTime = tick()
 	
-					-- Save button states
-					saveButtonStates()
+						if isBanging then
+							stopBang()
+							task.wait(0.1)
+						end
+					end
 	
-					-- Setup auto-execute
-					setupAutoExecute()
+					local targetAdmin = admins[currentAdminIndex]
 	
-					-- Rejoin
-					TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+					if not isBanging then
+						startBang(targetAdmin)
+					end
 				else
-					-- Not frozen anymore, continue
-					isResetting = false
+					if isBanging then
+						stopBang()
+					end
 				end
 			end
+	
+			task.wait(0.1)
 		end
 	end
 	
-	-- ============================================================
-	-- HOVER EFFECTS
-	-- ============================================================
+	-- Reset flinged status when players respawn
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			player.CharacterAdded:Connect(function()
+				flingedPlayers[player] = false
+			end)
+		end
+	end
+	
+	Players.PlayerAdded:Connect(function(player)
+		flingedPlayers[player] = false
+	
+		player.CharacterAdded:Connect(function()
+			task.wait(2)
+			flingedPlayers[player] = false
+		end)
+	end)
+	
+	LocalPlayer.CharacterAdded:Connect(function()
+		stopBang()
+		task.wait(1)
+	end)
+	
+	-- Hover effects - change MonkeyTitle text
 	if MonkeyTitle then
-		AntiFreeze.MouseEnter:Connect(function()
-			MonkeyTitle.Text = "AUTO RESETS ON FREEZE, REJOINS IF STILL FROZEN"
+		Fling.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "FLINGS PLAYERS NONSTOP, EXCLUDES NOCLIPPED OR FROZEN PLAYERS"
 		end)
 	
-		AntiFreeze.MouseLeave:Connect(function()
+		Fling.MouseLeave:Connect(function()
 			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
 		end)
 	end
 	
-	-- ============================================================
-	-- BUTTON TOGGLE
-	-- ============================================================
-	AntiFreeze.MouseButton1Click:Connect(function()
+	-- Button toggle
+	Fling.MouseButton1Click:Connect(function()
 		isOn = not isOn
 	
 		if isOn then
-			AntiFreeze.Text = "ANTI FREEZE: ON"
-			AntiFreeze.TextColor3 = Color3.fromRGB(0, 255, 0)
+			Fling.Text = "LOOP FLING PLAYERS: ON"
+			Fling.TextColor3 = Color3.fromRGB(0, 255, 0)
+	
+			-- Start the fling loop
+			task.spawn(loopFling)
 		else
-			AntiFreeze.Text = "ANTI FREEZE: OFF"
-			AntiFreeze.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Fling.Text = "LOOP FLING PLAYERS: OFF"
+			Fling.TextColor3 = Color3.fromRGB(255, 255, 255)
+	
+			-- Stop flinging immediately
+			-- (the isOn = false already stops the loop)
+	
+			-- Reset flinged table
+			flingedPlayers = {}
+	
+			-- Stop banging
+			stopBang()
+	
+			-- Reset character (doesn't wait)
+			if LocalPlayer.Character then
+				LocalPlayer.Character:BreakJoints()
+			end
 		end
 	end)
-	
-	-- ============================================================
-	-- START HIELO MONITORING
-	-- ============================================================
-	task.spawn(checkHielo)
-	
-	-- ============================================================
-	-- LOAD STATES ON JOIN
-	-- ============================================================
-	task.spawn(loadAndApplyStates)
 end;
 task.spawn(C_9);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit.BkitScript
@@ -1283,42 +1464,28 @@ local script = G2L["e"];
 	-- HIELO DETECTION AND AUTO RESET/REJOIN
 	-- ============================================================
 	local function checkHielo()
-		while task.wait(0.5) do
-			if not isOn then continue end
-			if isResetting then continue end
+		while task.wait(0.05) do
+			if isOn and not isResetting then
+				local char = workspace:FindFirstChild(LocalPlayer.Name)
+				if char then
+					if char:FindFirstChild("Hielo") then
+						isResetting = true
 	
-			local char = workspace:FindFirstChild(LocalPlayer.Name)
-			if not char then continue end
+						if LocalPlayer.Character then
+							LocalPlayer.Character:BreakJoints()
+						end
 	
-			-- Check if Hielo exists
-			if char:FindFirstChild("Hielo") then
-				isResetting = true
+						LocalPlayer.CharacterAdded:Wait()
+						isResetting = false
+						task.wait(5)
 	
-				-- Reset character
-				if LocalPlayer.Character then
-					LocalPlayer.Character:BreakJoints()
-				end
-	
-				-- Wait for respawn
-				LocalPlayer.CharacterAdded:Wait()
-				task.wait(5) -- Wait 5 seconds after respawn
-	
-				-- Check if Hielo is still there
-				local newChar = workspace:FindFirstChild(LocalPlayer.Name)
-				if newChar and newChar:FindFirstChild("Hielo") then
-					-- Still frozen, rejoin server
-	
-					-- Save button states
-					saveButtonStates()
-	
-					-- Setup auto-execute
-					setupAutoExecute()
-	
-					-- Rejoin
-					TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
-				else
-					-- Not frozen anymore, continue
-					isResetting = false
+						local newChar = workspace:FindFirstChild(LocalPlayer.Name)
+						if newChar and newChar:FindFirstChild("Hielo") then
+							saveButtonStates()
+							setupAutoExecute()
+							TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+						end
+					end
 				end
 			end
 		end
