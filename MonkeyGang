@@ -152,9 +152,9 @@ G2L["f"]["Text"] = [[ANTI GLOW, TOXIFY: OFF]];
 G2L["f"]["Name"] = [[AntiGlow]];
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.LocalScript
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.AntiGlowScript
 G2L["10"] = Instance.new("LocalScript", G2L["f"]);
-
+G2L["10"]["Name"] = [[AntiGlowScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.FloodChat
@@ -353,7 +353,6 @@ G2L["24"] = Instance.new("LocalScript", G2L["23"]);
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.TextBox
 G2L["25"] = Instance.new("TextBox", G2L["17"]);
-G2L["25"]["CursorPosition"] = -1;
 G2L["25"]["PlaceholderColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["25"]["TextWrapped"] = true;
 G2L["25"]["TextTransparency"] = 0.4;
@@ -621,6 +620,7 @@ local script = G2L["9"];
 				or THumanoid.Sit
 				or (Humanoid.Health <= 0)
 				or (tick() - startTime > maxTime)
+				or not isOn  -- ADDED: Stop if toggle is turned off
 	
 			if BasePart.Velocity.Magnitude > 500 then
 				flinged = true
@@ -796,13 +796,16 @@ local script = G2L["9"];
 			Fling.Text = "LOOP FLING PLAYERS: OFF"
 			Fling.TextColor3 = Color3.fromRGB(255, 255, 255)
 	
-			-- Stop flinging and reset
+			-- Stop flinging immediately
+			-- (the isOn = false already stops the loop)
+	
+			-- Reset flinged table
 			flingedPlayers = {}
 	
 			-- Stop banging
 			stopBang()
 	
-			-- Reset character
+			-- Reset character (doesn't wait)
 			if LocalPlayer.Character then
 				LocalPlayer.Character:BreakJoints()
 			end
@@ -994,8 +997,6 @@ local script = G2L["c"];
 						humanoid:UnequipTools()
 	
 						task.wait(0.2)
-	
-						sendChat("🔥BKIT BROKEN🔥")
 	
 						isProcessingDelete = false
 	
@@ -1278,7 +1279,7 @@ local script = G2L["c"];
 	-- ============================================================
 	if MonkeyTitle then
 		Bkit.MouseEnter:Connect(function()
-			MonkeyTitle.Text = "AUTO DISABLE BKIT"
+			MonkeyTitle.Text = "AUTO DISABLE BKIT + AUTO GRAB ITEMS"
 		end)
 	
 		Bkit.MouseLeave:Connect(function()
@@ -1315,11 +1316,194 @@ local script = G2L["e"];
 	
 end;
 task.spawn(C_e);
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.LocalScript
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.AntiGlowScript
 local function C_10()
 local script = G2L["10"];
-	print("Hello world!")
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
 	
+	local AntiGlow = script.Parent
+	local isEnabled = false
+	local Connections = {}
+	
+	-- ============================================================
+	-- FIND MONKEYTITLE FOR HOVER
+	-- ============================================================
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then
+				return v
+			end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	
+	-- ============================================================
+	-- ANTI-GLOW/TOXIFY FUNCTIONS
+	-- ============================================================
+	local function removeGlow(part)
+		if part:IsA("BasePart") then
+			-- Remove glow effect
+			if part.Material == Enum.Material.Neon then
+				part.Material = Enum.Material.Plastic
+			end
+	
+			-- Remove black toxify color
+			if part.Color == Color3.fromRGB(0, 0, 0) and part.Material == Enum.Material.Neon then
+				part.Color = Color3.fromRGB(163, 162, 165) -- Default gray
+			end
+	
+			-- Restore anchored/collision if toxified
+			if not part.Anchored then
+				part.Anchored = true
+			end
+			if not part.CanCollide then
+				part.CanCollide = true
+			end
+		end
+	end
+	
+	local function monitorCharacter(character)
+		-- Clean existing parts
+		for _, part in pairs(character:GetDescendants()) do
+			removeGlow(part)
+		end
+	
+		-- Monitor for new parts or changes
+		table.insert(Connections, character.DescendantAdded:Connect(function(descendant)
+			if isEnabled then
+				task.wait()
+				removeGlow(descendant)
+			end
+		end))
+	
+		-- Monitor for property changes
+		for _, part in pairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				table.insert(Connections, part:GetPropertyChangedSignal("Material"):Connect(function()
+					if isEnabled then
+						removeGlow(part)
+					end
+				end))
+	
+				table.insert(Connections, part:GetPropertyChangedSignal("Color"):Connect(function()
+					if isEnabled then
+						removeGlow(part)
+					end
+				end))
+	
+				table.insert(Connections, part:GetPropertyChangedSignal("Anchored"):Connect(function()
+					if isEnabled and not part.Anchored then
+						part.Anchored = true
+					end
+				end))
+	
+				table.insert(Connections, part:GetPropertyChangedSignal("CanCollide"):Connect(function()
+					if isEnabled and not part.CanCollide then
+						part.CanCollide = true
+					end
+				end))
+			end
+		end
+	
+		-- Continuous check loop
+		table.insert(Connections, RunService.Heartbeat:Connect(function()
+			if not isEnabled then return end
+	
+			for _, part in pairs(character:GetDescendants()) do
+				removeGlow(part)
+			end
+		end))
+	end
+	
+	local function enableAntiGlow()
+		-- Disconnect old connections
+		for _, conn in pairs(Connections) do
+			if conn then conn:Disconnect() end
+		end
+		Connections = {}
+	
+		local character = LocalPlayer.Character
+		if character then
+			monitorCharacter(character)
+		end
+	end
+	
+	local function disableAntiGlow()
+		-- Disconnect all connections
+		for _, conn in pairs(Connections) do
+			if conn then conn:Disconnect() end
+		end
+		Connections = {}
+	end
+	
+	-- ============================================================
+	-- BUTTON TOGGLE
+	-- ============================================================
+	AntiGlow.MouseButton1Click:Connect(function()
+		isEnabled = not isEnabled
+	
+		if isEnabled then
+			AntiGlow.Text = "ANTI GLOW, TOXIFY: ON"
+			AntiGlow.TextColor3 = Color3.fromRGB(0, 255, 0)
+			enableAntiGlow()
+		else
+			AntiGlow.Text = "ANTI GLOW, TOXIFY: OFF"
+			AntiGlow.TextColor3 = Color3.fromRGB(255, 255, 255)
+			disableAntiGlow()
+		end
+	end)
+	
+	-- ============================================================
+	-- RESPAWN HANDLING
+	-- ============================================================
+	LocalPlayer.CharacterAdded:Connect(function(character)
+		if isEnabled then
+			character:WaitForChild("Humanoid")
+			task.wait(0.1)
+			enableAntiGlow()
+		end
+	end)
+	
+	-- ============================================================
+	-- HOVER TOOLTIP
+	-- ============================================================
+	if MonkeyTitle then
+		AntiGlow.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "PREVENTS GLOW AND TOXIFY EFFECTS ON YOUR CHARACTER"
+		end)
+	
+		AntiGlow.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+	
+	-- ============================================================
+	-- CLEANUP ON DESTROY
+	-- ============================================================
+	script.Parent.AncestryChanged:Connect(function()
+		if not script:IsDescendantOf(game) then
+			isEnabled = false
+			for _, conn in pairs(Connections) do
+				if conn then conn:Disconnect() end
+			end
+			Connections = {}
+		end
+	end)
 end;
 task.spawn(C_10);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.FloodChat.LocalScript
