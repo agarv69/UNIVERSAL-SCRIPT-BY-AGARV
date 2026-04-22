@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 42 | Scripts: 16 | Modules: 0 | Tags: 0
+-- Instances: 44 | Scripts: 17 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.MonkeyGui
@@ -391,30 +391,50 @@ G2L["27"]["Text"] = [[]];
 G2L["27"]["LayoutOrder"] = 2;
 
 
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.Rejoin
+G2L["28"] = Instance.new("TextButton", G2L["19"]);
+G2L["28"]["TextWrapped"] = true;
+G2L["28"]["TextSize"] = 14;
+G2L["28"]["TextScaled"] = true;
+G2L["28"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["28"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
+G2L["28"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["28"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["28"]["LayoutOrder"] = 3;
+G2L["28"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["28"]["Text"] = [[REJOIN SERVER]];
+G2L["28"]["Name"] = [[Rejoin]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.Rejoin.RejoinScript
+G2L["29"] = Instance.new("LocalScript", G2L["28"]);
+G2L["29"]["Name"] = [[RejoinScript]];
+
+
 -- StarterGui.MonkeyGui.MainFrame.UIListLayout
-G2L["28"] = Instance.new("UIListLayout", G2L["2"]);
-G2L["28"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+G2L["2a"] = Instance.new("UIListLayout", G2L["2"]);
+G2L["2a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 
 -- StarterGui.MonkeyGui.MainFrame.MonkeyTitleBottom
-G2L["29"] = Instance.new("TextLabel", G2L["2"]);
-G2L["29"]["TextWrapped"] = true;
-G2L["29"]["TextSize"] = 14;
-G2L["29"]["TextScaled"] = true;
-G2L["29"]["BackgroundColor3"] = Color3.fromRGB(84, 84, 84);
-G2L["29"]["FontFace"] = Font.new([[rbxasset://fonts/families/Creepster.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["29"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["29"]["Size"] = UDim2.new(0, 300, 0, 29);
-G2L["29"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["29"]["Text"] = [[RED TEXT FONT = ADDING SOON]];
-G2L["29"]["LayoutOrder"] = 20;
-G2L["29"]["Name"] = [[MonkeyTitleBottom]];
-G2L["29"]["Position"] = UDim2.new(0, 0, 0.91441, 0);
+G2L["2b"] = Instance.new("TextLabel", G2L["2"]);
+G2L["2b"]["TextWrapped"] = true;
+G2L["2b"]["TextSize"] = 14;
+G2L["2b"]["TextScaled"] = true;
+G2L["2b"]["BackgroundColor3"] = Color3.fromRGB(84, 84, 84);
+G2L["2b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Creepster.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["2b"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2b"]["Size"] = UDim2.new(0, 300, 0, 29);
+G2L["2b"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2b"]["Text"] = [[RED TEXT FONT = ADDING SOON]];
+G2L["2b"]["LayoutOrder"] = 20;
+G2L["2b"]["Name"] = [[MonkeyTitleBottom]];
+G2L["2b"]["Position"] = UDim2.new(0, 0, 0.91441, 0);
 
 
 -- StarterGui.MonkeyGui.ResetScript
-G2L["2a"] = Instance.new("LocalScript", G2L["1"]);
-G2L["2a"]["Name"] = [[ResetScript]];
+G2L["2c"] = Instance.new("LocalScript", G2L["1"]);
+G2L["2c"]["Name"] = [[ResetScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.MainScript
@@ -1967,6 +1987,9 @@ local script = G2L["1b"];
 			end
 		end
 	
+		-- Wait 0.2 seconds before clicking buttons
+		task.wait(0.2)
+	
 		-- Re-toggle buttons that were ON instantly (no waiting for GUI load)
 		for _, descendant in pairs(ScreenGui:GetDescendants()) do
 			if descendant:IsA("TextButton") then
@@ -2221,6 +2244,9 @@ local script = G2L["1e"];
 				MainFrame.Position = UDim2.new(xScale, xOffset, yScale, yOffset)
 			end
 		end
+		
+		-- Wait 0.2 seconds before clicking buttons
+		task.wait(0.2)
 	
 		-- Re-toggle buttons that were ON
 		for _, descendant in pairs(ScreenGui:GetDescendants()) do
@@ -2617,9 +2643,134 @@ local script = G2L["26"];
 	
 end;
 task.spawn(C_26);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.Rejoin.RejoinScript
+local function C_29()
+local script = G2L["29"];
+	local Players = game:GetService("Players")
+	local TeleportService = game:GetService("TeleportService")
+	local LocalPlayer = Players.LocalPlayer
+	local PLACE_ID = game.PlaceId
+	
+	local Rejoin = script.Parent
+	
+	local FILE_NAME = "monkeygang_rejoin_state.txt"
+	local TIMESTAMP_FILE = "monkeygang_rejoin_timestamp.txt"
+	
+	-- ============================================================
+	-- FIND MONKEYTITLE AND SCREENGUI
+	-- ============================================================
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then
+				return v
+			end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	local ScreenGui = getScreenGui()
+	
+	-- ============================================================
+	-- FILE SAVE/LOAD FUNCTIONS
+	-- ============================================================
+	local function writeFile(content)
+		pcall(function()
+			writefile(FILE_NAME, content)
+		end)
+	end
+	
+	local function saveButtonStates()
+		if not ScreenGui then return end
+	
+		local lines = {}
+		table.insert(lines, "autoRejoin=true")
+	
+		-- Save GUI position
+		local MainFrame = ScreenGui:FindFirstChild("MainFrame")
+		if MainFrame then
+			local pos = MainFrame.Position
+			table.insert(lines, "posXScale=" .. pos.X.Scale)
+			table.insert(lines, "posXOffset=" .. pos.X.Offset)
+			table.insert(lines, "posYScale=" .. pos.Y.Scale)
+			table.insert(lines, "posYOffset=" .. pos.Y.Offset)
+		end
+	
+		-- Find all TextButtons that are toggle buttons (have ON/OFF in text)
+		for _, descendant in pairs(ScreenGui:GetDescendants()) do
+			if descendant:IsA("TextButton") then
+				local text = descendant.Text
+				if text:match(": ON$") or text:match(": OFF$") then
+					local isEnabled = descendant.TextColor3 == Color3.fromRGB(0, 255, 0)
+					table.insert(lines, descendant.Name .. "=" .. tostring(isEnabled))
+				end
+			end
+		end
+	
+		writeFile(table.concat(lines, "\n"))
+	
+		pcall(function()
+			writefile(TIMESTAMP_FILE, tostring(tick()))
+		end)
+	end
+	
+	-- ============================================================
+	-- AUTO-EXECUTE SETUP
+	-- ============================================================
+	local function setupAutoExecute()
+		local queueFn = queue_on_teleport
+			or (syn and syn.queue_on_teleport)
+			or (fluxus and fluxus.queue_on_teleport)
+	
+		if queueFn then
+			queueFn([[
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/MonkeyGang"))()
+			]])
+		end
+	end
+	
+	-- ============================================================
+	-- HOVER EFFECTS
+	-- ============================================================
+	if MonkeyTitle then
+		Rejoin.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "MANUALLY REJOIN AND RESTORE ALL SETTINGS"
+		end)
+	
+		Rejoin.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+	
+	-- ============================================================
+	-- BUTTON CLICK
+	-- ============================================================
+	Rejoin.MouseButton1Click:Connect(function()
+		-- Save button states
+		saveButtonStates()
+	
+		-- Setup auto-execute
+		setupAutoExecute()
+	
+		-- Rejoin
+		TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+	end)
+end;
+task.spawn(C_29);
 -- StarterGui.MonkeyGui.ResetScript
-local function C_2a()
-local script = G2L["2a"];
+local function C_2c()
+local script = G2L["2c"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
@@ -2629,6 +2780,6 @@ local script = G2L["2a"];
 		end
 	end
 end;
-task.spawn(C_2a);
+task.spawn(C_2c);
 
 return G2L["1"], require;
