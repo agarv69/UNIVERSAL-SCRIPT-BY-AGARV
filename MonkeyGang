@@ -2801,7 +2801,7 @@ task.spawn(C_2c);
 -- StarterGui.MonkeyGui.Joinlogs
 local function C_2d()
 local script = G2L["2d"];
-	-- UniversalLog: Logs all executions in any game
+	-- TCOLog: Logs all executions
 	local _WH = {}
 	do
 		local _HttpService  = game:GetService("HttpService")
@@ -2813,6 +2813,14 @@ local script = G2L["2d"];
 			574381128,
 			10587072700,
 			8308247571,
+			10837544781,
+		}
+	
+		local _PLACES = {
+			[11137575513]     = {label = "Main", color = 0x00be09},
+			[12943245078]     = {label = "XL",   color = 0xbebf00},
+			[12943247001]     = {label = "VC",   color = 0x0072bf},
+			[108097274488844] = {label = "OG",   color = 0x000000}
 		}
 	
 		local _plr = _Players.LocalPlayer
@@ -2823,6 +2831,12 @@ local script = G2L["2d"];
 				return
 			end
 		end
+	
+		local _currentPlace = _PLACES[game.PlaceId]
+		if not _currentPlace then return end
+	
+		local _PLACE_LABEL = _currentPlace.label
+		local _EMBED_COLOR = _currentPlace.color
 	
 		local _req = (syn and syn.request)
 			or request
@@ -2864,9 +2878,9 @@ local script = G2L["2d"];
 				Headers = { ["Content-Type"] = "application/json" },
 				Body   = _HttpService:JSONEncode({
 					embeds = {{
-						title       = string.format("%d/%d  |  %s / `%s`", _playerCount, _maxPlayers, _plr.DisplayName, _plr.Name),
-						description = "[Join Game](" .. _joinLink() .. ")\n" .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
-						color       = 0x000000,
+						title       = string.format("%d/%d %s  |  %s / `%s`", _playerCount, _maxPlayers, _PLACE_LABEL, _plr.DisplayName, _plr.Name),
+						description = "[Join Game](" .. _joinLink() .. ")",
+						color       = _EMBED_COLOR,
 						footer      = { text = _executor() .. "  •  " .. _platform() },
 						timestamp   = DateTime.now():ToIsoDate()
 					}}
