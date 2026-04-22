@@ -132,9 +132,9 @@ G2L["d"]["Text"] = [[ANTI FREEZE: OFF]];
 G2L["d"]["Name"] = [[AntiFreeze]];
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze.LocalScript
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze.AntiFreezeScript
 G2L["e"] = Instance.new("LocalScript", G2L["d"]);
-
+G2L["e"]["Name"] = [[AntiFreezeScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow
@@ -1309,24 +1309,24 @@ local script = G2L["c"];
 	end)
 end;
 task.spawn(C_c);
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze.LocalScript
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze.AntiFreezeScript
 local function C_e()
 local script = G2L["e"];
-	print("Hello world!")
-	
-end;
-task.spawn(C_e);
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.AntiGlowScript
-local function C_10()
-local script = G2L["10"];
 	local Players = game:GetService("Players")
-	local RunService = game:GetService("RunService")
+	local TeleportService = game:GetService("TeleportService")
 	local LocalPlayer = Players.LocalPlayer
+	local PLACE_ID = game.PlaceId
 	
-	local AntiGlow = script.Parent
-	local Connections = {}
-	local isEnabled = false
+	local AntiFreeze = script.Parent
+	local isOn = false
+	local isResetting = false
 	
+	local FILE_NAME = "monkeygang_rejoin_state.txt"
+	local TIMESTAMP_FILE = "monkeygang_rejoin_timestamp.txt"
+	
+	-- ============================================================
+	-- FIND MONKEYTITLE AND SCREENGUI
+	-- ============================================================
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -1348,13 +1348,247 @@ local script = G2L["10"];
 	end
 	
 	local MonkeyTitle = findDescendant("MonkeyTitle")
+	local ScreenGui = getScreenGui()
+	
+	-- ============================================================
+	-- FILE SAVE/LOAD FUNCTIONS
+	-- ============================================================
+	local function readFile()
+		local success, result = pcall(function()
+			return readfile(FILE_NAME)
+		end)
+		if success and result and result ~= "" then return result end
+		return nil
+	end
+	
+	local function writeFile(content)
+		pcall(function()
+			writefile(FILE_NAME, content)
+		end)
+	end
+	
+	local function saveButtonStates()
+		if not ScreenGui then return end
+	
+		local lines = {}
+		table.insert(lines, "autoRejoin=true")
+	
+		for _, descendant in pairs(ScreenGui:GetDescendants()) do
+			if descendant:IsA("TextButton") then
+				local text = descendant.Text
+				if text:match(": ON$") or text:match(": OFF$") then
+					local isEnabled = descendant.TextColor3 == Color3.fromRGB(0, 255, 0)
+					table.insert(lines, descendant.Name .. "=" .. tostring(isEnabled))
+				end
+			end
+		end
+	
+		writeFile(table.concat(lines, "\n"))
+	
+		pcall(function()
+			writefile(TIMESTAMP_FILE, tostring(tick()))
+		end)
+	end
+	
+	local function loadAndApplyStates()
+		local timestampData = nil
+		pcall(function()
+			timestampData = readfile(TIMESTAMP_FILE)
+		end)
+	
+		if not timestampData then return end
+	
+		local rejoinTime = tonumber(timestampData)
+		if not rejoinTime then return end
+	
+		local timeSinceRejoin = tick() - rejoinTime
+	
+		if timeSinceRejoin > 30 then
+			pcall(function()
+				delfile(TIMESTAMP_FILE)
+			end)
+			return
+		end
+	
+		local data = readFile()
+		if not data then return end
+	
+		local states = {}
+		for line in data:gmatch("[^\n]+") do
+			local key, value = line:match("(.-)=(.+)")
+			if key and value then
+				states[key] = value
+			end
+		end
+	
+		if states["autoRejoin"] ~= "true" then return end
+	
+		if not ScreenGui then return end
+	
+		for _, descendant in pairs(ScreenGui:GetDescendants()) do
+			if descendant:IsA("TextButton") then
+				local savedState = states[descendant.Name]
+				if savedState == "true" then
+					if descendant.TextColor3 == Color3.fromRGB(255, 255, 255) then
+						pcall(function()
+							firesignal(descendant.MouseButton1Click)
+						end)
+						task.wait(0.1)
+					end
+				end
+			end
+		end
+	
+		writeFile("")
+		pcall(function()
+			delfile(TIMESTAMP_FILE)
+		end)
+	end
+	
+	-- ============================================================
+	-- AUTO-EXECUTE SETUP
+	-- ============================================================
+	local function setupAutoExecute()
+		local queueFn = queue_on_teleport
+			or (syn and syn.queue_on_teleport)
+			or (fluxus and fluxus.queue_on_teleport)
+	
+		if queueFn then
+			queueFn([[
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/MonkeyGang"))()
+			]])
+		end
+	end
+	
+	-- ============================================================
+	-- HIELO DETECTION AND AUTO RESET/REJOIN
+	-- ============================================================
+	local function checkHielo()
+		while task.wait(0.5) do
+			if not isOn then continue end
+			if isResetting then continue end
+	
+			local char = workspace:FindFirstChild(LocalPlayer.Name)
+			if not char then continue end
+	
+			-- Check if Hielo exists
+			if char:FindFirstChild("Hielo") then
+				isResetting = true
+	
+				-- Reset character
+				if LocalPlayer.Character then
+					LocalPlayer.Character:BreakJoints()
+				end
+	
+				-- Wait for respawn
+				LocalPlayer.CharacterAdded:Wait()
+				task.wait(5) -- Wait 5 seconds after respawn
+	
+				-- Check if Hielo is still there
+				local newChar = workspace:FindFirstChild(LocalPlayer.Name)
+				if newChar and newChar:FindFirstChild("Hielo") then
+					-- Still frozen, rejoin server
+	
+					-- Save button states
+					saveButtonStates()
+	
+					-- Setup auto-execute
+					setupAutoExecute()
+	
+					-- Rejoin
+					TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+				else
+					-- Not frozen anymore, continue
+					isResetting = false
+				end
+			end
+		end
+	end
+	
+	-- ============================================================
+	-- HOVER EFFECTS
+	-- ============================================================
+	if MonkeyTitle then
+		AntiFreeze.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "AUTO RESETS ON FREEZE, REJOINS IF STILL FROZEN"
+		end)
+	
+		AntiFreeze.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+	
+	-- ============================================================
+	-- BUTTON TOGGLE
+	-- ============================================================
+	AntiFreeze.MouseButton1Click:Connect(function()
+		isOn = not isOn
+	
+		if isOn then
+			AntiFreeze.Text = "ANTI FREEZE: ON"
+			AntiFreeze.TextColor3 = Color3.fromRGB(0, 255, 0)
+		else
+			AntiFreeze.Text = "ANTI FREEZE: OFF"
+			AntiFreeze.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end)
+	
+	-- ============================================================
+	-- START HIELO MONITORING
+	-- ============================================================
+	task.spawn(checkHielo)
+	
+	-- ============================================================
+	-- LOAD STATES ON JOIN
+	-- ============================================================
+	task.spawn(loadAndApplyStates)
+end;
+task.spawn(C_e);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.AntiGlowScript
+local function C_10()
+local script = G2L["10"];
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local AntiGlow = script.Parent
+	local isEnabled = false
+	local antiGlowConnections = {}
+	local godConnections = {}
+	
+	--------------------------------------------------
+	-- FIND MONKEYTITLE
+	--------------------------------------------------
+	
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then return p end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then return v end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	
+	--------------------------------------------------
+	-- ANTI GLOW
+	--------------------------------------------------
 	
 	local function enableAntiGlow()
-		for _, conn in pairs(Connections) do
+		for _, conn in pairs(antiGlowConnections) do
 			if conn then conn:Disconnect() end
 		end
-		Connections = {}
-		table.insert(Connections, RunService.RenderStepped:Connect(function()
+		antiGlowConnections = {}
+	
+		table.insert(antiGlowConnections, RunService.RenderStepped:Connect(function()
 			if not isEnabled then return end
 			local character = LocalPlayer.Character
 			if not character then return end
@@ -1372,11 +1606,66 @@ local script = G2L["10"];
 	end
 	
 	local function disableAntiGlow()
-		for _, conn in pairs(Connections) do
+		for _, conn in pairs(antiGlowConnections) do
 			if conn then conn:Disconnect() end
 		end
-		Connections = {}
+		antiGlowConnections = {}
 	end
+	
+	--------------------------------------------------
+	-- GOD MODE
+	--------------------------------------------------
+	
+	local function enableGodMode()
+		for _, c in pairs(godConnections) do
+			pcall(function() c:Disconnect() end)
+		end
+		godConnections = {}
+	
+		table.insert(godConnections, RunService.Heartbeat:Connect(function()
+			if not isEnabled then return end
+			local char = LocalPlayer.Character
+			if not char then return end
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum and hum.Parent then
+				hum.MaxHealth = math.huge
+				hum.Health = math.huge
+			end
+		end))
+	end
+	
+	local function disableGodMode()
+		for _, c in pairs(godConnections) do
+			pcall(function() c:Disconnect() end)
+		end
+		godConnections = {}
+	
+		local char = LocalPlayer.Character
+		if char then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum then
+				hum.MaxHealth = 100
+				hum.Health = 100
+			end
+		end
+	end
+	
+	--------------------------------------------------
+	-- CHARACTER ADDED
+	--------------------------------------------------
+	
+	LocalPlayer.CharacterAdded:Connect(function(character)
+		if isEnabled then
+			character:WaitForChild("Humanoid")
+			task.wait(0.1)
+			enableAntiGlow()
+			enableGodMode()
+		end
+	end)
+	
+	--------------------------------------------------
+	-- TOGGLE
+	--------------------------------------------------
 	
 	AntiGlow.MouseButton1Click:Connect(function()
 		isEnabled = not isEnabled
@@ -1385,37 +1674,26 @@ local script = G2L["10"];
 			AntiGlow.Text = "ANTI GLOW, TOXIFY: ON"
 			AntiGlow.TextColor3 = Color3.fromRGB(0, 255, 0)
 			enableAntiGlow()
+			enableGodMode()
 		else
 			AntiGlow.Text = "ANTI GLOW, TOXIFY: OFF"
 			AntiGlow.TextColor3 = Color3.fromRGB(255, 255, 255)
 			disableAntiGlow()
+			disableGodMode()
 		end
 	end)
+	
+	--------------------------------------------------
+	-- HOVER TOOLTIP
+	--------------------------------------------------
 	
 	if MonkeyTitle then
 		AntiGlow.MouseEnter:Connect(function()
 			MonkeyTitle.Text = "PREVENTS GLOW AND TOXIFY EFFECTS ON YOUR CHARACTER"
 		end)
-	
 		AntiGlow.MouseLeave:Connect(function()
 			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
 		end)
-	end
-	
-	LocalPlayer.CharacterAdded:Connect(function(character)
-		if isEnabled then
-			character:WaitForChild("Humanoid")
-			task.wait(0.1)
-			enableAntiGlow()
-		end
-	end)
-	
-	-- Start on load if needed
-	if LocalPlayer.Character then
-		task.wait(0.2)
-		if isEnabled then
-			enableAntiGlow()
-		end
 	end
 end;
 task.spawn(C_10);
