@@ -1475,10 +1475,30 @@ local script = G2L["e"];
 							LocalPlayer.Character:BreakJoints()
 						end
 	
-						LocalPlayer.CharacterAdded:Wait()
+						-- If character didn't reset after 1 second, break again
+						local resetted = false
+						local resetConn
+						resetConn = Players.LocalPlayer.CharacterAdded:Connect(function()
+							resetted = true
+							resetConn:Disconnect()
+						end)
+						task.wait(1)
+						if not resetted then
+							resetConn:Disconnect()
+							if LocalPlayer.Character then
+								LocalPlayer.Character:BreakJoints()
+							end
+						end
+	
+						-- Wait for character to actually respawn
+						if not resetted then
+							LocalPlayer.CharacterAdded:Wait()
+						end
+	
 						isResetting = false
 						task.wait(5)
 	
+						-- Check if still frozen after respawn
 						local newChar = workspace:FindFirstChild(LocalPlayer.Name)
 						if newChar and newChar:FindFirstChild("Hielo") then
 							saveButtonStates()
