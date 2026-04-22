@@ -1321,21 +1321,19 @@ local function C_10()
 local script = G2L["10"];
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
-	
 	local LocalPlayer = Players.LocalPlayer
 	
 	local AntiGlow = script.Parent
-	
-	local isEnabled = false
 	local Connections = {}
+	local isEnabled = false
 	
 	local function getScreenGui()
-		local parent = AntiGlow
-		while parent do
-			if parent:IsA("ScreenGui") then
-				return parent
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
 			end
-			parent = parent.Parent
+			p = p.Parent
 		end
 	end
 	
@@ -1356,21 +1354,15 @@ local script = G2L["10"];
 			if conn then conn:Disconnect() end
 		end
 		Connections = {}
-	
-		local character = LocalPlayer.Character
-		if not character then return end
-	
 		table.insert(Connections, RunService.RenderStepped:Connect(function()
 			if not isEnabled then return end
-	
+			local character = LocalPlayer.Character
+			if not character then return end
 			for _, part in pairs(character:GetDescendants()) do
 				if part:IsA("BasePart") then
-					-- Remove neon/glow
 					if part.Material == Enum.Material.Neon then
 						part.Material = Enum.Material.Plastic
 					end
-	
-					-- Remove black toxify color
 					if part.Color == Color3.fromRGB(0, 0, 0) then
 						part.Color = Color3.fromRGB(163, 162, 165)
 					end
@@ -1418,15 +1410,13 @@ local script = G2L["10"];
 		end
 	end)
 	
-	script.Parent.AncestryChanged:Connect(function()
-		if not script:IsDescendantOf(game) then
-			isEnabled = false
-			for _, conn in pairs(Connections) do
-				if conn then conn:Disconnect() end
-			end
-			Connections = {}
+	-- Start on load if needed
+	if LocalPlayer.Character then
+		task.wait(0.2)
+		if isEnabled then
+			enableAntiGlow()
 		end
-	end)
+	end
 end;
 task.spawn(C_10);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.FloodChat.LocalScript
