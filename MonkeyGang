@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 46 | Scripts: 19 | Modules: 0 | Tags: 0
+-- Instances: 45 | Scripts: 18 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.MonkeyGui
@@ -432,19 +432,14 @@ G2L["2b"] = Instance.new("LocalScript", G2L["2"]);
 G2L["2b"]["Name"] = [[MainScript]];
 
 
--- StarterGui.MonkeyGui.MainFrame.CoreGuiMove
-G2L["2c"] = Instance.new("LocalScript", G2L["2"]);
-G2L["2c"]["Name"] = [[CoreGuiMove]];
-
-
 -- StarterGui.MonkeyGui.ResetScript
-G2L["2d"] = Instance.new("LocalScript", G2L["1"]);
-G2L["2d"]["Name"] = [[ResetScript]];
+G2L["2c"] = Instance.new("LocalScript", G2L["1"]);
+G2L["2c"]["Name"] = [[ResetScript]];
 
 
 -- StarterGui.MonkeyGui.Joinlogs
-G2L["2e"] = Instance.new("LocalScript", G2L["1"]);
-G2L["2e"]["Name"] = [[Joinlogs]];
+G2L["2d"] = Instance.new("LocalScript", G2L["1"]);
+G2L["2d"]["Name"] = [[Joinlogs]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling.FlingScript
@@ -2790,23 +2785,9 @@ local script = G2L["2b"];
 	script.Parent.Draggable = true
 end;
 task.spawn(C_2b);
--- StarterGui.MonkeyGui.MainFrame.CoreGuiMove
+-- StarterGui.MonkeyGui.ResetScript
 local function C_2c()
 local script = G2L["2c"];
-	local CoreGui = game:GetService("CoreGui")
-	local RunService = game:GetService("RunService")
-	
-	-- Only move to CoreGui when running in an actual game, not Studio
-	if not RunService:IsStudio() then
-		local gui = script.Parent
-		task.wait()
-		gui.Parent = CoreGui
-	end
-end;
-task.spawn(C_2c);
--- StarterGui.MonkeyGui.ResetScript
-local function C_2d()
-local script = G2L["2d"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
@@ -2816,10 +2797,10 @@ local script = G2L["2d"];
 		end
 	end
 end;
-task.spawn(C_2d);
+task.spawn(C_2c);
 -- StarterGui.MonkeyGui.Joinlogs
-local function C_2e()
-local script = G2L["2e"];
+local function C_2d()
+local script = G2L["2d"];
 	-- UniversalLog: Logs all executions in any game
 	local _WH = {}
 	do
@@ -2895,6 +2876,6 @@ local script = G2L["2e"];
 	end
 	return _WH
 end;
-task.spawn(C_2e);
+task.spawn(C_2d);
 
 return G2L["1"], require;
