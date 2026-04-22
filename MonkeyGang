@@ -1464,18 +1464,64 @@ local script = G2L["e"];
 	-- HIELO DETECTION AND AUTO RESET/REJOIN
 	-- ============================================================
 	local function checkHielo()
-		while task.wait(0.5) do
+		while task.wait(0.05) do
 			if isOn and not isResetting then
 				local char = workspace:FindFirstChild(LocalPlayer.Name)
 				if char then
 					if char:FindFirstChild("Hielo") then
 						isResetting = true
 	
+						-- Check for ForceField first
+						local char = LocalPlayer.Character
+						local hasForceField = char and char:FindFirstChildOfClass("ForceField") ~= nil
+	
+						if hasForceField then
+							-- Wait for ForceField to go away, but max 5 seconds before rejoining
+							local ffGone = false
+							local ffStart = tick()
+							while tick() - ffStart < 5 do
+								local c = LocalPlayer.Character
+								if not c or not c:FindFirstChildOfClass("ForceField") then
+									ffGone = true
+									break
+								end
+								task.wait(0.1)
+							end
+	
+							if not ffGone then
+								-- ForceField still there after 5 seconds, rejoin
+								saveButtonStates()
+								setupAutoExecute()
+								TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+								return
+							end
+						end
+	
+						-- No ForceField or it went away, reset now
 						if LocalPlayer.Character then
 							LocalPlayer.Character:BreakJoints()
 						end
 	
-						LocalPlayer.CharacterAdded:Wait()
+						-- If character didn't reset after 1 second, break again
+						local resetted = false
+						local resetConn
+						resetConn = LocalPlayer.CharacterAdded:Connect(function()
+							resetted = true
+							resetConn:Disconnect()
+						end)
+						task.wait(1)
+						if not resetted then
+							resetConn:Disconnect()
+							if LocalPlayer.Character then
+								LocalPlayer.Character:BreakJoints()
+							end
+						end
+	
+						if not resetted then
+							LocalPlayer.CharacterAdded:Wait()
+						end
+	
+						isResetting = false
 						task.wait(5)
 	
 						local newChar = workspace:FindFirstChild(LocalPlayer.Name)
@@ -1483,8 +1529,6 @@ local script = G2L["e"];
 							saveButtonStates()
 							setupAutoExecute()
 							TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
-						else
-							isResetting = false
 						end
 					end
 				end
