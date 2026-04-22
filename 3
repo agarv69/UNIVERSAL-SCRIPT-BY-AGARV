@@ -1464,42 +1464,48 @@ local script = G2L["e"];
 	-- HIELO DETECTION AND AUTO RESET/REJOIN
 	-- ============================================================
 	local function checkHielo()
-		while task.wait(0.5) do
-			if not isOn then continue end
-			if isResetting then continue end
+		while task.wait(0.05) do
+			if isOn and not isResetting then
+				local char = workspace:FindFirstChild(LocalPlayer.Name)
+				if char then
+					if char:FindFirstChild("Hielo") then
+						isResetting = true
 	
-			local char = workspace:FindFirstChild(LocalPlayer.Name)
-			if not char then continue end
+						if LocalPlayer.Character then
+							LocalPlayer.Character:BreakJoints()
+						end
 	
-			-- Check if Hielo exists
-			if char:FindFirstChild("Hielo") then
-				isResetting = true
+						-- If character didn't reset after 1 second, break again
+						local resetted = false
+						local resetConn
+						resetConn = Players.LocalPlayer.CharacterAdded:Connect(function()
+							resetted = true
+							resetConn:Disconnect()
+						end)
+						task.wait(1)
+						if not resetted then
+							resetConn:Disconnect()
+							if LocalPlayer.Character then
+								LocalPlayer.Character:BreakJoints()
+							end
+						end
 	
-				-- Reset character using BreakJoints (works even with god mode on)
-				if LocalPlayer.Character then
-					LocalPlayer.Character:BreakJoints()
-				end
+						-- Wait for character to actually respawn
+						if not resetted then
+							LocalPlayer.CharacterAdded:Wait()
+						end
 	
-				-- Wait for respawn
-				LocalPlayer.CharacterAdded:Wait()
-				task.wait(5) -- Wait 5 seconds after respawn
+						isResetting = false
+						task.wait(5)
 	
-				-- Check if Hielo is still there
-				local newChar = workspace:FindFirstChild(LocalPlayer.Name)
-				if newChar and newChar:FindFirstChild("Hielo") then
-					-- Still frozen, rejoin server
-	
-					-- Save button states
-					saveButtonStates()
-	
-					-- Setup auto-execute
-					setupAutoExecute()
-	
-					-- Rejoin
-					TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
-				else
-					-- Not frozen anymore, continue
-					isResetting = false
+						-- Check if still frozen after respawn
+						local newChar = workspace:FindFirstChild(LocalPlayer.Name)
+						if newChar and newChar:FindFirstChild("Hielo") then
+							saveButtonStates()
+							setupAutoExecute()
+							TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+						end
+					end
 				end
 			end
 		end
