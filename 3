@@ -1,80 +1,1768 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
+--[=[
+ d888b  db    db d888888b      .d888b.      db      db    db  .d8b.  
+88' Y8b 88    88   `88'        VP  `8D      88      88    88 d8' `8b 
+88      88    88    88            odD'      88      88    88 88ooo88 
+88  ooo 88    88    88          .88'        88      88    88 88~~~88 
+88. ~8~ 88b  d88   .88.        j88.         88booo. 88b  d88 88   88    @uniquadev
+ Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
+]=]
 
-local deleteRange = 500 -- Range to delete
+-- Instances: 39 | Scripts: 14 | Modules: 0 | Tags: 0
+local G2L = {};
 
--- Function to modify the Delete tool's script
-local function modifyDeleteTool()
-	local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete") or 
-	                   (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
+-- StarterGui.MonkeyGui
+G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+G2L["1"]["Name"] = [[MonkeyGui]];
+G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+G2L["1"]["ResetOnSpawn"] = false;
+
+
+-- StarterGui.MonkeyGui.MainFrame
+G2L["2"] = Instance.new("Frame", G2L["1"]);
+G2L["2"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2"]["Size"] = UDim2.new(0, 300, 0, 357);
+G2L["2"]["Position"] = UDim2.new(0, 541, 0, 301);
+G2L["2"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2"]["Name"] = [[MainFrame]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.MainScript
+G2L["3"] = Instance.new("LocalScript", G2L["2"]);
+G2L["3"]["Name"] = [[MainScript]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.UIAspectRatioConstraint
+G2L["4"] = Instance.new("UIAspectRatioConstraint", G2L["2"]);
+G2L["4"]["AspectRatio"] = 0.85995;
+
+
+-- StarterGui.MonkeyGui.MainFrame.MonkeyTitle
+G2L["5"] = Instance.new("TextLabel", G2L["2"]);
+G2L["5"]["TextWrapped"] = true;
+G2L["5"]["TextSize"] = 14;
+G2L["5"]["TextScaled"] = true;
+G2L["5"]["BackgroundColor3"] = Color3.fromRGB(84, 84, 84);
+G2L["5"]["FontFace"] = Font.new([[rbxasset://fonts/families/Creepster.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["5"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["5"]["Size"] = UDim2.new(0, 300, 0, 50);
+G2L["5"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["5"]["Text"] = [[🔥THE MONKEY GANG GUI🔥]];
+G2L["5"]["Name"] = [[MonkeyTitle]];
+G2L["5"]["Position"] = UDim2.new(-0.19667, 0, -0.11466, 0);
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame
+G2L["6"] = Instance.new("ScrollingFrame", G2L["2"]);
+G2L["6"]["Active"] = true;
+G2L["6"]["CanvasSize"] = UDim2.new(0, 0, 1, 0);
+G2L["6"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["6"]["Size"] = UDim2.new(0, 300, 0, 271);
+G2L["6"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["6"]["Position"] = UDim2.new(0, 0, 0.14333, 0);
+G2L["6"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["6"]["ScrollBarThickness"] = 0;
+G2L["6"]["LayoutOrder"] = 1;
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left
+G2L["7"] = Instance.new("Frame", G2L["6"]);
+G2L["7"]["BorderSizePixel"] = 0;
+G2L["7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["7"]["Size"] = UDim2.new(0, 150, 0, 263);
+G2L["7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["7"]["Name"] = [[Left]];
+G2L["7"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling
+G2L["8"] = Instance.new("TextButton", G2L["7"]);
+G2L["8"]["TextWrapped"] = true;
+G2L["8"]["TextSize"] = 14;
+G2L["8"]["TextScaled"] = true;
+G2L["8"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["8"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
+G2L["8"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["8"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["8"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["8"]["Text"] = [[LOOP FLING PLAYERS: OFF]];
+G2L["8"]["Name"] = [[Fling]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling.FlingScript
+G2L["9"] = Instance.new("LocalScript", G2L["8"]);
+G2L["9"]["Name"] = [[FlingScript]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.UIListLayout
+G2L["a"] = Instance.new("UIListLayout", G2L["7"]);
+G2L["a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit
+G2L["b"] = Instance.new("TextButton", G2L["7"]);
+G2L["b"]["TextWrapped"] = true;
+G2L["b"]["TextSize"] = 14;
+G2L["b"]["TextScaled"] = true;
+G2L["b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["b"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
+G2L["b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["b"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["b"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["b"]["Text"] = [[AUTO DISABLE BKIT: OFF]];
+G2L["b"]["Name"] = [[Bkit]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit.BkitScript
+G2L["c"] = Instance.new("LocalScript", G2L["b"]);
+G2L["c"]["Name"] = [[BkitScript]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze
+G2L["d"] = Instance.new("TextButton", G2L["7"]);
+G2L["d"]["TextWrapped"] = true;
+G2L["d"]["TextSize"] = 14;
+G2L["d"]["TextScaled"] = true;
+G2L["d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["d"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
+G2L["d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["d"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["d"]["LayoutOrder"] = 1;
+G2L["d"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["d"]["Text"] = [[ANTI FREEZE: OFF]];
+G2L["d"]["Name"] = [[AntiFreeze]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze.LocalScript
+G2L["e"] = Instance.new("LocalScript", G2L["d"]);
+
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow
+G2L["f"] = Instance.new("TextButton", G2L["7"]);
+G2L["f"]["TextWrapped"] = true;
+G2L["f"]["TextSize"] = 14;
+G2L["f"]["TextScaled"] = true;
+G2L["f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["f"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
+G2L["f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["f"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["f"]["LayoutOrder"] = 1;
+G2L["f"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["f"]["Text"] = [[ANTI GLOW, TOXIFY: OFF]];
+G2L["f"]["Name"] = [[AntiGlow]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.AntiGlowScript
+G2L["10"] = Instance.new("LocalScript", G2L["f"]);
+G2L["10"]["Name"] = [[AntiGlowScript]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.FloodChat
+G2L["11"] = Instance.new("TextButton", G2L["7"]);
+G2L["11"]["TextWrapped"] = true;
+G2L["11"]["TextSize"] = 14;
+G2L["11"]["TextScaled"] = true;
+G2L["11"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["11"]["BackgroundColor3"] = Color3.fromRGB(3, 123, 132);
+G2L["11"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["11"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["11"]["LayoutOrder"] = 2;
+G2L["11"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["11"]["Text"] = [[FLOOD CHAT: OFF]];
+G2L["11"]["Name"] = [[FloodChat]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.FloodChat.LocalScript
+G2L["12"] = Instance.new("LocalScript", G2L["11"]);
+
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.HackBkit
+G2L["13"] = Instance.new("TextButton", G2L["7"]);
+G2L["13"]["TextWrapped"] = true;
+G2L["13"]["TextSize"] = 14;
+G2L["13"]["TextScaled"] = true;
+G2L["13"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["13"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
+G2L["13"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["13"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["13"]["LayoutOrder"] = 3;
+G2L["13"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["13"]["Text"] = [[HACK PAINT BKIT]];
+G2L["13"]["Name"] = [[HackBkit]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.HackBkit.LocalScript
+G2L["14"] = Instance.new("LocalScript", G2L["13"]);
+
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.ToggleAll
+G2L["15"] = Instance.new("TextButton", G2L["7"]);
+G2L["15"]["TextWrapped"] = true;
+G2L["15"]["TextSize"] = 14;
+G2L["15"]["TextScaled"] = true;
+G2L["15"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["15"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
+G2L["15"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["15"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["15"]["LayoutOrder"] = 3;
+G2L["15"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["15"]["Text"] = [[ENABLE ALL]];
+G2L["15"]["Name"] = [[ToggleAll]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.ToggleAll.LocalScript
+G2L["16"] = Instance.new("LocalScript", G2L["15"]);
+
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right
+G2L["17"] = Instance.new("Frame", G2L["6"]);
+G2L["17"]["BorderSizePixel"] = 0;
+G2L["17"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["17"]["Size"] = UDim2.new(0, 150, 0, 263);
+G2L["17"]["Position"] = UDim2.new(0.5, 0, 0, 0);
+G2L["17"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17"]["Name"] = [[Right]];
+G2L["17"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip
+G2L["18"] = Instance.new("TextButton", G2L["17"]);
+G2L["18"]["TextWrapped"] = true;
+G2L["18"]["TextSize"] = 14;
+G2L["18"]["TextScaled"] = true;
+G2L["18"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
+G2L["18"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["18"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["18"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18"]["Text"] = [[REJOIN ON NOCLIP: OFF]];
+G2L["18"]["Name"] = [[RejoinNoclip]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip.RejoinNoclipScript
+G2L["19"] = Instance.new("LocalScript", G2L["18"]);
+G2L["19"]["Name"] = [[RejoinNoclipScript]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.UIListLayout
+G2L["1a"] = Instance.new("UIListLayout", G2L["17"]);
+G2L["1a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinMute
+G2L["1b"] = Instance.new("TextButton", G2L["17"]);
+G2L["1b"]["TextWrapped"] = true;
+G2L["1b"]["TextSize"] = 14;
+G2L["1b"]["TextScaled"] = true;
+G2L["1b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1b"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
+G2L["1b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1b"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["1b"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1b"]["Text"] = [[REJOIN ON MUTE/DUMB: OFF]];
+G2L["1b"]["Name"] = [[RejoinMute]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinMute.LocalScript
+G2L["1c"] = Instance.new("LocalScript", G2L["1b"]);
+
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiInvis
+G2L["1d"] = Instance.new("TextButton", G2L["17"]);
+G2L["1d"]["TextWrapped"] = true;
+G2L["1d"]["TextSize"] = 14;
+G2L["1d"]["TextScaled"] = true;
+G2L["1d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1d"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
+G2L["1d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1d"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["1d"]["LayoutOrder"] = 1;
+G2L["1d"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1d"]["Text"] = [[ANTI INVISIBLE: OFF]];
+G2L["1d"]["Name"] = [[AntiInvis]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiInvis.LocalScript
+G2L["1e"] = Instance.new("LocalScript", G2L["1d"]);
+
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiNan
+G2L["1f"] = Instance.new("TextButton", G2L["17"]);
+G2L["1f"]["TextWrapped"] = true;
+G2L["1f"]["TextSize"] = 14;
+G2L["1f"]["TextScaled"] = true;
+G2L["1f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1f"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
+G2L["1f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1f"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["1f"]["LayoutOrder"] = 1;
+G2L["1f"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1f"]["Text"] = [[ANTI MAPTIDE NAN: OFF]];
+G2L["1f"]["Name"] = [[AntiNan]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiNan.LocalScript
+G2L["20"] = Instance.new("LocalScript", G2L["1f"]);
+
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.CloseGui
+G2L["21"] = Instance.new("TextButton", G2L["17"]);
+G2L["21"]["TextWrapped"] = true;
+G2L["21"]["TextSize"] = 14;
+G2L["21"]["TextScaled"] = true;
+G2L["21"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["21"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
+G2L["21"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["21"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["21"]["LayoutOrder"] = 3;
+G2L["21"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["21"]["Text"] = [[DESTROY/CLOSE GUI]];
+G2L["21"]["Name"] = [[CloseGui]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.CloseGui.LocalScript
+G2L["22"] = Instance.new("LocalScript", G2L["21"]);
+
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.GriefAura
+G2L["23"] = Instance.new("TextButton", G2L["17"]);
+G2L["23"]["TextWrapped"] = true;
+G2L["23"]["TextSize"] = 14;
+G2L["23"]["TextScaled"] = true;
+G2L["23"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["23"]["BackgroundColor3"] = Color3.fromRGB(3, 123, 132);
+G2L["23"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["23"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["23"]["LayoutOrder"] = 2;
+G2L["23"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["23"]["Text"] = [[GRIEF AURA: OFF]];
+G2L["23"]["Name"] = [[GriefAura]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.GriefAura.LocalScript
+G2L["24"] = Instance.new("LocalScript", G2L["23"]);
+
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.TextBox
+G2L["25"] = Instance.new("TextBox", G2L["17"]);
+G2L["25"]["PlaceholderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["25"]["TextWrapped"] = true;
+G2L["25"]["TextTransparency"] = 0.4;
+G2L["25"]["TextSize"] = 14;
+G2L["25"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["25"]["TextScaled"] = true;
+G2L["25"]["BackgroundColor3"] = Color3.fromRGB(3, 123, 132);
+G2L["25"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["25"]["PlaceholderText"] = [[CUSTOM FLOOD CHAT MESSAGE]];
+G2L["25"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["25"]["Position"] = UDim2.new(0, 0, 0.30418, 0);
+G2L["25"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["25"]["Text"] = [[]];
+G2L["25"]["LayoutOrder"] = 2;
+
+
+-- StarterGui.MonkeyGui.MainFrame.UIListLayout
+G2L["26"] = Instance.new("UIListLayout", G2L["2"]);
+G2L["26"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.MonkeyGui.MainFrame.MonkeyTitleBottom
+G2L["27"] = Instance.new("TextLabel", G2L["2"]);
+G2L["27"]["TextWrapped"] = true;
+G2L["27"]["TextSize"] = 14;
+G2L["27"]["TextScaled"] = true;
+G2L["27"]["BackgroundColor3"] = Color3.fromRGB(84, 84, 84);
+G2L["27"]["FontFace"] = Font.new([[rbxasset://fonts/families/Creepster.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["27"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["27"]["Size"] = UDim2.new(0, 300, 0, 29);
+G2L["27"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["27"]["Text"] = [[🚨BOT SERVER RAIDER🚨]];
+G2L["27"]["LayoutOrder"] = 20;
+G2L["27"]["Name"] = [[MonkeyTitleBottom]];
+G2L["27"]["Position"] = UDim2.new(0, 0, 0.91441, 0);
+
+
+-- StarterGui.MonkeyGui.MainFrame.MainScript
+local function C_3()
+local script = G2L["3"];
+	script.Parent.Draggable = true
+	script.Parent.Active = true
+end;
+task.spawn(C_3);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling.FlingScript
+local function C_9()
+local script = G2L["9"];
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
 	
-	if not deleteTool then return false end
+	local Fling = script.Parent
+	local isOn = false
+	local flingedPlayers = {}
 	
-	local deleteScript = deleteTool:FindFirstChild("Script")
-	if not deleteScript then return false end
+	local bangAnim = nil
+	local bang = nil
+	local bangDied = nil
+	local bangLoop = nil
+	local isBanging = false
 	
-	-- Try to modify the script's range check
-	local success = pcall(function()
-		-- Replace the Magnitude < 24 check with a huge number
-		local scriptSource = deleteScript.Source
-		if scriptSource then
-			scriptSource = scriptSource:gsub("Magnitude < 24", "Magnitude < 99999")
-			deleteScript.Source = scriptSource
-			print("Modified Delete tool range check!")
+	-- ============================================================
+	-- FIND MONKEYTITLE
+	-- ============================================================
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then
+				return v
+			end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	
+	local function isNoclipped(player)
+		local character = player.Character
+		if not character then return false end
+	
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return false end
+	
+		return hrp.CollisionGroup == "NoClip"
+	end
+	
+	local function isFrozen(player)
+		local character = workspace:FindFirstChild(player.Name)
+		if not character then return false end
+	
+		return character:FindFirstChild("Hielo") ~= nil
+	end
+	
+	local function isAdmin(player)
+		return player.Team and player.Team.Name == "Chosen"
+	end
+	
+	local function getAdmins()
+		local admins = {}
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and isAdmin(player) then
+				table.insert(admins, player)
+			end
+		end
+		return admins
+	end
+	
+	local function getTorso(character)
+		character = character or LocalPlayer.Character
+		return character:FindFirstChild("Torso") 
+			or character:FindFirstChild("UpperTorso") 
+			or character:FindFirstChild("LowerTorso") 
+			or character:FindFirstChild("HumanoidRootPart")
+	end
+	
+	local function stopBang()
+		if bangDied then bangDied:Disconnect() end
+		if bang then bang:Stop() end
+		if bangAnim then bangAnim:Destroy() end
+		if bangLoop then bangLoop:Disconnect() end
+		bangDied = nil
+		bang = nil
+		bangAnim = nil
+		bangLoop = nil
+		isBanging = false
+	end
+	
+	local function startBang(targetPlayer)
+		if isBanging then return end
+	
+		stopBang()
+		task.wait(0.1)
+	
+		local character = LocalPlayer.Character
+		if not character then return end
+	
+		local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+		if not humanoid then return end
+	
+		local isR15 = character:FindFirstChild("UpperTorso") ~= nil
+	
+		bangAnim = Instance.new("Animation")
+		bangAnim.AnimationId = isR15 and "rbxassetid://5918726674" or "rbxassetid://148840371"
+		bang = humanoid:LoadAnimation(bangAnim)
+		bang:Play(0.1, 1, 1)
+		bang:AdjustSpeed(3)
+	
+		isBanging = true
+	
+		bangDied = humanoid.Died:Connect(function()
+			stopBang()
+		end)
+	
+		if targetPlayer then
+			local bangOffset = CFrame.new(0, 0, 1.1)
+			bangLoop = RunService.Stepped:Connect(function()
+				pcall(function()
+					local myRoot = getTorso(LocalPlayer.Character)
+					local otherRoot = getTorso(targetPlayer.Character)
+					if myRoot and otherRoot then
+						myRoot.CFrame = otherRoot.CFrame * bangOffset
+					end
+				end)
+			end)
+		end
+	end
+	
+	local function flingPlayer(TargetPlayer)
+		local Character = LocalPlayer.Character
+		local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+		local RootPart = Humanoid and Humanoid.RootPart
+	
+		local TCharacter = TargetPlayer.Character
+		if not TCharacter then return false end
+	
+		local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+		local TRootPart = THumanoid and THumanoid.RootPart
+		local THead = TCharacter:FindFirstChild("Head")
+		local Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+		local Handle = Accessory and Accessory:FindFirstChild("Handle")
+	
+		if not (Character and Humanoid and RootPart) then return false end
+	
+		if RootPart.Velocity.Magnitude < 50 then
+			getgenv().OldPos = RootPart.CFrame
+		end
+	
+		if THumanoid and THumanoid.Sit then return false end
+		if not TCharacter:FindFirstChildWhichIsA("BasePart") then return false end
+	
+		local flinged = false
+		local startTime = tick()
+		local maxTime = 0.5
+	
+		local BV = Instance.new("BodyVelocity")
+		BV.Name = "FlingVel"
+		BV.Parent = RootPart
+		BV.Velocity = Vector3.new(900000000, 900000000, 900000000)
+		BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+	
+		local FPos = function(BasePart, Pos, Ang)
+			RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+			Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+			RootPart.Velocity = Vector3.new(90000000, 90000000 * 10, 90000000)
+			RootPart.RotVelocity = Vector3.new(900000000, 900000000, 900000000)
+		end
+	
+		local SFBasePart = function(BasePart)
+			local Angle = 0
+			repeat
+				if RootPart and THumanoid then
+					if BasePart.Velocity.Magnitude < 50 then
+						Angle = Angle + 100
+						FPos(BasePart, CFrame.new(0, 1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + ((THumanoid.MoveDirection * BasePart.Velocity.Magnitude) / 1.25), CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+						task.wait()
+					else
+						if not TRootPart then break end
+						FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(-90), 0, 0))
+						task.wait()
+						FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+						task.wait()
+					end
+				else
+					break
+				end
+			until (BasePart.Velocity.Magnitude > 500)
+				or (BasePart.Parent ~= TargetPlayer.Character)
+				or (TargetPlayer.Parent ~= Players)
+				or THumanoid.Sit
+				or (Humanoid.Health <= 0)
+				or (tick() - startTime > maxTime)
+				or not isOn  -- ADDED: Stop if toggle is turned off
+	
+			if BasePart.Velocity.Magnitude > 500 then
+				flinged = true
+			end
+		end
+	
+		local savedFPDH = workspace.FallenPartsDestroyHeight
+		workspace.FallenPartsDestroyHeight = 0/0
+	
+		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+	
+		if TRootPart and THead then
+			if (TRootPart.CFrame.p - THead.CFrame.p).Magnitude > 5 then
+				SFBasePart(THead)
+			else
+				SFBasePart(TRootPart)
+			end
+		elseif TRootPart and not THead then
+			SFBasePart(TRootPart)
+		elseif not TRootPart and THead then
+			SFBasePart(THead)
+		elseif not TRootPart and not THead and Accessory and Handle then
+			SFBasePart(Handle)
+		end
+	
+		BV:Destroy()
+		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+		workspace.FallenPartsDestroyHeight = savedFPDH
+	
+		return flinged
+	end
+	
+	local function loopFling()
+		local currentAdminIndex = 1
+		local lastAdminSwitchTime = tick()
+	
+		while isOn do
+			local hasFlingTargets = false
+	
+			for _, player in pairs(Players:GetPlayers()) do
+				if player ~= LocalPlayer then
+					-- Skip if already flinged
+					if flingedPlayers[player] then
+						continue
+					end
+	
+					-- Don't fling players with NoClip
+					if isNoclipped(player) then
+						continue
+					end
+	
+					-- Don't fling players with Hielo (frozen)
+					if isFrozen(player) then
+						continue
+					end
+	
+					hasFlingTargets = true
+	
+					-- Stop banging if we have targets to fling
+					if isBanging then
+						stopBang()
+					end
+	
+					-- Fling the player
+					local success = flingPlayer(player)
+	
+					if success then
+						flingedPlayers[player] = true
+					end
+				end
+			end
+	
+			-- If no one to fling, bang admin
+			if not hasFlingTargets then
+				local character = LocalPlayer.Character
+				if character then
+					local rootPart = character:FindFirstChild("HumanoidRootPart")
+					if rootPart then
+						for _, obj in pairs(rootPart:GetChildren()) do
+							if obj:IsA("BodyVelocity") then
+								obj:Destroy()
+							end
+						end
+	
+						rootPart.Velocity = Vector3.new()
+						rootPart.RotVelocity = Vector3.new()
+					end
+	
+					local humanoid = character:FindFirstChildOfClass("Humanoid")
+					if humanoid then
+						humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+					end
+				end
+	
+				local admins = getAdmins()
+	
+				if #admins > 0 then
+					-- Switch admin every 1 second if there are multiple
+					if #admins > 1 and tick() - lastAdminSwitchTime >= 1 then
+						currentAdminIndex = currentAdminIndex + 1
+						if currentAdminIndex > #admins then
+							currentAdminIndex = 1
+						end
+						lastAdminSwitchTime = tick()
+	
+						if isBanging then
+							stopBang()
+							task.wait(0.1)
+						end
+					end
+	
+					local targetAdmin = admins[currentAdminIndex]
+	
+					if not isBanging then
+						startBang(targetAdmin)
+					end
+				else
+					if isBanging then
+						stopBang()
+					end
+				end
+			end
+	
+			task.wait(0.1)
+		end
+	end
+	
+	-- Reset flinged status when players respawn
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			player.CharacterAdded:Connect(function()
+				flingedPlayers[player] = false
+			end)
+		end
+	end
+	
+	Players.PlayerAdded:Connect(function(player)
+		flingedPlayers[player] = false
+	
+		player.CharacterAdded:Connect(function()
+			task.wait(2)
+			flingedPlayers[player] = false
+		end)
+	end)
+	
+	LocalPlayer.CharacterAdded:Connect(function()
+		stopBang()
+		task.wait(1)
+	end)
+	
+	-- Hover effects - change MonkeyTitle text
+	if MonkeyTitle then
+		Fling.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "FLINGS PLAYERS NONSTOP, EXCLUDES NOCLIPPED OR FROZEN PLAYERS"
+		end)
+	
+		Fling.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+	
+	-- Button toggle
+	Fling.MouseButton1Click:Connect(function()
+		isOn = not isOn
+	
+		if isOn then
+			Fling.Text = "LOOP FLING PLAYERS: ON"
+			Fling.TextColor3 = Color3.fromRGB(0, 255, 0)
+	
+			-- Start the fling loop
+			task.spawn(loopFling)
+		else
+			Fling.Text = "LOOP FLING PLAYERS: OFF"
+			Fling.TextColor3 = Color3.fromRGB(255, 255, 255)
+	
+			-- Stop flinging immediately
+			-- (the isOn = false already stops the loop)
+	
+			-- Reset flinged table
+			flingedPlayers = {}
+	
+			-- Stop banging
+			stopBang()
+	
+			-- Reset character (doesn't wait)
+			if LocalPlayer.Character then
+				LocalPlayer.Character:BreakJoints()
+			end
+		end
+	end)
+end;
+task.spawn(C_9);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit.BkitScript
+local function C_c()
+local script = G2L["c"];
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local TextChatService = game:GetService("TextChatService")
+	
+	local Bkit = script.Parent
+	local isOn = false
+	
+	local isProcessingDelete = false
+	local isProcessingPaint = false
+	local isProcessingArkenstone = false
+	local cancelPaint = false
+	
+	-- ============================================================
+	-- FIND MONKEYTITLE
+	-- ============================================================
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then
+				return v
+			end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	
+	-- ============================================================
+	-- CHAT FUNCTION
+	-- ============================================================
+	local function sendChat(message)
+		pcall(function()
+			local channels = TextChatService:WaitForChild("TextChannels", 2)
+			if channels then
+				local general = channels:FindFirstChild("RBXGeneral")
+				if general then
+					general:SendAsync(message)
+					return
+				end
+			end
+			local chatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents", 2)
+			if chatEvents then
+				local sayMessage = chatEvents:WaitForChild("SayMessageRequest", 2)
+				if sayMessage then
+					sayMessage:FireServer(message, "All")
+				end
+			end
+		end)
+	end
+	
+	-- ============================================================
+	-- AUTO TOOL PICKUP
+	-- ============================================================
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			local char = LocalPlayer.Character
+			local hum = char and char:FindFirstChildWhichIsA("Humanoid")
+			if hum and hum.Health > 0 and not isProcessingDelete and not isProcessingPaint and not isProcessingArkenstone then
+				local currentlyEquipped = char:FindFirstChildOfClass("Tool")
+				for _, obj in ipairs(workspace:GetChildren()) do
+					if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
+						pcall(function()
+							hum:EquipTool(obj)
+							task.wait(0.05)
+							for i = 1, 3 do
+								if obj.Parent == char then
+									obj.Parent = LocalPlayer.Backpack
+								end
+								task.wait(0.02)
+							end
+							if currentlyEquipped and currentlyEquipped.Parent == LocalPlayer.Backpack then
+								task.wait(0.03)
+								hum:EquipTool(currentlyEquipped)
+							end
+						end)
+					end
+				end
+			end
+			task.wait(0.1)
 		end
 	end)
 	
-	return true
-end
-
--- Auto-equip Delete and modify it
-task.spawn(function()
-	task.wait(1)
-	if LocalPlayer.Backpack:FindFirstChild("Delete") and LocalPlayer.Character then
-		LocalPlayer.Backpack.Delete.Parent = LocalPlayer.Character
-		task.wait(0.5)
-		modifyDeleteTool()
-	end
-end)
-
--- Keep trying to modify if not done yet
-task.spawn(function()
-	while task.wait(1) do
-		modifyDeleteTool()
-	end
-end)
-
--- Delete aura
-RunService.Heartbeat:Connect(function()
-	pcall(function()
-		if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
-			return 
-		end
-		
-		if not LocalPlayer.Character:FindFirstChild("Delete") then return end
-		
-		local deleteScript = LocalPlayer.Character.Delete:FindFirstChild("Script")
-		if not deleteScript or not deleteScript:FindFirstChild("Event") then return end
-		
-		local myPos = LocalPlayer.Character.HumanoidRootPart.Position
-		
-		-- Delete all blocks within range
-		for _, block in pairs(workspace.Bricks:GetDescendants()) do
-			if block:IsA("BasePart") and block.Name == "Brick" then
-				local distance = (block.Position - myPos).Magnitude
-				
-				if distance <= deleteRange then
-					task.spawn(function()
-						pcall(function()
-							deleteScript.Event:FireServer(block, block.Position)
-						end)
-					end)
+	-- ============================================================
+	-- AUTO DELETE TOOL (BREAK BKIT)
+	-- ============================================================
+	local processedDeleteTools = {}
+	local justPickedUpDelete = {}
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+			for _, obj in ipairs(workspace:GetChildren()) do
+				if obj:IsA("Tool") and obj.Name == "Delete" and obj:FindFirstChild("Handle") then
+					justPickedUpDelete[obj] = true
 				end
 			end
 		end
 	end)
-end)
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+	
+			local brick = ReplicatedStorage:FindFirstChild("Brick")
+			if not brick then
+				task.wait(0.5)
+				continue
+			end
+	
+			local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+			if deleteTool and not processedDeleteTools[deleteTool] then
+				processedDeleteTools[deleteTool] = true
+	
+				if isProcessingPaint then
+					cancelPaint = true
+					while isProcessingPaint do
+						task.wait(0.1)
+					end
+				end
+	
+				if justPickedUpDelete[deleteTool] then
+					task.wait(0.5)
+					justPickedUpDelete[deleteTool] = nil
+				end
+	
+				isProcessingDelete = true
+	
+				task.spawn(function()
+					pcall(function()
+						local character = LocalPlayer.Character
+						if not character then return end
+						local humanoid = character:FindFirstChild("Humanoid")
+						if not humanoid then return end
+	
+						local previousTool = character:FindFirstChildOfClass("Tool")
+						if previousTool and previousTool.Name == "Delete" then
+							previousTool = nil
+						end
+	
+						humanoid:EquipTool(deleteTool)
+						task.wait(0.1)
+	
+						local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+	
+						local startTime = tick()
+						while tick() - startTime < 1 do
+							event:FireServer(brick, character.HumanoidRootPart.Position)
+							task.wait(0.05)
+						end
+	
+						task.wait(0.1)
+	
+						humanoid:UnequipTools()
+	
+						task.wait(0.2)
+	
+						isProcessingDelete = false
+	
+						if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+							humanoid:EquipTool(previousTool)
+						end
+					end)
+				end)
+			end
+	
+			for tool, _ in pairs(processedDeleteTools) do
+				if not tool or not tool.Parent then
+					processedDeleteTools[tool] = nil
+				end
+			end
+		end
+	end)
+	
+	-- ============================================================
+	-- AUTO PAINT TOOL (MONKEY GANG GRAFFITI)
+	-- ============================================================
+	local processedPaintTools = {}
+	local justPickedUpPaint = {}
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+			for _, obj in ipairs(workspace:GetChildren()) do
+				if obj:IsA("Tool") and obj.Name == "Paint" and obj:FindFirstChild("Handle") then
+					justPickedUpPaint[obj] = true
+				end
+			end
+		end
+	end)
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+	
+			local brick = ReplicatedStorage:FindFirstChild("Brick")
+			if not brick then
+				task.wait(0.5)
+				continue
+			end
+	
+			local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
+			local deleteToolExists = LocalPlayer.Backpack:FindFirstChild("Delete")
+			if paintTool and not processedPaintTools[paintTool] and not deleteToolExists then
+				processedPaintTools[paintTool] = true
+	
+				if justPickedUpPaint[paintTool] then
+					task.wait(0.5)
+					justPickedUpPaint[paintTool] = nil
+				end
+	
+				isProcessingPaint = true
+				cancelPaint = false
+	
+				task.spawn(function()
+					pcall(function()
+						local character = LocalPlayer.Character
+						if not character then return end
+						local humanoid = character:FindFirstChild("Humanoid")
+						if not humanoid then return end
+	
+						local previousTool = character:FindFirstChildOfClass("Tool")
+						if previousTool and previousTool.Name == "Paint" then
+							previousTool = nil
+						end
+	
+						humanoid:EquipTool(paintTool)
+						task.wait(0.1)
+	
+						local paintEvent = paintTool:WaitForChild("Script"):WaitForChild("Event")
+	
+						local blueColor = Color3.fromRGB(0, 0, 255)
+						local whiteColor = Color3.fromRGB(255, 255, 255)
+						local sprayText = "MONKEY GANG"
+	
+						local sides = {
+							Enum.NormalId.Front,
+							Enum.NormalId.Right,
+							Enum.NormalId.Back,
+							Enum.NormalId.Left,
+							Enum.NormalId.Top,
+							Enum.NormalId.Bottom
+						}
+	
+						for i, side in ipairs(sides) do
+							if cancelPaint then break end
+							pcall(function()
+								paintEvent:FireServer(brick, side, brick.Position, "both 🤝", blueColor, "", "")
+							end)
+							task.wait(0.05)
+						end
+	
+						if not cancelPaint then
+							pcall(function()
+								paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "material", blueColor, "Smooth", "")
+							end)
+							task.wait(0.1)
+						end
+	
+						for i, side in ipairs(sides) do
+							if cancelPaint then break end
+							for retry = 1, 2 do
+								pcall(function()
+									paintEvent:FireServer(brick, side, brick.Position, "both 🤝", blueColor, "spray", "")
+								end)
+								task.wait(0.03)
+							end
+						end
+	
+						if not cancelPaint then
+							for i, side in ipairs(sides) do
+								if cancelPaint then break end
+								for retry = 1, 2 do
+									pcall(function()
+										paintEvent:FireServer(brick, side, brick.Position, "both 🤝", whiteColor, "spray", sprayText)
+									end)
+									task.wait(0.03)
+								end
+							end
+						end
+	
+						if not cancelPaint then
+							pcall(function()
+								paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "both 🤝", blueColor, "spray", "")
+							end)
+							task.wait(0.1)
+	
+							pcall(function()
+								paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "material", Color3.new(0, 0, 0), "anchor", "")
+							end)
+							task.wait(0.1)
+	
+							pcall(function()
+								paintEvent:FireServer(brick, Enum.NormalId.Top, brick.Position, "both 🤝", whiteColor, "spray", sprayText)
+							end)
+							task.wait(0.05)
+						end
+	
+						task.wait(0.1)
+	
+						humanoid:UnequipTools()
+	
+						task.wait(0.2)
+	
+						isProcessingPaint = false
+						cancelPaint = false
+	
+						if previousTool and previousTool.Parent == LocalPlayer.Backpack then
+							humanoid:EquipTool(previousTool)
+						end
+					end)
+	
+					if not pcall(function() end) then
+						isProcessingPaint = false
+						cancelPaint = false
+					end
+				end)
+			end
+	
+			for tool, _ in pairs(processedPaintTools) do
+				if not tool or not tool.Parent then
+					processedPaintTools[tool] = nil
+				end
+			end
+		end
+	end)
+	
+	-- ============================================================
+	-- AUTO ARKENSTONE (AUTO BKIT COMMAND)
+	-- ============================================================
+	local processedArkenstones = {}
+	local justPickedUpArkenstone = {}
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+			for _, obj in ipairs(workspace:GetChildren()) do
+				if obj:IsA("Tool") and obj.Name == "The Arkenstone" and obj:FindFirstChild("Handle") then
+					justPickedUpArkenstone[obj] = true
+				end
+			end
+		end
+	end)
+	
+	task.spawn(function()
+		while true do
+			if not isOn then 
+				task.wait(0.5)
+				continue 
+			end
+	
+			task.wait(0.1)
+	
+			local brick = ReplicatedStorage:FindFirstChild("Brick")
+			if not brick then
+				task.wait(0.5)
+				continue
+			end
+	
+			local backpack = LocalPlayer:FindFirstChild("Backpack")
+			local char = LocalPlayer.Character
+			local arkenstone = (backpack and backpack:FindFirstChild("The Arkenstone"))
+				or (char and char:FindFirstChild("The Arkenstone"))
+	
+			if arkenstone and not processedArkenstones[arkenstone] then
+				processedArkenstones[arkenstone] = true
+	
+				if isProcessingPaint then
+					cancelPaint = true
+					while isProcessingPaint do
+						task.wait(0.1)
+					end
+				end
+	
+				if justPickedUpArkenstone[arkenstone] then
+					task.wait(0.5)
+					justPickedUpArkenstone[arkenstone] = nil
+				end
+	
+				isProcessingArkenstone = true
+	
+				task.spawn(function()
+					pcall(function()
+						local character = LocalPlayer.Character
+						if not character then return end
+						local humanoid = character:FindFirstChild("Humanoid")
+						if not humanoid then return end
+	
+						local ark = LocalPlayer.Backpack:FindFirstChild("The Arkenstone")
+							or (character and character:FindFirstChild("The Arkenstone"))
+	
+						if not ark then return end
+	
+						if ark.Parent == LocalPlayer.Backpack then
+							humanoid:EquipTool(ark)
+						end
+	
+						task.wait(0.5)
+	
+						sendChat(";bkit")
+	
+						isProcessingArkenstone = false
+					end)
+	
+					if not pcall(function() end) then
+						isProcessingArkenstone = false
+					end
+				end)
+			end
+	
+			for tool, _ in pairs(processedArkenstones) do
+				if not tool or not tool.Parent then
+					processedArkenstones[tool] = nil
+				end
+			end
+		end
+	end)
+	
+	-- ============================================================
+	-- HOVER EFFECTS
+	-- ============================================================
+	if MonkeyTitle then
+		Bkit.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "AUTO DISABLE BKIT + AUTO GRAB ITEMS"
+		end)
+	
+		Bkit.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+	
+	-- ============================================================
+	-- BUTTON TOGGLE
+	-- ============================================================
+	Bkit.MouseButton1Click:Connect(function()
+		isOn = not isOn
+	
+		if isOn then
+			Bkit.Text = "AUTO DISABLE BKIT: ON"
+			Bkit.TextColor3 = Color3.fromRGB(0, 255, 0)
+		else
+			Bkit.Text = "AUTO DISABLE BKIT: OFF"
+			Bkit.TextColor3 = Color3.fromRGB(255, 255, 255)
+	
+			-- Reset processing flags when turning off
+			isProcessingDelete = false
+			isProcessingPaint = false
+			isProcessingArkenstone = false
+			cancelPaint = false
+		end
+	end)
+end;
+task.spawn(C_c);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze.LocalScript
+local function C_e()
+local script = G2L["e"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_e);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.AntiGlowScript
+local function C_10()
+local script = G2L["10"];
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local AntiGlow = script.Parent
+	local isEnabled = false
+	local antiGlowConnections = {}
+	local godConnections = {}
+	
+	--------------------------------------------------
+	-- FIND MONKEYTITLE
+	--------------------------------------------------
+	
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then return p end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then return v end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	
+	--------------------------------------------------
+	-- ANTI GLOW
+	--------------------------------------------------
+	
+	local function enableAntiGlow()
+		for _, conn in pairs(antiGlowConnections) do
+			if conn then conn:Disconnect() end
+		end
+		antiGlowConnections = {}
+	
+		table.insert(antiGlowConnections, RunService.RenderStepped:Connect(function()
+			if not isEnabled then return end
+			local character = LocalPlayer.Character
+			if not character then return end
+			for _, part in pairs(character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					if part.Material == Enum.Material.Neon then
+						part.Material = Enum.Material.Plastic
+					end
+					if part.Color == Color3.fromRGB(0, 0, 0) then
+						part.Color = Color3.fromRGB(163, 162, 165)
+					end
+				end
+			end
+		end))
+	end
+	
+	local function disableAntiGlow()
+		for _, conn in pairs(antiGlowConnections) do
+			if conn then conn:Disconnect() end
+		end
+		antiGlowConnections = {}
+	end
+	
+	--------------------------------------------------
+	-- GOD MODE
+	--------------------------------------------------
+	
+	local function enableGodMode()
+		for _, c in pairs(godConnections) do
+			pcall(function() c:Disconnect() end)
+		end
+		godConnections = {}
+	
+		table.insert(godConnections, RunService.Heartbeat:Connect(function()
+			if not isEnabled then return end
+			local char = LocalPlayer.Character
+			if not char then return end
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum and hum.Parent then
+				hum.MaxHealth = math.huge
+				hum.Health = math.huge
+			end
+		end))
+	end
+	
+	local function disableGodMode()
+		for _, c in pairs(godConnections) do
+			pcall(function() c:Disconnect() end)
+		end
+		godConnections = {}
+	
+		local char = LocalPlayer.Character
+		if char then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum then
+				hum.MaxHealth = 100
+				hum.Health = 100
+			end
+		end
+	end
+	
+	--------------------------------------------------
+	-- CHARACTER ADDED
+	--------------------------------------------------
+	
+	LocalPlayer.CharacterAdded:Connect(function(character)
+		if isEnabled then
+			character:WaitForChild("Humanoid")
+			task.wait(0.1)
+			enableAntiGlow()
+			enableGodMode()
+		end
+	end)
+	
+	--------------------------------------------------
+	-- TOGGLE
+	--------------------------------------------------
+	
+	AntiGlow.MouseButton1Click:Connect(function()
+		isEnabled = not isEnabled
+	
+		if isEnabled then
+			AntiGlow.Text = "ANTI GLOW, TOXIFY: ON"
+			AntiGlow.TextColor3 = Color3.fromRGB(0, 255, 0)
+			enableAntiGlow()
+			enableGodMode()
+		else
+			AntiGlow.Text = "ANTI GLOW, TOXIFY: OFF"
+			AntiGlow.TextColor3 = Color3.fromRGB(255, 255, 255)
+			disableAntiGlow()
+			disableGodMode()
+		end
+	end)
+	
+	--------------------------------------------------
+	-- HOVER TOOLTIP
+	--------------------------------------------------
+	
+	if MonkeyTitle then
+		AntiGlow.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "PREVENTS GLOW AND TOXIFY EFFECTS ON YOUR CHARACTER"
+		end)
+		AntiGlow.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+end;
+task.spawn(C_10);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.FloodChat.LocalScript
+local function C_12()
+local script = G2L["12"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_12);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.HackBkit.LocalScript
+local function C_14()
+local script = G2L["14"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_14);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.ToggleAll.LocalScript
+local function C_16()
+local script = G2L["16"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_16);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip.RejoinNoclipScript
+local function C_19()
+local script = G2L["19"];
+	local Players = game:GetService("Players")
+	local TeleportService = game:GetService("TeleportService")
+	local LocalPlayer = Players.LocalPlayer
+	local PLACE_ID = game.PlaceId
+	
+	local RejoinNoclip = script.Parent
+	local isOn = false
+	local cooldown = false
+	local lastRejoinTime = 0
+	
+	local FILE_NAME = "monkeygang_rejoin_state.txt"
+	local TIMESTAMP_FILE = "monkeygang_rejoin_timestamp.txt"
+	
+	-- ============================================================
+	-- FIND MONKEYTITLE AND SCREENGUI
+	-- ============================================================
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
+		end
+	end
+	
+	local function findDescendant(name)
+		local ScreenGui = getScreenGui()
+		if not ScreenGui then return nil end
+		for _, v in pairs(ScreenGui:GetDescendants()) do
+			if v.Name == name then
+				return v
+			end
+		end
+	end
+	
+	local MonkeyTitle = findDescendant("MonkeyTitle")
+	local ScreenGui = getScreenGui()
+	
+	-- ============================================================
+	-- FILE SAVE/LOAD FUNCTIONS
+	-- ============================================================
+	local function readFile()
+		local success, result = pcall(function()
+			return readfile(FILE_NAME)
+		end)
+		if success and result and result ~= "" then return result end
+		return nil
+	end
+	
+	local function writeFile(content)
+		pcall(function()
+			writefile(FILE_NAME, content)
+		end)
+	end
+	
+	local function saveButtonStates()
+		if not ScreenGui then return end
+	
+		local lines = {}
+		table.insert(lines, "autoRejoin=true")
+	
+		-- Find all TextButtons that are toggle buttons (have ON/OFF in text)
+		for _, descendant in pairs(ScreenGui:GetDescendants()) do
+			if descendant:IsA("TextButton") then
+				local text = descendant.Text
+				-- Check if it's a toggle button by looking for "ON" or "OFF" in the text
+				if text:match(": ON$") or text:match(": OFF$") then
+					local isEnabled = descendant.TextColor3 == Color3.fromRGB(0, 255, 0)
+					table.insert(lines, descendant.Name .. "=" .. tostring(isEnabled))
+				end
+			end
+		end
+	
+		writeFile(table.concat(lines, "\n"))
+	
+		-- Save timestamp of when we triggered the rejoin
+		pcall(function()
+			writefile(TIMESTAMP_FILE, tostring(tick()))
+		end)
+	end
+	
+	local function loadAndApplyStates()
+		-- Check if rejoin timestamp exists and is recent (within 30 seconds)
+		local timestampData = nil
+		pcall(function()
+			timestampData = readfile(TIMESTAMP_FILE)
+		end)
+	
+		if not timestampData then 
+			-- No timestamp = manual rejoin, don't restore
+			return 
+		end
+	
+		local rejoinTime = tonumber(timestampData)
+		if not rejoinTime then return end
+	
+		local timeSinceRejoin = tick() - rejoinTime
+	
+		-- If more than 30 seconds, this is a manual rejoin
+		if timeSinceRejoin > 30 then
+			pcall(function()
+				delfile(TIMESTAMP_FILE)
+			end)
+			return
+		end
+	
+		-- This is an auto-rejoin, restore states
+		local data = readFile()
+		if not data then return end
+	
+		local states = {}
+		for line in data:gmatch("[^\n]+") do
+			local key, value = line:match("(.-)=(.+)")
+			if key and value then
+				states[key] = value
+			end
+		end
+	
+		-- Only apply if this was an auto-rejoin
+		if states["autoRejoin"] ~= "true" then return end
+	
+		if not ScreenGui then return end
+	
+		-- Re-toggle buttons that were ON instantly (no waiting for GUI load)
+		for _, descendant in pairs(ScreenGui:GetDescendants()) do
+			if descendant:IsA("TextButton") then
+				local savedState = states[descendant.Name]
+				if savedState == "true" then
+					-- Check if button is currently OFF (white text)
+					if descendant.TextColor3 == Color3.fromRGB(255, 255, 255) then
+						-- Click the button to turn it ON
+						pcall(function()
+							firesignal(descendant.MouseButton1Click)
+						end)
+						task.wait(0.1) -- Wait 0.1 seconds before next button
+					end
+				end
+			end
+		end
+	
+		-- Clear the files after restoring
+		writeFile("")
+		pcall(function()
+			delfile(TIMESTAMP_FILE)
+		end)
+	end
+	
+	-- ============================================================
+	-- AUTO-EXECUTE SETUP
+	-- ============================================================
+	local function setupAutoExecute()
+		local queueFn = queue_on_teleport
+			or (syn and syn.queue_on_teleport)
+			or (fluxus and fluxus.queue_on_teleport)
+	
+		if queueFn then
+			queueFn([[
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/MonkeyGang"))()
+			]])
+		end
+	end
+	
+	-- ============================================================
+	-- NOCLIP DETECTION AND AUTO REJOIN
+	-- ============================================================
+	local function checkNoclipAndRejoin()
+		while task.wait(0.5) do
+			if not isOn then continue end
+	
+			if cooldown then continue end
+	
+			if tick() - lastRejoinTime < 10 then continue end
+	
+			local char = LocalPlayer.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	
+			if hrp and hrp.CollisionGroup == "NoClip" then
+				cooldown = true
+				lastRejoinTime = tick()
+	
+				-- Save button states before rejoining
+				saveButtonStates()
+	
+				-- Setup auto-execute
+				setupAutoExecute()
+	
+				-- Rejoin the server
+				TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+	
+				task.delay(10, function()
+					cooldown = false
+				end)
+			end
+		end
+	end
+	
+	-- ============================================================
+	-- HOVER EFFECTS
+	-- ============================================================
+	if MonkeyTitle then
+		RejoinNoclip.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "REJOINS ON NOCLIP"
+		end)
+	
+		RejoinNoclip.MouseLeave:Connect(function()
+			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
+		end)
+	end
+	
+	-- ============================================================
+	-- BUTTON TOGGLE
+	-- ============================================================
+	RejoinNoclip.MouseButton1Click:Connect(function()
+		isOn = not isOn
+	
+		if isOn then
+			RejoinNoclip.Text = "REJOIN ON NOCLIP: ON"
+			RejoinNoclip.TextColor3 = Color3.fromRGB(0, 255, 0)
+		else
+			RejoinNoclip.Text = "REJOIN ON NOCLIP: OFF"
+			RejoinNoclip.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end)
+	
+	-- ============================================================
+	-- START NOCLIP MONITORING
+	-- ============================================================
+	task.spawn(checkNoclipAndRejoin)
+	
+	-- ============================================================
+	-- LOAD STATES ON JOIN (if this was an auto-rejoin)
+	-- ============================================================
+	task.spawn(loadAndApplyStates)
+end;
+task.spawn(C_19);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinMute.LocalScript
+local function C_1c()
+local script = G2L["1c"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_1c);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiInvis.LocalScript
+local function C_1e()
+local script = G2L["1e"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_1e);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiNan.LocalScript
+local function C_20()
+local script = G2L["20"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_20);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.CloseGui.LocalScript
+local function C_22()
+local script = G2L["22"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_22);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.GriefAura.LocalScript
+local function C_24()
+local script = G2L["24"];
+	print("Hello world!")
+	
+end;
+task.spawn(C_24);
 
-print("Delete aura with modified range loaded!")
-print("Attempting to change Magnitude < 24 to Magnitude < 99999")
+return G2L["1"], require;
