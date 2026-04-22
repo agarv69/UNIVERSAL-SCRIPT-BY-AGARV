@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 39 | Scripts: 14 | Modules: 0 | Tags: 0
+-- Instances: 40 | Scripts: 15 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.MonkeyGui
@@ -388,6 +388,11 @@ G2L["27"]["Text"] = [[🚨BOT SERVER RAIDER🚨]];
 G2L["27"]["LayoutOrder"] = 20;
 G2L["27"]["Name"] = [[MonkeyTitleBottom]];
 G2L["27"]["Position"] = UDim2.new(0, 0, 0.91441, 0);
+
+
+-- StarterGui.MonkeyGui.ResetScript
+G2L["28"] = Instance.new("LocalScript", G2L["1"]);
+G2L["28"]["Name"] = [[ResetScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.MainScript
@@ -1467,45 +1472,40 @@ local script = G2L["e"];
 		while task.wait(0.05) do
 			if isOn and not isResetting then
 				local char = workspace:FindFirstChild(LocalPlayer.Name)
-				if char then
-					if char:FindFirstChild("Hielo") then
-						isResetting = true
+				if char and char:FindFirstChild("Hielo") then
+					isResetting = true
 	
+					-- Send reset event
+					if shared.ResetCharacter then
+						shared.ResetCharacter()
+					else
 						if LocalPlayer.Character then
 							LocalPlayer.Character:BreakJoints()
 						end
+					end
 	
-						-- If character didn't reset after 1 second, break again
-						local resetted = false
-						local resetConn
-						resetConn = Players.LocalPlayer.CharacterAdded:Connect(function()
-							resetted = true
-							resetConn:Disconnect()
-						end)
-						task.wait(1)
-						if not resetted then
-							resetConn:Disconnect()
-							if LocalPlayer.Character then
-								LocalPlayer.Character:BreakJoints()
-							end
-						end
-	
-						-- Wait for character to actually respawn
-						if not resetted then
-							LocalPlayer.CharacterAdded:Wait()
-						end
-	
-						isResetting = false
-						task.wait(5)
-	
-						-- Check if still frozen after respawn
+					-- Wait up to 5 seconds for character to respawn and Hielo to be gone
+					local success = false
+					local startTime = tick()
+					while tick() - startTime < 5 do
+						LocalPlayer.CharacterAdded:Wait()
+						task.wait(0.5)
 						local newChar = workspace:FindFirstChild(LocalPlayer.Name)
-						if newChar and newChar:FindFirstChild("Hielo") then
-							saveButtonStates()
-							setupAutoExecute()
-							TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+						if newChar and not newChar:FindFirstChild("Hielo") then
+							success = true
+							break
 						end
 					end
+	
+					if not success then
+						-- Still frozen or Hielo still there after 5 seconds, rejoin
+						saveButtonStates()
+						setupAutoExecute()
+						TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
+						return
+					end
+	
+					isResetting = false
 				end
 			end
 		end
@@ -1998,5 +1998,18 @@ local script = G2L["24"];
 	
 end;
 task.spawn(C_24);
+-- StarterGui.MonkeyGui.ResetScript
+local function C_28()
+local script = G2L["28"];
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	shared.ResetCharacter = function()
+		if LocalPlayer.Character then
+			LocalPlayer.Character:BreakJoints()
+		end
+	end
+end;
+task.spawn(C_28);
 
 return G2L["1"], require;
