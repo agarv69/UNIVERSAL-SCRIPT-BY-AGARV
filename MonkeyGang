@@ -1321,22 +1321,21 @@ local function C_10()
 local script = G2L["10"];
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
+	
 	local LocalPlayer = Players.LocalPlayer
 	
 	local AntiGlow = script.Parent
+	
 	local isEnabled = false
 	local Connections = {}
 	
-	-- ============================================================
-	-- FIND MONKEYTITLE FOR HOVER
-	-- ============================================================
 	local function getScreenGui()
-		local p = script.Parent
-		while p do
-			if p:IsA("ScreenGui") then
-				return p
+		local parent = AntiGlow
+		while parent do
+			if parent:IsA("ScreenGui") then
+				return parent
 			end
-			p = p.Parent
+			parent = parent.Parent
 		end
 	end
 	
@@ -1352,108 +1351,41 @@ local script = G2L["10"];
 	
 	local MonkeyTitle = findDescendant("MonkeyTitle")
 	
-	-- ============================================================
-	-- ANTI-GLOW/TOXIFY FUNCTIONS
-	-- ============================================================
-	local function removeGlow(part)
-		if part:IsA("BasePart") then
-			-- Remove glow effect
-			if part.Material == Enum.Material.Neon then
-				part.Material = Enum.Material.Plastic
-			end
-	
-			-- Remove black toxify color
-			if part.Color == Color3.fromRGB(0, 0, 0) and part.Material == Enum.Material.Neon then
-				part.Color = Color3.fromRGB(163, 162, 165) -- Default gray
-			end
-	
-			-- Restore anchored/collision if toxified
-			if not part.Anchored then
-				part.Anchored = true
-			end
-			if not part.CanCollide then
-				part.CanCollide = true
-			end
-		end
-	end
-	
-	local function monitorCharacter(character)
-		-- Clean existing parts
-		for _, part in pairs(character:GetDescendants()) do
-			removeGlow(part)
-		end
-	
-		-- Monitor for new parts or changes
-		table.insert(Connections, character.DescendantAdded:Connect(function(descendant)
-			if isEnabled then
-				task.wait()
-				removeGlow(descendant)
-			end
-		end))
-	
-		-- Monitor for property changes
-		for _, part in pairs(character:GetDescendants()) do
-			if part:IsA("BasePart") then
-				table.insert(Connections, part:GetPropertyChangedSignal("Material"):Connect(function()
-					if isEnabled then
-						removeGlow(part)
-					end
-				end))
-	
-				table.insert(Connections, part:GetPropertyChangedSignal("Color"):Connect(function()
-					if isEnabled then
-						removeGlow(part)
-					end
-				end))
-	
-				table.insert(Connections, part:GetPropertyChangedSignal("Anchored"):Connect(function()
-					if isEnabled and not part.Anchored then
-						part.Anchored = true
-					end
-				end))
-	
-				table.insert(Connections, part:GetPropertyChangedSignal("CanCollide"):Connect(function()
-					if isEnabled and not part.CanCollide then
-						part.CanCollide = true
-					end
-				end))
-			end
-		end
-	
-		-- Continuous check loop
-		table.insert(Connections, RunService.Heartbeat:Connect(function()
-			if not isEnabled then return end
-	
-			for _, part in pairs(character:GetDescendants()) do
-				removeGlow(part)
-			end
-		end))
-	end
-	
 	local function enableAntiGlow()
-		-- Disconnect old connections
 		for _, conn in pairs(Connections) do
 			if conn then conn:Disconnect() end
 		end
 		Connections = {}
 	
 		local character = LocalPlayer.Character
-		if character then
-			monitorCharacter(character)
-		end
+		if not character then return end
+	
+		table.insert(Connections, RunService.RenderStepped:Connect(function()
+			if not isEnabled then return end
+	
+			for _, part in pairs(character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					-- Remove neon/glow
+					if part.Material == Enum.Material.Neon then
+						part.Material = Enum.Material.Plastic
+					end
+	
+					-- Remove black toxify color
+					if part.Color == Color3.fromRGB(0, 0, 0) then
+						part.Color = Color3.fromRGB(163, 162, 165)
+					end
+				end
+			end
+		end))
 	end
 	
 	local function disableAntiGlow()
-		-- Disconnect all connections
 		for _, conn in pairs(Connections) do
 			if conn then conn:Disconnect() end
 		end
 		Connections = {}
 	end
 	
-	-- ============================================================
-	-- BUTTON TOGGLE
-	-- ============================================================
 	AntiGlow.MouseButton1Click:Connect(function()
 		isEnabled = not isEnabled
 	
@@ -1468,20 +1400,6 @@ local script = G2L["10"];
 		end
 	end)
 	
-	-- ============================================================
-	-- RESPAWN HANDLING
-	-- ============================================================
-	LocalPlayer.CharacterAdded:Connect(function(character)
-		if isEnabled then
-			character:WaitForChild("Humanoid")
-			task.wait(0.1)
-			enableAntiGlow()
-		end
-	end)
-	
-	-- ============================================================
-	-- HOVER TOOLTIP
-	-- ============================================================
 	if MonkeyTitle then
 		AntiGlow.MouseEnter:Connect(function()
 			MonkeyTitle.Text = "PREVENTS GLOW AND TOXIFY EFFECTS ON YOUR CHARACTER"
@@ -1492,9 +1410,14 @@ local script = G2L["10"];
 		end)
 	end
 	
-	-- ============================================================
-	-- CLEANUP ON DESTROY
-	-- ============================================================
+	LocalPlayer.CharacterAdded:Connect(function(character)
+		if isEnabled then
+			character:WaitForChild("Humanoid")
+			task.wait(0.1)
+			enableAntiGlow()
+		end
+	end)
+	
 	script.Parent.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			isEnabled = false
