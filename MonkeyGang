@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 45 | Scripts: 18 | Modules: 0 | Tags: 0
+-- Instances: 44 | Scripts: 18 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.MonkeyGui
@@ -17,85 +17,75 @@ G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 G2L["1"]["ResetOnSpawn"] = false;
 
 
+-- StarterGui.MonkeyGui.ResetScript
+G2L["2"] = Instance.new("LocalScript", G2L["1"]);
+G2L["2"]["Name"] = [[ResetScript]];
+
+
+-- StarterGui.MonkeyGui.Joinlogs
+G2L["3"] = Instance.new("LocalScript", G2L["1"]);
+G2L["3"]["Name"] = [[Joinlogs]];
+
+
 -- StarterGui.MonkeyGui.MainFrame
-G2L["2"] = Instance.new("Frame", G2L["1"]);
-G2L["2"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2"]["Size"] = UDim2.new(0, 300, 0, 357);
-G2L["2"]["Position"] = UDim2.new(0, 541, 0, 301);
-G2L["2"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["2"]["Name"] = [[MainFrame]];
+G2L["4"] = Instance.new("Frame", G2L["1"]);
+G2L["4"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["4"]["Size"] = UDim2.new(0, 300, 0, 357);
+G2L["4"]["Position"] = UDim2.new(0, 541, 0, 301);
+G2L["4"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["4"]["Name"] = [[MainFrame]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.MainScript
+G2L["5"] = Instance.new("LocalScript", G2L["4"]);
+G2L["5"]["Name"] = [[MainScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.UIAspectRatioConstraint
-G2L["3"] = Instance.new("UIAspectRatioConstraint", G2L["2"]);
-G2L["3"]["AspectRatio"] = 0.85995;
+G2L["6"] = Instance.new("UIAspectRatioConstraint", G2L["4"]);
+G2L["6"]["AspectRatio"] = 0.85995;
 
 
 -- StarterGui.MonkeyGui.MainFrame.MonkeyTitle
-G2L["4"] = Instance.new("TextLabel", G2L["2"]);
-G2L["4"]["TextWrapped"] = true;
-G2L["4"]["TextSize"] = 14;
-G2L["4"]["TextScaled"] = true;
-G2L["4"]["BackgroundColor3"] = Color3.fromRGB(84, 84, 84);
-G2L["4"]["FontFace"] = Font.new([[rbxasset://fonts/families/Creepster.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["4"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["4"]["Size"] = UDim2.new(0, 300, 0, 50);
-G2L["4"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["4"]["Text"] = [[🔥THE MONKEY GANG GUI🔥]];
-G2L["4"]["Name"] = [[MonkeyTitle]];
-G2L["4"]["Position"] = UDim2.new(-0.19667, 0, -0.11466, 0);
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame
-G2L["5"] = Instance.new("ScrollingFrame", G2L["2"]);
-G2L["5"]["Active"] = true;
-G2L["5"]["CanvasSize"] = UDim2.new(0, 0, 1, 0);
-G2L["5"]["CanvasPosition"] = Vector2.new(0, 77.85715);
-G2L["5"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["5"]["Size"] = UDim2.new(0, 300, 0, 271);
-G2L["5"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["5"]["Position"] = UDim2.new(0, 0, 0.14333, 0);
-G2L["5"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["5"]["ScrollBarThickness"] = 0;
-G2L["5"]["LayoutOrder"] = 1;
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left
-G2L["6"] = Instance.new("Frame", G2L["5"]);
-G2L["6"]["BorderSizePixel"] = 0;
-G2L["6"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["6"]["Size"] = UDim2.new(0, 150, 0, 263);
-G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["6"]["Name"] = [[Left]];
-G2L["6"]["BackgroundTransparency"] = 1;
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling
-G2L["7"] = Instance.new("TextButton", G2L["6"]);
+G2L["7"] = Instance.new("TextLabel", G2L["4"]);
 G2L["7"]["TextWrapped"] = true;
 G2L["7"]["TextSize"] = 14;
 G2L["7"]["TextScaled"] = true;
-G2L["7"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["7"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
-G2L["7"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["7"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["7"]["BackgroundColor3"] = Color3.fromRGB(84, 84, 84);
+G2L["7"]["FontFace"] = Font.new([[rbxasset://fonts/families/Creepster.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["7"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["7"]["Size"] = UDim2.new(0, 300, 0, 50);
 G2L["7"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["7"]["Text"] = [[LOOP FLING PLAYERS: OFF]];
-G2L["7"]["Name"] = [[Fling]];
+G2L["7"]["Text"] = [[🔥THE MONKEY GANG GUI🔥]];
+G2L["7"]["Name"] = [[MonkeyTitle]];
+G2L["7"]["Position"] = UDim2.new(-0.19667, 0, -0.11466, 0);
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling.FlingScript
-G2L["8"] = Instance.new("LocalScript", G2L["7"]);
-G2L["8"]["Name"] = [[FlingScript]];
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame
+G2L["8"] = Instance.new("ScrollingFrame", G2L["4"]);
+G2L["8"]["Active"] = true;
+G2L["8"]["CanvasSize"] = UDim2.new(0, 0, 1, 0);
+G2L["8"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["8"]["Size"] = UDim2.new(0, 300, 0, 271);
+G2L["8"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["8"]["Position"] = UDim2.new(0, 0, 0.14333, 0);
+G2L["8"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["8"]["ScrollBarThickness"] = 0;
+G2L["8"]["LayoutOrder"] = 1;
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.UIListLayout
-G2L["9"] = Instance.new("UIListLayout", G2L["6"]);
-G2L["9"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left
+G2L["9"] = Instance.new("Frame", G2L["8"]);
+G2L["9"]["BorderSizePixel"] = 0;
+G2L["9"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["9"]["Size"] = UDim2.new(0, 150, 0, 263);
+G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["9"]["Name"] = [[Left]];
+G2L["9"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit
-G2L["a"] = Instance.new("TextButton", G2L["6"]);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling
+G2L["a"] = Instance.new("TextButton", G2L["9"]);
 G2L["a"]["TextWrapped"] = true;
 G2L["a"]["TextSize"] = 14;
 G2L["a"]["TextScaled"] = true;
@@ -104,172 +94,172 @@ G2L["a"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
 G2L["a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["a"]["Size"] = UDim2.new(0, 150, 0, 40);
 G2L["a"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["a"]["Text"] = [[AUTO DISABLE BKIT: OFF]];
-G2L["a"]["Name"] = [[Bkit]];
+G2L["a"]["Text"] = [[LOOP FLING PLAYERS: OFF]];
+G2L["a"]["Name"] = [[Fling]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling.FlingScript
+G2L["b"] = Instance.new("LocalScript", G2L["a"]);
+G2L["b"]["Name"] = [[FlingScript]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.UIListLayout
+G2L["c"] = Instance.new("UIListLayout", G2L["9"]);
+G2L["c"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit
+G2L["d"] = Instance.new("TextButton", G2L["9"]);
+G2L["d"]["TextWrapped"] = true;
+G2L["d"]["TextSize"] = 14;
+G2L["d"]["TextScaled"] = true;
+G2L["d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["d"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
+G2L["d"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["d"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["d"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["d"]["Text"] = [[AUTO DISABLE BKIT: OFF]];
+G2L["d"]["Name"] = [[Bkit]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit.BkitScript
-G2L["b"] = Instance.new("LocalScript", G2L["a"]);
-G2L["b"]["Name"] = [[BkitScript]];
+G2L["e"] = Instance.new("LocalScript", G2L["d"]);
+G2L["e"]["Name"] = [[BkitScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze
-G2L["c"] = Instance.new("TextButton", G2L["6"]);
-G2L["c"]["TextWrapped"] = true;
-G2L["c"]["TextSize"] = 14;
-G2L["c"]["TextScaled"] = true;
-G2L["c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["c"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
-G2L["c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["c"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["c"]["LayoutOrder"] = 1;
-G2L["c"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["c"]["Text"] = [[ANTI FREEZE: OFF]];
-G2L["c"]["Name"] = [[AntiFreeze]];
+G2L["f"] = Instance.new("TextButton", G2L["9"]);
+G2L["f"]["TextWrapped"] = true;
+G2L["f"]["TextSize"] = 14;
+G2L["f"]["TextScaled"] = true;
+G2L["f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["f"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
+G2L["f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["f"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["f"]["LayoutOrder"] = 1;
+G2L["f"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["f"]["Text"] = [[ANTI FREEZE: OFF]];
+G2L["f"]["Name"] = [[AntiFreeze]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze.AntiFreezeScript
-G2L["d"] = Instance.new("LocalScript", G2L["c"]);
-G2L["d"]["Name"] = [[AntiFreezeScript]];
+G2L["10"] = Instance.new("LocalScript", G2L["f"]);
+G2L["10"]["Name"] = [[AntiFreezeScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow
-G2L["e"] = Instance.new("TextButton", G2L["6"]);
-G2L["e"]["TextWrapped"] = true;
-G2L["e"]["TextSize"] = 14;
-G2L["e"]["TextScaled"] = true;
-G2L["e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["e"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
-G2L["e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["e"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["e"]["LayoutOrder"] = 1;
-G2L["e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["e"]["Text"] = [[ANTI GLOW, TOXIFY: OFF]];
-G2L["e"]["Name"] = [[AntiGlow]];
+G2L["11"] = Instance.new("TextButton", G2L["9"]);
+G2L["11"]["TextWrapped"] = true;
+G2L["11"]["TextSize"] = 14;
+G2L["11"]["TextScaled"] = true;
+G2L["11"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["11"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
+G2L["11"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["11"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["11"]["LayoutOrder"] = 1;
+G2L["11"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["11"]["Text"] = [[ANTI GLOW, TOXIFY: OFF]];
+G2L["11"]["Name"] = [[AntiGlow]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.AntiGlowScript
-G2L["f"] = Instance.new("LocalScript", G2L["e"]);
-G2L["f"]["Name"] = [[AntiGlowScript]];
+G2L["12"] = Instance.new("LocalScript", G2L["11"]);
+G2L["12"]["Name"] = [[AntiGlowScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.FloodChat
-G2L["10"] = Instance.new("TextButton", G2L["6"]);
-G2L["10"]["TextWrapped"] = true;
-G2L["10"]["TextSize"] = 14;
-G2L["10"]["TextScaled"] = true;
-G2L["10"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["10"]["BackgroundColor3"] = Color3.fromRGB(3, 123, 132);
-G2L["10"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["10"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["10"]["LayoutOrder"] = 2;
-G2L["10"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["10"]["Text"] = [[FLOOD CHAT: OFF]];
-G2L["10"]["Name"] = [[FloodChat]];
+G2L["13"] = Instance.new("TextButton", G2L["9"]);
+G2L["13"]["TextWrapped"] = true;
+G2L["13"]["TextSize"] = 14;
+G2L["13"]["TextScaled"] = true;
+G2L["13"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["13"]["BackgroundColor3"] = Color3.fromRGB(3, 123, 132);
+G2L["13"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["13"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["13"]["LayoutOrder"] = 2;
+G2L["13"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["13"]["Text"] = [[FLOOD CHAT: OFF]];
+G2L["13"]["Name"] = [[FloodChat]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.FloodChat.LocalScript
-G2L["11"] = Instance.new("LocalScript", G2L["10"]);
+G2L["14"] = Instance.new("LocalScript", G2L["13"]);
 
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.HackBkit
-G2L["12"] = Instance.new("TextButton", G2L["6"]);
-G2L["12"]["TextWrapped"] = true;
-G2L["12"]["TextSize"] = 14;
-G2L["12"]["TextScaled"] = true;
-G2L["12"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["12"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
-G2L["12"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["12"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["12"]["LayoutOrder"] = 3;
-G2L["12"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["12"]["Text"] = [[HACK PAINT BKIT]];
-G2L["12"]["Name"] = [[HackBkit]];
+G2L["15"] = Instance.new("TextButton", G2L["9"]);
+G2L["15"]["TextWrapped"] = true;
+G2L["15"]["TextSize"] = 14;
+G2L["15"]["TextScaled"] = true;
+G2L["15"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["15"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
+G2L["15"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["15"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["15"]["LayoutOrder"] = 3;
+G2L["15"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["15"]["Text"] = [[HACK PAINT BKIT]];
+G2L["15"]["Name"] = [[HackBkit]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.HackBkit.LocalScript
-G2L["13"] = Instance.new("LocalScript", G2L["12"]);
+G2L["16"] = Instance.new("LocalScript", G2L["15"]);
 
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.ToggleAll
-G2L["14"] = Instance.new("TextButton", G2L["6"]);
-G2L["14"]["TextWrapped"] = true;
-G2L["14"]["TextSize"] = 14;
-G2L["14"]["TextScaled"] = true;
-G2L["14"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["14"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
-G2L["14"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["14"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["14"]["LayoutOrder"] = 3;
-G2L["14"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["14"]["Text"] = [[ENABLE ALL]];
-G2L["14"]["Name"] = [[ToggleAll]];
+G2L["17"] = Instance.new("TextButton", G2L["9"]);
+G2L["17"]["TextWrapped"] = true;
+G2L["17"]["TextSize"] = 14;
+G2L["17"]["TextScaled"] = true;
+G2L["17"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["17"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
+G2L["17"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["17"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["17"]["LayoutOrder"] = 3;
+G2L["17"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["17"]["Text"] = [[ENABLE ALL]];
+G2L["17"]["Name"] = [[ToggleAll]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.ToggleAll.LocalScript
-G2L["15"] = Instance.new("LocalScript", G2L["14"]);
+G2L["18"] = Instance.new("LocalScript", G2L["17"]);
 
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.OldScript
-G2L["16"] = Instance.new("TextButton", G2L["6"]);
-G2L["16"]["TextWrapped"] = true;
-G2L["16"]["TextSize"] = 14;
-G2L["16"]["TextScaled"] = true;
-G2L["16"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["16"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
-G2L["16"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["16"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["16"]["LayoutOrder"] = 3;
-G2L["16"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["16"]["Text"] = [[EXECUTE OLD SCRIPT (NO UI)]];
-G2L["16"]["Name"] = [[OldScript]];
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.OldScript.OldScriptScript
-G2L["17"] = Instance.new("LocalScript", G2L["16"]);
-G2L["17"]["Name"] = [[OldScriptScript]];
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right
-G2L["18"] = Instance.new("Frame", G2L["5"]);
-G2L["18"]["BorderSizePixel"] = 0;
-G2L["18"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["18"]["Size"] = UDim2.new(0, 150, 0, 263);
-G2L["18"]["Position"] = UDim2.new(0.5, 0, 0, 0);
-G2L["18"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["18"]["Name"] = [[Right]];
-G2L["18"]["BackgroundTransparency"] = 1;
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip
-G2L["19"] = Instance.new("TextButton", G2L["18"]);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AgarWare
+G2L["19"] = Instance.new("TextButton", G2L["9"]);
 G2L["19"]["TextWrapped"] = true;
 G2L["19"]["TextSize"] = 14;
 G2L["19"]["TextScaled"] = true;
 G2L["19"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["19"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
+G2L["19"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
 G2L["19"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["19"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["19"]["LayoutOrder"] = 3;
 G2L["19"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["19"]["Text"] = [[REJOIN ON NOCLIP: OFF]];
-G2L["19"]["Name"] = [[RejoinNoclip]];
+G2L["19"]["Text"] = [[EXECUTE AGAR WARE]];
+G2L["19"]["Name"] = [[AgarWare]];
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip.RejoinNoclipScript
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AgarWare.AgarWareScript
 G2L["1a"] = Instance.new("LocalScript", G2L["19"]);
-G2L["1a"]["Name"] = [[RejoinNoclipScript]];
+G2L["1a"]["Name"] = [[AgarWareScript]];
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.UIListLayout
-G2L["1b"] = Instance.new("UIListLayout", G2L["18"]);
-G2L["1b"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right
+G2L["1b"] = Instance.new("Frame", G2L["8"]);
+G2L["1b"]["BorderSizePixel"] = 0;
+G2L["1b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1b"]["Size"] = UDim2.new(0, 150, 0, 263);
+G2L["1b"]["Position"] = UDim2.new(0.5, 0, 0, 0);
+G2L["1b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1b"]["Name"] = [[Right]];
+G2L["1b"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinMute
-G2L["1c"] = Instance.new("TextButton", G2L["18"]);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip
+G2L["1c"] = Instance.new("TextButton", G2L["1b"]);
 G2L["1c"]["TextWrapped"] = true;
 G2L["1c"]["TextSize"] = 14;
 G2L["1c"]["TextScaled"] = true;
@@ -278,173 +268,291 @@ G2L["1c"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
 G2L["1c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["1c"]["Size"] = UDim2.new(0, 150, 0, 40);
 G2L["1c"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1c"]["Text"] = [[REJOIN ON MUTE/DUMB: OFF]];
-G2L["1c"]["Name"] = [[RejoinMute]];
+G2L["1c"]["Text"] = [[REJOIN ON NOCLIP: OFF]];
+G2L["1c"]["Name"] = [[RejoinNoclip]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip.RejoinNoclipScript
+G2L["1d"] = Instance.new("LocalScript", G2L["1c"]);
+G2L["1d"]["Name"] = [[RejoinNoclipScript]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.UIListLayout
+G2L["1e"] = Instance.new("UIListLayout", G2L["1b"]);
+G2L["1e"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinMute
+G2L["1f"] = Instance.new("TextButton", G2L["1b"]);
+G2L["1f"]["TextWrapped"] = true;
+G2L["1f"]["TextSize"] = 14;
+G2L["1f"]["TextScaled"] = true;
+G2L["1f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1f"]["BackgroundColor3"] = Color3.fromRGB(137, 0, 0);
+G2L["1f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1f"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["1f"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1f"]["Text"] = [[REJOIN ON MUTE/DUMB: OFF]];
+G2L["1f"]["Name"] = [[RejoinMute]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinMute.RejoinMuteScript
-G2L["1d"] = Instance.new("LocalScript", G2L["1c"]);
-G2L["1d"]["Name"] = [[RejoinMuteScript]];
+G2L["20"] = Instance.new("LocalScript", G2L["1f"]);
+G2L["20"]["Name"] = [[RejoinMuteScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiInvis
-G2L["1e"] = Instance.new("TextButton", G2L["18"]);
-G2L["1e"]["TextWrapped"] = true;
-G2L["1e"]["TextSize"] = 14;
-G2L["1e"]["TextScaled"] = true;
-G2L["1e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1e"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
-G2L["1e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["1e"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["1e"]["LayoutOrder"] = 1;
-G2L["1e"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1e"]["Text"] = [[ANTI INVISIBLE: OFF]];
-G2L["1e"]["Name"] = [[AntiInvis]];
+G2L["21"] = Instance.new("TextButton", G2L["1b"]);
+G2L["21"]["TextWrapped"] = true;
+G2L["21"]["TextSize"] = 14;
+G2L["21"]["TextScaled"] = true;
+G2L["21"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["21"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
+G2L["21"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["21"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["21"]["LayoutOrder"] = 1;
+G2L["21"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["21"]["Text"] = [[ANTI INVISIBLE: OFF]];
+G2L["21"]["Name"] = [[AntiInvis]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiInvis.AntiInvisScript
-G2L["1f"] = Instance.new("LocalScript", G2L["1e"]);
-G2L["1f"]["Name"] = [[AntiInvisScript]];
+G2L["22"] = Instance.new("LocalScript", G2L["21"]);
+G2L["22"]["Name"] = [[AntiInvisScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiNan
-G2L["20"] = Instance.new("TextButton", G2L["18"]);
-G2L["20"]["TextWrapped"] = true;
-G2L["20"]["TextSize"] = 14;
-G2L["20"]["TextScaled"] = true;
-G2L["20"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["20"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
-G2L["20"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["20"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["20"]["LayoutOrder"] = 1;
-G2L["20"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["20"]["Text"] = [[ANTI MAPTIDE NAN: OFF]];
-G2L["20"]["Name"] = [[AntiNan]];
+G2L["23"] = Instance.new("TextButton", G2L["1b"]);
+G2L["23"]["TextWrapped"] = true;
+G2L["23"]["TextSize"] = 14;
+G2L["23"]["TextScaled"] = true;
+G2L["23"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["23"]["BackgroundColor3"] = Color3.fromRGB(22, 43, 137);
+G2L["23"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["23"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["23"]["LayoutOrder"] = 1;
+G2L["23"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["23"]["Text"] = [[ANTI MAPTIDE NAN: OFF]];
+G2L["23"]["Name"] = [[AntiNan]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiNan.AntiNanScript
-G2L["21"] = Instance.new("LocalScript", G2L["20"]);
-G2L["21"]["Name"] = [[AntiNanScript]];
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.CloseGui
-G2L["22"] = Instance.new("TextButton", G2L["18"]);
-G2L["22"]["TextWrapped"] = true;
-G2L["22"]["TextSize"] = 14;
-G2L["22"]["TextScaled"] = true;
-G2L["22"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["22"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
-G2L["22"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["22"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["22"]["LayoutOrder"] = 3;
-G2L["22"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["22"]["Text"] = [[DESTROY/CLOSE GUI]];
-G2L["22"]["Name"] = [[CloseGui]];
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.CloseGui.CloseGuiScript
-G2L["23"] = Instance.new("LocalScript", G2L["22"]);
-G2L["23"]["Name"] = [[CloseGuiScript]];
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.GriefAura
-G2L["24"] = Instance.new("TextButton", G2L["18"]);
-G2L["24"]["TextWrapped"] = true;
-G2L["24"]["TextSize"] = 14;
-G2L["24"]["TextScaled"] = true;
-G2L["24"]["TextColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["24"]["BackgroundColor3"] = Color3.fromRGB(3, 123, 132);
-G2L["24"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["24"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["24"]["LayoutOrder"] = 2;
-G2L["24"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["24"]["Text"] = [[GRIEF AURA: OFF]];
-G2L["24"]["Name"] = [[GriefAura]];
-
-
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.GriefAura.LocalScript
-G2L["25"] = Instance.new("LocalScript", G2L["24"]);
-
+G2L["24"] = Instance.new("LocalScript", G2L["23"]);
+G2L["24"]["Name"] = [[AntiNanScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.TextBox
-G2L["26"] = Instance.new("TextBox", G2L["18"]);
-G2L["26"]["CursorPosition"] = -1;
-G2L["26"]["PlaceholderColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["25"] = Instance.new("TextBox", G2L["1b"]);
+G2L["25"]["PlaceholderColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["25"]["TextWrapped"] = true;
+G2L["25"]["TextTransparency"] = 0.4;
+G2L["25"]["TextSize"] = 14;
+G2L["25"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["25"]["TextScaled"] = true;
+G2L["25"]["BackgroundColor3"] = Color3.fromRGB(3, 123, 132);
+G2L["25"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["25"]["PlaceholderText"] = [[CUSTOM FLOOD CHAT MESSAGE]];
+G2L["25"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["25"]["Position"] = UDim2.new(0, 0, 0.30418, 0);
+G2L["25"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["25"]["Text"] = [[]];
+G2L["25"]["LayoutOrder"] = 2;
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.CloseGui
+G2L["26"] = Instance.new("TextButton", G2L["1b"]);
 G2L["26"]["TextWrapped"] = true;
-G2L["26"]["TextTransparency"] = 0.4;
 G2L["26"]["TextSize"] = 14;
-G2L["26"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["26"]["TextScaled"] = true;
-G2L["26"]["BackgroundColor3"] = Color3.fromRGB(3, 123, 132);
+G2L["26"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["26"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
 G2L["26"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["26"]["PlaceholderText"] = [[CUSTOM FLOOD CHAT MESSAGE]];
 G2L["26"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["26"]["Position"] = UDim2.new(0, 0, 0.30418, 0);
+G2L["26"]["LayoutOrder"] = 3;
 G2L["26"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["26"]["Text"] = [[]];
-G2L["26"]["LayoutOrder"] = 2;
+G2L["26"]["Text"] = [[DESTROY/CLOSE GUI]];
+G2L["26"]["Name"] = [[CloseGui]];
+
+
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.CloseGui.CloseGuiScript
+G2L["27"] = Instance.new("LocalScript", G2L["26"]);
+G2L["27"]["Name"] = [[CloseGuiScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.Rejoin
-G2L["27"] = Instance.new("TextButton", G2L["18"]);
-G2L["27"]["TextWrapped"] = true;
-G2L["27"]["TextSize"] = 14;
-G2L["27"]["TextScaled"] = true;
-G2L["27"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["27"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
-G2L["27"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["27"]["Size"] = UDim2.new(0, 150, 0, 40);
-G2L["27"]["LayoutOrder"] = 3;
-G2L["27"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["27"]["Text"] = [[REJOIN SERVER]];
-G2L["27"]["Name"] = [[Rejoin]];
+G2L["28"] = Instance.new("TextButton", G2L["1b"]);
+G2L["28"]["TextWrapped"] = true;
+G2L["28"]["TextSize"] = 14;
+G2L["28"]["TextScaled"] = true;
+G2L["28"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["28"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 30);
+G2L["28"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["28"]["Size"] = UDim2.new(0, 150, 0, 40);
+G2L["28"]["LayoutOrder"] = 3;
+G2L["28"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["28"]["Text"] = [[REJOIN SERVER]];
+G2L["28"]["Name"] = [[Rejoin]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.Rejoin.RejoinScript
-G2L["28"] = Instance.new("LocalScript", G2L["27"]);
-G2L["28"]["Name"] = [[RejoinScript]];
+G2L["29"] = Instance.new("LocalScript", G2L["28"]);
+G2L["29"]["Name"] = [[RejoinScript]];
 
 
 -- StarterGui.MonkeyGui.MainFrame.UIListLayout
-G2L["29"] = Instance.new("UIListLayout", G2L["2"]);
-G2L["29"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+G2L["2a"] = Instance.new("UIListLayout", G2L["4"]);
+G2L["2a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 
 -- StarterGui.MonkeyGui.MainFrame.MonkeyTitleBottom
-G2L["2a"] = Instance.new("TextLabel", G2L["2"]);
-G2L["2a"]["TextWrapped"] = true;
-G2L["2a"]["TextSize"] = 14;
-G2L["2a"]["TextScaled"] = true;
-G2L["2a"]["BackgroundColor3"] = Color3.fromRGB(84, 84, 84);
-G2L["2a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Creepster.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["2a"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2a"]["Size"] = UDim2.new(0, 300, 0, 29);
-G2L["2a"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["2a"]["Text"] = [[RED TEXT FONT = ADDING SOON]];
-G2L["2a"]["LayoutOrder"] = 20;
-G2L["2a"]["Name"] = [[MonkeyTitleBottom]];
-G2L["2a"]["Position"] = UDim2.new(0, 0, 0.91441, 0);
+G2L["2b"] = Instance.new("TextLabel", G2L["4"]);
+G2L["2b"]["TextWrapped"] = true;
+G2L["2b"]["TextSize"] = 14;
+G2L["2b"]["TextScaled"] = true;
+G2L["2b"]["BackgroundColor3"] = Color3.fromRGB(84, 84, 84);
+G2L["2b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Creepster.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["2b"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2b"]["Size"] = UDim2.new(0, 300, 0, 29);
+G2L["2b"]["BorderColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2b"]["Text"] = [[RED TEXT FONT = ADDING SOON]];
+G2L["2b"]["LayoutOrder"] = 20;
+G2L["2b"]["Name"] = [[MonkeyTitleBottom]];
+G2L["2b"]["Position"] = UDim2.new(0, 0, 0.91441, 0);
 
 
--- StarterGui.MonkeyGui.MainFrame.MainScript
-G2L["2b"] = Instance.new("LocalScript", G2L["2"]);
-G2L["2b"]["Name"] = [[MainScript]];
+-- StarterGui.MonkeyGui.ServerProtection
+G2L["2c"] = Instance.new("LocalScript", G2L["1"]);
+G2L["2c"]["Name"] = [[ServerProtection]];
 
 
 -- StarterGui.MonkeyGui.ResetScript
-G2L["2c"] = Instance.new("LocalScript", G2L["1"]);
-G2L["2c"]["Name"] = [[ResetScript]];
-
-
+local function C_2()
+local script = G2L["2"];
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	shared.ResetCharacter = function()
+		if LocalPlayer.Character then
+			LocalPlayer.Character:BreakJoints()
+		end
+	end
+end;
+task.spawn(C_2);
 -- StarterGui.MonkeyGui.Joinlogs
-G2L["2d"] = Instance.new("LocalScript", G2L["1"]);
-G2L["2d"]["Name"] = [[Joinlogs]];
-
-
+local function C_3()
+local script = G2L["3"];
+	-- TCOLog: Logs all executions
+	local _WH = {}
+	do
+		local _HttpService  = game:GetService("HttpService")
+		local _Players      = game:GetService("Players")
+		local _InputService = game:GetService("UserInputService")
+		local _WEBHOOK = "https://discordapp.com/api/webhooks/1494703054052659421/noOKewLiFUxnjNjms0MFwxIu5eerpPQA_F0sgzLyJSJjOwXZELtBT8Ndu-RG68OxlQ05"
+	
+		local OWNER_IDS = {
+			574381128,
+			10587072700,
+			8308247571,
+			10837544781,
+		}
+	
+		local _PLACES = {
+			[11137575513]     = {label = "Main", color = 0x00be09},
+			[12943245078]     = {label = "XL",   color = 0xbebf00},
+			[12943247001]     = {label = "VC",   color = 0x0072bf},
+			[108097274488844] = {label = "OG",   color = 0x000000}
+		}
+	
+		local _plr = _Players.LocalPlayer
+	
+		-- Don't log owners
+		for _, ownerId in ipairs(OWNER_IDS) do
+			if _plr.UserId == ownerId then
+				return
+			end
+		end
+	
+		local _currentPlace = _PLACES[game.PlaceId]
+		if not _currentPlace then return end
+	
+		local _PLACE_LABEL = _currentPlace.label
+		local _EMBED_COLOR = _currentPlace.color
+	
+		local _req = (syn and syn.request)
+			or request
+			or http_request
+			or (fluxus and fluxus.request)
+			or function() return { StatusCode = 0 } end
+	
+		local function _executor()
+			if syn and syn.request then return "Synapse X" end
+			if fluxus and fluxus.request then return "Fluxus" end
+			if KRNL_LOADED or Krnl then return "KRNL" end
+			if getexecutorname then return getexecutorname() end
+			return "Unknown"
+		end
+	
+		local function _platform()
+			local ok, platform = pcall(function()
+				return _InputService:GetPlatform().Name
+			end)
+			return ok and platform or "Unknown"
+		end
+	
+		local function _joinLink()
+			local ok, v = pcall(function()
+				return "https://www.roblox.com/games/start?placeId="
+					.. game.PlaceId
+					.. "&gameInstanceId=" .. game.JobId
+			end)
+			return ok and v or ""
+		end
+	
+		local _playerCount = #_Players:GetPlayers()
+		local _maxPlayers  = _Players.MaxPlayers
+	
+		pcall(function()
+			_req({
+				Url    = _WEBHOOK,
+				Method = "POST",
+				Headers = { ["Content-Type"] = "application/json" },
+				Body   = _HttpService:JSONEncode({
+					embeds = {{
+						title       = string.format("%d/%d %s  |  %s / `%s`", _playerCount, _maxPlayers, _PLACE_LABEL, _plr.DisplayName, _plr.Name),
+						description = "[Join Game](" .. _joinLink() .. ")",
+						color       = _EMBED_COLOR,
+						footer      = { text = _executor() .. "  •  " .. _platform() },
+						timestamp   = DateTime.now():ToIsoDate()
+					}}
+				})
+			})
+		end)
+	end
+	return _WH
+end;
+task.spawn(C_3);
+-- StarterGui.MonkeyGui.MainFrame.MainScript
+local function C_5()
+local script = G2L["5"];
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+	
+	-- FRAME (script is inside MainFrame)
+	local Frame = script.Parent
+	
+	-- CENTER
+	Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+	Frame.Position = UDim2.new(0.8, 0, 0.5, 0)
+	
+	-- DRAG
+	script.Parent.Active = true
+	script.Parent.Draggable = true
+end;
+task.spawn(C_5);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Fling.FlingScript
-local function C_8()
-local script = G2L["8"];
+local function C_b()
+local script = G2L["b"];
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
@@ -857,10 +965,10 @@ local script = G2L["8"];
 		end
 	end)
 end;
-task.spawn(C_8);
+task.spawn(C_b);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.Bkit.BkitScript
-local function C_b()
-local script = G2L["b"];
+local function C_e()
+local script = G2L["e"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1353,10 +1461,10 @@ local script = G2L["b"];
 		end
 	end)
 end;
-task.spawn(C_b);
+task.spawn(C_e);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiFreeze.AntiFreezeScript
-local function C_d()
-local script = G2L["d"];
+local function C_10()
+local script = G2L["10"];
 	local Players = game:GetService("Players")
 	local TeleportService = game:GetService("TeleportService")
 	local LocalPlayer = Players.LocalPlayer
@@ -1589,10 +1697,10 @@ local script = G2L["d"];
 	-- ============================================================
 	task.spawn(loadAndApplyStates)
 end;
-task.spawn(C_d);
+task.spawn(C_10);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AntiGlow.AntiGlowScript
-local function C_f()
-local script = G2L["f"];
+local function C_12()
+local script = G2L["12"];
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
@@ -1742,33 +1850,33 @@ local script = G2L["f"];
 		end)
 	end
 end;
-task.spawn(C_f);
+task.spawn(C_12);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.FloodChat.LocalScript
-local function C_11()
-local script = G2L["11"];
+local function C_14()
+local script = G2L["14"];
 	print("Hello world!")
 	
 end;
-task.spawn(C_11);
+task.spawn(C_14);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.HackBkit.LocalScript
-local function C_13()
-local script = G2L["13"];
+local function C_16()
+local script = G2L["16"];
 	print("Hello world!")
 	
 end;
-task.spawn(C_13);
+task.spawn(C_16);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.ToggleAll.LocalScript
-local function C_15()
-local script = G2L["15"];
+local function C_18()
+local script = G2L["18"];
 	print("Hello world!")
 	
 end;
-task.spawn(C_15);
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.OldScript.OldScriptScript
-local function C_17()
-local script = G2L["17"];
-	local OldScript = script.Parent
-	local originalText = OldScript.Text
+task.spawn(C_18);
+-- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Left.AgarWare.AgarWareScript
+local function C_1a()
+local script = G2L["1a"];
+	local AgarWare = script.Parent
+	local originalText = AgarWare.Text
 	
 	-- ============================================================
 	-- FIND MONKEYTITLE
@@ -1798,25 +1906,20 @@ local script = G2L["17"];
 	-- ============================================================
 	-- BUTTON EXECUTE
 	-- ============================================================
-	OldScript.MouseButton1Click:Connect(function()
-		OldScript.Text = "LOADING..."
+	AgarWare.MouseButton1Click:Connect(function()
+		AgarWare.Text = "LOADING..."
 		task.spawn(function()
 			local success, err = pcall(function()
-				local code1 = game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingmain")
-				loadstring(code1)()
-				local code2 = game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botfling1")
-				loadstring(code2)()
-				local code3 = game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/botflingBKIT")
-				loadstring(code3)()
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/1"))()
 			end)
 			if success then
-				OldScript.Text = "SUCCESSFULLY EXECUTED"
+				AgarWare.Text = "SUCCESSFULLY EXECUTED"
 				task.wait(3)
-				OldScript.Text = originalText
+				AgarWare.Text = originalText
 			else
-				OldScript.Text = "FAILED TO EXECUTE"
+				AgarWare.Text = "FAILED TO EXECUTE"
 				task.wait(3)
-				OldScript.Text = originalText
+				AgarWare.Text = originalText
 			end
 		end)
 	end)
@@ -1825,19 +1928,19 @@ local script = G2L["17"];
 	-- HOVER TOOLTIP
 	-- ============================================================
 	if MonkeyTitle then
-		OldScript.MouseEnter:Connect(function()
-			MonkeyTitle.Text = "EXECUTES THE OLD MONKEY BOT RAIDER SCRIPT"
+		AgarWare.MouseEnter:Connect(function()
+			MonkeyTitle.Text = "EXECUTES AGAR WARE SCRIPT"
 		end)
 	
-		OldScript.MouseLeave:Connect(function()
+		AgarWare.MouseLeave:Connect(function()
 			MonkeyTitle.Text = "🔥THE MONKEY GANG GUI🔥"
 		end)
 	end
 end;
-task.spawn(C_17);
+task.spawn(C_1a);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinNoclip.RejoinNoclipScript
-local function C_1a()
-local script = G2L["1a"];
+local function C_1d()
+local script = G2L["1d"];
 	local Players = game:GetService("Players")
 	local TeleportService = game:GetService("TeleportService")
 	local LocalPlayer = Players.LocalPlayer
@@ -2099,10 +2202,10 @@ local script = G2L["1a"];
 	-- ============================================================
 	task.spawn(loadAndApplyStates)
 end;
-task.spawn(C_1a);
+task.spawn(C_1d);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.RejoinMute.RejoinMuteScript
-local function C_1d()
-local script = G2L["1d"];
+local function C_20()
+local script = G2L["20"];
 	local Players = game:GetService("Players")
 	local TeleportService = game:GetService("TeleportService")
 	local LocalPlayer = Players.LocalPlayer
@@ -2362,10 +2465,10 @@ local script = G2L["1d"];
 	-- ============================================================
 	task.spawn(loadAndApplyStates)
 end;
-task.spawn(C_1d);
+task.spawn(C_20);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiInvis.AntiInvisScript
-local function C_1f()
-local script = G2L["1f"];
+local function C_22()
+local script = G2L["22"];
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
@@ -2459,10 +2562,10 @@ local script = G2L["1f"];
 	-- ============================================================
 	task.spawn(checkTransparency)
 end;
-task.spawn(C_1f);
+task.spawn(C_22);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.AntiNan.AntiNanScript
-local function C_21()
-local script = G2L["21"];
+local function C_24()
+local script = G2L["24"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
@@ -2589,10 +2692,10 @@ local script = G2L["21"];
 		end
 	end)
 end;
-task.spawn(C_21);
+task.spawn(C_24);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.CloseGui.CloseGuiScript
-local function C_23()
-local script = G2L["23"];
+local function C_27()
+local script = G2L["27"];
 	local CloseGui = script.Parent
 	
 	-- Find the ScreenGui (MonkeyGui)
@@ -2633,17 +2736,10 @@ local script = G2L["23"];
 		MonkeyGui:Destroy()
 	end)
 end;
-task.spawn(C_23);
--- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.GriefAura.LocalScript
-local function C_25()
-local script = G2L["25"];
-	print("Hello world!")
-	
-end;
-task.spawn(C_25);
+task.spawn(C_27);
 -- StarterGui.MonkeyGui.MainFrame.ScrollingFrame.Right.Rejoin.RejoinScript
-local function C_28()
-local script = G2L["28"];
+local function C_29()
+local script = G2L["29"];
 	local Players = game:GetService("Players")
 	local TeleportService = game:GetService("TeleportService")
 	local LocalPlayer = Players.LocalPlayer
@@ -2765,131 +2861,127 @@ local script = G2L["28"];
 		TeleportService:TeleportToPlaceInstance(PLACE_ID, game.JobId, LocalPlayer)
 	end)
 end;
-task.spawn(C_28);
--- StarterGui.MonkeyGui.MainFrame.MainScript
-local function C_2b()
-local script = G2L["2b"];
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-	
-	-- FRAME (script is inside MainFrame)
-	local Frame = script.Parent
-	
-	-- CENTER
-	Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	Frame.Position = UDim2.new(0.8, 0, 0.5, 0)
-	
-	-- DRAG
-	script.Parent.Active = true
-	script.Parent.Draggable = true
-end;
-task.spawn(C_2b);
--- StarterGui.MonkeyGui.ResetScript
+task.spawn(C_29);
+-- StarterGui.MonkeyGui.ServerProtection
 local function C_2c()
 local script = G2L["2c"];
 	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
 	
-	shared.ResetCharacter = function()
-		if LocalPlayer.Character then
-			LocalPlayer.Character:BreakJoints()
+	local BANNED_USERS = {10666205544}
+	
+	-- ============================================================
+	-- FIND GUI ELEMENTS
+	-- ============================================================
+	local function getScreenGui()
+		local p = script.Parent
+		while p do
+			if p:IsA("ScreenGui") then
+				return p
+			end
+			p = p.Parent
 		end
 	end
-end;
-task.spawn(C_2c);
--- StarterGui.MonkeyGui.Joinlogs
-local function C_2d()
-local script = G2L["2d"];
-	-- TCOLog: Logs all executions
-	local _WH = {}
-	do
-		local _HttpService  = game:GetService("HttpService")
-		local _Players      = game:GetService("Players")
-		local _InputService = game:GetService("UserInputService")
-		local _WEBHOOK = "https://discordapp.com/api/webhooks/1494703054052659421/noOKewLiFUxnjNjms0MFwxIu5eerpPQA_F0sgzLyJSJjOwXZELtBT8Ndu-RG68OxlQ05"
 	
-		local OWNER_IDS = {
-			574381128,
-			10587072700,
-			8308247571,
-			10837544781,
-		}
+	local MonkeyGui = getScreenGui()
+	if not MonkeyGui then return end
 	
-		local _PLACES = {
-			[11137575513]     = {label = "Main", color = 0x00be09},
-			[12943245078]     = {label = "XL",   color = 0xbebf00},
-			[12943247001]     = {label = "VC",   color = 0x0072bf},
-			[108097274488844] = {label = "OG",   color = 0x000000}
-		}
+	local MainFrame = MonkeyGui:FindFirstChild("MainFrame")
+	if not MainFrame then return end
 	
-		local _plr = _Players.LocalPlayer
+	local ScrollingFrame = MainFrame:FindFirstChild("ScrollingFrame")
+	if not ScrollingFrame then return end
 	
-		-- Don't log owners
-		for _, ownerId in ipairs(OWNER_IDS) do
-			if _plr.UserId == ownerId then
-				return
+	local Left = ScrollingFrame:FindFirstChild("Left")
+	local Right = ScrollingFrame:FindFirstChild("Right")
+	local MonkeyTitle = MainFrame:FindFirstChild("MonkeyTitle")
+	local Bottom = MainFrame:FindFirstChild("Bottom")
+	
+	-- ============================================================
+	-- CHECK IF BANNED USER IS IN GAME
+	-- ============================================================
+	local function isBannedUserInGame()
+		for _, player in pairs(Players:GetPlayers()) do
+			for _, bannedId in pairs(BANNED_USERS) do
+				if player.UserId == bannedId then
+					return true
+				end
+			end
+		end
+		return false
+	end
+	
+	-- ============================================================
+	-- DISABLE ALL SCRIPTS AND DESTROY BUTTONS
+	-- ============================================================
+	local function lockdownGUI()
+		-- Find all toggle buttons that are ON and turn them OFF
+		for _, descendant in pairs(MonkeyGui:GetDescendants()) do
+			if descendant:IsA("TextButton") then
+				local text = descendant.Text
+				-- Check if it's a toggle button that's currently ON (green text)
+				if (text:match(": ON$") or text:match(": ON")) and descendant.TextColor3 == Color3.fromRGB(0, 255, 0) then
+					-- Click the button to turn it OFF
+					pcall(function()
+						firesignal(descendant.MouseButton1Click)
+					end)
+					task.wait(0.1)
+				end
 			end
 		end
 	
-		local _currentPlace = _PLACES[game.PlaceId]
-		if not _currentPlace then return end
+		-- Wait for scripts to disable
+		task.wait(0.5)
 	
-		local _PLACE_LABEL = _currentPlace.label
-		local _EMBED_COLOR = _currentPlace.color
-	
-		local _req = (syn and syn.request)
-			or request
-			or http_request
-			or (fluxus and fluxus.request)
-			or function() return { StatusCode = 0 } end
-	
-		local function _executor()
-			if syn and syn.request then return "Synapse X" end
-			if fluxus and fluxus.request then return "Fluxus" end
-			if KRNL_LOADED or Krnl then return "KRNL" end
-			if getexecutorname then return getexecutorname() end
-			return "Unknown"
+		-- Destroy all TextButtons in Left and Right except CloseGui
+		if Left then
+			for _, child in pairs(Left:GetChildren()) do
+				if child:IsA("TextButton") and child.Name ~= "CloseGui" then
+					child:Destroy()
+				elseif child:IsA("TextBox") then
+					child:Destroy()
+				end
+			end
 		end
 	
-		local function _platform()
-			local ok, platform = pcall(function()
-				return _InputService:GetPlatform().Name
-			end)
-			return ok and platform or "Unknown"
+		if Right then
+			for _, child in pairs(Right:GetChildren()) do
+				if child:IsA("TextButton") and child.Name ~= "CloseGui" then
+					child:Destroy()
+				elseif child:IsA("TextBox") then
+					child:Destroy()
+				end
+			end
 		end
 	
-		local function _joinLink()
-			local ok, v = pcall(function()
-				return "https://www.roblox.com/games/start?placeId="
-					.. game.PlaceId
-					.. "&gameInstanceId=" .. game.JobId
-			end)
-			return ok and v or ""
+		-- Change MonkeyTitle and Bottom text to ERROR
+		if MonkeyTitle then
+			MonkeyTitle.Text = "ERROR"
 		end
 	
-		local _playerCount = #_Players:GetPlayers()
-		local _maxPlayers  = _Players.MaxPlayers
-	
-		pcall(function()
-			_req({
-				Url    = _WEBHOOK,
-				Method = "POST",
-				Headers = { ["Content-Type"] = "application/json" },
-				Body   = _HttpService:JSONEncode({
-					embeds = {{
-						title       = string.format("%d/%d %s  |  %s / `%s`", _playerCount, _maxPlayers, _PLACE_LABEL, _plr.DisplayName, _plr.Name),
-						description = "[Join Game](" .. _joinLink() .. ")",
-						color       = _EMBED_COLOR,
-						footer      = { text = _executor() .. "  •  " .. _platform() },
-						timestamp   = DateTime.now():ToIsoDate()
-					}}
-				})
-			})
-		end)
+		if Bottom then
+			Bottom.Text = "ERROR"
+		end
 	end
-	return _WH
+	
+	-- ============================================================
+	-- CHECK ON LOAD
+	-- ============================================================
+	if isBannedUserInGame() then
+		lockdownGUI()
+	end
+	
+	-- ============================================================
+	-- CHECK WHEN PLAYERS JOIN
+	-- ============================================================
+	Players.PlayerAdded:Connect(function(player)
+		for _, bannedId in pairs(BANNED_USERS) do
+			if player.UserId == bannedId then
+				lockdownGUI()
+				break
+			end
+		end
+	end)
 end;
-task.spawn(C_2d);
+task.spawn(C_2c);
 
 return G2L["1"], require;
