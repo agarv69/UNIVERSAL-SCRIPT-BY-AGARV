@@ -65,6 +65,7 @@ G2L["7"]["Position"] = UDim2.new(-0.19667, 0, -0.11466, 0);
 G2L["8"] = Instance.new("ScrollingFrame", G2L["4"]);
 G2L["8"]["Active"] = true;
 G2L["8"]["CanvasSize"] = UDim2.new(0, 0, 1, 0);
+G2L["8"]["CanvasPosition"] = Vector2.new(0, 77.85715);
 G2L["8"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["8"]["Size"] = UDim2.new(0, 300, 0, 271);
 G2L["8"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
@@ -2089,7 +2090,7 @@ local script = G2L["1d"];
 		end
 	
 		-- Wait 0.2 seconds before clicking buttons
-		task.wait(0.2)
+		task.wait(0.1)
 	
 		-- Re-toggle buttons that were ON instantly (no waiting for GUI load)
 		for _, descendant in pairs(ScreenGui:GetDescendants()) do
@@ -2102,7 +2103,7 @@ local script = G2L["1d"];
 						pcall(function()
 							firesignal(descendant.MouseButton1Click)
 						end)
-						task.wait(0.1) -- Wait 0.1 seconds before next button
+						task.wait(0.03) -- Wait 0.1 seconds before next button
 					end
 				end
 			end
@@ -2347,7 +2348,7 @@ local script = G2L["20"];
 		end
 		
 		-- Wait 0.2 seconds before clicking buttons
-		task.wait(0.2)
+		task.wait(0.1)
 	
 		-- Re-toggle buttons that were ON
 		for _, descendant in pairs(ScreenGui:GetDescendants()) do
@@ -2358,7 +2359,7 @@ local script = G2L["20"];
 						pcall(function()
 							firesignal(descendant.MouseButton1Click)
 						end)
-						task.wait(0.1)
+						task.wait(0.03)
 					end
 				end
 			end
