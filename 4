@@ -15786,6 +15786,7 @@ local script = G2L["eb"];
 	-- ============================================================
 	-- AUTO PICKUP SCRIPT (INSTANT PICKUP - NO WAITS)
 	-- Automatically picks up ALL dropped tools at once and unequips them
+	-- Stops unequipping when you manually equip a tool
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -15858,23 +15859,25 @@ local script = G2L["eb"];
 	-- ============================================================
 	local isEnabled = false
 	local pickupLoop = nil
+	local allowedToEquip = {}  -- Tools that are allowed to stay equipped
 	
 	-- ============================================================
-	-- AUTO UNEQUIP ON CHARACTER
+	-- TRACK MANUAL UNEQUIPS
 	-- ============================================================
-	local function setupAutoUnequip(char)
+	local function setupCharacter(char)
 		local hum = char:FindFirstChildWhichIsA("Humanoid")
 		if not hum then return end
 	
-		hum.ChildAdded:Connect(function(child)
-			if isEnabled and child:IsA("Tool") then
-				child.Parent = LocalPlayer.Backpack
+		-- When a tool is removed from character (unequipped), allow it to be equipped again
+		char.ChildRemoved:Connect(function(child)
+			if child:IsA("Tool") and child.Parent == LocalPlayer.Backpack then
+				allowedToEquip[child] = true
 			end
 		end)
 	end
 	
 	-- ============================================================
-	-- AUTO PICKUP LOOP (INSTANT - NO WAITS)
+	-- AUTO PICKUP LOOP (PICKS UP ALL AT ONCE)
 	-- ============================================================
 	local function startPickupLoop()
 		pickupLoop = task.spawn(function()
@@ -15891,6 +15894,15 @@ local script = G2L["eb"];
 							end)
 						end
 					end
+	
+					-- Force unequip everything EXCEPT allowed tools
+					for i = 1, 5 do
+						for _, tool in pairs(char:GetChildren()) do
+							if tool:IsA("Tool") and not allowedToEquip[tool] then
+								tool.Parent = LocalPlayer.Backpack
+							end
+						end
+					end
 				end
 	
 				task.wait(0.1)
@@ -15904,14 +15916,15 @@ local script = G2L["eb"];
 	local function enable()
 		isEnabled = true
 		APickupTickBox.BackgroundColor3 = MainAccentColor.BackgroundColor3
+		allowedToEquip = {}
 	
 		if LocalPlayer.Character then
-			setupAutoUnequip(LocalPlayer.Character)
+			setupCharacter(LocalPlayer.Character)
 		end
 	
 		LocalPlayer.CharacterAdded:Connect(function(char)
 			if isEnabled then
-				setupAutoUnequip(char)
+				setupCharacter(char)
 			end
 		end)
 	
@@ -15926,6 +15939,8 @@ local script = G2L["eb"];
 			task.cancel(pickupLoop)
 			pickupLoop = nil
 		end
+	
+		allowedToEquip = {}
 	end
 	
 	-- ============================================================
