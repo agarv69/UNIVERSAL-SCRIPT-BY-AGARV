@@ -15786,6 +15786,7 @@ local script = G2L["eb"];
 	-- ============================================================
 	-- AUTO PICKUP SCRIPT (INSTANT PICKUP - NO WAITS)
 	-- Automatically picks up ALL dropped tools at once and unequips them
+	-- Only unequips tools that were AUTO PICKED UP
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -15858,9 +15859,42 @@ local script = G2L["eb"];
 	-- ============================================================
 	local isEnabled = false
 	local pickupLoop = nil
+	local unequipLoop = nil
+	local autoPickedTools = {}  -- Tools that were picked up by auto pickup (with expiry time)
 	
 	-- ============================================================
-	-- AUTO PICKUP LOOP (PICKS UP ALL AT ONCE)
+	-- UNEQUIP LOOP (SEPARATE FROM PICKUP)
+	-- ============================================================
+	local function startUnequipLoop()
+		unequipLoop = task.spawn(function()
+			while isEnabled do
+				local char = LocalPlayer.Character
+	
+				if char then
+					local currentTime = tick()
+	
+					-- Clean up expired tools
+					for tool, expiry in pairs(autoPickedTools) do
+						if currentTime > expiry then
+							autoPickedTools[tool] = nil
+						end
+					end
+	
+					-- Unequip auto-picked tools
+					for _, tool in pairs(char:GetChildren()) do
+						if tool:IsA("Tool") and autoPickedTools[tool] and currentTime < autoPickedTools[tool] then
+							tool.Parent = LocalPlayer.Backpack
+						end
+					end
+				end
+	
+				task.wait()
+			end
+		end)
+	end
+	
+	-- ============================================================
+	-- AUTO PICKUP LOOP
 	-- ============================================================
 	local function startPickupLoop()
 		pickupLoop = task.spawn(function()
@@ -15869,22 +15903,23 @@ local script = G2L["eb"];
 				local hum = char and char:FindFirstChildWhichIsA("Humanoid")
 	
 				if hum and hum.Health > 0 then
-					-- Pick up ALL tools at once
+					local currentTool = char:FindFirstChildOfClass("Tool")
+	
+					-- Pick up ALL tools from workspace
 					for _, obj in ipairs(workspace:GetChildren()) do
 						if obj:IsA("Tool") and obj:FindFirstChild("Handle") and not obj:HasTag(DEATH_TAG) then
+							autoPickedTools[obj] = tick() + 0.5
+	
 							pcall(function()
 								hum:EquipTool(obj)
 							end)
 						end
 					end
 	
-					-- Force unequip everything to backpack
-					for i = 1, 5 do
-						for _, tool in pairs(char:GetChildren()) do
-							if tool:IsA("Tool") then
-								tool.Parent = LocalPlayer.Backpack
-							end
-						end
+					-- Re-equip current tool if we had one
+					if currentTool and currentTool.Parent == LocalPlayer.Backpack and not autoPickedTools[currentTool] then
+						task.wait(0.05)
+						hum:EquipTool(currentTool)
 					end
 				end
 	
@@ -15899,7 +15934,9 @@ local script = G2L["eb"];
 	local function enable()
 		isEnabled = true
 		APickupTickBox.BackgroundColor3 = MainAccentColor.BackgroundColor3
+		autoPickedTools = {}
 		startPickupLoop()
+		startUnequipLoop()
 	end
 	
 	local function disable()
@@ -15910,6 +15947,13 @@ local script = G2L["eb"];
 			task.cancel(pickupLoop)
 			pickupLoop = nil
 		end
+	
+		if unequipLoop then
+			task.cancel(unequipLoop)
+			unequipLoop = nil
+		end
+	
+		autoPickedTools = {}
 	end
 	
 	-- ============================================================
