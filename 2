@@ -15786,6 +15786,7 @@ local script = G2L["eb"];
 	-- ============================================================
 	-- AUTO PICKUP SCRIPT (INSTANT PICKUP - NO WAITS)
 	-- Automatically picks up ALL dropped tools at once and unequips them
+	-- Only unequips tools that were AUTO PICKED UP
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -15858,25 +15859,10 @@ local script = G2L["eb"];
 	-- ============================================================
 	local isEnabled = false
 	local pickupLoop = nil
-	local autoPickedTools = {}  -- Track tools picked up by auto pickup
+	local autoPickedTools = {}  -- Tools that were picked up by auto pickup (with expiry time)
 	
 	-- ============================================================
-	-- AUTO UNEQUIP ON CHARACTER
-	-- ============================================================
-	local function setupAutoUnequip(char)
-		local hum = char:FindFirstChildWhichIsA("Humanoid")
-		if not hum then return end
-	
-		hum.ChildAdded:Connect(function(child)
-			if isEnabled and child:IsA("Tool") and autoPickedTools[child] then
-				child.Parent = LocalPlayer.Backpack
-				autoPickedTools[child] = nil  -- Clear tracking
-			end
-		end)
-	end
-	
-	-- ============================================================
-	-- AUTO PICKUP LOOP (INSTANT - NO WAITS)
+	-- AUTO PICKUP LOOP (PICKS UP ALL AT ONCE)
 	-- ============================================================
 	local function startPickupLoop()
 		pickupLoop = task.spawn(function()
@@ -15885,14 +15871,39 @@ local script = G2L["eb"];
 				local hum = char and char:FindFirstChildWhichIsA("Humanoid")
 	
 				if hum and hum.Health > 0 then
-					-- Pick up ALL tools at once
+					local currentTool = char:FindFirstChildOfClass("Tool")  -- Remember what we're holding
+	
+					-- Pick up ALL tools at once from workspace
 					for _, obj in ipairs(workspace:GetChildren()) do
 						if obj:IsA("Tool") and obj:FindFirstChild("Handle") and not obj:HasTag(DEATH_TAG) then
-							autoPickedTools[obj] = true  -- Mark as auto-picked BEFORE equipping
+							-- Mark this tool as auto-picked with expiry time
+							autoPickedTools[obj] = tick() + 0.5  -- 0.5 second unequip duration
+	
 							pcall(function()
 								hum:EquipTool(obj)
 							end)
 						end
+					end
+	
+					-- Clean up expired tools from the list
+					for tool, expiry in pairs(autoPickedTools) do
+						if tick() > expiry then
+							autoPickedTools[tool] = nil
+						end
+					end
+	
+					-- Force unequip ONLY auto-picked tools that haven't expired
+					for i = 1, 5 do
+						for _, tool in pairs(char:GetChildren()) do
+							if tool:IsA("Tool") and autoPickedTools[tool] and tick() < autoPickedTools[tool] then
+								tool.Parent = LocalPlayer.Backpack
+							end
+						end
+					end
+	
+					-- Re-equip the tool we were holding before (if we had one)
+					if currentTool and currentTool.Parent == LocalPlayer.Backpack then
+						hum:EquipTool(currentTool)
 					end
 				end
 	
@@ -15908,17 +15919,6 @@ local script = G2L["eb"];
 		isEnabled = true
 		APickupTickBox.BackgroundColor3 = MainAccentColor.BackgroundColor3
 		autoPickedTools = {}
-	
-		if LocalPlayer.Character then
-			setupAutoUnequip(LocalPlayer.Character)
-		end
-	
-		LocalPlayer.CharacterAdded:Connect(function(char)
-			if isEnabled then
-				setupAutoUnequip(char)
-			end
-		end)
-	
 		startPickupLoop()
 	end
 	
