@@ -15784,9 +15784,8 @@ task.spawn(C_e7);
 local function C_eb()
 local script = G2L["eb"];
 	-- ============================================================
-	-- AUTO PICKUP SCRIPT (STEALTH MODE V3)
-	-- Automatically picks up dropped tools and instantly unequips them
-	-- You can manually re-equip stolen tools to use them
+	-- AUTO PICKUP SCRIPT (INSTANT PICKUP - NO WAITS)
+	-- Automatically picks up ALL dropped tools at once and unequips them
 	-- ============================================================
 	
 	local Players = game:GetService("Players")
@@ -15859,10 +15858,9 @@ local script = G2L["eb"];
 	-- ============================================================
 	local isEnabled = false
 	local pickupLoop = nil
-	local justStolen = {}  -- Track tools that were JUST stolen (temporary lockout)
 	
 	-- ============================================================
-	-- AUTO PICKUP LOOP (STEALTH MODE)
+	-- AUTO PICKUP LOOP (PICKS UP ALL AT ONCE)
 	-- ============================================================
 	local function startPickupLoop()
 		pickupLoop = task.spawn(function()
@@ -15870,52 +15868,27 @@ local script = G2L["eb"];
 				local char = LocalPlayer.Character
 				local hum = char and char:FindFirstChildWhichIsA("Humanoid")
 	
-				-- Only pickup if alive (Health > 0)
 				if hum and hum.Health > 0 then
-					-- Remember what tool we're currently holding
-					local currentlyEquipped = char:FindFirstChildOfClass("Tool")
-	
+					-- Pick up ALL tools at once
 					for _, obj in ipairs(workspace:GetChildren()) do
-						if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
-							-- Skip tools tagged by Auto Drop on Death
-							if not obj:HasTag(DEATH_TAG) then
-								-- Try to equip the tool (picks it up)
-								local success = pcall(function()
-									hum:EquipTool(obj)
-								end)
+						if obj:IsA("Tool") and obj:FindFirstChild("Handle") and not obj:HasTag(DEATH_TAG) then
+							pcall(function()
+								hum:EquipTool(obj)
+							end)
+						end
+					end
 	
-								if success then
-									-- Mark this tool as just stolen (for 2 seconds)
-									justStolen[obj] = true
-	
-									-- Wait a tiny bit for the tool to be fully equipped
-									task.wait(0.05)
-	
-									-- Force it to backpack multiple times to be sure
-									for i = 1, 3 do
-										if obj.Parent == char then
-											obj.Parent = LocalPlayer.Backpack
-										end
-										task.wait(0.02)
-									end
-	
-									-- Re-equip the tool we were holding before
-									if currentlyEquipped and currentlyEquipped.Parent == LocalPlayer.Backpack then
-										task.wait(0.03)
-										hum:EquipTool(currentlyEquipped)
-									end
-	
-									-- Remove the "just stolen" flag after 2 seconds
-									task.delay(2, function()
-										justStolen[obj] = nil
-									end)
-								end
+					-- Force unequip everything to backpack
+					for i = 1, 5 do
+						for _, tool in pairs(char:GetChildren()) do
+							if tool:IsA("Tool") then
+								tool.Parent = LocalPlayer.Backpack
 							end
 						end
 					end
 				end
 	
-				task.wait(0.1) -- Check every 0.1 seconds
+				task.wait(0.1)
 			end
 		end)
 	end
@@ -15926,7 +15899,6 @@ local script = G2L["eb"];
 	local function enable()
 		isEnabled = true
 		APickupTickBox.BackgroundColor3 = MainAccentColor.BackgroundColor3
-		justStolen = {}  -- Reset just stolen list
 		startPickupLoop()
 	end
 	
@@ -15938,8 +15910,6 @@ local script = G2L["eb"];
 			task.cancel(pickupLoop)
 			pickupLoop = nil
 		end
-	
-		justStolen = {}  -- Clear the list
 	end
 	
 	-- ============================================================
