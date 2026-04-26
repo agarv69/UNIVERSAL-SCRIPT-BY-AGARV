@@ -1,42 +1,67 @@
--- Debug Script - Only important additions/removals and boolean property changes
+-- Debug Script - Raw property changes (skip DevConsole spam)
 local player = game.Players.LocalPlayer
 
--- Log important additions (skip tiny parts/effects)
+local function isDevConsole(obj)
+	return obj:IsDescendantOf(game:GetService("CoreGui").DevConsoleMaster)
+end
+
 game.DescendantAdded:Connect(function(obj)
-	if obj:IsA("Tool") or obj:IsA("ScreenGui") or obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
-		print("[ADDED]", obj:GetFullName(), "|", obj.ClassName)
+	if not isDevConsole(obj) then
+		print(obj:GetFullName(), "added")
 	end
 end)
 
--- Log important removals
 game.DescendantRemoving:Connect(function(obj)
-	if obj:IsA("Tool") or obj:IsA("ScreenGui") or obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
-		print("[REMOVED]", obj:GetFullName(), "|", obj.ClassName)
+	if not isDevConsole(obj) then
+		print(obj:GetFullName(), "removed")
 	end
 end)
 
--- Log ONLY boolean (true/false) property changes
-local function watchBooleans(obj)
-	-- Common boolean properties
-	local boolProps = {"Enabled", "Visible", "Anchored", "CanCollide", "Disabled", "Active", "Draggable"}
+local function watchObject(obj)
+	if isDevConsole(obj) then return end
 	
-	for _, prop in pairs(boolProps) do
+	obj:GetPropertyChangedSignal("Parent"):Connect(function()
+		if not isDevConsole(obj) then
+			print(obj:GetFullName(), "Parent changed to", tostring(obj.Parent))
+		end
+	end)
+	
+	-- Camera
+	if obj == workspace.CurrentCamera then
+		obj:GetPropertyChangedSignal("CameraType"):Connect(function()
+			print("workspace.CurrentCamera.CameraType =", obj.CameraType.Name)
+		end)
+		obj:GetPropertyChangedSignal("CameraSubject"):Connect(function()
+			print("workspace.CurrentCamera.CameraSubject =", tostring(obj.CameraSubject))
+		end)
+	end
+	
+	-- ScreenGui.Enabled
+	if obj:IsA("ScreenGui") then
+		obj:GetPropertyChangedSignal("Enabled"):Connect(function()
+			print(obj:GetFullName() .. ".Enabled =", obj.Enabled)
+		end)
+	end
+	
+	-- GuiObject.Visible
+	if obj:IsA("GuiObject") then
 		pcall(function()
-			local currentValue = obj[prop]
-			if type(currentValue) == "boolean" then
-				obj:GetPropertyChangedSignal(prop):Connect(function()
-					print("[PROPERTY]", obj:GetFullName(), "|", prop, "=", obj[prop])
-				end)
-			end
+			obj:GetPropertyChangedSignal("Visible"):Connect(function()
+				print(obj:GetFullName() .. ".Visible =", obj.Visible)
+			end)
+		end)
+	end
+	
+	-- Script.Disabled
+	if obj:IsA("BaseScript") then
+		obj:GetPropertyChangedSignal("Disabled"):Connect(function()
+			print(obj:GetFullName() .. ".Disabled =", obj.Disabled)
 		end)
 	end
 end
 
--- Watch existing and new objects
 for _, obj in pairs(game:GetDescendants()) do
-	watchBooleans(obj)
+	watchObject(obj)
 end
 
-game.DescendantAdded:Connect(watchBooleans)
-
-print("[DEBUG] Logging additions/removals + boolean property changes only!")
+game.DescendantAdded:Connect(watchObject)
