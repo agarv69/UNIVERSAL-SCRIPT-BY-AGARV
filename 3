@@ -1,17 +1,38 @@
--- Debug Script - Raw property changes
+-- Debug Script - Capture full path BEFORE removal
 local player = game.Players.LocalPlayer
 
+local function isDevConsole(obj)
+	return obj:IsDescendantOf(game:GetService("CoreGui").DevConsoleMaster)
+end
+
+-- Store paths before they get removed
+local pathCache = {}
+
 game.DescendantAdded:Connect(function(obj)
-	print(obj:GetFullName(), "added")
+	if not isDevConsole(obj) then
+		pathCache[obj] = obj:GetFullName()
+		print(obj:GetFullName(), "| ClassName:", obj.ClassName, "| ADDED")
+	end
 end)
 
 game.DescendantRemoving:Connect(function(obj)
-	print(obj:GetFullName(), "removed")
+	if not isDevConsole(obj) then
+		local fullPath = pathCache[obj] or obj:GetFullName()
+		print(fullPath, "| ClassName:", obj.ClassName, "| REMOVED")
+		pathCache[obj] = nil
+	end
 end)
 
 local function watchObject(obj)
+	if isDevConsole(obj) then return end
+	
+	pathCache[obj] = obj:GetFullName()
+	
 	obj:GetPropertyChangedSignal("Parent"):Connect(function()
-		print(obj:GetFullName(), "Parent changed to", tostring(obj.Parent))
+		if not isDevConsole(obj) then
+			pathCache[obj] = obj:GetFullName()
+			print(obj:GetFullName(), "| Parent changed to", tostring(obj.Parent))
+		end
 	end)
 	
 	-- Camera
