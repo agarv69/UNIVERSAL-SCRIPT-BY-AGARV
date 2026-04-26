@@ -1,144 +1,68 @@
--- Leaderboard Fix Script (Direct Modification with Auto-Reapply)
+-- Enlighten Team Script
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
+local Teams = game:GetService("Teams")
+local Workspace = game:GetService("Workspace")
 
-local isRunning = false
+-- Create Enlighten team if it doesn't exist
+local EnlightenTeam = Teams:FindFirstChild("Enlighten")
+if not EnlightenTeam then
+	EnlightenTeam = Instance.new("Team")
+	EnlightenTeam.Name = "Enlighten"
+	EnlightenTeam.TeamColor = BrickColor.new("Cyan")
+	EnlightenTeam.AutoAssignable = false
+	EnlightenTeam.Parent = Teams
+	print("[Enlighten Team] Created Enlighten team")
+end
 
-local function getPlayerTime(player)
-	-- Try Workspace.username.Tiempo.Text1 first
-	local char = workspace:FindFirstChild(player.Name)
-	if char then
-		local tiempo = char:FindFirstChild("Tiempo")
-		if tiempo then
-			local text1 = tiempo:FindFirstChild("Text1")
-			if text1 and text1:IsA("TextLabel") then
-				local timeValue = tonumber(text1.Text)
-				if timeValue and timeValue > 0 then
-					return timeValue
+local ChosenTeam = Teams:FindFirstChild("Chosen")
+
+local function hasArkenstone(player)
+	-- Check backpack
+	local backpack = player:FindFirstChild("Backpack")
+	if backpack and backpack:FindFirstChild("The Arkenstone") then
+		return true
+	end
+	
+	-- Check character in workspace
+	local character = Workspace:FindFirstChild(player.Name)
+	if character and character:FindFirstChild("The Arkenstone") then
+		return true
+	end
+	
+	return false
+end
+
+local function updatePlayerTeams()
+	for _, player in pairs(Players:GetPlayers()) do
+		-- Skip players on Chosen team
+		if ChosenTeam and player.Team == ChosenTeam then
+			continue
+		end
+		
+		if hasArkenstone(player) then
+			-- Move to Enlighten team
+			if player.Team ~= EnlightenTeam then
+				player.Team = EnlightenTeam
+			end
+		else
+			-- Move back to Neutral (or whatever default team exists)
+			if player.Team == EnlightenTeam then
+				local NeutralTeam = Teams:FindFirstChild("Neutral")
+				if NeutralTeam then
+					player.Team = NeutralTeam
 				end
 			end
 		end
 	end
-	
-	-- Fallback to leaderstats.Time
-	local leaderstats = player:FindFirstChild("leaderstats")
-	if leaderstats then
-		local timeValue = leaderstats:FindFirstChild("Time")
-		if timeValue and (timeValue:IsA("IntValue") or timeValue:IsA("NumberValue")) then
-			return timeValue.Value
-		end
-	end
-	
-	return 0
 end
 
-local function updatePlayerDisplay(playerEntry, time)
-	local contentFrame = playerEntry:FindFirstChild("PlayerEntryContentFrame")
-	if contentFrame then
-		local overlayFrame = contentFrame:FindFirstChild("OverlayFrame")
-		if overlayFrame then
-			local gameStat = overlayFrame:FindFirstChild("GameStat_Time")
-			if gameStat then
-				local display = gameStat:FindFirstChild("PlayerStatDisplay")
-				if display and display:IsA("TextLabel") then
-					display.Text = tostring(time)
-				end
-			end
-		end
-	end
-end
-
-local function updateLeaderboard()
-	if isRunning then return end
-	isRunning = true
-	
-	local PlayerList = CoreGui:FindFirstChild("PlayerList")
-	if not PlayerList then 
-		isRunning = false
-		return 
-	end
-	
-	local success = pcall(function()
-		local ScrollingFrame = PlayerList.Children.OffsetFrame.PlayerScrollList.SizeOffsetFrame.ScrollingFrameContainer.ScrollingFrameClippingFrame.ScrollingFrame.OffsetUndoFrame
-		local TeamList_Chosen = ScrollingFrame:FindFirstChild("TeamList_Chosen")
-		local TeamList_Neutral = ScrollingFrame:FindFirstChild("TeamList_Neutral")
-		
-		if not TeamList_Chosen or not TeamList_Neutral then return end
-		
-		-- Get all players and their times
-		local playerData = {}
-		for _, player in pairs(Players:GetPlayers()) do
-			local time = getPlayerTime(player)
-			table.insert(playerData, {
-				player = player,
-				time = time,
-				userId = player.UserId
-			})
-		end
-		
-		-- Sort by time (highest first)
-		table.sort(playerData, function(a, b)
-			return a.time > b.time
-		end)
-		
-		-- Find highest time
-		local highestTime = playerData[1] and playerData[1].time or 0
-		
-		-- Update player entries
-		for i, data in ipairs(playerData) do
-			local playerEntry = TeamList_Chosen:FindFirstChild("PlayerEntry_" .. data.userId) or 
-			                     TeamList_Neutral:FindFirstChild("PlayerEntry_" .. data.userId)
-			
-			if playerEntry then
-				-- Update display time with decimals
-				updatePlayerDisplay(playerEntry, data.time)
-				
-				-- Move to correct team
-				if data.time == highestTime and highestTime > 0 then
-					if playerEntry.Parent ~= TeamList_Chosen then
-						playerEntry.Parent = TeamList_Chosen
-					end
-					playerEntry.LayoutOrder = 1
-				else
-					if playerEntry.Parent ~= TeamList_Neutral then
-						playerEntry.Parent = TeamList_Neutral
-					end
-					playerEntry.LayoutOrder = (i - 1) * 2 + 1
-				end
-			end
-		end
-	end)
-	
-	if not success then
-		warn("[Leaderboard Fix] Error updating leaderboard, will retry...")
-	end
-	
-	isRunning = false
-end
-
--- Update every second (not every frame to reduce detection)
+-- Update every second
 task.spawn(function()
 	while true do
-		updateLeaderboard()
+		updatePlayerTeams()
 		task.wait(1)
 	end
 end)
 
--- Watch for PlayerList being destroyed/reset and auto-reapply
-CoreGui.ChildRemoved:Connect(function(child)
-	if child.Name == "PlayerList" then
-		warn("[Leaderboard Fix] PlayerList was removed, waiting for respawn...")
-	end
-end)
-
-CoreGui.ChildAdded:Connect(function(child)
-	if child.Name == "PlayerList" then
-		warn("[Leaderboard Fix] PlayerList respawned, reapplying fixes...")
-		task.wait(1)
-		updateLeaderboard()
-	end
-end)
-
-updateLeaderboard()
-print("[Leaderboard Fix] Script loaded - modifying original PlayerList directly")
+updatePlayerTeams()
+print("[Enlighten Team] Script loaded - moving Arkenstone holders to Enlighten team")
