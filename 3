@@ -1,21 +1,12 @@
--- Leaderboard Fix Script
+-- Leaderboard Fix Script (Direct Modification with Auto-Reapply)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 
-local PlayerList = CoreGui:WaitForChild("PlayerList")
-local ScrollingFrame = PlayerList.Children.OffsetFrame.PlayerScrollList.SizeOffsetFrame.ScrollingFrameContainer.ScrollingFrameClippingFrame.ScrollingFrame.OffsetUndoFrame
+local isRunning = false
 
-local TeamList_Chosen = ScrollingFrame:FindFirstChild("TeamList_Chosen")
-local TeamList_Neutral = ScrollingFrame:FindFirstChild("TeamList_Neutral")
-
-if not TeamList_Chosen or not TeamList_Neutral then
-	warn("TeamList_Chosen or TeamList_Neutral not found!")
-	return
-end
-
--- Function to get player's exact time from Workspace
 local function getPlayerTime(player)
+	-- Try Workspace.username.Tiempo.Text1 first
 	local char = workspace:FindFirstChild(player.Name)
 	if char then
 		local tiempo = char:FindFirstChild("Tiempo")
@@ -23,14 +14,25 @@ local function getPlayerTime(player)
 			local text1 = tiempo:FindFirstChild("Text1")
 			if text1 and text1:IsA("TextLabel") then
 				local timeValue = tonumber(text1.Text)
-				return timeValue or 0
+				if timeValue and timeValue > 0 then
+					return timeValue
+				end
 			end
 		end
 	end
+	
+	-- Fallback to leaderstats.Time
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if leaderstats then
+		local timeValue = leaderstats:FindFirstChild("Time")
+		if timeValue and (timeValue:IsA("IntValue") or timeValue:IsA("NumberValue")) then
+			return timeValue.Value
+		end
+	end
+	
 	return 0
 end
 
--- Function to update player entry display time
 local function updatePlayerDisplay(playerEntry, time)
 	local contentFrame = playerEntry:FindFirstChild("PlayerEntryContentFrame")
 	if contentFrame then
@@ -47,92 +49,96 @@ local function updatePlayerDisplay(playerEntry, time)
 	end
 end
 
--- Function to get all player entries in a team
-local function getPlayerEntries(teamList)
-	local entries = {}
-	for _, child in pairs(teamList:GetChildren()) do
-		if child.Name:match("^PlayerEntry_") then
-			table.insert(entries, child)
-		end
-	end
-	return entries
-end
-
--- Function to update leaderboard
 local function updateLeaderboard()
-	-- Get all players and their times
-	local playerData = {}
-	for _, player in pairs(Players:GetPlayers()) do
-		local time = getPlayerTime(player)
-		table.insert(playerData, {
-			player = player,
-			time = time,
-			userId = player.UserId
-		})
+	if isRunning then return end
+	isRunning = true
+	
+	local PlayerList = CoreGui:FindFirstChild("PlayerList")
+	if not PlayerList then 
+		isRunning = false
+		return 
 	end
 	
-	-- Sort by time (highest first)
-	table.sort(playerData, function(a, b)
-		return a.time > b.time
-	end)
-	
-	-- Find highest time
-	local highestTime = playerData[1] and playerData[1].time or 0
-	
-	-- Move player entries to correct teams and update layout
-	for i, data in ipairs(playerData) do
-		local playerEntry = TeamList_Chosen:FindFirstChild("PlayerEntry_" .. data.userId) or 
-		                     TeamList_Neutral:FindFirstChild("PlayerEntry_" .. data.userId)
+	local success = pcall(function()
+		local ScrollingFrame = PlayerList.Children.OffsetFrame.PlayerScrollList.SizeOffsetFrame.ScrollingFrameContainer.ScrollingFrameClippingFrame.ScrollingFrame.OffsetUndoFrame
+		local TeamList_Chosen = ScrollingFrame:FindFirstChild("TeamList_Chosen")
+		local TeamList_Neutral = ScrollingFrame:FindFirstChild("TeamList_Neutral")
 		
-		if playerEntry then
-			-- Update display time with decimals
-			updatePlayerDisplay(playerEntry, data.time)
+		if not TeamList_Chosen or not TeamList_Neutral then return end
+		
+		-- Get all players and their times
+		local playerData = {}
+		for _, player in pairs(Players:GetPlayers()) do
+			local time = getPlayerTime(player)
+			table.insert(playerData, {
+				player = player,
+				time = time,
+				userId = player.UserId
+			})
+		end
+		
+		-- Sort by time (highest first)
+		table.sort(playerData, function(a, b)
+			return a.time > b.time
+		end)
+		
+		-- Find highest time
+		local highestTime = playerData[1] and playerData[1].time or 0
+		
+		-- Update player entries
+		for i, data in ipairs(playerData) do
+			local playerEntry = TeamList_Chosen:FindFirstChild("PlayerEntry_" .. data.userId) or 
+			                     TeamList_Neutral:FindFirstChild("PlayerEntry_" .. data.userId)
 			
-			-- Move to correct team
-			if data.time == highestTime and highestTime > 0 then
-				-- Move to Chosen with LayoutOrder 1
-				if playerEntry.Parent ~= TeamList_Chosen then
-					playerEntry.Parent = TeamList_Chosen
+			if playerEntry then
+				-- Update display time with decimals
+				updatePlayerDisplay(playerEntry, data.time)
+				
+				-- Move to correct team
+				if data.time == highestTime and highestTime > 0 then
+					if playerEntry.Parent ~= TeamList_Chosen then
+						playerEntry.Parent = TeamList_Chosen
+					end
+					playerEntry.LayoutOrder = 1
+				else
+					if playerEntry.Parent ~= TeamList_Neutral then
+						playerEntry.Parent = TeamList_Neutral
+					end
+					playerEntry.LayoutOrder = (i - 1) * 2 + 1
 				end
-				playerEntry.LayoutOrder = 1
-			else
-				-- Move to Neutral with ranked LayoutOrder
-				if playerEntry.Parent ~= TeamList_Neutral then
-					playerEntry.Parent = TeamList_Neutral
-				end
-				playerEntry.LayoutOrder = (i - 1) * 2 + 1 -- Account for dividers
 			end
 		end
-	end
-	
-	-- Update dividers in Neutral team
-	local neutralEntries = getPlayerEntries(TeamList_Neutral)
-	table.sort(neutralEntries, function(a, b)
-		return a.LayoutOrder < b.LayoutOrder
 	end)
 	
-	-- Remove old dividers in Neutral
-	for _, child in pairs(TeamList_Neutral:GetChildren()) do
-		if child.Name:match("^Divider_") then
-			child:Destroy()
-		end
+	if not success then
+		warn("[Leaderboard Fix] Error updating leaderboard, will retry...")
 	end
 	
-	-- Add dividers between players in Neutral
-	for i = 1, #neutralEntries - 1 do
-		local divider = Instance.new("Frame")
-		divider.Name = "Divider_" .. i
-		divider.LayoutOrder = neutralEntries[i].LayoutOrder + 1
-		divider.Parent = TeamList_Neutral
-	end
+	isRunning = false
 end
 
--- Update every frame
-RunService.Heartbeat:Connect(function()
-	updateLeaderboard()
+-- Update every second (not every frame to reduce detection)
+task.spawn(function()
+	while true do
+		updateLeaderboard()
+		task.wait(1)
+	end
 end)
 
--- Initial update
-updateLeaderboard()
+-- Watch for PlayerList being destroyed/reset and auto-reapply
+CoreGui.ChildRemoved:Connect(function(child)
+	if child.Name == "PlayerList" then
+		warn("[Leaderboard Fix] PlayerList was removed, waiting for respawn...")
+	end
+end)
 
-print("[Leaderboard Fix] Script loaded successfully!")
+CoreGui.ChildAdded:Connect(function(child)
+	if child.Name == "PlayerList" then
+		warn("[Leaderboard Fix] PlayerList respawned, reapplying fixes...")
+		task.wait(1)
+		updateLeaderboard()
+	end
+end)
+
+updateLeaderboard()
+print("[Leaderboard Fix] Script loaded - modifying original PlayerList directly")
