@@ -1,55 +1,67 @@
--- Debug Script - Logs EVERYTHING that happens
-local function logChange(changeType, object, details)
-	local path = object:GetFullName()
-	print(string.format("[%s] %s | %s", changeType, path, details or ""))
+-- Debug Script - Raw property changes (skip DevConsole spam)
+local player = game.Players.LocalPlayer
+
+local function isDevConsole(obj)
+	return obj:IsDescendantOf(game:GetService("CoreGui").DevConsoleMaster)
 end
 
--- Watch for new instances added
 game.DescendantAdded:Connect(function(obj)
-	logChange("ADDED", obj, "ClassName: " .. obj.ClassName)
+	if not isDevConsole(obj) then
+		print(obj:GetFullName(), "| ClassName:", obj.ClassName, "| ADDED")
+	end
 end)
 
--- Watch for instances removed
 game.DescendantRemoving:Connect(function(obj)
-	logChange("REMOVED", obj, "ClassName: " .. obj.ClassName)
+	if not isDevConsole(obj) then
+		print(obj:GetFullName(), "| ClassName:", obj.ClassName, "| REMOVED")
+	end
 end)
 
--- Watch for ancestry changes (moved to different parent)
-game.DescendantAdded:Connect(function(obj)
-	obj.AncestryChanged:Connect(function(child, parent)
-		if parent then
-			logChange("MOVED", obj, "New Parent: " .. parent:GetFullName())
+local function watchObject(obj)
+	if isDevConsole(obj) then return end
+	
+	obj:GetPropertyChangedSignal("Parent"):Connect(function()
+		if not isDevConsole(obj) then
+			print(obj:GetFullName(), "| Parent changed to", tostring(obj.Parent))
 		end
 	end)
-end)
-
--- Watch for property changes on ALL instances
-local function watchProperties(obj)
-	-- Common properties to watch
-	local properties = {
-		"Parent", "Name", "Position", "CFrame", "Size", "Text", 
-		"Value", "Transparency", "Color", "BrickColor", "Material",
-		"Anchored", "CanCollide", "Velocity", "Health", "WalkSpeed"
-	}
 	
-	for _, prop in pairs(properties) do
+	-- Camera
+	if obj == workspace.CurrentCamera then
+		obj:GetPropertyChangedSignal("CameraType"):Connect(function()
+			print("workspace.CurrentCamera.CameraType =", obj.CameraType.Name)
+		end)
+		obj:GetPropertyChangedSignal("CameraSubject"):Connect(function()
+			print("workspace.CurrentCamera.CameraSubject =", tostring(obj.CameraSubject))
+		end)
+	end
+	
+	-- ScreenGui.Enabled
+	if obj:IsA("ScreenGui") then
+		obj:GetPropertyChangedSignal("Enabled"):Connect(function()
+			print(obj:GetFullName() .. ".Enabled =", obj.Enabled)
+		end)
+	end
+	
+	-- GuiObject.Visible
+	if obj:IsA("GuiObject") then
 		pcall(function()
-			obj:GetPropertyChangedSignal(prop):Connect(function()
-				local newValue = tostring(obj[prop])
-				logChange("PROPERTY", obj, prop .. " = " .. newValue)
+			obj:GetPropertyChangedSignal("Visible"):Connect(function()
+				print(obj:GetFullName() .. ".Visible =", obj.Visible)
 			end)
+		end)
+	end
+	
+	-- Script.Disabled
+	if obj:IsA("BaseScript") then
+		obj:GetPropertyChangedSignal("Disabled"):Connect(function()
+			print(obj:GetFullName() .. ".Disabled =", obj.Disabled)
 		end)
 	end
 end
 
--- Apply property watchers to everything
 for _, obj in pairs(game:GetDescendants()) do
-	watchProperties(obj)
+	watchObject(obj)
 end
 
--- Watch new objects for property changes too
-game.DescendantAdded:Connect(function(obj)
-	watchProperties(obj)
-end)
-
-print("[DEBUG] Logging all changes - check console!")
+game.DescendantAdded:Connect(watchObject)
