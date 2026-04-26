@@ -7744,7 +7744,7 @@ G2L["2bc"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["2bc"]["BackgroundTransparency"] = 1;
 G2L["2bc"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["2bc"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2bc"]["Text"] = [[🧱 Total Blocks: X]];
+G2L["2bc"]["Text"] = [[🧱 Total Blocks: 0]];
 G2L["2bc"]["Name"] = [[Text]];
 G2L["2bc"]["Position"] = UDim2.new(0.02367, 0, 0, 0);
 
@@ -7761,9 +7761,9 @@ G2L["2bd"]["LayoutOrder"] = 4;
 G2L["2bd"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.AdminRow.Script
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.AdminRow.Admin
 G2L["2be"] = Instance.new("LocalScript", G2L["2bd"]);
-G2L["2be"]["Name"] = [[Script]];
+G2L["2be"]["Name"] = [[Admin]];
 
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.AdminRow.Text
@@ -7777,7 +7777,7 @@ G2L["2bf"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["2bf"]["BackgroundTransparency"] = 1;
 G2L["2bf"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["2bf"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2bf"]["Text"] = [[👤 Admin: display]];
+G2L["2bf"]["Text"] = [[👤 Admin: N\A]];
 G2L["2bf"]["Name"] = [[Text]];
 G2L["2bf"]["Position"] = UDim2.new(0.02367, 0, 0, 0);
 
@@ -7794,9 +7794,9 @@ G2L["2c0"]["LayoutOrder"] = 4;
 G2L["2c0"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.TotalTimeRow.Script
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.TotalTimeRow.TotalTime
 G2L["2c1"] = Instance.new("LocalScript", G2L["2c0"]);
-G2L["2c1"]["Name"] = [[Script]];
+G2L["2c1"]["Name"] = [[TotalTime]];
 
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.TotalTimeRow.Text
@@ -7827,9 +7827,9 @@ G2L["2c3"]["LayoutOrder"] = 4;
 G2L["2c3"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.EnlightenRow.Script
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.EnlightenRow.Enlighten
 G2L["2c4"] = Instance.new("LocalScript", G2L["2c3"]);
-G2L["2c4"]["Name"] = [[Script]];
+G2L["2c4"]["Name"] = [[Enlighten]];
 
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.EnlightenRow.Text
@@ -31059,23 +31059,40 @@ local script = G2L["2bb"];
 	local BlockCountRow = script.Parent
 	local BlockCountText = BlockCountRow.Text
 	
-	-- Function to count all bricks in Workspace.Bricks
+	local SPECIAL_PLACE_ID = 108097274488844
+	
+	-- Function to count all bricks/cubes
 	local function countBricks()
-		local bricksFolder = Workspace:FindFirstChild("Bricks")
-		if not bricksFolder then
+		local folderName, itemNames
+	
+		if game.PlaceId == SPECIAL_PLACE_ID then
+			-- Special game: check Cubes folder for "Cube" and "Sign"
+			folderName = "Cubes"
+			itemNames = {"Cube", "Sign"}
+		else
+			-- Normal game: check Bricks folder for "Brick"
+			folderName = "Bricks"
+			itemNames = {"Brick"}
+		end
+	
+		local folder = Workspace:FindFirstChild(folderName)
+		if not folder then
 			return 0
 		end
 	
-		local totalBricks = 0
+		local totalCount = 0
 	
-		-- Count all descendants named "Brick" inside the Bricks folder
-		for _, descendant in pairs(bricksFolder:GetDescendants()) do
-			if descendant.Name == "Brick" then
-				totalBricks = totalBricks + 1
+		-- Count all descendants with matching names
+		for _, descendant in pairs(folder:GetDescendants()) do
+			for _, itemName in pairs(itemNames) do
+				if descendant.Name == itemName then
+					totalCount = totalCount + 1
+					break
+				end
 			end
 		end
 	
-		return totalBricks
+		return totalCount
 	end
 	
 	-- Update display
@@ -31093,130 +31110,166 @@ local script = G2L["2bb"];
 	updateDisplay()
 end;
 task.spawn(C_2bb);
--- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.AdminRow.Script
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.AdminRow.Admin
 local function C_2be()
 local script = G2L["2be"];
+	-- AdminScript
+	local RunService = game:GetService("RunService")
 	local Players = game:GetService("Players")
+	local Teams = game:GetService("Teams")
 	
-	local LocalPlayer = Players.LocalPlayer
+	local AdminRow = script.Parent
+	local AdminText = AdminRow.Text
 	
-	local TpPlayerRow2 = script.Parent
-	local TpPlayerButton = TpPlayerRow2.TpPlayerButton
-	local TpPlayerRow1 = TpPlayerRow2.Parent.TpPlayerRow1
+	local SPECIAL_PLACE_ID = 108097274488844
 	
-	-- Wait for GUI to be fully loaded
-	if not game:IsLoaded() then
-		game.Loaded:Wait()
-	end
+	-- Function to get admins (players on admin team)
+	local function getAdmins()
+		local teamName = (game.PlaceId == SPECIAL_PLACE_ID) and "Admin" or "Chosen"
+		local adminTeam = Teams:FindFirstChild(teamName)
 	
-	TpPlayerButton.MouseButton1Click:Connect(function()
-		local selectedName = TpPlayerRow1:GetAttribute("SelectedPlayer")
-	
-		if not selectedName or selectedName == "" then
-			return
+		if not adminTeam then
+			return {}
 		end
 	
-		local targetPlayer = Players:FindFirstChild(selectedName)
-		if not targetPlayer then return end
+		local admins = {}
+		for _, player in pairs(Players:GetPlayers()) do
+			if player.Team == adminTeam then
+				table.insert(admins, player.DisplayName)
+			end
+		end
 	
-		local targetCharacter = targetPlayer.Character
-		if not targetCharacter then return end
+		return admins
+	end
 	
-		local targetHRP = targetCharacter:FindFirstChild("HumanoidRootPart")
-		if not targetHRP then return end
+	-- Update display
+	local function updateDisplay()
+		local admins = getAdmins()
 	
-		local myCharacter = LocalPlayer.Character
-		if not myCharacter then return end
+		if #admins == 0 then
+			AdminText.Text = "👤 Admin: N/A"
+		else
+			AdminText.Text = "👤 Admin: " .. table.concat(admins, ", ")
+		end
+	end
 	
-		local myHRP = myCharacter:FindFirstChild("HumanoidRootPart")
-		if not myHRP then return end
-	
-		myHRP.CFrame = targetHRP.CFrame + Vector3.new(0, 3, 0)
+	-- Update every frame
+	RunService.Heartbeat:Connect(function()
+		updateDisplay()
 	end)
+	
+	-- Initial update
+	updateDisplay()
 end;
 task.spawn(C_2be);
--- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.TotalTimeRow.Script
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.TotalTimeRow.TotalTime
 local function C_2c1()
 local script = G2L["2c1"];
+	-- TotalTimeScript
+	local RunService = game:GetService("RunService")
 	local Players = game:GetService("Players")
 	
-	local LocalPlayer = Players.LocalPlayer
+	local TotalTimeRow = script.Parent
+	local TotalTimeText = TotalTimeRow.Text
 	
-	local TpPlayerRow2 = script.Parent
-	local TpPlayerButton = TpPlayerRow2.TpPlayerButton
-	local TpPlayerRow1 = TpPlayerRow2.Parent.TpPlayerRow1
+	-- Function to get total time from all players
+	local function getTotalTime()
+		local totalTime = 0
 	
-	-- Wait for GUI to be fully loaded
-	if not game:IsLoaded() then
-		game.Loaded:Wait()
-	end
-	
-	TpPlayerButton.MouseButton1Click:Connect(function()
-		local selectedName = TpPlayerRow1:GetAttribute("SelectedPlayer")
-	
-		if not selectedName or selectedName == "" then
-			return
+		for _, player in pairs(Players:GetPlayers()) do
+			local leaderstats = player:FindFirstChild("leaderstats")
+			if leaderstats then
+				local timeValue = leaderstats:FindFirstChild("Time")
+				if timeValue and timeValue:IsA("IntValue") or timeValue:IsA("NumberValue") then
+					totalTime = totalTime + timeValue.Value
+				end
+			end
 		end
 	
-		local targetPlayer = Players:FindFirstChild(selectedName)
-		if not targetPlayer then return end
+		return totalTime
+	end
 	
-		local targetCharacter = targetPlayer.Character
-		if not targetCharacter then return end
+	-- Update display
+	local function updateDisplay()
+		local total = getTotalTime()
 	
-		local targetHRP = targetCharacter:FindFirstChild("HumanoidRootPart")
-		if not targetHRP then return end
+		if total == 0 then
+			TotalTimeText.Text = "🕛 All Time: N/A"
+		else
+			TotalTimeText.Text = "🕛 All Time: " .. tostring(total)
+		end
+	end
 	
-		local myCharacter = LocalPlayer.Character
-		if not myCharacter then return end
-	
-		local myHRP = myCharacter:FindFirstChild("HumanoidRootPart")
-		if not myHRP then return end
-	
-		myHRP.CFrame = targetHRP.CFrame + Vector3.new(0, 3, 0)
+	-- Update every frame
+	RunService.Heartbeat:Connect(function()
+		updateDisplay()
 	end)
+	
+	-- Initial update
+	updateDisplay()
 end;
 task.spawn(C_2c1);
--- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.EnlightenRow.Script
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuLeftSide.TCOGroup.EnlightenRow.Enlighten
 local function C_2c4()
 local script = G2L["2c4"];
+	-- EnlightenScript
+	local RunService = game:GetService("RunService")
 	local Players = game:GetService("Players")
+	local Workspace = game:GetService("Workspace")
+	local Teams = game:GetService("Teams")
 	
-	local LocalPlayer = Players.LocalPlayer
+	local EnlightenRow = script.Parent
+	local EnlightenText = EnlightenRow.Text
 	
-	local TpPlayerRow2 = script.Parent
-	local TpPlayerButton = TpPlayerRow2.TpPlayerButton
-	local TpPlayerRow1 = TpPlayerRow2.Parent.TpPlayerRow1
+	-- Function to count enlightened players
+	local function getEnlightenedCount()
+		local count = 0
+		local chosenTeam = Teams:FindFirstChild("Chosen")
 	
-	-- Wait for GUI to be fully loaded
-	if not game:IsLoaded() then
-		game.Loaded:Wait()
-	end
+		for _, player in pairs(Players:GetPlayers()) do
+			-- Skip players on Chosen team (admins)
+			if chosenTeam and player.Team == chosenTeam then
+				continue
+			end
 	
-	TpPlayerButton.MouseButton1Click:Connect(function()
-		local selectedName = TpPlayerRow1:GetAttribute("SelectedPlayer")
+			local hasArkenstone = false
 	
-		if not selectedName or selectedName == "" then
-			return
+			-- Check backpack
+			local backpack = player:FindFirstChild("Backpack")
+			if backpack and backpack:FindFirstChild("The Arkenstone") then
+				hasArkenstone = true
+			end
+	
+			-- Check character in workspace
+			if not hasArkenstone then
+				local character = Workspace:FindFirstChild(player.Name)
+				if character and character:FindFirstChild("The Arkenstone") then
+					hasArkenstone = true
+				end
+			end
+	
+			-- Count this player if they have it
+			if hasArkenstone then
+				count = count + 1
+			end
 		end
 	
-		local targetPlayer = Players:FindFirstChild(selectedName)
-		if not targetPlayer then return end
+		return count
+	end
 	
-		local targetCharacter = targetPlayer.Character
-		if not targetCharacter then return end
+	-- Update display
+	local function updateDisplay()
+		local count = getEnlightenedCount()
+		EnlightenText.Text = "🌟 Enlighten Users: " .. tostring(count)
+	end
 	
-		local targetHRP = targetCharacter:FindFirstChild("HumanoidRootPart")
-		if not targetHRP then return end
-	
-		local myCharacter = LocalPlayer.Character
-		if not myCharacter then return end
-	
-		local myHRP = myCharacter:FindFirstChild("HumanoidRootPart")
-		if not myHRP then return end
-	
-		myHRP.CFrame = targetHRP.CFrame + Vector3.new(0, 3, 0)
+	-- Update every frame
+	RunService.Heartbeat:Connect(function()
+		updateDisplay()
 	end)
+	
+	-- Initial update
+	updateDisplay()
 end;
 task.spawn(C_2c4);
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuRightSide.UpLogsGroup.UpLogsScript
