@@ -192,7 +192,6 @@ G2L["15"]["Name"] = [[ContentArea]];
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MainPage
 G2L["16"] = Instance.new("ScrollingFrame", G2L["15"]);
-G2L["16"]["Visible"] = false;
 G2L["16"]["Active"] = true;
 G2L["16"]["BorderSizePixel"] = 0;
 G2L["16"]["CanvasSize"] = UDim2.new(0, 0, 1.5, 0);
@@ -6273,6 +6272,7 @@ G2L["239"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMiscPage
 G2L["23a"] = Instance.new("ScrollingFrame", G2L["15"]);
+G2L["23a"]["Visible"] = false;
 G2L["23a"]["Active"] = true;
 G2L["23a"]["BorderSizePixel"] = 0;
 G2L["23a"]["Name"] = [[TCOMiscPage]];
@@ -11813,37 +11813,17 @@ local function C_53()
 local script = G2L["53"];
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
-	
 	local LocalPlayer = Players.LocalPlayer
 	
-	local GriefFlingRow = script.Parent
-	local GriefFlingTickBox = GriefFlingRow.GriefFlingTickBox
-	
-	local ProtectionGroup = GriefFlingRow.Parent
-	local ProtectionAccentColor = ProtectionGroup.ProtectionAccentColor
-	
-	local WListRow = ProtectionGroup:FindFirstChild("WListRow")
-	
-	local function isWhitelisted(playerName)
-		if not WListRow then return false end
-		local wl = WListRow:GetAttribute("Whitelist") or ""
-		for _, name in ipairs(wl:split(",")) do
-			if name == playerName then return true end
-		end
-		return false
-	end
+	local TouchFlingRow = script.Parent
+	local TouchFlingTickBox = TouchFlingRow.TouchFlingTickBox
+	local TrollGroup = TouchFlingRow.Parent
+	local TrollAccentColor = TrollGroup.TrollAccentColor
 	
 	local isEnabled = false
-	local deleteLog = {}
-	local DELETE_LIMIT = 10
-	local TIME_WINDOW = 60
-	local DELETE_RADIUS = 24
+	local movel = 0.1
 	
-	-- queue of players to fling
-	local flingQueue = {}
-	local currentlyFlinging = false
-	
-	GriefFlingTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+	TouchFlingTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
 	-- ============================================================
 	-- SCREENGUI HELPER
@@ -11860,7 +11840,6 @@ local script = G2L["53"];
 	-- TOOLTIP
 	-- ============================================================
 	local tooltipFrame = Instance.new("Frame")
-	tooltipFrame.Name = "GriefFlingTooltip"
 	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 	tooltipFrame.BorderSizePixel = 0
 	tooltipFrame.ZIndex = 100
@@ -11869,421 +11848,79 @@ local script = G2L["53"];
 	tooltipFrame.Visible = false
 	tooltipFrame.Parent = getScreenGui()
 	
-	local tooltipStroke = Instance.new("UIStroke")
+	local tooltipStroke = Instance.new("UIStroke", tooltipFrame)
 	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
-	tooltipStroke.Thickness = 1
-	tooltipStroke.Parent = tooltipFrame
 	
-	local tooltipPadding = Instance.new("UIPadding")
+	local tooltipPadding = Instance.new("UIPadding", tooltipFrame)
 	tooltipPadding.PaddingTop = UDim.new(0, 6)
 	tooltipPadding.PaddingBottom = UDim.new(0, 6)
 	tooltipPadding.PaddingLeft = UDim.new(0, 6)
 	tooltipPadding.PaddingRight = UDim.new(0, 6)
-	tooltipPadding.Parent = tooltipFrame
 	
-	local tooltipText = Instance.new("TextLabel")
-	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Automatically flings a player when they are detected griefing. Works best for non-admins. This can accidentally fling nearby players to the griefer"
-	tooltipText.TextColor3 = Color3.new(1, 1, 1)
-	tooltipText.TextSize = 14
-	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
-	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
-	tooltipText.Font = Enum.Font.GothamSemibold
-	tooltipText.TextWrapped = true
-	tooltipText.Size = UDim2.new(0, 200, 0, 0)
-	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipText.ZIndex = 101
-	tooltipText.Parent = tooltipFrame
+	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
+	tooltipLabel.BackgroundTransparency = 1
+	tooltipLabel.Text = "Enables touch fling. Walk into players to fling them."
+	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
+	tooltipLabel.TextSize = 14
+	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
+	tooltipLabel.TextYAlignment = Enum.TextYAlignment.Top
+	tooltipLabel.Font = Enum.Font.GothamSemibold
+	tooltipLabel.TextWrapped = true
+	tooltipLabel.Size = UDim2.new(0, 200, 0, 0)
+	tooltipLabel.AutomaticSize = Enum.AutomaticSize.Y
+	tooltipLabel.ZIndex = 101
 	
-	GriefFlingTickBox.MouseEnter:Connect(function()
-		local abs = GriefFlingTickBox.AbsolutePosition
-		local size = GriefFlingTickBox.AbsoluteSize
+	TouchFlingTickBox.MouseEnter:Connect(function()
+		local abs = TouchFlingTickBox.AbsolutePosition
+		local size = TouchFlingTickBox.AbsoluteSize
 		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
 		tooltipFrame.Visible = true
 	end)
 	
-	GriefFlingTickBox.MouseLeave:Connect(function()
+	TouchFlingTickBox.MouseLeave:Connect(function()
 		tooltipFrame.Visible = false
 	end)
 	
 	-- ============================================================
-	-- SEND CHAT
+	-- TOUCH FLING
 	-- ============================================================
-	local TextChatService = game:GetService("TextChatService")
-	local function sendChat(message)
-		pcall(function()
-			if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-				TextChatService.TextChannels.RBXGeneral:SendAsync(message)
-			else
-				game:GetService("ReplicatedStorage")
-					.DefaultChatSystemChatEvents
-					.SayMessageRequest
-					:FireServer(message, "All")
-			end
-		end)
-	end
+	local function fling()
+		while isEnabled do
+			RunService.Heartbeat:Wait()
+			local c = LocalPlayer.Character
+			local hrp = c and c:FindFirstChild("HumanoidRootPart")
 	
-	-- ============================================================
-	-- FREEZE / UNFREEZE ANIMATIONS
-	-- ============================================================
-	local frozenTracks = {}
-	
-	local function freezeAnimations(character)
-		frozenTracks = {}
-		local hum = character:FindFirstChildWhichIsA("Humanoid")
-		if not hum then return end
-		local animator = hum:FindFirstChildWhichIsA("Animator")
-		if not animator then return end
-		for _, track in pairs(animator:GetPlayingAnimationTracks()) do
-			table.insert(frozenTracks, {track = track, speed = track.Speed})
-			track:AdjustSpeed(0)
-		end
-	end
-	
-	local function unfreezeAnimations(character)
-		for _, data in pairs(frozenTracks) do
-			pcall(function()
-				data.track:AdjustSpeed(data.speed)
-			end)
-		end
-		frozenTracks = {}
-	end
-	
-	-- ============================================================
-	-- FLING ONE PLAYER
-	-- returns true if flung, false if failed
-	-- ============================================================
-	local rotations = {
-		CFrame.Angles(0, 0, 0),
-		CFrame.Angles(0, math.pi, 0),
-		CFrame.Angles(math.pi, math.pi, 0),
-		CFrame.Angles(math.pi, 0, 0),
-		CFrame.Angles(0, 0, 0),
-		CFrame.Angles(0, math.pi, 0),
-	}
-	
-	local function flingOne(TargetPlayer, savedPos)
-		local myChar = LocalPlayer.Character
-		if not myChar then return false end
-		local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-		local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
-		if not myHRP or not myHum then return false end
-	
-		local tChar = TargetPlayer.Character
-		if not tChar then return false end
-		local tHRP = tChar:FindFirstChild("HumanoidRootPart")
-		if not tHRP then return false end
-	
-		workspace.CurrentCamera.CameraSubject = myHum
-	
-		local rotIndex = 1
-		local lastVelocity = 0
-		local highVelocityFrames = 0
-		local flung = false
-		local failed = false
-		local startTime = tick()
-	
-		local flingConn
-		flingConn = RunService.Heartbeat:Connect(function()
-	
-			if not isEnabled then
-				flung = true
-				failed = true
-			end
-	
-			if not tHRP or not tHRP.Parent or not TargetPlayer.Parent then
-				flung = true
-				failed = true
-			end
-	
-			if tick() - startTime >= 10 then
-				flung = true
-				failed = true
-			end
-	
-			if not flung then
-				local currentVel = tHRP.AssemblyLinearVelocity.Magnitude
-				local velDelta = currentVel - lastVelocity
-				lastVelocity = currentVel
-	
-				if currentVel > 1000 and velDelta > 500 then
-					highVelocityFrames = highVelocityFrames + 1
-				else
-					highVelocityFrames = 0
-				end
-	
-				if highVelocityFrames >= 2 then
-					flung = true
-				end
-			end
-	
-			if flung then
-				flingConn:Disconnect()
-				return
-			end
-	
-			if tHRP and tHRP.Parent then
-	
-				-- teleport around player (same as your script)
-				local rot = rotations[rotIndex]
-				myHRP.CFrame = tHRP.CFrame * rot
-				myChar:SetPrimaryPartCFrame(tHRP.CFrame * rot)
-	
-				-- APPLY TOUCHFLING PHYSICS
-				local vel = myHRP.Velocity
-				myHRP.Velocity = vel * 999999999 + Vector3.new(0, 999999999, 0)
-	
+			if hrp then
+				local vel = hrp.Velocity
+				hrp.Velocity = vel * 15000 + Vector3.new(0, 15000, 0)
 				RunService.RenderStepped:Wait()
-	
-				myHRP.Velocity = vel
-	
+				hrp.Velocity = vel
 				RunService.Stepped:Wait()
-	
-				myHRP.Velocity = vel + Vector3.new(0,0.1,0)
-	
-				rotIndex = rotIndex + 1
-				if rotIndex > #rotations then
-					myHRP.CFrame = savedPos
-					myChar:SetPrimaryPartCFrame(savedPos)
-					rotIndex = 1
-				end
+				hrp.Velocity = vel + Vector3.new(0, movel, 0)
+				movel = -movel
 			end
-		end)
-	
-		repeat RunService.Heartbeat:Wait() until flung or not flingConn.Connected
-	
-		return not failed
+		end
 	end
-	
-	-- ============================================================
-	-- FLING LOOP - processes queue
-	-- ============================================================
-	local function processFlingQueue()
-		if currentlyFlinging then return end
-		currentlyFlinging = true
-	
-		local myChar = LocalPlayer.Character
-		if not myChar then currentlyFlinging = false return end
-		local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-		local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
-		if not myHRP or not myHum then currentlyFlinging = false return end
-	
-		-- save position once for whole session
-		local savedPos = myHRP.CFrame
-	
-		freezeAnimations(myChar)
-		workspace.CurrentCamera.CameraSubject = myHum
-	
-		while #flingQueue > 0 and isEnabled do
-			local target = table.remove(flingQueue, 1)
-	
-			-- skip if player left
-			if not target or not target.Parent then continue end
-			if not target.Character then continue end
-	
-			local success = flingOne(target, savedPos)
-	
-			if not success then
-				sendChat("🚫Failed to Fling")
-			end
-	
-			-- tp back to saved pos between targets
-			if myHRP and myHRP.Parent then
-				myHRP.CFrame = savedPos
-				myChar:SetPrimaryPartCFrame(savedPos)
-				for _, x in pairs(myChar:GetChildren()) do
-					if x:IsA("BasePart") then
-						x.Velocity = Vector3.new()
-						x.RotVelocity = Vector3.new()
-						x.AssemblyLinearVelocity = Vector3.new()
-						x.AssemblyAngularVelocity = Vector3.new()
-					end
-				end
-			end
-		end
-	
-		-- all done, tp back and cleanup
-		if myHRP and myHRP.Parent then
-			myHRP.CFrame = savedPos
-			myChar:SetPrimaryPartCFrame(savedPos)
-	
-			for _, x in pairs(myChar:GetChildren()) do
-				if x:IsA("BasePart") then
-					x.Velocity = Vector3.new()
-					x.RotVelocity = Vector3.new()
-					x.AssemblyLinearVelocity = Vector3.new()
-					x.AssemblyAngularVelocity = Vector3.new()
-				end
-			end
-	
-			local protBV = Instance.new("BodyVelocity")
-			protBV.Velocity = Vector3.new(0, 0, 0)
-			protBV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
-			protBV.Parent = myHRP
-	
-			task.wait(0.5)
-	
-			if protBV and protBV.Parent then protBV:Destroy() end
-	
-			for _, x in pairs(myChar:GetChildren()) do
-				if x:IsA("BasePart") then
-					x.Velocity = Vector3.new()
-					x.RotVelocity = Vector3.new()
-					x.AssemblyLinearVelocity = Vector3.new()
-					x.AssemblyAngularVelocity = Vector3.new()
-				end
-			end
-		end
-	
-		workspace.CurrentCamera.CameraSubject = myHum
-		unfreezeAnimations(myChar)
-		currentlyFlinging = false
-	end
-	
-	local function queueFling(player)
-		-- dont add duplicates
-		for _, p in ipairs(flingQueue) do
-			if p == player then return end
-		end
-		table.insert(flingQueue, player)
-		task.spawn(processFlingQueue)
-	end
-	
-	-- ============================================================
-	-- UTILITY
-	-- ============================================================
-	local function holdingDelete(player)
-		local char = player.Character
-		if not char then return false end
-		for _, obj in pairs(char:GetChildren()) do
-			if obj:IsA("Tool") and obj.Name:lower():find("delete") then
-				return true
-			end
-		end
-		return false
-	end
-	
-	-- ============================================================
-	-- DETECTION
-	-- ============================================================
-	local bricksFolder = nil
-	local previousBricks = {}
-	
-	local function getOwner(brick)
-		if not bricksFolder then return "Server" end
-		if brick:IsDescendantOf(bricksFolder) then
-			local parent = brick.Parent
-			if parent and Players:FindFirstChild(parent.Name) then
-				return parent.Name
-			end
-		end
-		return "Server"
-	end
-	
-	local function snapshot()
-		local current = {}
-		if not bricksFolder then return current end
-		for _, obj in pairs(bricksFolder:GetDescendants()) do
-			if obj:IsA("BasePart") and obj.Name == "Brick" then
-				current[obj] = {
-					position = obj.Position,
-					owner = getOwner(obj)
-				}
-			end
-		end
-		return current
-	end
-	
-	RunService.Heartbeat:Connect(function()
-		if not isEnabled then return end
-		if not bricksFolder then return end
-	
-		local currentBricks = snapshot()
-	
-		for oldBrick, data in pairs(previousBricks) do
-			if not currentBricks[oldBrick] then
-				local oldPos = data.position
-				local ownerName = data.owner
-				local closest = nil
-				local closestDist = DELETE_RADIUS
-	
-				for _, player in pairs(Players:GetPlayers()) do
-					local char = player.Character
-					if char and char:FindFirstChild("HumanoidRootPart") then
-						local dist = (char.HumanoidRootPart.Position - oldPos).Magnitude
-						if dist <= closestDist and holdingDelete(player) then
-							closestDist = dist
-							closest = player
-						end
-					end
-				end
-	
-				if closest and closest.Name ~= ownerName and not isWhitelisted(closest.Name) then
-					deleteLog[closest.Name] = deleteLog[closest.Name] or {}
-					table.insert(deleteLog[closest.Name], tick())
-	
-					local now = tick()
-					local valid = {}
-					for _, t in ipairs(deleteLog[closest.Name]) do
-						if now - t <= TIME_WINDOW then
-							table.insert(valid, t)
-						end
-					end
-					deleteLog[closest.Name] = valid
-	
-					if #valid >= DELETE_LIMIT then
-						queueFling(closest)
-						deleteLog[closest.Name] = {}
-					end
-				end
-			end
-		end
-	
-		previousBricks = currentBricks
-	end)
 	
 	-- ============================================================
 	-- ENABLE / DISABLE
 	-- ============================================================
 	local function enable()
-		local safeRow = ProtectionGroup:FindFirstChild("GriefFlingSafeRow")
-		if safeRow then
-			local safeTickBox = safeRow:FindFirstChild("GriefFlingSafeTickBox")
-			if safeTickBox then
-				safeTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-			end
-			ProtectionGroup:SetAttribute("SafeFlingEnabled", false)
-		end
 		isEnabled = true
-		flingQueue = {}
-		bricksFolder = workspace:FindFirstChild("Bricks")
-		if bricksFolder then
-			previousBricks = snapshot()
-		end
-		if ProtectionAccentColor then
-			GriefFlingTickBox.BackgroundColor3 = ProtectionAccentColor.BackgroundColor3
-		else
-			GriefFlingTickBox.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-		end
+		TouchFlingTickBox.BackgroundColor3 = TrollAccentColor.BackgroundColor3
+		task.spawn(fling)
 	end
 	
 	local function disable()
 		isEnabled = false
-		deleteLog = {}
-		previousBricks = {}
-		flingQueue = {}
-		GriefFlingTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+		TouchFlingTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	end
 	
 	-- ============================================================
 	-- TICKBOX TOGGLE
 	-- ============================================================
-	GriefFlingTickBox.MouseButton1Click:Connect(function()
-		local forcedOff = ProtectionGroup:GetAttribute("FlingEnabled") == false
-		if forcedOff then
-			ProtectionGroup:SetAttribute("FlingEnabled", nil)
-			enable()
-		elseif isEnabled then
+	TouchFlingTickBox.MouseButton1Click:Connect(function()
+		if isEnabled then
 			disable()
 		else
 			enable()
