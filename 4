@@ -1,10 +1,26 @@
--- Leaderboard Fix Script
+-- Leaderboard Clone & Fix Script
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 
-local PlayerList = CoreGui:WaitForChild("PlayerList")
-local ScrollingFrame = PlayerList.Offset.PlayerScrollList.SizeOffsetFrame.ScrollingFrameContainer.ScrollingFrameClippingFrame.ScrollingFrame.OffsetUndoFrame
+-- Wait for original PlayerList
+local OriginalPlayerList = CoreGui:WaitForChild("PlayerList")
+
+-- Clone the entire PlayerList
+local ClonedPlayerList = OriginalPlayerList:Clone()
+ClonedPlayerList.Parent = CoreGui
+
+-- Rename original to PlayerList_Default
+OriginalPlayerList.Name = "PlayerList_Default"
+
+-- Clone keeps the name "PlayerList"
+ClonedPlayerList.Name = "PlayerList"
+
+-- Hide the original
+OriginalPlayerList.Enabled = false
+
+-- Now work with the cloned version
+local ScrollingFrame = ClonedPlayerList.Children.OffsetFrame.PlayerScrollList.SizeOffsetFrame.ScrollingFrameContainer.ScrollingFrameClippingFrame.ScrollingFrame.OffsetUndoFrame
 
 local TeamList_Chosen = ScrollingFrame:FindFirstChild("TeamList_Chosen")
 local TeamList_Neutral = ScrollingFrame:FindFirstChild("TeamList_Neutral")
@@ -14,8 +30,9 @@ if not TeamList_Chosen or not TeamList_Neutral then
 	return
 end
 
--- Function to get player's exact time from Workspace
+-- Function to get player's exact time from Workspace (with fallback to leaderstats)
 local function getPlayerTime(player)
+	-- Try Workspace.username.Tiempo.Text1 first
 	local char = workspace:FindFirstChild(player.Name)
 	if char then
 		local tiempo = char:FindFirstChild("Tiempo")
@@ -23,10 +40,22 @@ local function getPlayerTime(player)
 			local text1 = tiempo:FindFirstChild("Text1")
 			if text1 and text1:IsA("TextLabel") then
 				local timeValue = tonumber(text1.Text)
-				return timeValue or 0
+				if timeValue and timeValue > 0 then
+					return timeValue
+				end
 			end
 		end
 	end
+	
+	-- Fallback to leaderstats.Time
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if leaderstats then
+		local timeValue = leaderstats:FindFirstChild("Time")
+		if timeValue and (timeValue:IsA("IntValue") or timeValue:IsA("NumberValue")) then
+			return timeValue.Value
+		end
+	end
+	
 	return 0
 end
 
@@ -135,4 +164,4 @@ end)
 -- Initial update
 updateLeaderboard()
 
-print("[Leaderboard Fix] Script loaded successfully!")
+print("[Leaderboard Fix] Cloned PlayerList created and script loaded successfully!")
