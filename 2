@@ -25131,25 +25131,20 @@ local script = G2L["1e3"];
 		-- Find all bkit tools IN ORDER
 		local bkitTools = {}
 		local toolNames = {"Build", "Delete", "Paint", "Shape", "Shovel", "Sign"}
+		local originalGrips = {}
 	
 		-- Loop through toolNames order to keep them matched
 		for _, toolName in pairs(toolNames) do
 			for _, item in pairs(Player.Backpack:GetChildren()) do
 				if item.Name == toolName and item:IsA("Tool") then
 					table.insert(bkitTools, item)
+					originalGrips[item] = item.Grip -- Save original grip
 					break -- Only add one of each tool
 				end
 			end
 		end
 	
-		-- Equip all bkit tools
-		for _, tool in pairs(bkitTools) do
-			tool.Parent = Character
-		end
-	
-		task.wait(0.1)
-	
-		-- Position bkit tools with correct positions
+		-- Position bkit tools FIRST (before equipping)
 		local positions = {
 			CFrame.new(2.2, 1.7, -0.7) * CFrame.Angles(0, 0, 0),                                      -- Build
 			CFrame.new(0.7, 1.7, -0.7) * CFrame.Angles(0, 0, 0),                                      -- Delete
@@ -25162,11 +25157,25 @@ local script = G2L["1e3"];
 		for i, tool in pairs(bkitTools) do
 			if tool:FindFirstChild("Handle") and positions[i] then
 				tool.Grip = positions[i]
-				print("✅ "..tool.Name.." equipped!")
+				print("✅ "..tool.Name.." position set!")
 			end
 		end
 	
-		print("✅ Bkit tools equipped permanently!")
+		-- THEN equip all bkit tools
+		for _, tool in pairs(bkitTools) do
+			tool.Parent = Character
+		end
+	
+		-- Reset grips when tools are unequipped
+		for _, tool in pairs(bkitTools) do
+			tool.Unequipped:Connect(function()
+				if originalGrips[tool] then
+					tool.Grip = originalGrips[tool]
+				end
+			end)
+		end
+	
+		print("✅ Bkit tools equipped with positions!")
 	end)
 end;
 task.spawn(C_1e3);
