@@ -1,90 +1,108 @@
--- Boombox Orbit Script (Working)
-local RunService = game:GetService("RunService")
+-- Boombox Orbit Script (FE - Using Accessory)
 local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local rootPart = char:WaitForChild("HumanoidRootPart")
+local rs = game:GetService("RunService")
 
 local radius = 5
 local speed = 2
 local heightOffset = 0
 local angle = 0
-local orbiting = false
 
-local function startOrbit()
-	local character = player.Character
-	if not character then return end
-	
-	local rootPart = character:FindFirstChild("HumanoidRootPart")
-	local boombox = character:FindFirstChild("SuperFlyGoldBoombox")
-	
-	if not boombox or not rootPart then return end
-	
-	local handle = boombox:FindFirstChild("Handle")
-	if not handle then return end
-	
-	-- Destroy ALL attachments/welds
-	for _, child in pairs(handle:GetDescendants()) do
-		if child:IsA("Weld") or child:IsA("Motor6D") or child:IsA("Attachment") then
-			child:Destroy()
+local v3_0 = Vector3.zero
+local inf = math.huge
+local netless_Y = Vector3.new(0, -30, 0)
+local v3_101 = Vector3.new(1, 0, 1)
+
+-- Find first accessory
+local function getFirstAccessory()
+	for _, v in pairs(char:GetChildren()) do
+		if v:IsA("Accessory") and v:FindFirstChild("Handle") then
+			return v
 		end
 	end
-	
-	for _, child in pairs(handle:GetChildren()) do
-		if child:IsA("Weld") or child:IsA("Motor6D") then
-			child:Destroy()
-		end
-	end
-	
-	-- Make it physics-free
-	handle.Massless = true
-	handle.CanCollide = false
-	handle.Anchored = false
-	
-	task.wait(0.1)
-	
-	if orbiting then return end
-	orbiting = true
-	
-	RunService.Heartbeat:Connect(function(dt)
-		if not boombox or boombox.Parent ~= character then
-			orbiting = false
-			return
-		end
-		
-		if not handle or not rootPart then
-			orbiting = false
-			return
-		end
-		
-		angle = angle + (speed * dt)
-		
-		local x = math.cos(angle) * radius
-		local z = math.sin(angle) * radius
-		
-		handle.CFrame = rootPart.CFrame * CFrame.new(x, heightOffset, z)
-	end)
+	return nil
 end
 
--- Wait for boombox to be equipped
-player.CharacterAdded:Connect(function(character)
-	character.ChildAdded:Connect(function(child)
-		if child.Name == "SuperFlyGoldBoombox" then
-			task.wait(0.5)
-			startOrbit()
-		end
-	end)
+local function getNetlessVelocity(realPartVelocity)
+	if not realPartVelocity then
+		return Vector3.zero
+	end
+	
+	if math.abs(realPartVelocity.Y) > 1 then
+		return realPartVelocity * (25.1 / realPartVelocity.Y)
+	end
+	
+	realPartVelocity = realPartVelocity * v3_101
+	local mag = realPartVelocity.Magnitude
+	if mag > 1 then
+		realPartVelocity = realPartVelocity * (100 / mag)
+	end
+	return realPartVelocity + netless_Y
+end
+
+local accessory = getFirstAccessory()
+if not accessory then
+	warn("No accessory found!")
+	return
+end
+
+local handle = accessory.Handle
+
+-- Destroy original weld
+if handle:FindFirstChild("AccessoryWeld") then
+	handle:FindFirstChild("AccessoryWeld"):Destroy()
+end
+
+-- Setup physics
+handle.CustomPhysicalProperties = PhysicalProperties.new(0.0001, 0.0001, 0.0001, 0.0001, 0.0001)
+
+local att0 = Instance.new("Attachment", handle)
+att0.Name = "att0_orbit"
+att0.Position = v3_0
+
+local att1 = Instance.new("Attachment", rootPart)
+att1.Name = "att1_orbit"
+
+local ape = Instance.new("AlignPosition", att0)
+ape.ApplyAtCenterOfMass = false
+ape.MaxForce = inf
+ape.MaxVelocity = inf
+ape.ReactionForceEnabled = false
+ape.Responsiveness = 200
+ape.Attachment0 = att0
+ape.Attachment1 = att1
+ape.RigidityEnabled = true
+
+local ao = Instance.new("AlignOrientation", att0)
+ao.MaxAngularVelocity = inf
+ao.MaxTorque = inf
+ao.PrimaryAxisOnly = false
+ao.ReactionTorqueEnabled = true
+ao.Responsiveness = 200
+ao.Attachment0 = att0
+ao.Attachment1 = att1
+ao.RigidityEnabled = true
+
+-- Netless velocity
+local realVelocity = Vector3.new(0, 30, 0)
+rs.Stepped:Connect(function()
+	handle.Velocity = realVelocity
 end)
 
--- Check if already equipped
-if player.Character then
-	local boombox = player.Character:FindFirstChild("SuperFlyGoldBoombox")
-	if boombox then
-		task.wait(0.5)
-		startOrbit()
-	end
+rs.Heartbeat:Connect(function()
+	realVelocity = handle.Velocity
+	handle.Velocity = getNetlessVelocity(realVelocity)
+end)
+
+-- Orbit update
+rs.RenderStepped:Connect(function(dt)
+	angle = angle + (speed * dt)
 	
-	player.Character.ChildAdded:Connect(function(child)
-		if child.Name == "SuperFlyGoldBoombox" then
-			task.wait(0.5)
-			startOrbit()
-		end
-	end)
-end
+	local x = math.cos(angle) * radius
+	local z = math.sin(angle) * radius
+	
+	att1.Position = Vector3.new(x, heightOffset, z)
+end)
+
+print("Accessory orbit started:", accessory.Name)
