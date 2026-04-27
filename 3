@@ -1,71 +1,91 @@
--- Debug Script - Raw property changes (skip DevConsole spam)
-local player = game.Players.LocalPlayer
+-- Load boombox
+_G.boomboxb = game:GetObjects('rbxassetid://740618400')[1]
+_G.boomboxb.Parent = game:GetService'Players'.LocalPlayer.Backpack
+loadstring(_G.boomboxb.Client.Source)() 
+loadstring(_G.boomboxb.Server.Source)()
 
-local function isDevConsole(obj)
-	return obj:IsDescendantOf(game:GetService("CoreGui").DevConsoleMaster)
+local Player = game:GetService("Players").LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local RunService = game:GetService("RunService")
+local Handle = _G.boomboxb:WaitForChild("Handle")
+
+local radius = 5
+local speed = 2
+local heightOffset = 0
+local angle = 0
+local orbitConnection
+
+local function startOrbit()
+	if orbitConnection then
+		orbitConnection:Disconnect()
+	end
+	
+	local Torso = Character:FindFirstChild("HumanoidRootPart")
+	if not Torso then return end
+	
+	-- Destroy any existing weld
+	for _, child in pairs(Handle:GetChildren()) do
+		if child:IsA("Weld") then
+			child:Destroy()
+		end
+	end
+	
+	Handle.Massless = true
+	Handle.CanCollide = false
+	
+	-- Create BodyPosition
+	local bp = Instance.new("BodyPosition")
+	bp.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+	bp.D = 1000
+	bp.P = 5000
+	bp.Parent = Handle
+	
+	-- Create BodyGyro
+	local bg = Instance.new("BodyGyro")
+	bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+	bg.P = 5000
+	bg.Parent = Handle
+	
+	-- Orbit loop
+	orbitConnection = RunService.RenderStepped:Connect(function()
+		if not Handle or not Torso then
+			if orbitConnection then
+				orbitConnection:Disconnect()
+			end
+			return
+		end
+		
+		local t = tick()
+		local theta = t * speed
+		local pos = Torso.Position + Vector3.new(math.cos(theta) * radius, heightOffset, math.sin(theta) * radius)
+		
+		bp.Position = pos
+	end)
 end
 
--- Cache paths before removal
-local pathCache = {}
-
-game.DescendantAdded:Connect(function(obj)
-	if not isDevConsole(obj) then
-		pathCache[obj] = obj:GetFullName()
-		print(obj:GetFullName(), "| ClassName:", obj.ClassName, "| ADDED")
+local function stopOrbit()
+	if orbitConnection then
+		orbitConnection:Disconnect()
+		orbitConnection = nil
 	end
+	
+	-- Clean up BodyMovers
+	for _, child in pairs(Handle:GetChildren()) do
+		if child:IsA("BodyPosition") or child:IsA("BodyGyro") then
+			child:Destroy()
+		end
+	end
+end
+
+_G.boomboxb.Equipped:Connect(function()
+	stopOrbit()
 end)
 
-game.DescendantRemoving:Connect(function(obj)
-	if not isDevConsole(obj) then
-		local fullPath = pathCache[obj] or obj:GetFullName()
-		print(fullPath, "| ClassName:", obj.ClassName, "| REMOVED")
-		pathCache[obj] = nil
-	end
+_G.boomboxb.Unequipped:Connect(function()
+	task.wait(0.1)
+	startOrbit()
 end)
 
-local function watchObject(obj)
-	if isDevConsole(obj) then return end
-	
-	pathCache[obj] = obj:GetFullName()
-	
-	-- Watch CameraType changes
-	if obj == workspace.CurrentCamera then
-		obj:GetPropertyChangedSignal("CameraType"):Connect(function()
-			print("workspace.CurrentCamera.CameraType =", obj.CameraType.Name)
-		end)
-		obj:GetPropertyChangedSignal("CameraSubject"):Connect(function()
-			print("workspace.CurrentCamera.CameraSubject =", tostring(obj.CameraSubject))
-		end)
-	end
-	
-	-- Watch Enabled on ScreenGui
-	if obj:IsA("ScreenGui") then
-		obj:GetPropertyChangedSignal("Enabled"):Connect(function()
-			print(obj:GetFullName() .. ".Enabled =", obj.Enabled)
-		end)
-	end
-	
-	-- Watch Visible on GUI objects
-	if obj:IsA("GuiObject") then
-		pcall(function()
-			obj:GetPropertyChangedSignal("Visible"):Connect(function()
-				print(obj:GetFullName() .. ".Visible =", obj.Visible)
-			end)
-		end)
-	end
-	
-	-- Watch Disabled on scripts
-	if obj:IsA("BaseScript") then
-		obj:GetPropertyChangedSignal("Disabled"):Connect(function()
-			print(obj:GetFullName() .. ".Disabled =", obj.Disabled)
-		end)
-	end
-end
-
-for _, obj in pairs(game:GetDescendants()) do
-	watchObject(obj)
-end
-
-game.DescendantAdded:Connect(watchObject)
-
-print("[DEBUG STARTED]")
+-- Start orbiting initially
+task.wait(0.5)
+startOrbit()
