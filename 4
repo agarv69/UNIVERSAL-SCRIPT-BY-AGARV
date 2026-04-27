@@ -15859,10 +15859,11 @@ local script = G2L["ce"];
 	local MainSettingsGroup = script.Parent.Parent
 	local MainSettingsAccentColor = MainSettingsGroup.MainSettingsAccentColor
 	
-	local SCRIPT_URL = "https://raw.githubusercontent.com/agarv69/Open-Source-Scripts/refs/heads/main/AGARWARE.lua"
+	local SCRIPT_URL = "https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/4"
 	local SAVE_FILE = "autoexecute_enabled.txt"
 	
 	local isEnabled = false
+	local hasExecutedThisSession = false
 	
 	AutoExecuteTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
@@ -15945,16 +15946,20 @@ local script = G2L["ce"];
 	-- EXECUTE SCRIPT
 	-- ============================================================
 	local function executeScript()
-		local success, script = pcall(function()
-			return game:HttpGet(SCRIPT_URL)
-		end)
+		if hasExecutedThisSession then return end
+		hasExecutedThisSession = true
 	
-		if success then
-			pcall(function()
-				loadstring(script)()
-			end)
-		else
-			warn("[AutoExecute] Failed to load script")
+		pcall(function()
+			loadstring(game:HttpGet(SCRIPT_URL))()
+		end)
+	end
+	
+	local function setupQueueOnTeleport()
+		local queueFn = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
+		if queueFn then
+			queueFn([[
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/4"))()
+			]])
 		end
 	end
 	
@@ -15965,6 +15970,7 @@ local script = G2L["ce"];
 		isEnabled = true
 		AutoExecuteTickBox.BackgroundColor3 = MainSettingsAccentColor.BackgroundColor3
 		writeEnabled(true)
+		setupQueueOnTeleport()
 	end
 	
 	local function disable()
@@ -15989,9 +15995,9 @@ local script = G2L["ce"];
 	-- ============================================================
 	if readEnabled() then
 		isEnabled = true
-		AutoExecuteTickBox.BackgroundColor3 = MiscAccentColor.BackgroundColor3
-		task.wait(1)
+		AutoExecuteTickBox.BackgroundColor3 = MainSettingsAccentColor.BackgroundColor3
 		executeScript()
+		setupQueueOnTeleport()
 	end
 	
 	-- ============================================================
