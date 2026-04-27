@@ -1,83 +1,58 @@
-local Player = game:GetService("Players").LocalPlayer
-local RunService = game:GetService("RunService")
-
-local radius = 5
-local speed = 2
-local heightOffset = 0
-local angle = 0
-
--- Set simulation radius
-pcall(function()
-    sethiddenproperty(Player, "SimulationRadius", 9999)
-end)
-
-local function startOrbit()
-	local Character = Player.Character
-	if not Character then return end
+script.Parent.PPBkitButton.MouseButton1Click:Connect(function()
+	local Player = game.Players.LocalPlayer
+	local Character = Player.Character or Player.CharacterAdded:Wait()
+	local Humanoid = Character:WaitForChild("Humanoid")
 	
-	local rootPart = Character:FindFirstChild("HumanoidRootPart")
-	local boombox = Character:FindFirstChild("SuperFlyGoldBoombox")
+	Humanoid:UnequipTools()
 	
-	if not boombox or not rootPart then return end
+	-- Find all bkit tools IN ORDER and store original grips
+	local bkitTools = {}
+	local toolNames = {"Build", "Delete", "Paint", "Shape", "Shovel", "Sign"}
+	local originalGrips = {}
 	
-	local handle = boombox:FindFirstChild("Handle")
-	if not handle then return end
-	
-	-- Destroy grip weld
-	for _, child in pairs(handle:GetChildren()) do
-		if child:IsA("Weld") then
-			child:Destroy()
+	-- Loop through toolNames order to keep them matched
+	for _, toolName in pairs(toolNames) do
+		for _, item in pairs(Player.Backpack:GetChildren()) do
+			if item.Name == toolName and item:IsA("Tool") then
+				table.insert(bkitTools, item)
+				originalGrips[item] = item.Grip -- Save original grip
+				break -- Only add one of each tool
+			end
 		end
 	end
 	
-	-- Set physics properties
-	handle.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0)
-	handle.CanCollide = false
-	handle.CanTouch = false
-	
-	-- Create BodyPosition
-	local bp = Instance.new("BodyPosition")
-	bp.Name = "bp"
-	local m = handle:GetMass()
-	bp.P = m / 0.64e-5
-	bp.D = m / 0.64e-3
-	bp.MaxForce = Vector3.new(m / 0.64e-6, m / 0.64e-6, m / 0.64e-6)
-	bp.Parent = handle
-	
-	-- Orbit loop
-	RunService.Heartbeat:Connect(function()
-		if not boombox or not handle or not rootPart then return end
-		if boombox.Parent ~= Character then return end
-		
-		angle = angle + (speed * RunService.Heartbeat:Wait())
-		
-		local x = math.cos(angle) * radius
-		local z = math.sin(angle) * radius
-		
-		bp.Position = rootPart.Position + Vector3.new(x, heightOffset, z)
-	end)
-end
-
--- Wait for boombox to be equipped
-Player.CharacterAdded:Connect(function(character)
-	character.ChildAdded:Connect(function(child)
-		if child.Name == "SuperFlyGoldBoombox" then
-			task.wait(0.2)
-			startOrbit()
-		end
-	end)
-end)
-
-if Player.Character then
-	local boombox = Player.Character:FindFirstChild("SuperFlyGoldBoombox")
-	if boombox then
-		startOrbit()
+	-- Equip all bkit tools
+	for _, tool in pairs(bkitTools) do
+		tool.Parent = Character
 	end
 	
-	Player.Character.ChildAdded:Connect(function(child)
-		if child.Name == "SuperFlyGoldBoombox" then
-			task.wait(0.2)
-			startOrbit()
+	task.wait(0.1)
+	
+	-- Position bkit tools with correct positions
+	local positions = {
+		CFrame.new(2.2, 1.7, -0.7) * CFrame.Angles(0, 0, 0),                                      -- Build
+		CFrame.new(0.7, 1.7, -0.7) * CFrame.Angles(0, 0, 0),                                      -- Delete
+		CFrame.new(2.10, 1.45, 1.30) * CFrame.Angles(math.rad(90), math.rad(90), 0),             -- Paint
+		CFrame.new(1.45, 1.3, 1.2) * CFrame.Angles(0, 0, 0),                                      -- Shape
+		CFrame.new(1.45, 1.8, -1.2) * CFrame.Angles(math.rad(-90), math.rad(0), math.rad(0)),    -- Shovel
+		CFrame.new(-1.45, -0.2, 1.2) * CFrame.Angles(math.rad(270), 0, math.rad(180))            -- Sign
+	}
+	
+	for i, tool in pairs(bkitTools) do
+		if tool:FindFirstChild("Handle") and positions[i] then
+			tool.Grip = positions[i]
+			print("✅ "..tool.Name.." equipped!")
 		end
-	end)
-end
+	end
+	
+	-- Reset grips when tools are unequipped
+	for _, tool in pairs(bkitTools) do
+		tool.Unequipped:Connect(function()
+			if originalGrips[tool] then
+				tool.Grip = originalGrips[tool]
+			end
+		end)
+	end
+	
+	print("✅ Bkit tools equipped permanently!")
+end)
