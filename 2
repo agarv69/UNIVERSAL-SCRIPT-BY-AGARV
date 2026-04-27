@@ -1,48 +1,29 @@
--- Boombox Orbit Script (Unequip and Orbit)
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
 local RunService = game:GetService("RunService")
-local player = game.Players.LocalPlayer
 
-local radius = 5
+local radius = 3
 local speed = 2
-local heightOffset = 0
 local angle = 0
 
-local function startOrbit()
-	local character = player.Character
-	if not character then return end
-	
-	local rootPart = character:FindFirstChild("HumanoidRootPart")
-	local boombox = character:FindFirstChild("SuperFlyGoldBoombox") or player.Backpack:FindFirstChild("SuperFlyGoldBoombox")
-	
-	if not boombox then return end
-	
-	-- Move to workspace (unequip it completely)
-	boombox.Parent = workspace
-	
-	local handle = boombox:FindFirstChild("Handle")
-	if not handle then return end
-	
-	handle.Massless = true
-	handle.CanCollide = false
-	
-	RunService.Heartbeat:Connect(function(dt)
-		if not boombox or not handle or not rootPart then return end
-		
-		angle = angle + (speed * dt)
-		
-		local x = math.cos(angle) * radius
-		local z = math.sin(angle) * radius
-		
-		handle.CFrame = rootPart.CFrame * CFrame.new(x, heightOffset, z)
-	end)
+Character.Humanoid:UnequipTools()
+local Tools = Player.Backpack:GetChildren()
+
+-- Equip all tools
+for _, tool in pairs(Tools) do
+	tool.Parent = Character
 end
 
--- Run when boombox is found
-if player.Character then
-	startOrbit()
-end
-
-player.CharacterAdded:Connect(function()
-	task.wait(1)
-	startOrbit()
+-- Orbit by changing Grip every frame
+RunService.Heartbeat:Connect(function(dt)
+	angle = angle + (speed * dt)
+	
+	local x = math.cos(angle) * radius
+	local z = math.sin(angle) * radius
+	
+	for _, tool in pairs(Character:GetChildren()) do
+		if tool:IsA("Tool") then
+			tool.Grip = CFrame.new(x, 0, z)
+		end
+	end
 end)
