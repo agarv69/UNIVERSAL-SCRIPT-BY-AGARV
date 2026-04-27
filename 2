@@ -1,87 +1,48 @@
--- Boombox Orbit Script
+-- Boombox Orbit Script (Unequip and Orbit)
+local RunService = game:GetService("RunService")
 local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local rootPart = character:WaitForChild("HumanoidRootPart")
 
--- Configuration
 local radius = 5
-local speed = 5
+local speed = 2
 local heightOffset = 0
+local angle = 0
 
-local runService = game:GetService("RunService")
-local connection
-
-local function startOrbit(tool)
-	if connection then
-		connection:Disconnect()
-	end
+local function startOrbit()
+	local character = player.Character
+	if not character then return end
 	
-	local handle = tool:WaitForChild("Handle")
-	handle.Anchored = true
+	local rootPart = character:FindFirstChild("HumanoidRootPart")
+	local boombox = character:FindFirstChild("SuperFlyGoldBoombox") or player.Backpack:FindFirstChild("SuperFlyGoldBoombox")
 	
-	connection = runService.RenderStepped:Connect(function()
-		if not character or not handle or tool.Parent ~= character then
-			if connection then
-				connection:Disconnect()
-				connection = nil
-			end
-			handle.Anchored = false
-			return
-		end
+	if not boombox then return end
+	
+	-- Move to workspace (unequip it completely)
+	boombox.Parent = workspace
+	
+	local handle = boombox:FindFirstChild("Handle")
+	if not handle then return end
+	
+	handle.Massless = true
+	handle.CanCollide = false
+	
+	RunService.Heartbeat:Connect(function(dt)
+		if not boombox or not handle or not rootPart then return end
 		
-		local time = tick() * speed
-		local x = math.cos(time) * radius
-		local z = math.sin(time) * radius
+		angle = angle + (speed * dt)
+		
+		local x = math.cos(angle) * radius
+		local z = math.sin(angle) * radius
 		
 		handle.CFrame = rootPart.CFrame * CFrame.new(x, heightOffset, z)
 	end)
 end
 
-local function stopOrbit(tool)
-	if connection then
-		connection:Disconnect()
-		connection = nil
-	end
-	
-	local handle = tool:FindFirstChild("Handle")
-	if handle then
-		handle.Anchored = false
-	end
+-- Run when boombox is found
+if player.Character then
+	startOrbit()
 end
 
--- Watch for boombox equips
-character.ChildAdded:Connect(function(child)
-	if child:IsA("Tool") and child.Name == "SuperFlyGoldBoombox" then
-		startOrbit(child)
-	end
-end)
-
-character.ChildRemoved:Connect(function(child)
-	if child:IsA("Tool") and child.Name == "SuperFlyGoldBoombox" then
-		stopOrbit(child)
-	end
-end)
-
--- Check if already equipped
-local equippedBoombox = character:FindFirstChild("SuperFlyGoldBoombox")
-if equippedBoombox then
-	startOrbit(equippedBoombox)
-end
-
--- Handle character respawn
-player.CharacterAdded:Connect(function(newChar)
-	character = newChar
-	rootPart = character:WaitForChild("HumanoidRootPart")
-	
-	newChar.ChildAdded:Connect(function(child)
-		if child:IsA("Tool") and child.Name == "SuperFlyGoldBoombox" then
-			startOrbit(child)
-		end
-	end)
-	
-	newChar.ChildRemoved:Connect(function(child)
-		if child:IsA("Tool") and child.Name == "SuperFlyGoldBoombox" then
-			stopOrbit(child)
-		end
-	end)
+player.CharacterAdded:Connect(function()
+	task.wait(1)
+	startOrbit()
 end)
