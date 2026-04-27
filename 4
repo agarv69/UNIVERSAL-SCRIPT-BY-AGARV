@@ -11540,9 +11540,7 @@ local script = G2L["3d"];
 	local Players = game:GetService("Players")
 	local TeleportService = game:GetService("TeleportService")
 	local RunService = game:GetService("RunService")
-	
 	local LocalPlayer = Players.LocalPlayer
-	
 	local RejoinRow = script.Parent
 	local RejoinButton = RejoinRow.RejoinButton
 	
@@ -11584,12 +11582,6 @@ local script = G2L["3d"];
 	local connection = nil
 	
 	local function rejoin()
-		local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
-		if queueteleport then
-			pcall(function()
-				queueteleport([[loadstring(game:HttpGet("https://pastebin.com/raw/sLjp6RPD"))()]])
-			end)
-		end
 		TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
 	end
 	
@@ -11614,9 +11606,11 @@ local script = G2L["3d"];
 	
 		connection = RunService.RenderStepped:Connect(function(dt)
 			if not holding then return end
+	
 			progress = progress + (dt / HOLD_TIME)
 			progress = math.clamp(progress, 0, 1)
 			fillBar.Size = UDim2.new(progress, 0, 1, 0)
+	
 			if progress >= 1 then
 				btnLabel.Text = "Rejoining..."
 				stopHold()
@@ -15859,11 +15853,9 @@ local script = G2L["ce"];
 	local MainSettingsGroup = script.Parent.Parent
 	local MainSettingsAccentColor = MainSettingsGroup.MainSettingsAccentColor
 	
-	local SCRIPT_URL = "https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/4"
-	local SAVE_FILE = "autoexecute_enabled.txt"
+	local SCRIPT_URL = "https://raw.githubusercontent.com/agarv69/Open-Source-Scripts/refs/heads/main/AGARWARE.lua"
 	
 	local isEnabled = false
-	local hasExecutedThisSession = false
 	
 	AutoExecuteTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
@@ -15901,7 +15893,7 @@ local script = G2L["ce"];
 	
 	local tooltipLabel = Instance.new("TextLabel", tooltipFrame)
 	tooltipLabel.BackgroundTransparency = 1
-	tooltipLabel.Text = "Automatically executes AGAR WARE when you join a game."
+	tooltipLabel.Text = "Automatically executes this script when you server hop."
 	tooltipLabel.TextColor3 = Color3.new(1, 1, 1)
 	tooltipLabel.TextSize = 14
 	tooltipLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -15924,41 +15916,13 @@ local script = G2L["ce"];
 	end)
 	
 	-- ============================================================
-	-- FILE HANDLING
+	-- QUEUE ON TELEPORT
 	-- ============================================================
-	local function readEnabled()
-		local success, result = pcall(function()
-			return readfile(SAVE_FILE)
-		end)
-		if success and result == "true" then
-			return true
-		end
-		return false
-	end
-	
-	local function writeEnabled(enabled)
-		pcall(function()
-			writefile(SAVE_FILE, tostring(enabled))
-		end)
-	end
-	
-	-- ============================================================
-	-- EXECUTE SCRIPT
-	-- ============================================================
-	local function executeScript()
-		if hasExecutedThisSession then return end
-		hasExecutedThisSession = true
-	
-		pcall(function()
-			loadstring(game:HttpGet(SCRIPT_URL))()
-		end)
-	end
-	
 	local function setupQueueOnTeleport()
 		local queueFn = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
 		if queueFn then
 			queueFn([[
-				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/4"))()
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/Open-Source-Scripts/refs/heads/main/AGARWARE.lua"))()
 			]])
 		end
 	end
@@ -15969,14 +15933,12 @@ local script = G2L["ce"];
 	local function enable()
 		isEnabled = true
 		AutoExecuteTickBox.BackgroundColor3 = MainSettingsAccentColor.BackgroundColor3
-		writeEnabled(true)
 		setupQueueOnTeleport()
 	end
 	
 	local function disable()
 		isEnabled = false
 		AutoExecuteTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-		writeEnabled(false)
 	end
 	
 	-- ============================================================
@@ -15989,16 +15951,6 @@ local script = G2L["ce"];
 			enable()
 		end
 	end)
-	
-	-- ============================================================
-	-- AUTO EXECUTE ON JOIN
-	-- ============================================================
-	if readEnabled() then
-		isEnabled = true
-		AutoExecuteTickBox.BackgroundColor3 = MainSettingsAccentColor.BackgroundColor3
-		executeScript()
-		setupQueueOnTeleport()
-	end
 	
 	-- ============================================================
 	-- CLEANUP
