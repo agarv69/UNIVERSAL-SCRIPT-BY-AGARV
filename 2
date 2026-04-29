@@ -360,16 +360,10 @@ local script = G2L["8"];
 	local AscendingButton = script.Parent
 	local MainFrame = script.Parent.Parent.Parent.Parent
 	
-	-- Initialize attribute
-	MainFrame:SetAttribute("SortOrder", "Descending")
 	AscendingButton.Text = "Descending"
 	
-	local isAscending = false
-	
 	AscendingButton.MouseButton1Click:Connect(function()
-		isAscending = not isAscending
-	
-		if isAscending then
+		if AscendingButton.Text == "Descending" then
 			AscendingButton.Text = "Ascending"
 			MainFrame:SetAttribute("SortOrder", "Ascending")
 		else
@@ -377,7 +371,8 @@ local script = G2L["8"];
 			MainFrame:SetAttribute("SortOrder", "Descending")
 		end
 	
-		-- Trigger refresh
+		wait(0.1)
+	
 		local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
 		if RefreshEvent then
 			RefreshEvent:Fire()
@@ -431,16 +426,10 @@ local script = G2L["d"];
 	local HideFullButton = script.Parent
 	local MainFrame = script.Parent.Parent.Parent.Parent
 	
-	-- Initialize attribute (false = show all servers)
-	MainFrame:SetAttribute("HideFull", false)
 	HideFullButton.Text = "Hide Full"
 	
-	local hideFull = false
-	
 	HideFullButton.MouseButton1Click:Connect(function()
-		hideFull = not hideFull
-	
-		if hideFull then
+		if HideFullButton.Text == "Hide Full" then
 			HideFullButton.Text = "Show Full"
 			MainFrame:SetAttribute("HideFull", true)
 		else
@@ -448,7 +437,8 @@ local script = G2L["d"];
 			MainFrame:SetAttribute("HideFull", false)
 		end
 	
-		-- Trigger refresh
+		wait(0.1)
+	
 		local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
 		if RefreshEvent then
 			RefreshEvent:Fire()
@@ -639,28 +629,24 @@ local script = G2L["16"];
 		task.wait(0.1)
 	
 		-- Get settings from attributes
-		local sortOrder = MainFrame:GetAttribute("SortOrder")
+		local sortOrder = MainFrame:GetAttribute("SortOrder") or "Descending"
 		local hideFull = MainFrame:GetAttribute("HideFull")
-	
-		-- Default values if attributes don't exist yet
-		if sortOrder == nil then sortOrder = "Descending" end
 		if hideFull == nil then hideFull = false end
 	
-		print("Sort Order:", sortOrder, "Hide Full:", hideFull)
+		print("Sort Order:", sortOrder, "| Hide Full:", hideFull)
 	
-		-- Filter out full servers if HideFull is enabled
+		-- Filter out full servers if HideFull is true
 		local filteredData = {}
 		for _, serverData in ipairs(response.data) do
 			local isFull = serverData.playing >= serverData.maxPlayers
 	
-			if hideFull and isFull then
-				-- Skip full servers
-			else
+			-- Only add if: hideFull is false OR server is not full
+			if not hideFull or not isFull then
 				table.insert(filteredData, serverData)
 			end
 		end
 	
-		print("Filtered servers:", #filteredData, "from", #response.data)
+		print("Filtered:", #filteredData, "servers from", #response.data)
 	
 		-- Sort by player count
 		table.sort(filteredData, function(a, b)
@@ -671,7 +657,7 @@ local script = G2L["16"];
 			end
 		end)
 	
-		-- Use filteredData instead of response.data
+		-- Use filteredData
 		response.data = filteredData
 	
 		-- Create server rows
