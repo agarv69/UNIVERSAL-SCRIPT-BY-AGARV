@@ -403,11 +403,11 @@ local script = G2L["13"];
 	end
 	
 	local currentServer = game.JobId
-	
-	-- Wait for refresh event
-	local RefreshEvent = MainFrame:WaitForChild("ServerHopperRefresh", 30)
+	local isUpdating = false
 	
 	local function createServerRow(serverData, layoutOrder)
+		if not ServerTemplate then return end
+	
 		local newRow = ServerTemplate:Clone()
 		newRow.Name = "ServerList_" .. serverData.id
 		newRow.Visible = true
@@ -447,6 +447,7 @@ local script = G2L["13"];
 				newRow.BackgroundColor3 = Color3.fromRGB(18, 0, 0)
 			else
 				newRow.BackgroundColor3 = Color3.fromRGB(9, 9, 9)
+				serverSize.TextColor3 = Color3.fromRGB(255, 255, 255)
 			end
 	
 			serverSize.Text = sizeText
@@ -474,57 +475,99 @@ local script = G2L["13"];
 		newRow.Parent = ServerList
 	end
 	
+	local function updateCanvasSize()
+		task.wait(0.1)
+		local contentSize = ServerList.UIListLayout.AbsoluteContentSize
+		ServerList.CanvasSize = UDim2.new(0, 0, 0, contentSize.Y)
+	end
+	
 	local function updateServerList()
-		-- Clear existing servers (except template)
+		if isUpdating then 
+			warn("Already updating, skipping...")
+			return 
+		end
+		isUpdating = true
+	
+		print("Starting server list update...")
+	
+		-- Fetch servers FIRST before destroying anything
+		local success, response = pcall(function()
+			local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Desc&limit=100"
+	
+			if request then
+				local resp = request({Url = url, Method = "GET"})
+				return HttpService:JSONDecode(resp.Body)
+			else
+				return HttpService:JSONDecode(game:HttpGet(url))
+			end
+		end)
+	
+		if not success or not response or not response.data then
+			warn("Failed to fetch server data")
+			isUpdating = false
+			return
+		end
+	
+		print("Fetched " .. #response.data .. " servers")
+	
+		-- NOW destroy old frames
 		for _, child in pairs(ServerList:GetChildren()) do
-			if child:IsA("Frame") and child.Name ~= "ServerList" then
+			if child:IsA("Frame") then
 				child:Destroy()
 			end
 		end
 	
-		-- Fetch servers
-		local success = pcall(function()
-			local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Desc&limit=100"
+		task.wait(0.05)
 	
-			local response
-			if request then
-				response = request({Url = url, Method = "GET"})
-				response = HttpService:JSONDecode(response.Body)
-			else
-				response = HttpService:JSONDecode(game:HttpGet(url))
-			end
-	
-			if response and response.data then
-				-- Sort by player count (highest first)
-				table.sort(response.data, function(a, b)
-					return a.playing > b.playing
-				end)
-	
-				-- Create server rows
-				for i, serverData in ipairs(response.data) do
-					createServerRow(serverData, i)
-	
-					-- Yield every 10 servers to prevent lag
-					if i % 10 == 0 then
-						task.wait()
-					end
-				end
-			end
+		-- Sort by player count (highest first)
+		table.sort(response.data, function(a, b)
+			return a.playing > b.playing
 		end)
 	
-		if not success then
-			warn("Failed to update server list")
+		-- Create server rows with yielding
+		for i, serverData in ipairs(response.data) do
+			createServerRow(serverData, i)
+	
+			-- Yield every 5 servers to reduce lag
+			if i % 5 == 0 then
+				task.wait()
+			end
 		end
+	
+		print("Created all server frames")
+	
+		-- Update canvas size after all servers loaded
+		updateCanvasSize()
+	
+		isUpdating = false
 	end
 	
-	-- Listen for refresh event
-	if RefreshEvent then
-		RefreshEvent.Event:Connect(function()
-			updateServerList()
-		end)
-	end
+	-- Auto-update canvas size when content changes
+	ServerList.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		updateCanvasSize()
+	end)
+	
+	-- Wait for refresh event
+	task.spawn(function()
+		task.wait(2)
+		local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
+	
+		if RefreshEvent then
+			print("Found RefreshEvent, connecting...")
+			RefreshEvent.Event:Connect(function()
+				print("Refresh event fired!")
+				if not isUpdating then
+					updateServerList()
+				end
+			end)
+		else
+			warn("RefreshEvent not found!")
+		end
+	end)
 	
 	-- Initial update
+	task.wait(1.5)
+	print("Running initial server list update...")
 	updateServerList()
 end;
 task.spawn(C_13);
