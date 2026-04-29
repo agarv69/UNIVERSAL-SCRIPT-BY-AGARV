@@ -962,14 +962,38 @@ local script = G2L["a"];
 	local RefreshButton = script.Parent
 	local MainFrame = script.Parent.Parent.Parent.Parent
 	
-	-- Wait for the refresh event to exist
-	local RefreshEvent = MainFrame:WaitForChild("ServerHopperRefresh", 10)
-	
-	if RefreshEvent then
-		RefreshButton.MouseButton1Click:Connect(function()
-			RefreshEvent:Fire()
-		end)
+	-- Create refresh event
+	local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
+	if not RefreshEvent then
+		RefreshEvent = Instance.new("BindableEvent")
+		RefreshEvent.Name = "ServerHopperRefresh"
+		RefreshEvent.Parent = MainFrame
 	end
+	
+	local autoRefreshTimer = 0
+	
+	-- Auto-refresh timer (counts every second)
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			autoRefreshTimer = autoRefreshTimer + 1
+	
+			if autoRefreshTimer >= 60 then
+				autoRefreshTimer = 0
+				RefreshEvent:Fire()
+			end
+		end
+	end)
+	
+	-- Manual refresh when button clicked
+	RefreshButton.MouseButton1Click:Connect(function()
+		autoRefreshTimer = 0 -- Reset the 60 second timer
+		RefreshEvent:Fire()
+	end)
+	
+	-- Fire initial refresh
+	task.wait(0.5)
+	RefreshEvent:Fire()
 end;
 task.spawn(C_a);
 -- StarterGui.ServerHopper.MainFrame.ContentArea.BottomRow.LastUpdated.LastUpdated
@@ -979,7 +1003,10 @@ local script = G2L["42"];
 	local MainFrame = script.Parent.Parent.Parent.Parent
 	local timeSinceUpdate = 0
 	
-	-- Stopwatch that counts up
+	-- Wait for refresh event
+	local RefreshEvent = MainFrame:WaitForChild("ServerHopperRefresh", 30)
+	
+	-- Stopwatch
 	task.spawn(function()
 		while true do
 			task.wait(0.1)
@@ -988,16 +1015,12 @@ local script = G2L["42"];
 		end
 	end)
 	
-	-- Wait for refresh event in separate thread
-	task.spawn(function()
-		local RefreshEvent = MainFrame:WaitForChild("ServerHopperRefresh", 30)
-	
-		if RefreshEvent then
-			RefreshEvent.Event:Connect(function()
-				timeSinceUpdate = 0
-			end)
-		end
-	end)
+	-- Reset on refresh
+	if RefreshEvent then
+		RefreshEvent.Event:Connect(function()
+			timeSinceUpdate = 0
+		end)
+	end
 end;
 task.spawn(C_42);
 -- StarterGui.ServerHopper.MainFrame.ContentArea.BottomRow.ServerCount.ServerCount
@@ -1005,23 +1028,12 @@ local function C_45()
 local script = G2L["45"];
 	local ServerCountLabel = script.Parent
 	local MainFrame = script.Parent.Parent.Parent.Parent.Parent
-	local LastUpdatedLabel = MainFrame.ContentArea.BottomRow.LastUpdated
 	local HttpService = game:GetService("HttpService")
 	
-	-- Create refresh event
-	local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
-	if not RefreshEvent then
-		RefreshEvent = Instance.new("BindableEvent")
-		RefreshEvent.Name = "ServerHopperRefresh"
-		RefreshEvent.Parent = MainFrame
-	end
-	
-	local isUpdating = false
+	-- Wait for refresh event
+	local RefreshEvent = MainFrame:WaitForChild("ServerHopperRefresh", 30)
 	
 	local function updateServerCount()
-		if isUpdating then return end
-		isUpdating = true
-	
 		local success = pcall(function()
 			local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Desc&limit=100"
 			local response = game:HttpGet(url)
@@ -1032,34 +1044,28 @@ local script = G2L["45"];
 				serverCount = #data.data
 			end
 	
-			ServerCountLabel.Text = "Server Count: " .. tostring(serverCount) .. "/100+"
-	
-			-- Fire event with server data
-			RefreshEvent:Fire(data.data)
+			-- Show 100+ if at limit
+			if serverCount == 100 then
+				ServerCountLabel.Text = "Server Count: 100+"
+			else
+				ServerCountLabel.Text = "Server Count: " .. tostring(serverCount)
+			end
 		end)
 	
 		if not success then
 			ServerCountLabel.Text = "Server Count: Error"
 		end
+	end
 	
-		isUpdating = false
+	-- Listen for refresh event
+	if RefreshEvent then
+		RefreshEvent.Event:Connect(function()
+			updateServerCount()
+		end)
 	end
 	
 	-- Initial update
 	updateServerCount()
-	
-	-- Auto-refresh every 60 seconds
-	task.spawn(function()
-		while true do
-			task.wait(60)
-			updateServerCount()
-		end
-	end)
-	
-	-- Listen for manual refresh
-	RefreshEvent.Event:Connect(function()
-		updateServerCount()
-	end)
 end;
 task.spawn(C_45);
 -- StarterGui.ServerHopper.MainFrame.TopBar.DestroyDragScript
