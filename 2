@@ -375,7 +375,6 @@ task.spawn(C_a);
 local function C_13()
 local script = G2L["13"];
 	local ServerList = script.Parent
-	local ServerTemplate = ServerList:FindFirstChild("ServerList")
 	local MainFrame = script.Parent.Parent.Parent
 	local HttpService = game:GetService("HttpService")
 	local TeleportService = game:GetService("TeleportService")
@@ -405,15 +404,22 @@ local script = G2L["13"];
 	local currentServer = game.JobId
 	local isUpdating = false
 	
-	-- Wait for refresh event with retries
-	local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
-	if not RefreshEvent then
-		task.wait(2)
-		RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
+	-- Store the template permanently
+	local ServerTemplate = nil
+	
+	local function initTemplate()
+		ServerTemplate = ServerList:FindFirstChild("ServerList")
+		if ServerTemplate then
+			ServerTemplate.Visible = false
+			ServerTemplate.LayoutOrder = 999999
+		end
 	end
 	
 	local function createServerRow(serverData, layoutOrder)
-		if not ServerTemplate then return end
+		if not ServerTemplate then 
+			warn("Template is missing!")
+			return 
+		end
 	
 		local newRow = ServerTemplate:Clone()
 		newRow.Name = "ServerList_" .. serverData.id
@@ -483,24 +489,18 @@ local script = G2L["13"];
 	end
 	
 	local function updateCanvasSize()
+		task.wait(0.1)
 		local contentSize = ServerList.UIListLayout.AbsoluteContentSize
 		ServerList.CanvasSize = UDim2.new(0, 0, 0, contentSize.Y)
 	end
 	
 	local function updateServerList()
-		if isUpdating then return end
+		if isUpdating then 
+			return 
+		end
 		isUpdating = true
 	
-		-- Clear existing servers (except template)
-		for _, child in pairs(ServerList:GetChildren()) do
-			if child:IsA("Frame") and child.Name ~= "ServerList" then
-				child:Destroy()
-			end
-		end
-	
-		task.wait(0.1)
-	
-		-- Fetch servers
+		-- Fetch servers FIRST
 		local success, response = pcall(function()
 			local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Desc&limit=100"
 	
@@ -512,48 +512,66 @@ local script = G2L["13"];
 			end
 		end)
 	
-		if success and response and response.data then
-			-- Sort by player count (highest first)
-			table.sort(response.data, function(a, b)
-				return a.playing > b.playing
-			end)
-	
-			-- Create server rows with yielding
-			for i, serverData in ipairs(response.data) do
-				createServerRow(serverData, i)
-	
-				-- Yield every 5 servers to reduce lag
-				if i % 5 == 0 then
-					task.wait()
-				end
-			end
-	
-			-- Update canvas size after all servers loaded
-			task.wait(0.2)
-			updateCanvasSize()
-		else
-			warn("Failed to update server list")
+		if not success or not response or not response.data then
+			warn("Failed to fetch server data")
+			isUpdating = false
+			return
 		end
+	
+		-- Destroy old server frames (NOT the template)
+		for _, child in pairs(ServerList:GetChildren()) do
+			if child:IsA("Frame") and child.Name ~= "ServerList" then
+				child:Destroy()
+			end
+		end
+	
+		task.wait(0.05)
+	
+		-- Sort by player count (highest first)
+		table.sort(response.data, function(a, b)
+			return a.playing > b.playing
+		end)
+	
+		-- Create server rows
+		for i, serverData in ipairs(response.data) do
+			createServerRow(serverData, i)
+	
+			-- Yield every 5 servers
+			if i % 5 == 0 then
+				task.wait()
+			end
+		end
+	
+		-- Update canvas size
+		updateCanvasSize()
 	
 		isUpdating = false
 	end
 	
-	-- Auto-update canvas size when content changes
+	-- Auto-update canvas size
 	ServerList.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		updateCanvasSize()
 	end)
 	
-	-- Listen for refresh event
-	if RefreshEvent then
-		RefreshEvent.Event:Connect(function()
-			if not isUpdating then
-				updateServerList()
-			end
-		end)
-	end
+	-- Initialize template
+	initTemplate()
 	
-	-- Initial update with delay
-	task.wait(1)
+	-- Wait for refresh event
+	task.spawn(function()
+		task.wait(2)
+		local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
+	
+		if RefreshEvent then
+			RefreshEvent.Event:Connect(function()
+				if not isUpdating then
+					updateServerList()
+				end
+			end)
+		end
+	end)
+	
+	-- Initial update
+	task.wait(1.5)
 	updateServerList()
 end;
 task.spawn(C_13);
