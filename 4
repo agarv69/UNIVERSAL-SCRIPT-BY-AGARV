@@ -375,7 +375,6 @@ task.spawn(C_a);
 local function C_13()
 local script = G2L["13"];
 	local ServerList = script.Parent
-	local ServerTemplate = ServerList:FindFirstChild("ServerList")
 	local MainFrame = script.Parent.Parent.Parent
 	local HttpService = game:GetService("HttpService")
 	local TeleportService = game:GetService("TeleportService")
@@ -405,10 +404,31 @@ local script = G2L["13"];
 	local currentServer = game.JobId
 	local isUpdating = false
 	
-	local function createServerRow(serverData, layoutOrder)
-		if not ServerTemplate then return end
+	-- Store the template permanently
+	local ServerTemplate = ServerList:FindFirstChild("ServerList")
 	
-		local newRow = ServerTemplate:Clone()
+	if ServerTemplate then
+		ServerTemplate.Visible = false
+		ServerTemplate.LayoutOrder = 999999
+	else
+		warn("ServerTemplate not found!")
+	end
+	
+	local function createServerRow(serverData, layoutOrder)
+		if not ServerTemplate then 
+			warn("Template is missing!")
+			return 
+		end
+	
+		local success, newRow = pcall(function()
+			return ServerTemplate:Clone()
+		end)
+	
+		if not success or not newRow then
+			warn("Failed to clone template")
+			return
+		end
+	
 		newRow.Name = "ServerList_" .. serverData.id
 		newRow.Visible = true
 		newRow.LayoutOrder = layoutOrder
@@ -456,7 +476,9 @@ local script = G2L["13"];
 		-- CopyID button
 		if copyButton then
 			copyButton.MouseButton1Click:Connect(function()
-				setclipboard(tostring(serverData.id))
+				pcall(function()
+					setclipboard(tostring(serverData.id))
+				end)
 			end)
 		end
 	
@@ -468,29 +490,35 @@ local script = G2L["13"];
 						writefile("previousserverss.txt", tostring(currentServer))
 					end)
 				end
-				TeleportService:TeleportToPlaceInstance(game.PlaceId, serverData.id, Players.LocalPlayer)
+				pcall(function()
+					TeleportService:TeleportToPlaceInstance(game.PlaceId, serverData.id, Players.LocalPlayer)
+				end)
 			end)
 		end
 	
 		newRow.Parent = ServerList
+		return true
 	end
 	
 	local function updateCanvasSize()
-		task.wait(0.1)
+		task.wait(0.15)
 		local contentSize = ServerList.UIListLayout.AbsoluteContentSize
-		ServerList.CanvasSize = UDim2.new(0, 0, 0, contentSize.Y)
+		ServerList.CanvasSize = UDim2.new(0, 0, 0, contentSize.Y + 10)
 	end
 	
 	local function updateServerList()
 		if isUpdating then 
-			warn("Already updating, skipping...")
 			return 
 		end
+	
+		if not ServerTemplate then
+			warn("Cannot update - template missing")
+			return
+		end
+	
 		isUpdating = true
 	
-		print("Starting server list update...")
-	
-		-- Fetch servers FIRST before destroying anything
+		-- Fetch servers FIRST
 		local success, response = pcall(function()
 			local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Desc&limit=100"
 	
@@ -502,73 +530,88 @@ local script = G2L["13"];
 			end
 		end)
 	
-		if not success or not response or not response.data then
-			warn("Failed to fetch server data")
+		if not success then
+			warn("HTTP request failed")
 			isUpdating = false
 			return
 		end
 	
-		print("Fetched " .. #response.data .. " servers")
+		if not response or not response.data or #response.data == 0 then
+			warn("No server data received")
+			isUpdating = false
+			return
+		end
 	
-		-- NOW destroy old frames
+		-- Destroy old server frames (NOT the template)
 		for _, child in pairs(ServerList:GetChildren()) do
-			if child:IsA("Frame") then
-				child:Destroy()
+			if child:IsA("Frame") and child.Name ~= "ServerList" then
+				pcall(function()
+					child:Destroy()
+				end)
 			end
 		end
 	
-		task.wait(0.05)
+		task.wait(0.1)
 	
 		-- Sort by player count (highest first)
 		table.sort(response.data, function(a, b)
 			return a.playing > b.playing
 		end)
 	
-		-- Create server rows with yielding
+		-- Create server rows
+		local created = 0
 		for i, serverData in ipairs(response.data) do
-			createServerRow(serverData, i)
+			if createServerRow(serverData, i) then
+				created = created + 1
+			end
 	
-			-- Yield every 5 servers to reduce lag
-			if i % 5 == 0 then
-				task.wait()
+			-- Yield every 3 servers for smoother loading
+			if i % 3 == 0 then
+				task.wait(0.03)
 			end
 		end
 	
-		print("Created all server frames")
+		print("Created " .. created .. " server frames out of " .. #response.data)
 	
-		-- Update canvas size after all servers loaded
+		-- Update canvas size
+		task.wait(0.2)
 		updateCanvasSize()
 	
 		isUpdating = false
 	end
 	
-	-- Auto-update canvas size when content changes
+	-- Auto-update canvas size
 	ServerList.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		updateCanvasSize()
 	end)
 	
-	-- Wait for refresh event
+	-- Wait for refresh event with multiple retries
 	task.spawn(function()
-		task.wait(2)
-		local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
+		for i = 1, 5 do
+			task.wait(1)
+			local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
 	
-		if RefreshEvent then
-			print("Found RefreshEvent, connecting...")
-			RefreshEvent.Event:Connect(function()
-				print("Refresh event fired!")
-				if not isUpdating then
-					updateServerList()
-				end
-			end)
-		else
-			warn("RefreshEvent not found!")
+			if RefreshEvent then
+				print("Connected to RefreshEvent")
+				RefreshEvent.Event:Connect(function()
+					if not isUpdating then
+						updateServerList()
+					end
+				end)
+				break
+			else
+				warn("RefreshEvent not found, retry " .. i .. "/5")
+			end
 		end
 	end)
 	
-	-- Initial update
-	task.wait(1.5)
-	print("Running initial server list update...")
-	updateServerList()
+	-- Initial update with longer delay
+	task.wait(2)
+	if ServerTemplate then
+		updateServerList()
+	else
+		warn("Cannot run initial update - template is missing")
+	end
 end;
 task.spawn(C_13);
 -- StarterGui.ServerHopper.MainFrame.ContentArea.BottomRow.LastUpdated.LastUpdated
