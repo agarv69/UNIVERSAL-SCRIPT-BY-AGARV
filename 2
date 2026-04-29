@@ -962,15 +962,38 @@ local script = G2L["a"];
 	local RefreshButton = script.Parent
 	local MainFrame = script.Parent.Parent.Parent.Parent
 	
-	task.wait(1) -- Wait for event to be created
-	
+	-- Create refresh event
 	local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
-	
-	if RefreshEvent then
-		RefreshButton.MouseButton1Click:Connect(function()
-			RefreshEvent:Fire() -- Fire with no data to trigger update
-		end)
+	if not RefreshEvent then
+		RefreshEvent = Instance.new("BindableEvent")
+		RefreshEvent.Name = "ServerHopperRefresh"
+		RefreshEvent.Parent = MainFrame
 	end
+	
+	local autoRefreshTimer = 0
+	
+	-- Auto-refresh timer (counts every second)
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			autoRefreshTimer = autoRefreshTimer + 1
+	
+			if autoRefreshTimer >= 60 then
+				autoRefreshTimer = 0
+				RefreshEvent:Fire()
+			end
+		end
+	end)
+	
+	-- Manual refresh when button clicked
+	RefreshButton.MouseButton1Click:Connect(function()
+		autoRefreshTimer = 0 -- Reset the 60 second timer
+		RefreshEvent:Fire()
+	end)
+	
+	-- Fire initial refresh
+	task.wait(0.5)
+	RefreshEvent:Fire()
 end;
 task.spawn(C_a);
 -- StarterGui.ServerHopper.MainFrame.ContentArea.BottomRow.LastUpdated.LastUpdated
@@ -980,7 +1003,10 @@ local script = G2L["42"];
 	local MainFrame = script.Parent.Parent.Parent.Parent
 	local timeSinceUpdate = 0
 	
-	-- Stopwatch that counts up
+	-- Wait for refresh event
+	local RefreshEvent = MainFrame:WaitForChild("ServerHopperRefresh", 30)
+	
+	-- Stopwatch
 	task.spawn(function()
 		while true do
 			task.wait(0.1)
@@ -989,16 +1015,12 @@ local script = G2L["42"];
 		end
 	end)
 	
-	-- Wait for refresh event in separate thread
-	task.spawn(function()
-		local RefreshEvent = MainFrame:WaitForChild("ServerHopperRefresh", 30)
-	
-		if RefreshEvent then
-			RefreshEvent.Event:Connect(function()
-				timeSinceUpdate = 0
-			end)
-		end
-	end)
+	-- Reset on refresh
+	if RefreshEvent then
+		RefreshEvent.Event:Connect(function()
+			timeSinceUpdate = 0
+		end)
+	end
 end;
 task.spawn(C_42);
 -- StarterGui.ServerHopper.MainFrame.ContentArea.BottomRow.ServerCount.ServerCount
@@ -1008,10 +1030,7 @@ local script = G2L["45"];
 	local MainFrame = script.Parent.Parent.Parent.Parent.Parent
 	local HttpService = game:GetService("HttpService")
 	
-	-- Get the request function (executor-specific)
-	local request = request or http_request or syn.request or http.request or fluxus.request
-	
-	-- Create refresh event
+	-- Find or create refresh event
 	local RefreshEvent = MainFrame:FindFirstChild("ServerHopperRefresh")
 	if not RefreshEvent then
 		RefreshEvent = Instance.new("BindableEvent")
@@ -1019,55 +1038,36 @@ local script = G2L["45"];
 		RefreshEvent.Parent = MainFrame
 	end
 	
-	local isUpdating = false
-	
 	local function updateServerCount()
-		if isUpdating then return end
-		isUpdating = true
-	
 		local success = pcall(function()
 			local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Desc&limit=100"
-	
-			-- Use request instead of game:HttpGet
-			local response = request({Url = url, Method = "GET"})
-			local data = HttpService:JSONDecode(response.Body)
+			local response = game:HttpGet(url)
+			local data = HttpService:JSONDecode(response)
 	
 			local serverCount = 0
 			if data and data.data then
 				serverCount = #data.data
 			end
 	
-			ServerCountLabel.Text = "Server Count: " .. tostring(serverCount) .. "/100+"
-	
-			-- Fire event with server data AND reset timer
-			RefreshEvent:Fire(data.data)
+			if serverCount == 100 then
+				ServerCountLabel.Text = "Server Count: 100+"
+			else
+				ServerCountLabel.Text = "Server Count: " .. tostring(serverCount)
+			end
 		end)
 	
 		if not success then
 			ServerCountLabel.Text = "Server Count: Error"
 		end
-	
-		isUpdating = false
 	end
 	
-	-- Initial update
+	-- Listen for refresh event
+	RefreshEvent.Event:Connect(function()
+		updateServerCount()
+	end)
+	
+	-- Update immediately on startup
 	updateServerCount()
-	
-	-- Auto-refresh every 60 seconds
-	task.spawn(function()
-		while true do
-			task.wait(60)
-			updateServerCount()
-		end
-	end)
-	
-	-- Listen for manual refresh from button
-	RefreshEvent.Event:Connect(function(data)
-		-- Only update if no data (meaning it came from refresh button, not from this script)
-		if not data then
-			updateServerCount()
-		end
-	end)
 end;
 task.spawn(C_45);
 -- StarterGui.ServerHopper.MainFrame.TopBar.DestroyDragScript
