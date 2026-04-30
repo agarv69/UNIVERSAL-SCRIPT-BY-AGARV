@@ -1,50 +1,42 @@
--- LocalScript in StarterPlayer > StarterCharacterScripts
-
 local player = game.Players.LocalPlayer
-local character = script.Parent
-local humanoid = character:WaitForChild("Humanoid")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
 
--- Monitor for death/respawn
-humanoid.Died:Connect(function()
-    -- Wait a brief moment for the death to register
-    wait(0.1)
+local function fixAll()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
     
-    -- Force unlock inventory by resetting BackpackEnabled
-    player.PlayerGui:SetTopbarTransparency(0)
+    StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
     
-    -- Reset walkspeed if it's stuck at 0
-    if humanoid.WalkSpeed == 0 then
-        humanoid.WalkSpeed = 16 -- Default walkspeed
-    end
-    
-    -- Fix camera after respawn
     workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
     workspace.CurrentCamera.CameraSubject = humanoid
-end)
-
--- Additional safeguard: periodically check if stuck
-spawn(function()
-    while wait(1) do
-        if humanoid.Health > 0 and humanoid.WalkSpeed == 0 then
-            -- Player is alive but stuck at 0 walkspeed (vampire ability effect)
-            wait(3.1) -- Wait slightly longer than the 3-second freeze
-            
-            if humanoid.WalkSpeed == 0 then
-                humanoid.WalkSpeed = 16
-            end
-        end
-    end
-end)
-
--- Camera fix function
-local function fixCamera()
-    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-    workspace.CurrentCamera.CameraSubject = humanoid
+    
+    print("Fixed camera and inventory!")
 end
 
--- Monitor for camera issues
-workspace.CurrentCamera:GetPropertyChangedSignal("CameraSubject"):Connect(function()
-    if workspace.CurrentCamera.CameraSubject ~= humanoid and humanoid.Health > 0 then
-        fixCamera()
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.R then
+        fixAll()
+    end
+end)
+
+player.CharacterAdded:Connect(function(character)
+    wait(0.5)
+    fixAll()
+end)
+
+spawn(function()
+    while wait(0.5) do
+        if player.Character then
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            
+            if humanoid and humanoid.Health > 0 then
+                pcall(function()
+                    StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
+                end)
+            end
+        end
     end
 end)
