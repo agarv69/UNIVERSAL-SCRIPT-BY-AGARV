@@ -3171,7 +3171,7 @@ G2L["122"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["122"]["BackgroundTransparency"] = 1;
 G2L["122"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["122"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["122"]["Text"] = [[Anti Glitch]];
+G2L["122"]["Text"] = [[Anti Teleport]];
 G2L["122"]["Name"] = [[AntiTeleportText]];
 G2L["122"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -18692,9 +18692,8 @@ task.spawn(C_11d);
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTeleportRow.AntiTeleportScript
 local function C_123()
 local script = G2L["123"];
-	local Players = game:GetService("Players")
+	local player = game.Players.LocalPlayer
 	local RunService = game:GetService("RunService")
-	local LocalPlayer = Players.LocalPlayer
 	
 	local AntiTeleportRow = script.Parent
 	local AntiGroup = AntiTeleportRow.Parent
@@ -18764,7 +18763,7 @@ local script = G2L["123"];
 	RunService.RenderStepped:Connect(function()
 		if not isEnabled then return end
 	
-		local Char = LocalPlayer.Character
+		local Char = player.Character
 		if not Char then return end
 	
 		local Root = Char:FindFirstChild("HumanoidRootPart")
