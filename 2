@@ -20968,7 +20968,7 @@ local script = G2L["178"];
 		return LocalPlayer.Character.HumanoidRootPart.Position
 	end
 	
-	local function equiptool(toolname)
+	local function findtool(toolname)
 		for i,v in pairs(LocalPlayer.Character:GetChildren()) do
 			if v:IsA("Tool") and v.Name:find(toolname) then
 				return v
@@ -20976,11 +20976,18 @@ local script = G2L["178"];
 		end
 		for i,v in pairs(LocalPlayer.Backpack:GetChildren()) do
 			if v:IsA("Tool") and v.Name:find(toolname) then
-				v.Parent = LocalPlayer.Character
 				return v
 			end
 		end
 		return nil
+	end
+	
+	local function equiptool(toolname)
+		local tool = findtool(toolname)
+		if tool and tool.Parent == LocalPlayer.Backpack then
+			tool.Parent = LocalPlayer.Character
+		end
+		return tool
 	end
 	
 	local function restoreBrick()
@@ -21015,10 +21022,49 @@ local script = G2L["178"];
 			end
 		end
 	
-		local et = equiptool("Build")
-		if not et then
-			warn("Build tool not found")
+		local currentlyEquipped = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+	
+		local buildtool = findtool("Build")
+		local painttool = findtool("Paint")
+		local shapetool = findtool("Shape")
+	
+		if not (buildtool and painttool and shapetool) then
+			warn("Build, Paint, or Shape tool not found")
 			return false
+		end
+	
+		if buildtool.Parent == LocalPlayer.Backpack then
+			buildtool.Parent = LocalPlayer.Character
+		end
+		if painttool.Parent == LocalPlayer.Backpack then
+			painttool.Parent = LocalPlayer.Character
+		end
+		if shapetool.Parent == LocalPlayer.Backpack then
+			shapetool.Parent = LocalPlayer.Character
+		end
+	
+		task.wait(0.1)
+	
+		if not currentlyEquipped or (currentlyEquipped.Name ~= buildtool.Name and currentlyEquipped.Name ~= painttool.Name and currentlyEquipped.Name ~= shapetool.Name) then
+			if buildtool.Parent == LocalPlayer.Character then
+				buildtool.Parent = LocalPlayer.Backpack
+			end
+			if painttool.Parent == LocalPlayer.Character then
+				painttool.Parent = LocalPlayer.Backpack
+			end
+			if shapetool.Parent == LocalPlayer.Character then
+				shapetool.Parent = LocalPlayer.Backpack
+			end
+		else
+			if currentlyEquipped.Name ~= buildtool.Name and buildtool.Parent == LocalPlayer.Character then
+				buildtool.Parent = LocalPlayer.Backpack
+			end
+			if currentlyEquipped.Name ~= painttool.Name and painttool.Parent == LocalPlayer.Character then
+				painttool.Parent = LocalPlayer.Backpack
+			end
+			if currentlyEquipped.Name ~= shapetool.Name and shapetool.Parent == LocalPlayer.Character then
+				shapetool.Parent = LocalPlayer.Backpack
+			end
 		end
 	
 		task.wait(ws)
@@ -21054,15 +21100,9 @@ local script = G2L["178"];
 	
 		for i,v in pairs(currbc) do
 			if v ~= nil and typeof(v) == "Instance" then
-				et = equiptool("Build")
-				if not et then
-					warn("Build tool lost")
-					break
-				end
-	
 				block = v
-				if et:FindFirstChild("Script") and et.Script:FindFirstChild("Event") then
-					et.Script.Event:FireServer(
+				if buildtool:FindFirstChild("Script") and buildtool.Script:FindFirstChild("Event") then
+					buildtool.Script.Event:FireServer(
 						block,
 						Enum.NormalId.Top,
 						getplrpos(),
@@ -21083,14 +21123,6 @@ local script = G2L["178"];
 		block = playerfolder:FindFirstChildWhichIsA("BasePart")
 	
 		if block then
-			local painttool = equiptool("Paint")
-			local shapetool = equiptool("Shape")
-	
-			if not (painttool and shapetool) then
-				warn("Paint or Shape tool not found")
-				return false
-			end
-	
 			block = playerfolder:GetChildren()[#playerfolder:GetChildren()]
 	
 			if block.Material ~= Enum.Material.Plastic then
@@ -21133,56 +21165,63 @@ local script = G2L["178"];
 				shapetool.Script.Event:FireServer(
 					block,
 					Enum.NormalId.Left,
-					nil,
+					block.Position,
 					"increase"
 				)
+				task.wait(0.15)
 			end
 	
 			for i=1, 3-blockpos.X do
 				shapetool.Script.Event:FireServer(
 					block,
 					Enum.NormalId.Right,
-					nil,
+					block.Position,
 					"increase"
 				)
+				task.wait(0.15)
 			end
 	
 			for i=1, blockpos.Y do
 				shapetool.Script.Event:FireServer(
 					block,
 					Enum.NormalId.Bottom,
-					nil,
+					block.Position,
 					"increase"
 				)
+				task.wait(0.15)
 			end
 	
 			for i=1, 3-blockpos.Y do
 				shapetool.Script.Event:FireServer(
 					block,
 					Enum.NormalId.Top,
-					nil,
+					block.Position,
 					"increase"
 				)
+				task.wait(0.15)
 			end
 	
 			for i=1, blockpos.Z do
 				shapetool.Script.Event:FireServer(
 					block,
 					Enum.NormalId.Front,
-					nil,
+					block.Position,
 					"increase"
 				)
+				task.wait(0.15)
 			end
 	
 			for i=1, 3-blockpos.Z do
 				shapetool.Script.Event:FireServer(
 					block,
 					Enum.NormalId.Back,
-					nil,
+					block.Position,
 					"increase"
 				)
+				task.wait(0.15)
 			end
 	
+			task.wait(0.5)
 			return true
 		else
 			warn("No block created")
