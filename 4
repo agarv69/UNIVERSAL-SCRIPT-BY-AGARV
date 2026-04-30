@@ -20941,6 +20941,29 @@ local script = G2L["178"];
 		tooltipFrame.Visible = false
 	end)
 	
+	if getgenv().brickcollection == nil then
+		getgenv().brickcollection = {}
+	end
+	
+	local brickname = "Brick"
+	local cfolder = workspace:FindFirstChild("Bricks") or workspace:FindFirstChild("Blocks")
+	
+	local function dbc(b)
+		if b.Name ~= brickname then
+			return
+		end
+		if not table.find(getgenv().brickcollection, b) then
+			table.insert(getgenv().brickcollection, 1, b)
+		end
+	end
+	
+	if cfolder then
+		cfolder.DescendantAdded:Connect(dbc)
+		for i,v in pairs(cfolder:GetDescendants()) do
+			dbc(v)
+		end
+	end
+	
 	local function getplrpos()
 		return LocalPlayer.Character.HumanoidRootPart.Position
 	end
@@ -20960,17 +20983,17 @@ local script = G2L["178"];
 		return nil
 	end
 	
-	local function addqueue(toolname, args, priority)
-		local tool = equiptool(toolname)
-		if tool and tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event") then
-			tool.Script.Event:FireServer(unpack(args))
-		end
-	end
-	
 	local function restoreBrick()
-		local brickname = "Brick"
 		local rs = game:GetService("ReplicatedStorage")
 		local ws = 0.235
+	
+		if not cfolder then
+			cfolder = workspace:FindFirstChild("Bricks") or workspace:FindFirstChild("Blocks")
+			if not cfolder then
+				warn("Bricks/Blocks folder not found")
+				return false
+			end
+		end
 	
 		if not rs:FindFirstChild(brickname) then
 			local brick = Instance.new("Part")
@@ -20993,129 +21016,185 @@ local script = G2L["178"];
 		end
 	
 		local et = equiptool("Build")
-		if et then
-			task.wait(ws)
+		if not et then
+			warn("Build tool not found")
+			return false
+		end
 	
-			if et:FindFirstChild("Script") and et.Script:FindFirstChild("Event") then
-				et.Script.Event:FireServer(
-					rs:FindFirstChild(brickname),
-					Enum.NormalId.Top,
-					getplrpos(),
-					"detailed"
-				)
-			end
+		task.wait(ws)
 	
-			task.wait(1)
-	
-			local cfolder = workspace:FindFirstChild("Blocks")
-			if cfolder then
-				local playerfolder = cfolder:FindFirstChild(LocalPlayer.Name)
-				if playerfolder then
-					local block = playerfolder:FindFirstChildWhichIsA("BasePart")
-	
-					if block then
-						local painttool = equiptool("Paint")
-						local shapetool = equiptool("Shape")
-	
-						if painttool and shapetool then
-							if block.Material ~= Enum.Material.Plastic then
-								painttool.Script.Event:FireServer(
-									block,
-									Enum.NormalId.Top,
-									getplrpos(),
-									"material",
-									Color3.fromRGB(192,192,192),
-									"plastic",
-									""
-								)
-								task.wait(ws*2)
-							end
-	
-							if not block.Anchored or block.CFrame - block.Position ~= CFrame.new() then
-								local l = tick()
-								repeat
-									if tick() > l then
-										l = tick()+(ws*2)
-										painttool.Script.Event:FireServer(
-											block,
-											Enum.NormalId.Top,
-											getplrpos(),
-											"both 🤝",
-											Color3.fromRGB(192,192,192),
-											"anchor",
-											""
-										)
-									end
-									task.wait()
-								until block.Anchored and block.CFrame - block.Position == CFrame.new()
-							end
-	
-							local blockpos = block.Position
-							blockpos = Vector3.new(blockpos.X%4, blockpos.Y%4, blockpos.Z%4)
-							blockpos = blockpos - Vector3.new(0.5, 0.5, 0.5)
-	
-							for i=1, blockpos.X do
-								addqueue("Shape", {
-									block,
-									Enum.NormalId.Left,
-									nil,
-									"increase"
-								}, 3)
-							end
-	
-							for i=1, 3-blockpos.X do
-								addqueue("Shape", {
-									block,
-									Enum.NormalId.Right,
-									nil,
-									"increase"
-								}, 3)
-							end
-	
-							for i=1, blockpos.Y do
-								addqueue("Shape", {
-									block,
-									Enum.NormalId.Bottom,
-									nil,
-									"increase"
-								}, 3)
-							end
-	
-							for i=1, 3-blockpos.Y do
-								addqueue("Shape", {
-									block,
-									Enum.NormalId.Top,
-									nil,
-									"increase"
-								}, 3)
-							end
-	
-							for i=1, blockpos.Z do
-								addqueue("Shape", {
-									block,
-									Enum.NormalId.Front,
-									nil,
-									"increase"
-								}, 3)
-							end
-	
-							for i=1, 3-blockpos.Z do
-								addqueue("Shape", {
-									block,
-									Enum.NormalId.Back,
-									nil,
-									"increase"
-								}, 3)
-							end
-	
-							return true
-						end
+		local currbc = {}
+		local ins = 1
+		for i,v in pairs(getgenv().brickcollection) do
+			if v ~= nil then
+				if v:GetFullName() ~= brickname and v.Name ~= "Debris" then
+					table.insert(currbc, 1, v)
+					ins += 1
+				else
+					table.insert(currbc, v)
+					if i%2 == 1 then
+						table.insert(currbc, v)
+					else
+						table.insert(currbc, ins, v)
 					end
 				end
+			else
+				table.remove(getgenv().brickcollection, table.find(getgenv().brickcollection, v))
 			end
 		end
 	
-		return false
+		local playerfolder = cfolder:FindFirstChild(LocalPlayer.Name)
+		if not playerfolder then
+			warn("Player folder not found")
+			return false
+		end
+	
+		local block = nil
+		local beforeamt = #playerfolder:GetChildren()
+	
+		for i,v in pairs(currbc) do
+			if v ~= nil and typeof(v) == "Instance" then
+				et = equiptool("Build")
+				if not et then
+					warn("Build tool lost")
+					break
+				end
+	
+				block = v
+				if et:FindFirstChild("Script") and et.Script:FindFirstChild("Event") then
+					et.Script.Event:FireServer(
+						block,
+						Enum.NormalId.Top,
+						getplrpos(),
+						"detailed"
+					)
+				end
+	
+				task.wait(ws)
+				if beforeamt < #playerfolder:GetChildren() then
+					break
+				end
+			else
+				table.remove(currbc, table.find(currbc, v))
+			end
+		end
+	
+		task.wait(1)
+		block = playerfolder:FindFirstChildWhichIsA("BasePart")
+	
+		if block then
+			local painttool = equiptool("Paint")
+			local shapetool = equiptool("Shape")
+	
+			if not (painttool and shapetool) then
+				warn("Paint or Shape tool not found")
+				return false
+			end
+	
+			block = playerfolder:GetChildren()[#playerfolder:GetChildren()]
+	
+			if block.Material ~= Enum.Material.Plastic then
+				painttool.Script.Event:FireServer(
+					block,
+					Enum.NormalId.Top,
+					getplrpos(),
+					"material",
+					Color3.fromRGB(192,192,192),
+					"plastic",
+					""
+				)
+				task.wait(ws*2)
+			end
+	
+			if not block.Anchored or block.CFrame - block.Position ~= CFrame.new() then
+				local l = tick()
+				repeat
+					if tick() > l then
+						l = tick()+(ws*2)
+						painttool.Script.Event:FireServer(
+							block,
+							Enum.NormalId.Top,
+							getplrpos(),
+							"both 🤝",
+							Color3.fromRGB(192,192,192),
+							"anchor",
+							""
+						)
+					end
+					task.wait()
+				until block.Anchored and block.CFrame - block.Position == CFrame.new()
+			end
+	
+			local blockpos = block.Position
+			blockpos = Vector3.new(blockpos.X%4, blockpos.Y%4, blockpos.Z%4)
+			blockpos = blockpos - Vector3.new(0.5, 0.5, 0.5)
+	
+			for i=1, blockpos.X do
+				shapetool.Script.Event:FireServer(
+					block,
+					Enum.NormalId.Left,
+					nil,
+					"increase"
+				)
+				task.wait(0.1)
+			end
+	
+			for i=1, 3-blockpos.X do
+				shapetool.Script.Event:FireServer(
+					block,
+					Enum.NormalId.Right,
+					nil,
+					"increase"
+				)
+				task.wait(0.1)
+			end
+	
+			for i=1, blockpos.Y do
+				shapetool.Script.Event:FireServer(
+					block,
+					Enum.NormalId.Bottom,
+					nil,
+					"increase"
+				)
+				task.wait(0.1)
+			end
+	
+			for i=1, 3-blockpos.Y do
+				shapetool.Script.Event:FireServer(
+					block,
+					Enum.NormalId.Top,
+					nil,
+					"increase"
+				)
+				task.wait(0.1)
+			end
+	
+			for i=1, blockpos.Z do
+				shapetool.Script.Event:FireServer(
+					block,
+					Enum.NormalId.Front,
+					nil,
+					"increase"
+				)
+				task.wait(0.1)
+			end
+	
+			for i=1, 3-blockpos.Z do
+				shapetool.Script.Event:FireServer(
+					block,
+					Enum.NormalId.Back,
+					nil,
+					"increase"
+				)
+				task.wait(0.1)
+			end
+	
+			task.wait(0.5)
+			return true
+		else
+			warn("No block created")
+			return false
+		end
 	end
 	
 	RestoreBrickButton.MouseButton1Click:Connect(function()
