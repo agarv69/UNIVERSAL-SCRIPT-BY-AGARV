@@ -21238,9 +21238,9 @@ local script = G2L["18b"];
 	local LocalPlayer = Players.LocalPlayer
 	local RunService = game:GetService("RunService")
 	
-	local GriefAllRow = script.Parent
-	local GriefGroup = GriefAllRow.Parent
-	local GriefAllButton = GriefAllRow:WaitForChild("GriefAllButton")
+	local ToggleGriefRow = script.Parent
+	local GriefGroup = ToggleGriefRow.Parent
+	local ToggleGriefButton = ToggleGriefRow:WaitForChild("GriefAllButton")
 	
 	-- State
 	local isGriefing = false
@@ -21255,22 +21255,18 @@ local script = G2L["18b"];
 	local ws = 0.05
 	
 	-- ============================================================
-	-- GET ALL BLOCKS (EVERYONE)
+	-- GET ALL TARGET BLOCKS (INFINITE RANGE - EVERYONE)
 	-- ============================================================
-	local function getAllBlocks()
+	local function getAllTargetBlocks()
 		local blocks = {}
 		local bricksFolder = workspace:FindFirstChild("Bricks")
 	
 		if not bricksFolder then return blocks end
 	
-		-- Get ALL blocks from ALL players
-		for _, playerFolder in ipairs(bricksFolder:GetChildren()) do
-			if playerFolder:IsA("Folder") then
-				for _, brick in ipairs(playerFolder:GetChildren()) do
-					if brick:IsA("BasePart") and brick.Name == "Brick" then
-						table.insert(blocks, brick)
-					end
-				end
+		-- Get ALL descendants that are bricks
+		for _, brick in ipairs(bricksFolder:GetDescendants()) do
+			if brick:IsA("BasePart") and brick.Name == "Brick" then
+				table.insert(blocks, brick)
 			end
 		end
 	
@@ -21311,21 +21307,19 @@ local script = G2L["18b"];
 	end
 	
 	-- ============================================================
-	-- START GRIEFING ALL
+	-- START GRIEFING
 	-- ============================================================
 	local function startGrief()
 		local dtools = findDeleteTools()
 		if #dtools == 0 then
-			GriefAllButton.Text = "Delete tool not found"
+			ToggleGriefButton.Text = "Delete tool not found"
 			task.wait(1)
-			GriefAllButton.Text = TEXT_START
+			ToggleGriefButton.Text = TEXT_START
 			return
 		end
 	
 		isGriefing = true
-		GriefAllButton.Text = TEXT_STOP
-	
-		print("[GriefAll] Starting to delete ALL blocks from EVERYONE")
+		ToggleGriefButton.Text = TEXT_STOP
 	
 		griefLoop = task.spawn(function()
 			local dti = 0
@@ -21341,7 +21335,7 @@ local script = G2L["18b"];
 				local dtools = findDeleteTools()
 	
 				if #dtools > 0 then
-					local targetBlocks = getAllBlocks()
+					local targetBlocks = getAllTargetBlocks()
 	
 					if #targetBlocks > 0 then
 						-- Refresh every 10 seconds (only if not already equipped)
@@ -21378,7 +21372,7 @@ local script = G2L["18b"];
 							lastRefreshTime = tick()
 						end
 	
-						-- Fire delete events for ALL blocks
+						-- Fire delete events
 						for _, block in pairs(targetBlocks) do
 							if not isGriefing then break end
 	
@@ -21410,7 +21404,7 @@ local script = G2L["18b"];
 	-- ============================================================
 	local function stopGrief()
 		isGriefing = false
-		GriefAllButton.Text = TEXT_START
+		ToggleGriefButton.Text = TEXT_START
 	
 		if griefLoop then
 			task.cancel(griefLoop)
@@ -21424,32 +21418,27 @@ local script = G2L["18b"];
 				dt.bt.Parent = LocalPlayer.Backpack
 			end
 		end
-	
-		print("[GriefAll] Stopped")
 	end
 	
 	-- ============================================================
-	-- BUTTON HOVER (show errors)
+	-- BUTTON HANDLERS
 	-- ============================================================
-	GriefAllButton.MouseEnter:Connect(function()
+	ToggleGriefButton.MouseEnter:Connect(function()
 		if not isGriefing then
-			local targetBlocks = getAllBlocks()
+			local targetBlocks = getAllTargetBlocks()
 			if #targetBlocks == 0 then
-				GriefAllButton.Text = TEXT_NO_BLOCKS
+				ToggleGriefButton.Text = TEXT_NO_BLOCKS
 			end
 		end
 	end)
 	
-	GriefAllButton.MouseLeave:Connect(function()
+	ToggleGriefButton.MouseLeave:Connect(function()
 		if not isGriefing then
-			GriefAllButton.Text = TEXT_START
+			ToggleGriefButton.Text = TEXT_START
 		end
 	end)
 	
-	-- ============================================================
-	-- BUTTON CLICK HANDLER
-	-- ============================================================
-	GriefAllButton.MouseButton1Click:Connect(function()
+	ToggleGriefButton.MouseButton1Click:Connect(function()
 		if isGriefing then
 			stopGrief()
 		else
@@ -21457,15 +21446,11 @@ local script = G2L["18b"];
 		end
 	end)
 	
-	-- ============================================================
-	-- CLEANUP
-	-- ============================================================
 	script.AncestryChanged:Connect(function()
 		if not script:IsDescendantOf(game) then
 			if isGriefing then
 				stopGrief()
 			end
-			print("[GriefAll] Cleaned up")
 		end
 	end)
 end;
