@@ -21139,8 +21139,7 @@ local script = G2L["188"];
 		-- Start the grief loop (INFINITE RANGE)
 		griefLoop = task.spawn(function()
 			local dti = 0
-			local i = 0
-			local lastRefreshTime = tick()
+			local lastRefreshTime = 0 -- Start at 0 so it refreshes immediately
 	
 			while isGriefing do
 				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -21156,68 +21155,142 @@ local script = G2L["188"];
 					-- Get all target blocks (sorted by distance, infinite range)
 					local targetBlocks = getAllTargetBlocks()
 	
+					-- ONLY do stuff if there are blocks to delete
 					if #targetBlocks > 0 then
-						-- Delete blocks continuously
+						-- Refresh (equip/unequip) every 5 seconds to keep server accepting events
+						if tick() - lastRefreshTime >= 5 then
+							-- EQUIP delete tools (without unequipping other tools)
+							for _, dt in pairs(dtools) do
+								if dt.bt.Parent == LocalPlayer.Backpack then
+									dt.bt.Parent = LocalPlayer.Character
+								end
+							end
+	
+							-- Wait 1 frame
+							RunService.RenderStepped:Wait()
+	
+							-- FORCE UNEQUIP delete tools (keep trying until they're actually unequipped)
+							for _, dt in pairs(dtools) do
+								while dt.bt.Parent == LocalPlayer.Character do
+									dt.bt.Parent = LocalPlayer.Backpack
+									task.wait()
+								end
+							end
+	
+							lastRefreshTime = tick()
+						end
+	
+						-- CONSTANTLY fire delete events for all blocks
 						for _, block in pairs(targetBlocks) do
 							if not isGriefing then break end
 	
-							-- Check if block still exists
 							if block and block:IsDescendantOf(workspace) then
 								dti = dti + 1
 								local dt = dtools[(dti % #dtools) + 1]
 	
-								-- EQUIP delete tool WITHOUT unequipping other tools
-								if dt.bt.Parent == LocalPlayer.Backpack then
-									dt.bt.Parent = LocalPlayer.Character
-								end
-	
-								-- Wait one frame for it to register
-								RunService.RenderStepped:Wait()
-	
-								-- Fire delete event
 								pcall(function()
 									dt.e:FireServer(block, hrp.Position)
 								end)
 	
-								-- INSTANTLY UNEQUIP delete tool (without touching other tools)
-								if dt.bt.Parent == LocalPlayer.Character then
-									dt.bt.Parent = LocalPlayer.Backpack
-								end
-	
 								task.wait(ws / #dtools)
 							end
 						end
-	
-						-- Full refresh every 5 seconds (re-equip and unequip to keep it working)
-						if tick() - lastRefreshTime >= 5 then
-							for _, dt in pairs(dtools) do
-								-- Equip
-								if dt.bt.Parent == LocalPlayer.Backpack then
-									dt.bt.Parent = LocalPlayer.Character
-								end
-								RunService.RenderStepped:Wait()
-								-- Unequip
-								if dt.bt.Parent == LocalPlayer.Character then
-									dt.bt.Parent = LocalPlayer.Backpack
-								end
-							end
-							lastRefreshTime = tick()
-						end
-					end
-	
-					-- Refresh tools list every 20 iterations
-					i = i + 1
-					if i % 20 == 0 then
-						dtools = findDeleteTools()
+					else
+						-- No blocks, just wait
+						task.wait(0.5)
 					end
 				else
-					-- No delete tools, wait and retry
+					-- No delete tools, wait
 					task.wait(1)
 				end
 	
 				task.wait()
 			end
 		end)
+		local deleteToolsEquipped = false
+	
+		while isGriefing do
+			local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+			if not hrp then 
+				task.wait()
+				continue 
+			end
+	
+			-- Get delete tools
+			local dtools = findDeleteTools()
+	
+			if #dtools > 0 then
+				-- Get all target blocks (sorted by distance, infinite range)
+				local targetBlocks = getAllTargetBlocks()
+	
+				if #targetBlocks > 0 then
+					-- EQUIP delete tools at the start (keep them equipped)
+					if not deleteToolsEquipped then
+						for _, dt in pairs(dtools) do
+							if dt.bt.Parent == LocalPlayer.Backpack then
+								dt.bt.Parent = LocalPlayer.Character
+							end
+						end
+						RunService.RenderStepped:Wait()
+						deleteToolsEquipped = true
+					end
+	
+					-- Delete blocks continuously (tools stay equipped)
+					for _, block in pairs(targetBlocks) do
+						if not isGriefing then break end
+	
+						-- Check if block still exists
+						if block and block:IsDescendantOf(workspace) then
+							dti = dti + 1
+							local dt = dtools[(dti % #dtools) + 1]
+	
+							-- Fire delete event (tool already equipped)
+							pcall(function()
+								dt.e:FireServer(block, hrp.Position)
+							end)
+	
+							task.wait(ws / #dtools)
+						end
+					end
+	
+					-- Refresh every 5 seconds (FAST unequip/re-equip to keep it working)
+					if tick() - lastRefreshTime >= 5 then
+						-- UNEQUIP delete tools
+						for _, dt in pairs(dtools) do
+							if dt.bt.Parent == LocalPlayer.Character then
+								dt.bt.Parent = LocalPlayer.Backpack
+							end
+						end
+	
+						-- Wait one frame
+						RunService.RenderStepped:Wait()
+	
+						-- RE-EQUIP delete tools
+						for _, dt in pairs(dtools) do
+							if dt.bt.Parent == LocalPlayer.Backpack then
+								dt.bt.Parent = LocalPlayer.Character
+							end
+						end
+	
+						RunService.RenderStepped:Wait()
+						lastRefreshTime = tick()
+					end
+				end
+	
+				-- Refresh tools list every 20 iterations
+				i = i + 1
+				if i % 20 == 0 then
+					dtools = findDeleteTools()
+				end
+			else
+				-- No delete tools, wait and retry
+				deleteToolsEquipped = false
+				task.wait(1)
+			end
+	
+			task.wait()
+		end
+	end)
 	end
 	
 	-- ============================================================
@@ -21230,6 +21303,15 @@ local script = G2L["188"];
 		if griefLoop then
 			task.cancel(griefLoop)
 			griefLoop = nil
+		end
+	
+		-- Make sure all delete tools are unequipped
+		task.wait(0.1)
+		local dtools = findDeleteTools()
+		for _, dt in pairs(dtools) do
+			if dt.bt.Parent == LocalPlayer.Character then
+				dt.bt.Parent = LocalPlayer.Backpack
+			end
 		end
 	
 		print("[ToggleGrief] Grief stopped")
