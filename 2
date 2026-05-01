@@ -3494,7 +3494,7 @@ G2L["12c"]["Name"] = [[DetectionTCOPG]];
 G2L["12d"] = Instance.new("ScrollingFrame", G2L["16"]);
 G2L["12d"]["Active"] = true;
 G2L["12d"]["BorderSizePixel"] = 0;
-G2L["12d"]["CanvasPosition"] = Vector2.new(0, 299.00003);
+G2L["12d"]["CanvasPosition"] = Vector2.new(0, 99.00003);
 G2L["12d"]["Name"] = [[TCOTrollPage]];
 G2L["12d"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["12d"]["Size"] = UDim2.new(0, 349, 0, 233);
@@ -20960,12 +20960,14 @@ local script = G2L["188"];
 	local griefLoop = nil
 	local deleteTool = nil
 	local deleteEvent = nil
-	local lastRefreshTime = 0
 	
 	-- Text states
 	local TEXT_START = "Start Grief"
 	local TEXT_STOP = "Stop Grief"
 	local TEXT_NO_BLOCKS = "No Blocks Found"
+	
+	-- Network delay
+	local ws = 0.05
 	
 	-- ============================================================
 	-- GET SELECTED PLAYERS
@@ -20992,7 +20994,7 @@ local script = G2L["188"];
 	end
 	
 	-- ============================================================
-	-- GET ALL TARGET BLOCKS
+	-- GET ALL TARGET BLOCKS (INFINITE RANGE)
 	-- ============================================================
 	local function getAllTargetBlocks()
 		local blocks = {}
@@ -21001,6 +21003,7 @@ local script = G2L["188"];
 	
 		if not bricksFolder then return blocks end
 	
+		-- Get blocks from selected players only
 		for playerName, _ in pairs(selectedPlayers) do
 			local playerFolder = bricksFolder:FindFirstChild(playerName)
 			if playerFolder then
@@ -21010,6 +21013,16 @@ local script = G2L["188"];
 					end
 				end
 			end
+		end
+	
+		-- Sort by distance from LocalPlayer (closest first)
+		local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			table.sort(blocks, function(a, b)
+				local distA = (a.Position - hrp.Position).Magnitude
+				local distB = (b.Position - hrp.Position).Magnitude
+				return distA < distB
+			end)
 		end
 	
 		return blocks
@@ -21031,40 +21044,25 @@ local script = G2L["188"];
 		return nil
 	end
 	
-	-- INSTANT re-equip and unequip function (same as DeleteBypass)
+	-- INSTANT re-equip and unequip function (NO UNEQUIP OTHER TOOLS)
 	local function refreshDeleteTool()
 		local tool = hasDeleteTool()
 		if not tool then
 			return false
 		end
 	
-		-- Store currently equipped tool to re-equip it after
-		local previousTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
-	
-		-- Move to backpack if it's in character
-		if tool.Parent == LocalPlayer.Character then
-			tool.Parent = LocalPlayer.Backpack
-			task.wait()
-		end
-	
-		-- Equip delete tool instantly
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-			LocalPlayer.Character.Humanoid:EquipTool(tool)
-	
-			-- Use RenderStepped to unequip on the very next frame (invisible to player)
-			RunService.RenderStepped:Wait()
-	
-			-- Unequip immediately
-			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-				LocalPlayer.Character.Humanoid:UnequipTools()
+		if LocalPlayer.Character then
+			-- Equip delete tool directly WITHOUT unequipping other tools (like Equip Enlighten)
+			if tool.Parent == LocalPlayer.Backpack then
+				tool.Parent = LocalPlayer.Character
 			end
 	
-			-- Re-equip previous tool if there was one
-			if previousTool and previousTool.Parent == LocalPlayer.Backpack then
-				task.wait()
-				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-					LocalPlayer.Character.Humanoid:EquipTool(previousTool)
-				end
+			-- Wait one frame for it to register
+			RunService.RenderStepped:Wait()
+	
+			-- Instantly unequip ONLY the delete tool
+			if tool.Parent == LocalPlayer.Character then
+				tool.Parent = LocalPlayer.Backpack
 			end
 	
 			return true
@@ -21074,7 +21072,38 @@ local script = G2L["188"];
 	end
 	
 	-- ============================================================
-	-- START GRIEFING
+	-- GET DELETE TOOLS (like Mental's script)
+	-- ============================================================
+	local function findDeleteTools()
+		local dtools = {}
+	
+		-- Check backpack
+		for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
+			if v:IsA("Tool") and v.Name == "Delete" and v:FindFirstChild("Script") and v.Script:FindFirstChild("Event") then
+				table.insert(dtools, {bt = v, e = v.Script.Event})
+			end
+		end
+	
+		-- Check character
+		if LocalPlayer.Character then
+			for _, v in pairs(LocalPlayer.Character:GetChildren()) do
+				if v:IsA("Tool") and v.Name == "Delete" and v:FindFirstChild("Script") and v.Script:FindFirstChild("Event") then
+					table.insert(dtools, {bt = v, e = v.Script.Event})
+				end
+			end
+		end
+	
+		return dtools
+	end
+	
+	local function equipTool(tool)
+		if tool.Parent ~= LocalPlayer.Character then
+			tool.Parent = LocalPlayer.Character
+		end
+	end
+	
+	-- ============================================================
+	-- START GRIEFING (INFINITE RANGE AURA)
 	-- ============================================================
 	local function startGrief()
 		-- Check if delete tool exists
@@ -21085,11 +21114,12 @@ local script = G2L["188"];
 			return
 		end
 	
-		-- Get all target blocks
-		local targetBlocks = getAllTargetBlocks()
-	
-		if #targetBlocks == 0 then
-			print("[ToggleGrief] No blocks found to delete")
+		-- Get selected players
+		local selectedPlayers = getSelectedPlayers()
+		if not next(selectedPlayers) then
+			ToggleGriefButton.Text = "No players selected"
+			task.wait(1)
+			ToggleGriefButton.Text = TEXT_START
 			return
 		end
 	
@@ -21104,55 +21134,69 @@ local script = G2L["188"];
 		isGriefing = true
 		ToggleGriefButton.Text = TEXT_STOP
 	
-		local totalBlocks = #targetBlocks
-		local deletedCount = 0
+		print("[ToggleGrief] Starting infinite range grief aura")
 	
-		print("[ToggleGrief] Starting grief - " .. totalBlocks .. " blocks to delete")
-	
-		-- Start the grief loop
+		-- Start the grief loop (INFINITE RANGE)
 		griefLoop = task.spawn(function()
 			local refreshCounter = 0
+			local dti = 0
+			local i = 0
 	
-			for i, block in ipairs(targetBlocks) do
-				if not isGriefing then break end
+			while isGriefing do
+				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+				if not hrp then 
+					task.wait()
+					continue 
+				end
 	
-				-- Check if block still exists before trying to delete
-				if block and block:IsDescendantOf(workspace) then
-					-- Get current delete tool and event
-					local currentEvent = getDeleteEvent()
+				-- Get delete tools
+				local dtools = findDeleteTools()
 	
-					if currentEvent then
-						-- Fire delete event
-						pcall(function()
-							currentEvent:FireServer(block, block.Position)
-						end)
+				if #dtools > 0 then
+					-- Get all target blocks (sorted by distance, infinite range)
+					local targetBlocks = getAllTargetBlocks()
 	
-						-- Count as attempted
-						deletedCount = deletedCount + 1
-					else
-						-- Event lost, try to refresh
-						refreshDeleteTool()
+					if #targetBlocks > 0 then
+						-- Delete blocks continuously
+						for _, block in pairs(targetBlocks) do
+							if not isGriefing then break end
+	
+							-- Check if block still exists
+							if block and block:IsDescendantOf(workspace) then
+								dti = dti + 1
+								local dt = dtools[(dti % #dtools) + 1]
+	
+								-- Equip tool
+								equipTool(dt.bt)
+	
+								-- Fire delete event
+								pcall(function()
+									dt.e:FireServer(block, hrp.Position)
+								end)
+	
+								-- Refresh tool periodically
+								refreshCounter = refreshCounter + 1
+								if refreshCounter >= 50 then
+									refreshDeleteTool()
+									refreshCounter = 0
+								end
+	
+								task.wait(ws / #dtools)
+							end
+						end
 					end
+	
+					-- Refresh tools list every 20 iterations
+					i = i + 1
+					if i % 20 == 0 then
+						dtools = findDeleteTools()
+					end
+				else
+					-- No delete tools, wait and retry
+					task.wait(1)
 				end
 	
-				-- Refresh tool every 50 attempts to prevent it from breaking
-				refreshCounter = refreshCounter + 1
-				if refreshCounter >= 50 then
-					refreshDeleteTool()
-					refreshCounter = 0
-				end
-	
-				task.wait(0.05) -- Delete rate
-			end
-	
-			-- Finished griefing - ran through all blocks
-			if isGriefing then
-				isGriefing = false
-				ToggleGriefButton.Text = deletedCount .. " Blocks Deleted"
-				print("[ToggleGrief] Finished - attempted " .. deletedCount .. " out of " .. totalBlocks .. " total")
-	
-				task.wait(1)
-				ToggleGriefButton.Text = TEXT_START
+				task.wait()
 			end
 		end)
 	end
@@ -21186,10 +21230,7 @@ local script = G2L["188"];
 	
 	ToggleGriefButton.MouseLeave:Connect(function()
 		if not isGriefing then
-			-- Don't change text if it's showing a finish message
-			if not ToggleGriefButton.Text:find("Blocks Deleted") then
-				ToggleGriefButton.Text = TEXT_START
-			end
+			ToggleGriefButton.Text = TEXT_START
 		end
 	end)
 	
