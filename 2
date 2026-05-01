@@ -21138,9 +21138,9 @@ local script = G2L["188"];
 	
 		-- Start the grief loop (INFINITE RANGE)
 		griefLoop = task.spawn(function()
-			local refreshCounter = 0
 			local dti = 0
 			local i = 0
+			local lastRefreshTime = tick()
 	
 			while isGriefing do
 				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -21166,23 +21166,42 @@ local script = G2L["188"];
 								dti = dti + 1
 								local dt = dtools[(dti % #dtools) + 1]
 	
-								-- Equip tool
-								equipTool(dt.bt)
+								-- EQUIP delete tool WITHOUT unequipping other tools
+								if dt.bt.Parent == LocalPlayer.Backpack then
+									dt.bt.Parent = LocalPlayer.Character
+								end
+	
+								-- Wait one frame for it to register
+								RunService.RenderStepped:Wait()
 	
 								-- Fire delete event
 								pcall(function()
 									dt.e:FireServer(block, hrp.Position)
 								end)
 	
-								-- Refresh tool periodically
-								refreshCounter = refreshCounter + 1
-								if refreshCounter >= 50 then
-									refreshDeleteTool()
-									refreshCounter = 0
+								-- INSTANTLY UNEQUIP delete tool (without touching other tools)
+								if dt.bt.Parent == LocalPlayer.Character then
+									dt.bt.Parent = LocalPlayer.Backpack
 								end
 	
 								task.wait(ws / #dtools)
 							end
+						end
+	
+						-- Full refresh every 5 seconds (re-equip and unequip to keep it working)
+						if tick() - lastRefreshTime >= 5 then
+							for _, dt in pairs(dtools) do
+								-- Equip
+								if dt.bt.Parent == LocalPlayer.Backpack then
+									dt.bt.Parent = LocalPlayer.Character
+								end
+								RunService.RenderStepped:Wait()
+								-- Unequip
+								if dt.bt.Parent == LocalPlayer.Character then
+									dt.bt.Parent = LocalPlayer.Backpack
+								end
+							end
+							lastRefreshTime = tick()
 						end
 					end
 	
@@ -21211,6 +21230,15 @@ local script = G2L["188"];
 		if griefLoop then
 			task.cancel(griefLoop)
 			griefLoop = nil
+		end
+	
+		-- Make sure all delete tools are unequipped
+		task.wait(0.1)
+		local dtools = findDeleteTools()
+		for _, dt in pairs(dtools) do
+			if dt.bt.Parent == LocalPlayer.Character then
+				dt.bt.Parent = LocalPlayer.Backpack
+			end
 		end
 	
 		print("[ToggleGrief] Grief stopped")
