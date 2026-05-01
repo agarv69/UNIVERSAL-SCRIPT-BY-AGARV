@@ -2359,6 +2359,7 @@ G2L["d8"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 G2L["d9"] = Instance.new("ScrollingFrame", G2L["16"]);
 G2L["d9"]["Active"] = true;
 G2L["d9"]["BorderSizePixel"] = 0;
+G2L["d9"]["CanvasPosition"] = Vector2.new(0, 100);
 G2L["d9"]["Name"] = [[TCOMainPage]];
 G2L["d9"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
 G2L["d9"]["Size"] = UDim2.new(0, 349, 0, 233);
@@ -3135,19 +3136,19 @@ G2L["11f"]["Name"] = [[AntiVampText]];
 G2L["11f"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 
--- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTeleportRow
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTestRow
 G2L["120"] = Instance.new("Frame", G2L["104"]);
 G2L["120"]["BorderSizePixel"] = 0;
 G2L["120"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["120"]["Size"] = UDim2.new(0, 169, 0, 20);
 G2L["120"]["Position"] = UDim2.new(0.00294, 0, 0.175, 0);
 G2L["120"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["120"]["Name"] = [[AntiTeleportRow]];
+G2L["120"]["Name"] = [[AntiTestRow]];
 G2L["120"]["LayoutOrder"] = 3;
 G2L["120"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTeleportRow.AntiTeleportTickBox
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTestRow.AntiTestTickBox
 G2L["121"] = Instance.new("TextButton", G2L["120"]);
 G2L["121"]["TextSize"] = 14;
 G2L["121"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -3156,11 +3157,11 @@ G2L["121"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json
 G2L["121"]["Size"] = UDim2.new(0, 16, 0, 16);
 G2L["121"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
 G2L["121"]["Text"] = [[]];
-G2L["121"]["Name"] = [[AntiTeleportTickBox]];
+G2L["121"]["Name"] = [[AntiTestTickBox]];
 G2L["121"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
 
--- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTeleportRow.AntiTeleportText
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTestRow.AntiTestText
 G2L["122"] = Instance.new("TextLabel", G2L["120"]);
 G2L["122"]["BorderSizePixel"] = 0;
 G2L["122"]["TextSize"] = 14;
@@ -3171,14 +3172,14 @@ G2L["122"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["122"]["BackgroundTransparency"] = 1;
 G2L["122"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["122"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["122"]["Text"] = [[Anti Glitch]];
-G2L["122"]["Name"] = [[AntiTeleportText]];
+G2L["122"]["Text"] = [[Test]];
+G2L["122"]["Name"] = [[AntiTestText]];
 G2L["122"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
 
--- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTeleportRow.AntiTeleportScript
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTestRow.LocalScript
 G2L["123"] = Instance.new("LocalScript", G2L["120"]);
-G2L["123"]["Name"] = [[AntiTeleportScript]];
+
 
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MiscPage
@@ -8305,7 +8306,6 @@ G2L["2ef"]["BackgroundTransparency"] = 1;
 G2L["2f0"] = Instance.new("ScrollingFrame", G2L["2ef"]);
 G2L["2f0"]["Active"] = true;
 G2L["2f0"]["CanvasSize"] = UDim2.new(0, 0, 8, 0);
-G2L["2f0"]["CanvasPosition"] = Vector2.new(0, 500);
 G2L["2f0"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 25);
 G2L["2f0"]["Size"] = UDim2.new(0, 152, 0, 103);
 G2L["2f0"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
@@ -18689,134 +18689,11 @@ local script = G2L["11d"];
 	end)
 end;
 task.spawn(C_11d);
--- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTeleportRow.AntiTeleportScript
+-- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOMainPage.TCOMainRightSide.AntiGroup.AntiTestRow.LocalScript
 local function C_123()
 local script = G2L["123"];
-	local Players = game:GetService("Players")
-	local RunService = game:GetService("RunService")
-	local LocalPlayer = Players.LocalPlayer
+	print("Hello world!")
 	
-	local AntiTeleportRow = script.Parent
-	local AntiGroup = AntiTeleportRow.Parent
-	local AntiAccentColor = AntiGroup.AntiAccentColor
-	local AntiTeleportTickBox = AntiTeleportRow.AntiTeleportTickBox
-	
-	local isEnabled = false
-	AntiTeleportTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-	
-	local function getScreenGui()
-		local p = script.Parent
-		while p do
-			if p:IsA("ScreenGui") then return p end
-			p = p.Parent
-		end
-		return nil
-	end
-	
-	local screenGui = getScreenGui()
-	if not screenGui then
-		warn("ScreenGui not found for AntiTeleport!")
-		return
-	end
-	
-	local tooltipFrame = Instance.new("Frame")
-	tooltipFrame.Name = "AntiTeleportTooltip"
-	tooltipFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
-	tooltipFrame.BorderSizePixel = 0
-	tooltipFrame.ZIndex = 100
-	tooltipFrame.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipFrame.Size = UDim2.new(0, 212, 0, 0)
-	tooltipFrame.Visible = false
-	tooltipFrame.Parent = screenGui
-	
-	local tooltipStroke = Instance.new("UIStroke")
-	tooltipStroke.Color = Color3.fromRGB(57, 57, 57)
-	tooltipStroke.Thickness = 1
-	tooltipStroke.Parent = tooltipFrame
-	
-	local tooltipPadding = Instance.new("UIPadding")
-	tooltipPadding.PaddingTop = UDim.new(0, 6)
-	tooltipPadding.PaddingBottom = UDim.new(0, 6)
-	tooltipPadding.PaddingLeft = UDim.new(0, 6)
-	tooltipPadding.PaddingRight = UDim.new(0, 6)
-	tooltipPadding.Parent = tooltipFrame
-	
-	local tooltipText = Instance.new("TextLabel")
-	tooltipText.BackgroundTransparency = 1
-	tooltipText.Text = "Prevents being teleported or flung more than 15 studs away"
-	tooltipText.TextColor3 = Color3.new(1, 1, 1)
-	tooltipText.TextSize = 14
-	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
-	tooltipText.TextYAlignment = Enum.TextYAlignment.Top
-	tooltipText.Font = Enum.Font.GothamSemibold
-	tooltipText.TextWrapped = true
-	tooltipText.Size = UDim2.new(0, 200, 0, 0)
-	tooltipText.AutomaticSize = Enum.AutomaticSize.Y
-	tooltipText.ZIndex = 101
-	tooltipText.Parent = tooltipFrame
-	
-	AntiTeleportTickBox.MouseEnter:Connect(function()
-		local abs = AntiTeleportTickBox.AbsolutePosition
-		local size = AntiTeleportTickBox.AbsoluteSize
-		tooltipFrame.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
-		tooltipFrame.Visible = true
-	end)
-	
-	AntiTeleportTickBox.MouseLeave:Connect(function()
-		tooltipFrame.Visible = false
-	end)
-	
-	local Old = nil
-	
-	RunService.RenderStepped:Connect(function()
-		if not isEnabled then return end
-	
-		local Char = LocalPlayer.Character
-		if not Char then return end
-	
-		local Root = Char:FindFirstChild("HumanoidRootPart")
-		if not Root then return end
-	
-		if not Old then 
-			Old = Root.CFrame 
-			return 
-		end
-	
-		local Distance = (Root.Position - Old.Position).Magnitude
-		if Distance >= 15 then
-			Root.CFrame = Old
-			Old = nil
-		else
-			Old = Root.CFrame
-		end
-	end)
-	
-	local function enable()
-		isEnabled = true
-		Old = nil
-		AntiTeleportTickBox.BackgroundColor3 = AntiAccentColor.BackgroundColor3
-	end
-	
-	local function disable()
-		isEnabled = false
-		Old = nil
-		AntiTeleportTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
-	end
-	
-	AntiTeleportTickBox.MouseButton1Click:Connect(function()
-		if isEnabled then disable() else enable() end
-	end)
-	
-	shared.AntiTeleportEnable = enable
-	shared.AntiTeleportDisable = disable
-	
-	script.AncestryChanged:Connect(function()
-		if not script:IsDescendantOf(game) then
-			tooltipFrame:Destroy()
-			isEnabled = false
-			Old = nil
-		end
-	end)
 end;
 task.spawn(C_123);
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MiscPage.MiscLeftSide.Misc1Group.Misc1Script
