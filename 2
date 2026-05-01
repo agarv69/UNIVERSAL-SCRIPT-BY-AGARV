@@ -8305,7 +8305,6 @@ G2L["2ef"]["BackgroundTransparency"] = 1;
 G2L["2f0"] = Instance.new("ScrollingFrame", G2L["2ef"]);
 G2L["2f0"]["Active"] = true;
 G2L["2f0"]["CanvasSize"] = UDim2.new(0, 0, 8, 0);
-G2L["2f0"]["CanvasPosition"] = Vector2.new(0, 500);
 G2L["2f0"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 25);
 G2L["2f0"]["Size"] = UDim2.new(0, 152, 0, 103);
 G2L["2f0"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
@@ -18694,13 +18693,12 @@ local function C_123()
 local script = G2L["123"];
 	local player = game.Players.LocalPlayer
 	local RunService = game:GetService("RunService")
-	
 	local AntiTeleportRow = script.Parent
 	local AntiGroup = AntiTeleportRow.Parent
-	local AntiAccentColor = AntiGroup.AntiAccentColor
+	local AntiAccentColor = AntiGroup:FindFirstChild("AntiAccentColor")
 	local AntiTeleportTickBox = AntiTeleportRow.AntiTeleportTickBox
-	
 	local isEnabled = false
+	
 	AntiTeleportTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	
 	local function getScreenGui()
@@ -18758,45 +18756,52 @@ local script = G2L["123"];
 		tooltipFrame.Visible = false
 	end)
 	
-	local Old = nil
+	local lastPosition = nil
 	
-	RunService.RenderStepped:Connect(function()
+	RunService.Heartbeat:Connect(function()
 		if not isEnabled then return end
 	
-		local Char = player.Character
-		if not Char then return end
+		pcall(function()
+			local character = player.Character
+			if not character then return end
 	
-		local Root = Char:FindFirstChild("HumanoidRootPart")
-		if not Root then return end
+			local root = character:FindFirstChild("HumanoidRootPart")
+			if not root then return end
 	
-		if not Old then 
-			Old = Root.CFrame 
-			return 
-		end
+			if lastPosition then
+				local distance = (root.Position - lastPosition).Magnitude
 	
-		local Distance = (Root.Position - Old.Position).Magnitude
-		if Distance >= 15 then
-			Root.CFrame = Old
-			Old = nil
-		else
-			Old = Root.CFrame
-		end
+				if distance > 15 then
+					root.CFrame = CFrame.new(lastPosition)
+				end
+			end
+	
+			lastPosition = root.Position
+		end)
 	end)
 	
 	local function enable()
 		isEnabled = true
-		Old = nil
-		AntiTeleportTickBox.BackgroundColor3 = AntiAccentColor.BackgroundColor3
+		lastPosition = nil
+		if AntiAccentColor then
+			AntiTeleportTickBox.BackgroundColor3 = AntiAccentColor.BackgroundColor3
+		else
+			AntiTeleportTickBox.BackgroundColor3 = Color3.fromRGB(0, 123, 255)
+		end
 	end
 	
 	local function disable()
 		isEnabled = false
-		Old = nil
+		lastPosition = nil
 		AntiTeleportTickBox.BackgroundColor3 = Color3.new(0, 0, 0)
 	end
 	
 	AntiTeleportTickBox.MouseButton1Click:Connect(function()
-		if isEnabled then disable() else enable() end
+		if isEnabled then 
+			disable() 
+		else 
+			enable() 
+		end
 	end)
 	
 	shared.AntiTeleportEnable = enable
@@ -18806,7 +18811,7 @@ local script = G2L["123"];
 		if not script:IsDescendantOf(game) then
 			tooltipFrame:Destroy()
 			isEnabled = false
-			Old = nil
+			lastPosition = nil
 		end
 	end)
 end;
