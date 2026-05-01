@@ -1,0 +1,424 @@
+-- ============================================================
+-- UNIVERSAL GROUP SCRIPT TEMPLATE
+-- 
+-- This script handles:
+-- - TickBoxes (toggle on/off with colored state)
+-- - Buttons (click to execute actions)
+-- - Tooltips (hover hints)
+-- - Minimize functionality
+-- - Automatic cleanup
+--
+-- HOW TO USE:
+-- 1. Place this script under your Group frame (e.g., AntiGroup, MovementGroup)
+-- 2. Scroll to the bottom where it says "ADD YOUR FEATURES HERE"
+-- 3. Copy the templates and fill in your feature details
+-- ============================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local Lighting = game:GetService("Lighting")
+local LocalPlayer = Players.LocalPlayer
+
+-- ============================================================
+-- CONFIGURATION - CHANGE THESE FOR YOUR GROUP
+-- ============================================================
+local Group = script.Parent
+local GroupName = "Anti"  -- Change this to your group name (Anti, Movement, Misc, etc)
+local AccentColor = Group:FindFirstChild(GroupName .. "AccentColor")
+
+-- ============================================================
+-- SCREENGUI HELPER
+-- ============================================================
+local function getScreenGui()
+	local p = Group
+	while p do
+		if p:IsA("ScreenGui") then return p end
+		p = p.Parent
+	end
+	return game:GetService("CoreGui")
+end
+
+-- ============================================================
+-- TOOLTIP CREATOR
+-- Creates hover tooltips for any UI element
+-- ============================================================
+local function createTooltip(name, text)
+	local frame = Instance.new("Frame")
+	frame.Name = name
+	frame.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	frame.BorderSizePixel = 0
+	frame.ZIndex = 100
+	frame.AutomaticSize = Enum.AutomaticSize.Y
+	frame.Size = UDim2.new(0, 212, 0, 0)
+	frame.Visible = false
+	frame.Parent = getScreenGui()
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(57, 57, 57)
+	stroke.Thickness = 1
+	stroke.Parent = frame
+
+	local padding = Instance.new("UIPadding")
+	padding.PaddingTop = UDim.new(0, 6)
+	padding.PaddingBottom = UDim.new(0, 6)
+	padding.PaddingLeft = UDim.new(0, 6)
+	padding.PaddingRight = UDim.new(0, 6)
+	padding.Parent = frame
+
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextSize = 14
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.TextYAlignment = Enum.TextYAlignment.Top
+	label.Font = Enum.Font.GothamSemibold
+	label.TextWrapped = true
+	label.Size = UDim2.new(0, 200, 0, 0)
+	label.AutomaticSize = Enum.AutomaticSize.Y
+	label.ZIndex = 101
+	label.Parent = frame
+
+	return frame
+end
+
+-- ============================================================
+-- MINIMIZE FUNCTIONALITY
+-- Automatically finds and sets up minimize button
+-- ============================================================
+local function setupMinimize()
+	local titleFrame = Group:FindFirstChild(GroupName .. "Title")
+	if not titleFrame then return end
+	
+	local minimizeButton = titleFrame:FindFirstChild(GroupName .. "Minimize")
+	if not minimizeButton then return end
+	
+	local function getRows()
+		local rows = {}
+		for _, child in ipairs(Group:GetChildren()) do
+			if child:IsA("Frame") and string.sub(child.Name, -3) == "Row" then
+				table.insert(rows, child)
+			end
+		end
+		return rows
+	end
+	
+	local isMinimized = false
+	local originalSize = Group.Size
+	local minimizedSize = UDim2.new(0, 170, 0, 20)
+	
+	minimizeButton.MouseButton1Click:Connect(function()
+		isMinimized = not isMinimized
+		local rows = getRows()
+		
+		if isMinimized then
+			Group.Size = minimizedSize
+			for _, row in ipairs(rows) do
+				row.Visible = false
+			end
+			minimizeButton.Text = "+"
+		else
+			Group.Size = originalSize
+			for _, row in ipairs(rows) do
+				row.Visible = true
+			end
+			minimizeButton.Text = "-"
+		end
+	end)
+end
+
+setupMinimize()
+
+-- ============================================================
+-- TICKBOX FEATURE SETUP
+-- For toggle features (on/off) with colored state
+-- ============================================================
+local activeFeatures = {}
+
+local function setupTickBox(config)
+	--[[
+	config = {
+		row = "AntiVampRow",           -- Name of the row Frame
+		tickBox = "AntiVampTickBox",   -- Name of the tickbox button
+		tooltip = "Tooltip text here", -- Hover text
+		onEnable = function() end,     -- (Optional) Runs once when enabled
+		onDisable = function() end,    -- (Optional) Runs once when disabled
+		loop = function() end          -- (Optional) Runs every frame while enabled
+	}
+	]]
+	
+	local rowName = config.row
+	local tickBoxName = config.tickBox
+	local tooltipText = config.tooltip
+	local onEnable = config.onEnable
+	local onDisable = config.onDisable
+	local loop = config.loop
+
+	local row = Group:FindFirstChild(rowName)
+	if not row then 
+		warn("[TickBox] Row not found:", rowName)
+		return 
+	end
+
+	local tickBox = row:FindFirstChild(tickBoxName)
+	if not tickBox then 
+		warn("[TickBox] TickBox not found:", tickBoxName)
+		return 
+	end
+
+	local isEnabled = false
+	local loopConnection = nil
+	tickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+
+	-- Create tooltip
+	local tooltip = createTooltip(tickBoxName .. "Tooltip", tooltipText)
+
+	tickBox.MouseEnter:Connect(function()
+		local abs = tickBox.AbsolutePosition
+		local size = tickBox.AbsoluteSize
+		tooltip.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+		tooltip.Visible = true
+	end)
+
+	tickBox.MouseLeave:Connect(function()
+		tooltip.Visible = false
+	end)
+
+	-- Enable function
+	local function enable()
+		isEnabled = true
+		
+		if AccentColor then
+			tickBox.BackgroundColor3 = AccentColor.BackgroundColor3
+		else
+			tickBox.BackgroundColor3 = Color3.fromRGB(0, 123, 255)
+		end
+
+		if onEnable then
+			pcall(onEnable)
+		end
+
+		if loop then
+			loopConnection = RunService.Heartbeat:Connect(function()
+				if isEnabled then
+					pcall(loop)
+				end
+			end)
+		end
+	end
+
+	-- Disable function
+	local function disable()
+		isEnabled = false
+		tickBox.BackgroundColor3 = Color3.new(0, 0, 0)
+
+		if loopConnection then
+			loopConnection:Disconnect()
+			loopConnection = nil
+		end
+
+		if onDisable then
+			pcall(onDisable)
+		end
+	end
+
+	-- Click handler
+	tickBox.MouseButton1Click:Connect(function()
+		if isEnabled then
+			disable()
+		else
+			enable()
+		end
+	end)
+
+	-- Expose to shared
+	local featureName = rowName:gsub("Row", "")
+	shared[featureName .. "Enable"] = enable
+	shared[featureName .. "Disable"] = disable
+
+	-- Store for cleanup
+	table.insert(activeFeatures, {
+		tooltip = tooltip,
+		disable = disable,
+		connection = loopConnection
+	})
+
+	return {
+		enable = enable,
+		disable = disable,
+		isEnabled = function() return isEnabled end
+	}
+end
+
+-- ============================================================
+-- BUTTON FEATURE SETUP
+-- For one-time actions (click to execute, no toggle)
+-- ============================================================
+local function setupButton(config)
+	--[[
+	config = {
+		row = "ResetRow",              -- Name of the row Frame
+		button = "ResetButton",        -- Name of the button
+		tooltip = "Tooltip text here", -- Hover text
+		onClick = function() end       -- Function to run when clicked
+	}
+	]]
+	
+	local rowName = config.row
+	local buttonName = config.button
+	local tooltipText = config.tooltip
+	local onClick = config.onClick
+
+	local row = Group:FindFirstChild(rowName)
+	if not row then 
+		warn("[Button] Row not found:", rowName)
+		return 
+	end
+
+	local button = row:FindFirstChild(buttonName)
+	if not button then 
+		warn("[Button] Button not found:", buttonName)
+		return 
+	end
+
+	-- Create tooltip
+	local tooltip = createTooltip(buttonName .. "Tooltip", tooltipText)
+
+	button.MouseEnter:Connect(function()
+		local abs = button.AbsolutePosition
+		local size = button.AbsoluteSize
+		tooltip.Position = UDim2.new(0, abs.X + size.X + 10, 0, abs.Y)
+		tooltip.Visible = true
+	end)
+
+	button.MouseLeave:Connect(function()
+		tooltip.Visible = false
+	end)
+
+	-- Click handler
+	button.MouseButton1Click:Connect(function()
+		if onClick then
+			pcall(onClick)
+		end
+	end)
+
+	-- Store for cleanup
+	table.insert(activeFeatures, {
+		tooltip = tooltip
+	})
+end
+
+-- ============================================================
+-- ADD YOUR FEATURES HERE
+-- Copy the templates below and fill them in
+-- ============================================================
+
+--[[
+================================================================================
+TICKBOX TEMPLATE (Toggle Features)
+================================================================================
+Use this for features that turn ON/OFF like Anti-Vamp, Fly, etc.
+
+setupTickBox({
+	row = "YourRow",
+	tickBox = "YourTickBox",
+	tooltip = "What this feature does",
+	onEnable = function()
+		-- Code that runs ONCE when you turn it on (optional)
+	end,
+	onDisable = function()
+		-- Code that runs ONCE when you turn it off (optional)
+	end,
+	loop = function()
+		-- Code that runs EVERY FRAME while enabled (optional)
+		-- Use this for continuous checks/updates
+	end
+})
+
+EXAMPLE - Anti Vamp:
+setupTickBox({
+	row = "AntiVampRow",
+	tickBox = "AntiVampTickBox",
+	tooltip = "Prevents Vampire Vanquisher gear from locking your camera",
+	loop = function()
+		if LocalPlayer.Character then
+			local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+			if humanoid and humanoid.Health > 0 then
+				pcall(function()
+					StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
+				end)
+				workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+				workspace.CurrentCamera.CameraSubject = humanoid
+			end
+		end
+	end
+})
+================================================================================
+]]
+
+--[[
+================================================================================
+BUTTON TEMPLATE (One-Time Actions)
+================================================================================
+Use this for features that execute once when clicked like Reset, Teleport, etc.
+
+setupButton({
+	row = "YourRow",
+	button = "YourButton",
+	tooltip = "What this button does",
+	onClick = function()
+		-- Code that runs when you click the button
+	end
+})
+
+EXAMPLE - Reset Button:
+setupButton({
+	row = "ResetRow",
+	button = "ResetButton",
+	tooltip = "Resets your character",
+	onClick = function()
+		if shared.ResetCharacter then
+			shared.ResetCharacter()
+		else
+			LocalPlayer.Character:FindFirstChild("Humanoid").Health = 0
+		end
+	end
+})
+
+EXAMPLE - Teleport Button:
+setupButton({
+	row = "TeleportRow",
+	button = "TeleportButton",
+	tooltip = "Teleports you to spawn",
+	onClick = function()
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
+		end
+	end
+})
+================================================================================
+]]
+
+-- PASTE YOUR FEATURES BELOW THIS LINE
+-- ============================================================
+
+
+
+
+-- ============================================================
+-- CLEANUP
+-- Automatically cleans up when GUI is destroyed
+-- ============================================================
+script.AncestryChanged:Connect(function()
+	if not script:IsDescendantOf(game) then
+		for _, feature in pairs(activeFeatures) do
+			if feature.tooltip then
+				feature.tooltip:Destroy()
+			end
+			if feature.disable then
+				feature.disable()
+			end
+		end
+	end
+end)
