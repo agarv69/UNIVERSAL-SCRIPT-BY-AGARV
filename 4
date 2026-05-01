@@ -21141,7 +21141,7 @@ local script = G2L["188"];
 			local dti = 0
 			local i = 0
 			local lastRefreshTime = tick()
-			local deleteToolEquipped = false
+			local deleteToolsEquipped = false
 	
 			while isGriefing do
 				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -21158,17 +21158,18 @@ local script = G2L["188"];
 					local targetBlocks = getAllTargetBlocks()
 	
 					if #targetBlocks > 0 then
-						-- Equip delete tool WITHOUT unequipping other tools (like Equip Enlighten)
-						if not deleteToolEquipped then
+						-- EQUIP delete tools at the start (keep them equipped)
+						if not deleteToolsEquipped then
 							for _, dt in pairs(dtools) do
 								if dt.bt.Parent == LocalPlayer.Backpack then
 									dt.bt.Parent = LocalPlayer.Character
 								end
 							end
-							deleteToolEquipped = true
+							RunService.RenderStepped:Wait()
+							deleteToolsEquipped = true
 						end
 	
-						-- Delete blocks continuously
+						-- Delete blocks continuously (tools stay equipped)
 						for _, block in pairs(targetBlocks) do
 							if not isGriefing then break end
 	
@@ -21186,9 +21187,9 @@ local script = G2L["188"];
 							end
 						end
 	
-						-- Refresh tool every 5 seconds to keep it working
+						-- Refresh every 5 seconds (FAST unequip/re-equip to keep it working)
 						if tick() - lastRefreshTime >= 5 then
-							-- Unequip delete tool only
+							-- UNEQUIP delete tools
 							for _, dt in pairs(dtools) do
 								if dt.bt.Parent == LocalPlayer.Character then
 									dt.bt.Parent = LocalPlayer.Backpack
@@ -21198,13 +21199,14 @@ local script = G2L["188"];
 							-- Wait one frame
 							RunService.RenderStepped:Wait()
 	
-							-- Re-equip delete tool
+							-- RE-EQUIP delete tools
 							for _, dt in pairs(dtools) do
 								if dt.bt.Parent == LocalPlayer.Backpack then
 									dt.bt.Parent = LocalPlayer.Character
 								end
 							end
 	
+							RunService.RenderStepped:Wait()
 							lastRefreshTime = tick()
 						end
 					end
@@ -21216,19 +21218,11 @@ local script = G2L["188"];
 					end
 				else
 					-- No delete tools, wait and retry
-					deleteToolEquipped = false
+					deleteToolsEquipped = false
 					task.wait(1)
 				end
 	
 				task.wait()
-			end
-	
-			-- Unequip delete tools when stopped
-			local dtools = findDeleteTools()
-			for _, dt in pairs(dtools) do
-				if dt.bt.Parent == LocalPlayer.Character then
-					dt.bt.Parent = LocalPlayer.Backpack
-				end
 			end
 		end)
 	end
@@ -21243,6 +21237,15 @@ local script = G2L["188"];
 		if griefLoop then
 			task.cancel(griefLoop)
 			griefLoop = nil
+		end
+	
+		-- Make sure all delete tools are unequipped
+		task.wait(0.1)
+		local dtools = findDeleteTools()
+		for _, dt in pairs(dtools) do
+			if dt.bt.Parent == LocalPlayer.Character then
+				dt.bt.Parent = LocalPlayer.Backpack
+			end
 		end
 	
 		print("[ToggleGrief] Grief stopped")
