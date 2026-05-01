@@ -2782,7 +2782,7 @@ G2L["f2"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["f2"]["BackgroundTransparency"] = 1;
 G2L["f2"]["Size"] = UDim2.new(0, 88, 0, 20);
 G2L["f2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["f2"]["Text"] = [[Anti Maptide Nan]];
+G2L["f2"]["Text"] = [[Anti Maptide NaN]];
 G2L["f2"]["Name"] = [[AntiNanText]];
 G2L["f2"]["Position"] = UDim2.new(0.17751, 0, 0, 0);
 
@@ -8171,7 +8171,7 @@ G2L["2cf"]["Size"] = UDim2.new(0, 152, 0, 103);
 G2L["2cf"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["2cf"]["Position"] = UDim2.new(0.05325, 0, 0.03516, 0);
 G2L["2cf"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
-G2L["2cf"]["ScrollBarThickness"] = 0;
+G2L["2cf"]["ScrollBarThickness"] = 10;
 
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuRightSide.UpLogsGroup.ScrollingRow.ScrollingFrame.V2.8
@@ -8487,7 +8487,8 @@ G2L["2e4"]["Position"] = UDim2.new(0.04605, 0, 0, 0);
 G2L["2e5"] = Instance.new("Frame", G2L["2cf"]);
 G2L["2e5"]["BorderSizePixel"] = 0;
 G2L["2e5"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["2e5"]["Size"] = UDim2.new(0, 152, 0, 103);
+G2L["2e5"]["Size"] = UDim2.new(0, 152, 0, 156);
+G2L["2e5"]["Position"] = UDim2.new(0, 0, -0.10989, 0);
 G2L["2e5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["2e5"]["Name"] = [[V2.8.10]];
 G2L["2e5"]["LayoutOrder"] = 990;
@@ -8506,11 +8507,11 @@ G2L["2e6"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]]
 G2L["2e6"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["2e6"]["BackgroundTransparency"] = 1;
 G2L["2e6"]["RichText"] = true;
-G2L["2e6"]["Size"] = UDim2.new(0, 133, 0, 76);
+G2L["2e6"]["Size"] = UDim2.new(0, 133, 0, 118);
 G2L["2e6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2e6"]["Text"] = [[===== v2.8.9 > v2.8.10<br />New Features - <br/>Bug Fixes - Fixed anti glitch from being an anti teleport, added both anti tp, glitch.]];
+G2L["2e6"]["Text"] = [[===== v2.8.9 > v2.8.10<br />New Features - <br/>Bug Fixes - Fixed anti glitch from being an anti teleport, added both anti tp, glitch. Fixed anti maptide nan, now only teleports when spawn is bugged + teleports to coordnates 0, 0, 0 instead of a player.]];
 G2L["2e6"]["Name"] = [[Text]];
-G2L["2e6"]["Position"] = UDim2.new(0.04605, 0, 0, 0);
+G2L["2e6"]["Position"] = UDim2.new(0.04605, 0, -0, 0);
 
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage.MenuRightSide.TCOGroup
@@ -17063,36 +17064,26 @@ local script = G2L["105"];
 			math.abs(p.X) == math.huge or
 			math.abs(p.Y) == math.huge or
 			math.abs(p.Z) == math.huge or
-			math.abs(p.Y) > 500000) -- Also check if Y is extremely high
+			math.abs(p.Y) > 500000)
 	end
-	
+	local function isVoided()
+		local spawn = workspace:FindFirstChild("Spawn")
+		if not spawn then return false end
+		local acm = spawn.AssemblyCenterOfMass
+		return acm.X == 0 and acm.Y == -1000000 and acm.Z == 0
+	end
 	local function onCharacterAdded(character)
 		local hrp = character:WaitForChild("HumanoidRootPart")
+		if not isVoided() then return end
 		hrp.Anchored = true
 		task.wait(0.1)
-	
-		if not isSafe(hrp.CFrame) then
-			hrp.CFrame = CFrame.new(0, 0, 0)
-		else
-			-- Try to find a safe player to teleport to
-			for _, plr in pairs(Players:GetPlayers()) do
-				if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-					local otherHRP = plr.Character.HumanoidRootPart
-					if isSafe(otherHRP.CFrame) then
-						hrp.CFrame = otherHRP.CFrame + Vector3.new(0, 5, 0)
-						break
-					end
-				end
-			end
-		end
-	
+		hrp.CFrame = CFrame.new(0, 3, 0)
 		hrp.Anchored = false
 	end
-	
 	setupAnti({
 		row = "AntiNanRow",
 		tickBox = "AntiNanTickBox",
-		tooltip = "Prevents NaN/void glitch on respawn. Teleports to 0,0,0 if glitched, otherwise teleports to a safe player",
+		tooltip = "Prevents respawning in the void when Spawn is in the void, maptide NaN.",
 		onEnable = function()
 			nanConnection = LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 			if LocalPlayer.Character then
