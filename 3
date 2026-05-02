@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 862 | Scripts: 163 | Modules: 0 | Tags: 0
+-- Instances: 863 | Scripts: 164 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareGui
@@ -3497,7 +3497,6 @@ G2L["12d"]["Name"] = [[DetectionTCOPG]];
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOTrollPage
 G2L["12e"] = Instance.new("ScrollingFrame", G2L["17"]);
-G2L["12e"]["Visible"] = false;
 G2L["12e"]["Active"] = true;
 G2L["12e"]["BorderSizePixel"] = 0;
 G2L["12e"]["Name"] = [[TCOTrollPage]];
@@ -5487,7 +5486,7 @@ G2L["1e2"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 25);
 G2L["1e2"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["1e2"]["Size"] = UDim2.new(0, 161, 0, 16);
 G2L["1e2"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
-G2L["1e2"]["Text"] = [[Delete All Blocks]];
+G2L["1e2"]["Text"] = [[Delete Aura]];
 G2L["1e2"]["Name"] = [[GriefAllButton]];
 G2L["1e2"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
@@ -7985,6 +7984,7 @@ G2L["2c1"] = Instance.new("LocalScript", G2L["2c0"]);
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage
 G2L["2c2"] = Instance.new("ScrollingFrame", G2L["17"]);
+G2L["2c2"]["Visible"] = false;
 G2L["2c2"]["Active"] = true;
 G2L["2c2"]["BorderSizePixel"] = 0;
 G2L["2c2"]["Name"] = [[MenuPage]];
@@ -9785,6 +9785,11 @@ G2L["35d"]["Name"] = [[MasterScripts]];
 -- StarterGui.AgarWareGui.MasterScripts.ResetCharacter
 G2L["35e"] = Instance.new("LocalScript", G2L["35d"]);
 G2L["35e"]["Name"] = [[ResetCharacter]];
+
+
+-- StarterGui.AgarWareGui.MasterScripts.RefreshBkitTools
+G2L["35f"] = Instance.new("LocalScript", G2L["35d"]);
+G2L["35f"]["Name"] = [[RefreshBkitTools]];
 
 
 -- StarterGui.AgarWareGui.MoveToCorGui
@@ -25014,251 +25019,40 @@ task.spawn(C_1cf);
 local function C_1d5()
 local script = G2L["1d5"];
 	local Players = game:GetService("Players")
-	local UserInputService = game:GetService("UserInputService")
-	
 	local LocalPlayer = Players.LocalPlayer
 	
 	local SelectDRow = script.Parent
-	local SelectDDropdown = SelectDRow.SelectDDropdown
-	local GriefGroup = SelectDRow.Parent
-	local GriefAccentColor = GriefGroup:WaitForChild("GriefAccentColor")
+	local SelectDDropdown = SelectDRow:WaitForChild("SelectDDropdown")
+	
+	-- Wait for DropdownMaster
+	repeat task.wait() until shared.DropdownMaster
+	task.wait(0.5)
 	
 	local selectedPlayers = {}
-	local isOpen = false
-	local showDisplay = false
-	
-	local ROW_HEIGHT = 16
-	local MAX_ROWS = 7
-	local BG = Color3.fromRGB(24, 24, 24)
-	local BORDER = Color3.fromRGB(57, 57, 57)
-	local WHITE = Color3.new(1, 1, 1)
-	local DIM = Color3.fromRGB(120, 120, 120)
-	local BLUE = Color3.fromRGB(0, 123, 255)
-	local HOVER = Color3.fromRGB(36, 36, 36)
-	local BTN_BG = Color3.fromRGB(36, 36, 36)
-	
-	if not game:IsLoaded() then
-		game.Loaded:Wait()
-	end
-	
-	repeat task.wait() until SelectDDropdown.AbsoluteSize.X > 0
+	local showOffline = false
 	
 	-- ============================================================
-	-- MAIN LABEL + ARROW
+	-- GET OFFLINE PLAYERS (from Workspace.Bricks)
 	-- ============================================================
-	local mainLabel = Instance.new("TextLabel")
-	mainLabel.Name = "MainLabel"
-	mainLabel.Size = UDim2.new(1, -24, 1, 0)
-	mainLabel.Position = UDim2.new(0, 0, 0, 0)
-	mainLabel.BackgroundTransparency = 1
-	mainLabel.Text = "Select Players"
-	mainLabel.TextColor3 = WHITE
-	mainLabel.TextSize = 14
-	mainLabel.Font = Enum.Font.Code
-	mainLabel.TextXAlignment = Enum.TextXAlignment.Center
-	mainLabel.TextTruncate = Enum.TextTruncate.AtEnd
-	mainLabel.ZIndex = 2
-	mainLabel.Parent = SelectDDropdown
+	local function getOfflinePlayers()
+		local offline = {}
+		local bricksFolder = workspace:FindFirstChild("Bricks")
+		if not bricksFolder then return offline end
 	
-	local mainArrow = Instance.new("TextLabel")
-	mainArrow.Name = "MainArrow"
-	mainArrow.Size = UDim2.new(0, 24, 1, 0)
-	mainArrow.Position = UDim2.new(1, -24, 0, 0)
-	mainArrow.BackgroundTransparency = 1
-	mainArrow.Text = "▼"
-	mainArrow.TextColor3 = WHITE
-	mainArrow.TextSize = 14
-	mainArrow.Font = Enum.Font.Code
-	mainArrow.TextXAlignment = Enum.TextXAlignment.Center
-	mainArrow.ZIndex = 2
-	mainArrow.Parent = SelectDDropdown
-	
-	-- ============================================================
-	-- SCREENGUI HELPER
-	-- ============================================================
-	local function getScreenGui()
-		local p = script.Parent
-		while p do
-			if p:IsA("ScreenGui") then return p end
-			p = p.Parent
-		end
-	end
-	
-	local BOTTOM_BAR_HEIGHT = ROW_HEIGHT + 2
-	local TOTAL_BOTTOM_HEIGHT = (BOTTOM_BAR_HEIGHT * 2) + 1
-	
-	-- ============================================================
-	-- PANEL
-	-- ============================================================
-	local panel = Instance.new("Frame")
-	panel.Name = "SelectDPanel"
-	panel.BackgroundColor3 = BG
-	panel.BorderSizePixel = 0
-	panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT)
-	panel.ZIndex = 999
-	panel.Visible = false
-	panel.Parent = getScreenGui()
-	
-	local panelStroke = Instance.new("UIStroke")
-	panelStroke.Color = BORDER
-	panelStroke.Thickness = 1
-	panelStroke.Parent = panel
-	
-	local searchBox = Instance.new("TextBox")
-	searchBox.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
-	searchBox.Position = UDim2.new(0, 0, 0, 0)
-	searchBox.BackgroundColor3 = BG
-	searchBox.BorderSizePixel = 0
-	searchBox.Text = ""
-	searchBox.PlaceholderText = "Search for users..."
-	searchBox.PlaceholderColor3 = DIM
-	searchBox.TextColor3 = WHITE
-	searchBox.TextSize = 14
-	searchBox.Font = Enum.Font.Code
-	searchBox.TextXAlignment = Enum.TextXAlignment.Left
-	searchBox.ClearTextOnFocus = false
-	searchBox.ZIndex = 1000
-	searchBox.Parent = panel
-	
-	local searchPad = Instance.new("UIPadding")
-	searchPad.PaddingLeft = UDim.new(0, 6)
-	searchPad.PaddingRight = UDim.new(0, 24)
-	searchPad.Parent = searchBox
-	
-	local searchArrow = Instance.new("TextButton")
-	searchArrow.Size = UDim2.new(0, 24, 0, ROW_HEIGHT)
-	searchArrow.Position = UDim2.new(1, -24, 0, 0)
-	searchArrow.BackgroundTransparency = 1
-	searchArrow.Text = "▲"
-	searchArrow.TextColor3 = WHITE
-	searchArrow.TextSize = 14
-	searchArrow.Font = Enum.Font.Code
-	searchArrow.BorderSizePixel = 0
-	searchArrow.ZIndex = 1001
-	searchArrow.Parent = panel
-	
-	local scrollFrame = Instance.new("ScrollingFrame")
-	scrollFrame.Position = UDim2.new(0, 0, 0, ROW_HEIGHT)
-	scrollFrame.Size = UDim2.new(1, 0, 0, 0)
-	scrollFrame.BackgroundTransparency = 1
-	scrollFrame.BorderSizePixel = 0
-	scrollFrame.ScrollBarThickness = 2
-	scrollFrame.ScrollBarImageColor3 = BORDER
-	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-	scrollFrame.ZIndex = 1000
-	scrollFrame.Parent = panel
-	
-	local listLayout = Instance.new("UIListLayout")
-	listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	listLayout.Parent = scrollFrame
-	
-	local bottomBar = Instance.new("Frame")
-	bottomBar.Size = UDim2.new(1, 0, 0, TOTAL_BOTTOM_HEIGHT)
-	bottomBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-	bottomBar.BorderSizePixel = 0
-	bottomBar.ZIndex = 1000
-	bottomBar.Parent = panel
-	
-	local bottomStroke = Instance.new("UIStroke")
-	bottomStroke.Color = BORDER
-	bottomStroke.Thickness = 1
-	bottomStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	bottomStroke.Parent = bottomBar
-	
-	-- Row 1: Select All / Unselect All
-	local selectAllBtn = Instance.new("TextButton")
-	selectAllBtn.Size = UDim2.new(0.5, -1, 0, BOTTOM_BAR_HEIGHT)
-	selectAllBtn.Position = UDim2.new(0, 0, 0, 0)
-	selectAllBtn.BackgroundColor3 = BTN_BG
-	selectAllBtn.BorderSizePixel = 0
-	selectAllBtn.Text = "Select All"
-	selectAllBtn.TextColor3 = WHITE
-	selectAllBtn.TextSize = 11
-	selectAllBtn.Font = Enum.Font.Code
-	selectAllBtn.ZIndex = 1001
-	selectAllBtn.Parent = bottomBar
-	
-	local divider1 = Instance.new("Frame")
-	divider1.Size = UDim2.new(0, 1, 0, BOTTOM_BAR_HEIGHT)
-	divider1.Position = UDim2.new(0.5, -1, 0, 0)
-	divider1.BackgroundColor3 = BORDER
-	divider1.BorderSizePixel = 0
-	divider1.ZIndex = 1001
-	divider1.Parent = bottomBar
-	
-	local unselectAllBtn = Instance.new("TextButton")
-	unselectAllBtn.Size = UDim2.new(0.5, 0, 0, BOTTOM_BAR_HEIGHT)
-	unselectAllBtn.Position = UDim2.new(0.5, 1, 0, 0)
-	unselectAllBtn.BackgroundColor3 = BTN_BG
-	unselectAllBtn.BorderSizePixel = 0
-	unselectAllBtn.Text = "Unselect All"
-	unselectAllBtn.TextColor3 = WHITE
-	unselectAllBtn.TextSize = 11
-	unselectAllBtn.Font = Enum.Font.Code
-	unselectAllBtn.ZIndex = 1001
-	unselectAllBtn.Parent = bottomBar
-	
-	-- Divider between Row 1 and Row 2
-	local rowDivider = Instance.new("Frame")
-	rowDivider.Size = UDim2.new(1, 0, 0, 1)
-	rowDivider.Position = UDim2.new(0, 0, 0, BOTTOM_BAR_HEIGHT)
-	rowDivider.BackgroundColor3 = BORDER
-	rowDivider.BorderSizePixel = 0
-	rowDivider.ZIndex = 1001
-	rowDivider.Parent = bottomBar
-	
-	-- Row 2: Show Display (full width)
-	local displayBtn = Instance.new("TextButton")
-	displayBtn.Size = UDim2.new(1, 0, 0, BOTTOM_BAR_HEIGHT)
-	displayBtn.Position = UDim2.new(0, 0, 0, BOTTOM_BAR_HEIGHT + 1)
-	displayBtn.BackgroundColor3 = BTN_BG
-	displayBtn.BorderSizePixel = 0
-	displayBtn.Text = "Show Display"
-	displayBtn.TextColor3 = WHITE
-	displayBtn.TextSize = 11
-	displayBtn.Font = Enum.Font.Code
-	displayBtn.ZIndex = 1001
-	displayBtn.Parent = bottomBar
-	
-	-- ============================================================
-	-- THUMBNAILS
-	-- ============================================================
-	local cachedThumbs = {}
-	local function getThumb(userId)
-		if cachedThumbs[userId] then return cachedThumbs[userId] end
-		local ok, img = pcall(function()
-			return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
-		end)
-		local result = ok and img or ""
-		cachedThumbs[userId] = result
-		return result
-	end
-	
-	-- ============================================================
-	-- LABEL UPDATE
-	-- ============================================================
-	local function updateMainLabel()
-		local count = 0
-		local names = {}
-		for name, _ in pairs(selectedPlayers) do
-			count = count + 1
-			local player = Players:FindFirstChild(name)
-			if player then
-				local displayText = showDisplay and player.DisplayName or player.Name
-				table.insert(names, displayText)
+		for _, child in pairs(bricksFolder:GetChildren()) do
+			if child:IsA("Folder") and #child:GetChildren() > 0 then
+				-- Check if this username is NOT in game
+				if not Players:FindFirstChild(child.Name) then
+					offline[child.Name] = true
+				end
 			end
 		end
-		if count == 0 then
-			mainLabel.Text = "Select Players"
-		elseif count <= 2 then
-			mainLabel.Text = table.concat(names, ", ")
-		else
-			mainLabel.Text = count .. " Players Selected"
-		end
+	
+		return offline
 	end
 	
 	-- ============================================================
-	-- SHARED ATTRIBUTE (so other scripts can read it)
+	-- UPDATE ATTRIBUTE
 	-- ============================================================
 	local function updateSelectedPlayers()
 		local names = {}
@@ -25266,225 +25060,95 @@ local script = G2L["1d5"];
 			table.insert(names, name)
 		end
 		SelectDRow:SetAttribute("SelectedPlayers", table.concat(names, ","))
-		-- Sync to shared so other scripts can read it directly
 		shared.GriefSelectedPlayers = selectedPlayers
 	end
 	
 	-- ============================================================
-	-- LIST BUILD
+	-- CREATE DROPDOWN
 	-- ============================================================
-	local function updatePanelSize(rowCount)
-		local visibleRows = math.min(rowCount, MAX_ROWS)
-		local scrollH = visibleRows * ROW_HEIGHT
-		scrollFrame.Size = UDim2.new(1, 0, 0, scrollH)
-		panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT + scrollH + TOTAL_BOTTOM_HEIGHT)
-		scrollFrame.CanvasSize = UDim2.new(0, 0, 0, rowCount * ROW_HEIGHT)
-		bottomBar.Position = UDim2.new(0, 0, 0, ROW_HEIGHT + scrollH)
-	end
+	local dropdown = shared.DropdownMaster.create({
+		button = SelectDDropdown,
+		mode = "custom",
+		multiSelect = true,
+		searchBar = true,
+		showIcons = true,
 	
-	local function buildList(filter)
-		for _, child in pairs(scrollFrame:GetChildren()) do
-			if child:IsA("Frame") then child:Destroy() end
-		end
+		-- Custom items provider
+		getItems = function()
+			local items = {}
 	
-		local playerList = {}
-		for _, p in pairs(Players:GetPlayers()) do
-			table.insert(playerList, p)
-		end
-	
-		table.sort(playerList, function(a, b)
-			local nameA = showDisplay and a.DisplayName or a.Name
-			local nameB = showDisplay and b.DisplayName or b.Name
-			return nameA:lower() < nameB:lower()
-		end)
-	
-		local filtered = {}
-		for _, p in ipairs(playerList) do
-			local displayText = showDisplay and p.DisplayName or p.Name
-			if filter == "" or displayText:lower():find(filter:lower(), 1, true) then
-				table.insert(filtered, p)
+			-- Add online players
+			for _, p in pairs(Players:GetPlayers()) do
+				table.insert(items, {
+					id = p.Name,
+					display = p.DisplayName,
+					username = p.Name,
+					userId = p.UserId,
+					isOnline = true
+				})
 			end
-		end
 	
-		for i, p in ipairs(filtered) do
-			local isSelected = selectedPlayers[p.Name] ~= nil
-			local displayText = showDisplay and p.DisplayName or p.Name
-	
-			local row = Instance.new("Frame")
-			row.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
-			row.BackgroundColor3 = isSelected and HOVER or BG
-			row.BorderSizePixel = 0
-			row.LayoutOrder = i
-			row.ZIndex = 1001
-			row.Parent = scrollFrame
-	
-			local thumb = Instance.new("ImageLabel")
-			thumb.Size = UDim2.new(0, 12, 0, 12)
-			thumb.Position = UDim2.new(1, -16, 0.5, -6)
-			thumb.BackgroundTransparency = 1
-			thumb.Image = ""
-			thumb.ZIndex = 1002
-			thumb.Parent = row
-	
-			task.spawn(function()
-				thumb.Image = getThumb(p.UserId)
-			end)
-	
-			local nameLabel = Instance.new("TextLabel")
-			nameLabel.Size = UDim2.new(1, -22, 1, 0)
-			nameLabel.Position = UDim2.new(0, 6, 0, 0)
-			nameLabel.BackgroundTransparency = 1
-			nameLabel.Text = displayText
-			nameLabel.TextColor3 = isSelected and BLUE or WHITE
-			nameLabel.TextSize = 14
-			nameLabel.Font = Enum.Font.Code
-			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-			nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
-			nameLabel.ZIndex = 1002
-			nameLabel.Parent = row
-	
-			local rowBtn = Instance.new("TextButton")
-			rowBtn.Size = UDim2.new(1, 0, 1, 0)
-			rowBtn.BackgroundTransparency = 1
-			rowBtn.Text = ""
-			rowBtn.ZIndex = 1003
-			rowBtn.Parent = row
-	
-			rowBtn.MouseEnter:Connect(function()
-				row.BackgroundColor3 = HOVER
-			end)
-			rowBtn.MouseLeave:Connect(function()
-				if not selectedPlayers[p.Name] then
-					row.BackgroundColor3 = BG
+			-- Add offline players if enabled
+			if showOffline then
+				for username, _ in pairs(getOfflinePlayers()) do
+					table.insert(items, {
+						id = username,
+						display = username .. " (Offline)",
+						username = username,
+						userId = nil,
+						isOnline = false
+					})
 				end
-			end)
-	
-			rowBtn.MouseButton1Click:Connect(function()
-				if selectedPlayers[p.Name] then
-					selectedPlayers[p.Name] = nil
-					nameLabel.TextColor3 = WHITE
-					row.BackgroundColor3 = BG
-				else
-					selectedPlayers[p.Name] = true
-					nameLabel.TextColor3 = BLUE
-					row.BackgroundColor3 = HOVER
-				end
-				updateMainLabel()
-				updateSelectedPlayers()
-			end)
-		end
-	
-		updatePanelSize(#filtered)
-	end
-	
-	-- ============================================================
-	-- SELECT ALL / UNSELECT ALL
-	-- ============================================================
-	selectAllBtn.MouseButton1Click:Connect(function()
-		for _, p in pairs(Players:GetPlayers()) do
-			selectedPlayers[p.Name] = true
-		end
-		updateMainLabel()
-		updateSelectedPlayers()
-		buildList(searchBox.Text)
-	end)
-	
-	unselectAllBtn.MouseButton1Click:Connect(function()
-		selectedPlayers = {}
-		updateMainLabel()
-		updateSelectedPlayers()
-		buildList(searchBox.Text)
-	end)
-	
-	-- ============================================================
-	-- SHOW DISPLAY / SHOW USERNAME
-	-- ============================================================
-	displayBtn.MouseButton1Click:Connect(function()
-		showDisplay = not showDisplay
-		displayBtn.Text = showDisplay and "Show Username" or "Show Display"
-		updateMainLabel()
-		if isOpen then buildList(searchBox.Text) end
-	end)
-	
-	-- ============================================================
-	-- OPEN / CLOSE
-	-- ============================================================
-	local function openDropdown()
-		isOpen = true
-		mainLabel.Visible = false
-		mainArrow.Visible = false
-	
-		repeat task.wait() until SelectDDropdown.AbsoluteSize.X > 0
-	
-		local absPos = SelectDDropdown.AbsolutePosition
-		local absSize = SelectDDropdown.AbsoluteSize
-		panel.Position = UDim2.new(0, absPos.X + (absSize.X - 161) / 2, 0, absPos.Y + absSize.Y)
-		panel.Size = UDim2.new(0, absSize.X, 0, ROW_HEIGHT)
-		panel.Visible = true
-	
-		searchBox.Text = ""
-		buildList("")
-	end
-	
-	local function closeDropdown()
-		isOpen = false
-		panel.Visible = false
-		mainLabel.Visible = true
-		mainArrow.Visible = true
-		mainArrow.Text = "▼"
-		updateMainLabel()
-	end
-	
-	SelectDDropdown.MouseButton1Click:Connect(function()
-		if isOpen then
-			closeDropdown()
-		else
-			openDropdown()
-		end
-	end)
-	
-	searchArrow.MouseButton1Click:Connect(function()
-		closeDropdown()
-	end)
-	
-	searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-		buildList(searchBox.Text)
-	end)
-	
-	UserInputService.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
-			local mousePos = input.Position
-			local panelPos = panel.AbsolutePosition
-			local panelSize = panel.AbsoluteSize
-			local btnPos = SelectDDropdown.AbsolutePosition
-			local btnSize = SelectDDropdown.AbsoluteSize
-	
-			local inPanel = mousePos.X >= panelPos.X and mousePos.X <= panelPos.X + panelSize.X
-				and mousePos.Y >= panelPos.Y and mousePos.Y <= panelPos.Y + panelSize.Y
-			local inBtn = mousePos.X >= btnPos.X and mousePos.X <= btnPos.X + btnSize.X
-				and mousePos.Y >= btnPos.Y and mousePos.Y <= btnPos.Y + btnSize.Y
-	
-			if not inPanel and not inBtn then
-				closeDropdown()
 			end
-		end
-	end)
 	
-	Players.PlayerRemoving:Connect(function(p)
-		if selectedPlayers[p.Name] then
-			selectedPlayers[p.Name] = nil
-			updateMainLabel()
+			return items
+		end,
+	
+		onMultiSelectChange = function(selected)
+			selectedPlayers = {}
+			for _, item in pairs(selected) do
+				selectedPlayers[item.username] = true
+			end
 			updateSelectedPlayers()
-		end
-		if isOpen then buildList(searchBox.Text) end
-	end)
+		end,
 	
-	Players.PlayerAdded:Connect(function()
-		if isOpen then buildList(searchBox.Text) end
-	end)
+		bottomButtons = {
+			{
+				text = "Select All",
+				onClick = function(dropdown)
+					-- Select all current items
+					local allItems = {}
+					for _, item in pairs(dropdown.getCurrentItems()) do
+						table.insert(allItems, item)
+					end
+					dropdown.setSelected(allItems)
+				end
+			},
+			{
+				text = "Unselect All",
+				onClick = function(dropdown)
+					dropdown.setSelected({})
+				end
+			},
+			{
+				text = "Show Display",
+				onClick = function(dropdown)
+					dropdown.toggleDisplayMode()
+				end
+			},
+			{
+				text = "Show Offline",
+				onClick = function(dropdown, btn)
+					showOffline = not showOffline
+					btn.Text = showOffline and "Hide Offline" or "Show Offline"
+					dropdown.refresh()
+				end
+			}
+		}
+	})
 	
+	-- Initialize
 	SelectDRow:SetAttribute("SelectedPlayers", "")
-	updateMainLabel()
 end;
 task.spawn(C_1d5);
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.GriefGroup.HLBlockRow.HLBlockScript
@@ -25711,7 +25375,6 @@ local function C_1de()
 local script = G2L["1de"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	local RunService = game:GetService("RunService")
 	
 	local ToggleGriefRow = script.Parent
 	local GriefGroup = ToggleGriefRow.Parent
@@ -25837,6 +25500,12 @@ local script = G2L["1de"];
 			local dti = 0
 			local lastRefreshTime = 0
 	
+			-- Initial refresh when starting
+			if shared.DeleteToolRefresh then
+				shared.DeleteToolRefresh()
+			end
+			lastRefreshTime = tick()
+	
 			while isGriefing do
 				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 				if not hrp then 
@@ -25850,37 +25519,11 @@ local script = G2L["1de"];
 					local targetBlocks = getAllTargetBlocks()
 	
 					if #targetBlocks > 0 then
-						-- Refresh every 10 seconds (only if not already equipped)
+						-- Refresh every 5 seconds ONLY when blocks exist
 						if tick() - lastRefreshTime >= 5 then
-							-- Check if any delete tools are already equipped
-							local alreadyEquipped = false
-							for _, dt in pairs(dtools) do
-								if dt.bt.Parent == LocalPlayer.Character then
-									alreadyEquipped = true
-									break
-								end
+							if shared.DeleteToolRefresh then
+								shared.DeleteToolRefresh()
 							end
-	
-							-- Only equip/unequip if they weren't already equipped
-							if not alreadyEquipped then
-								-- EQUIP
-								for _, dt in pairs(dtools) do
-									if dt.bt.Parent == LocalPlayer.Backpack then
-										dt.bt.Parent = LocalPlayer.Character
-									end
-								end
-	
-								RunService.RenderStepped:Wait()
-	
-								-- FORCE UNEQUIP (spam until in backpack)
-								for _, dt in pairs(dtools) do
-									while dt.bt.Parent == LocalPlayer.Character do
-										dt.bt.Parent = LocalPlayer.Backpack
-										task.wait()
-									end
-								end
-							end
-	
 							lastRefreshTime = tick()
 						end
 	
@@ -25900,6 +25543,7 @@ local script = G2L["1de"];
 							end
 						end
 					else
+						-- No blocks, don't refresh, just wait
 						task.wait(0.5)
 					end
 				else
@@ -25981,32 +25625,31 @@ local script = G2L["1e1"];
 	-- State
 	local isGriefing = false
 	local griefLoop = nil
+	local highlightLoop = nil
+	local highlights = {}
 	
 	-- Text states
-	local TEXT_START = "Delete All Blocks"
-	local TEXT_STOP = "Stop Deleting All"
+	local TEXT_START = "Delete Aura"
+	local TEXT_STOP = "Stop Delete Aura"
 	local TEXT_NO_BLOCKS = "No Blocks Found"
 	
 	-- Network delay
 	local ws = 0.05
 	
 	-- ============================================================
-	-- GET ALL TARGET BLOCKS (INFINITE RANGE - EVERYONE)
+	-- GET ALL TARGET BLOCKS
 	-- ============================================================
 	local function getAllTargetBlocks()
 		local blocks = {}
 		local bricksFolder = workspace:FindFirstChild("Bricks")
-	
 		if not bricksFolder then return blocks end
 	
-		-- Get ALL descendants that are bricks
 		for _, brick in ipairs(bricksFolder:GetDescendants()) do
 			if brick:IsA("BasePart") and brick.Name == "Brick" then
 				table.insert(blocks, brick)
 			end
 		end
 	
-		-- Sort by distance from LocalPlayer (closest first)
 		local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 		if hrp then
 			table.sort(blocks, function(a, b)
@@ -26043,6 +25686,20 @@ local script = G2L["1e1"];
 	end
 	
 	-- ============================================================
+	-- CLEAR ALL HIGHLIGHTS
+	-- ============================================================
+	local function clearHighlights()
+		for _, highlight in pairs(highlights) do
+			if highlight and highlight.Parent then
+				pcall(function()
+					highlight:Destroy()
+				end)
+			end
+		end
+		highlights = {}
+	end
+	
+	-- ============================================================
 	-- START GRIEFING
 	-- ============================================================
 	local function startGrief()
@@ -26057,10 +25714,44 @@ local script = G2L["1e1"];
 		isGriefing = true
 		GriefAllButton.Text = TEXT_STOP
 	
+		-- HIGHLIGHT LOOP (separate thread)
+		highlightLoop = task.spawn(function()
+			while isGriefing do
+				clearHighlights()
+	
+				local targetBlocks = getAllTargetBlocks()
+				local blocksPerSecond = 1 / (ws / math.max(#dtools, 1))
+				local highlightCount = math.floor(blocksPerSecond * 2)
+	
+				for i = 1, math.min(highlightCount, #targetBlocks) do
+					local block = targetBlocks[i]
+					if block and block:IsDescendantOf(workspace) then
+						local highlight = Instance.new("Highlight")
+						highlight.Adornee = block
+						highlight.FillColor = Color3.fromRGB(255, 0, 0)
+						highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+						highlight.FillTransparency = 0.5
+						highlight.OutlineTransparency = 1
+						highlight.Parent = block
+						table.insert(highlights, highlight)
+					end
+				end
+	
+				task.wait(0.1)
+			end
+			clearHighlights()
+		end)
+	
+		-- GRIEF LOOP (separate thread)
 		griefLoop = task.spawn(function()
 			local dti = 0
-			local lastRefreshTime = tick()
-			local highlights = {}
+			local lastRefreshTime = 0
+	
+			-- Initial refresh when starting
+			if shared.DeleteToolRefresh then
+				shared.DeleteToolRefresh()
+			end
+			lastRefreshTime = tick()
 	
 			while isGriefing do
 				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -26075,82 +25766,52 @@ local script = G2L["1e1"];
 					local targetBlocks = getAllTargetBlocks()
 	
 					if #targetBlocks > 0 then
-						-- FORCE refresh every 5 seconds when blocks exist
-						local currentTime = tick()
-						if currentTime - lastRefreshTime >= 5 then
-							local alreadyEquipped = false
-							for _, dt in pairs(dtools) do
-								if dt.bt.Parent == LocalPlayer.Character then
-									alreadyEquipped = true
-									break
-								end
+						-- Refresh every 5 seconds ONLY when blocks exist
+						if tick() - lastRefreshTime >= 5 then
+							if shared.DeleteToolRefresh then
+								shared.DeleteToolRefresh()
 							end
-	
-							if not alreadyEquipped then
-								for _, dt in pairs(dtools) do
-									if dt.bt.Parent == LocalPlayer.Backpack then
-										dt.bt.Parent = LocalPlayer.Character
-									end
-								end
-	
-								RunService.RenderStepped:Wait()
-	
-								for _, dt in pairs(dtools) do
-									while dt.bt.Parent == LocalPlayer.Character do
-										dt.bt.Parent = LocalPlayer.Backpack
-										task.wait()
-									end
-								end
-							end
-	
-							lastRefreshTime = currentTime
+							lastRefreshTime = tick()
 						end
 	
-						-- Calculate how many blocks ahead to highlight (2 seconds)
-						local blocksPerSecond = 1 / (ws / math.max(#dtools, 1))
-						local highlightCount = math.floor(blocksPerSecond * 2)
+						-- Check if any blocks are highlighted
+						local hasHighlights = false
+						for _, h in pairs(highlights) do
+							if h and h.Parent then
+								hasHighlights = true
+								break
+							end
+						end
 	
-						-- Delete blocks
-						for i, block in ipairs(targetBlocks) do
+						-- DELETE ONLY HIGHLIGHTED BLOCKS (or any block if none highlighted)
+						for _, block in ipairs(targetBlocks) do
 							if not isGriefing then break end
 	
 							if block and block:IsDescendantOf(workspace) then
-								-- Highlight next block in line (rolling window)
-								local nextIndex = i + highlightCount
-								if nextIndex <= #targetBlocks then
-									local nextBlock = targetBlocks[nextIndex]
-									if nextBlock and nextBlock:IsDescendantOf(workspace) and not highlights[nextBlock] then
-										local highlight = Instance.new("Highlight")
-										highlight.Adornee = nextBlock
-										highlight.FillColor = Color3.fromRGB(255, 0, 0)
-										highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-										highlight.FillTransparency = 0.5
-										highlight.OutlineTransparency = 1
-										highlight.Parent = nextBlock
-										highlights[nextBlock] = highlight
+								-- Check if this block is highlighted
+								local isHighlighted = false
+								for _, h in pairs(highlights) do
+									if h and h.Adornee == block then
+										isHighlighted = true
+										break
 									end
 								end
 	
-								-- Remove highlight from current block before deleting
-								if highlights[block] then
+								-- Only delete if: highlighted OR no highlights exist at all
+								if isHighlighted or not hasHighlights then
+									dti = dti + 1
+									local dt = dtools[(dti % #dtools) + 1]
+	
 									pcall(function()
-										highlights[block]:Destroy()
+										dt.e:FireServer(block, hrp.Position)
 									end)
-									highlights[block] = nil
+	
+									task.wait(ws / #dtools)
 								end
-	
-								-- Delete the block
-								dti = dti + 1
-								local dt = dtools[(dti % #dtools) + 1]
-	
-								pcall(function()
-									dt.e:FireServer(block, hrp.Position)
-								end)
-	
-								task.wait(ws / #dtools)
 							end
 						end
 					else
+						-- No blocks, don't refresh, just wait
 						task.wait(0.5)
 					end
 				else
@@ -26159,16 +25820,6 @@ local script = G2L["1e1"];
 	
 				task.wait()
 			end
-	
-			-- FORCE clean up ALL highlights when stopping
-			for block, highlight in pairs(highlights) do
-				pcall(function()
-					if highlight and highlight.Parent then
-						highlight:Destroy()
-					end
-				end)
-			end
-			highlights = {}
 		end)
 	end
 	
@@ -26184,7 +25835,15 @@ local script = G2L["1e1"];
 			griefLoop = nil
 		end
 	
+		if highlightLoop then
+			task.cancel(highlightLoop)
+			highlightLoop = nil
+		end
+	
 		task.wait(0.1)
+	
+		clearHighlights()
+	
 		local dtools = findDeleteTools()
 		for _, dt in pairs(dtools) do
 			if dt.bt.Parent == LocalPlayer.Character then
@@ -36688,5 +36347,197 @@ local script = G2L["35e"];
 	end
 end;
 task.spawn(C_35e);
+-- StarterGui.AgarWareGui.MasterScripts.RefreshBkitTools
+local function C_35f()
+local script = G2L["35f"];
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	-- ============================================================
+	-- TOOL REFRESH FUNCTIONS
+	-- Each tool can be refreshed individually by calling shared functions
+	-- Skips refresh if the tool is already equipped
+	-- ============================================================
+	
+	-- Build Tool Refresh
+	shared.BuildToolRefresh = function()
+		local buildTool = LocalPlayer.Backpack:FindFirstChild("Build") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Build"))
+	
+		if not buildTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if buildTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if buildTool.Parent == LocalPlayer.Backpack then
+			buildTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while buildTool.Parent == LocalPlayer.Character do
+			buildTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Delete Tool Refresh
+	shared.DeleteToolRefresh = function()
+		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
+	
+		if not deleteTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if deleteTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if deleteTool.Parent == LocalPlayer.Backpack then
+			deleteTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while deleteTool.Parent == LocalPlayer.Character do
+			deleteTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Paint Tool Refresh
+	shared.PaintToolRefresh = function()
+		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
+	
+		if not paintTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if paintTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if paintTool.Parent == LocalPlayer.Backpack then
+			paintTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while paintTool.Parent == LocalPlayer.Character do
+			paintTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Shape Tool Refresh
+	shared.ShapeToolRefresh = function()
+		local shapeTool = LocalPlayer.Backpack:FindFirstChild("Shape") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shape"))
+	
+		if not shapeTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if shapeTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if shapeTool.Parent == LocalPlayer.Backpack then
+			shapeTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while shapeTool.Parent == LocalPlayer.Character do
+			shapeTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Shovel Tool Refresh
+	shared.ShovelToolRefresh = function()
+		local shovelTool = LocalPlayer.Backpack:FindFirstChild("Shovel") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shovel"))
+	
+		if not shovelTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if shovelTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if shovelTool.Parent == LocalPlayer.Backpack then
+			shovelTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while shovelTool.Parent == LocalPlayer.Character do
+			shovelTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Sign Tool Refresh
+	shared.SignToolRefresh = function()
+		local signTool = LocalPlayer.Backpack:FindFirstChild("Sign") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Sign"))
+	
+		if not signTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if signTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if signTool.Parent == LocalPlayer.Backpack then
+			signTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while signTool.Parent == LocalPlayer.Character do
+			signTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	--[[
+	USAGE:
+		shared.BuildToolRefresh()   -- Refreshes Build tool
+		shared.DeleteToolRefresh()  -- Refreshes Delete tool
+		shared.PaintToolRefresh()   -- Refreshes Paint tool
+		shared.ShapeToolRefresh()   -- Refreshes Shape tool
+		shared.ShovelToolRefresh()  -- Refreshes Shovel tool
+		shared.SignToolRefresh()    -- Refreshes Sign tool
+		
+	Each function:
+	- Returns false if tool already equipped (skips refresh)
+	- Returns false if tool not found
+	- Returns true if refresh successful
+	- Equips tool without unequipping others
+	- Force unequips until in backpack
+	]]
+end;
+task.spawn(C_35f);
 
 return G2L["1"], require;
