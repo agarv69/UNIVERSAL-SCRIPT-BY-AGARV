@@ -18,7 +18,7 @@ G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 
 -- StarterGui.AgarWareV3.MainFrame
 G2L["2"] = Instance.new("Frame", G2L["1"]);
-G2L["2"]["BorderSizePixel"] = 0;
+G2L["2"]["BorderSizePixel"] = 5;
 G2L["2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["2"]["Size"] = UDim2.new(0, 904, 0, 636);
 G2L["2"]["Position"] = UDim2.new(0.05787, 0, 0.09405, 0);
@@ -37,11 +37,11 @@ local script = G2L["3"];
 	local frame = script.Parent.MainFrame
 	
 	-- Configuration
-	local BASE_WIDTH = 500
+	local BASE_WIDTH = 500   -- Target size for laptops/iPads
 	local BASE_HEIGHT = 350
-	local MIN_WIDTH = 400
-	local MIN_HEIGHT = 300
-	local MAX_WIDTH = 550
+	local MIN_WIDTH = 350    -- Smaller minimum for phones
+	local MIN_HEIGHT = 250
+	local MAX_WIDTH = 550    -- Max for big PC monitors
 	local MAX_HEIGHT = 400
 	
 	local function rescaler()
@@ -49,20 +49,23 @@ local script = G2L["3"];
 		local screenX = viewportSize.X
 		local screenY = viewportSize.Y
 	
-		local isMobile = screenX < 600
+		-- Detect device type based on screen size
+		local isMobile = screenX < 600  -- Phones are usually under 600px wide
 	
 		local newWidth, newHeight
 	
 		if isMobile then
-			newWidth = math.clamp(screenX * 0.85, MIN_WIDTH, BASE_WIDTH)
-			newHeight = math.clamp(screenY * 0.6, MIN_HEIGHT, BASE_HEIGHT)
+			-- For phones: smaller and more controlled
+			newWidth = math.clamp(screenX * 0.75, MIN_WIDTH, 380)  -- Max 380 on phones
+			newHeight = math.clamp(screenY * 0.5, MIN_HEIGHT, 280)  -- Max 280 on phones
 		else
+			-- For tablets/laptops/PCs: use fixed size with slight scaling
 			newWidth = math.clamp(screenX * 0.35, BASE_WIDTH - 50, MAX_WIDTH)
 			newHeight = math.clamp(screenY * 0.45, BASE_HEIGHT - 50, MAX_HEIGHT)
 		end
 	
 		frame.Size = UDim2.new(0, newWidth, 0, newHeight)
-		frame.Position = UDim2.new(0.5, -newWidth/2, 0.5, -newHeight/2)  -- Centered
+		frame.Position = UDim2.new(0.5, -newWidth/2, 0.5, -newHeight/2)
 	end
 	
 	rescaler()
