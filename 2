@@ -21,6 +21,7 @@ G2L["1"]["ResetOnSpawn"] = false;
 
 -- StarterGui.AgarWareV3.MainFrame
 G2L["2"] = Instance.new("Frame", G2L["1"]);
+G2L["2"]["ZIndex"] = 100;
 G2L["2"]["BorderSizePixel"] = 0;
 G2L["2"]["BackgroundColor3"] = Color3.fromRGB(21, 21, 21);
 G2L["2"]["Size"] = UDim2.new(0, 799, 0, 457);
@@ -99,6 +100,7 @@ G2L["a"]["Name"] = [[MainScript]];
 
 -- StarterGui.AgarWareV3.KeybindFrame
 G2L["b"] = Instance.new("Frame", G2L["1"]);
+G2L["b"]["ZIndex"] = 100000;
 G2L["b"]["BorderSizePixel"] = 0;
 G2L["b"]["BackgroundColor3"] = Color3.fromRGB(21, 21, 21);
 G2L["b"]["Size"] = UDim2.new(0, 200, 0, 50);
@@ -123,7 +125,7 @@ G2L["d"] = Instance.new("Frame", G2L["c"]);
 G2L["d"]["BorderSizePixel"] = 0;
 G2L["d"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["d"]["BorderMode"] = Enum.BorderMode.Middle;
-G2L["d"]["Size"] = UDim2.new(0, 193, 0, 29);
+G2L["d"]["Size"] = UDim2.new(0, 200, 0, 29);
 G2L["d"]["BorderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["d"]["Name"] = [[AccentColor]];
 G2L["d"]["BackgroundTransparency"] = 1;
@@ -342,6 +344,15 @@ local script = G2L["f"];
 	-- Store original sizes
 	keybindFrame:SetAttribute("OriginalWidth", keybindFrame.AbsoluteSize.X)
 	
+	-- Store original text sizes for ALL text elements under KeybindFrame
+	for _, descendant in pairs(keybindFrame:GetDescendants()) do
+		if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+			if not descendant:GetAttribute("OriginalTextSize") then
+				descendant:SetAttribute("OriginalTextSize", descendant.TextSize)
+			end
+		end
+	end
+	
 	-- Custom Grid Layout Function
 	local function arrangeButtonsInGrid()
 		local buttons = {}
@@ -374,10 +385,19 @@ local script = G2L["f"];
 	
 			button.Size = UDim2.new(0, cellWidth, 0, cellHeight)
 			button.Position = UDim2.new(0, xPos, 0, yPos)
+		end
+	end
 	
-			-- Store original text size
-			if not button:GetAttribute("OriginalTextSize") then
-				button:SetAttribute("OriginalTextSize", button.TextSize)
+	local function scaleAllText()
+		local scaleFactor = keybindFrame.AbsoluteSize.X / keybindFrame:GetAttribute("OriginalWidth")
+	
+		-- Scale ALL text under KeybindFrame
+		for _, descendant in pairs(keybindFrame:GetDescendants()) do
+			if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+				local originalSize = descendant:GetAttribute("OriginalTextSize")
+				if originalSize then
+					descendant.TextSize = math.floor(originalSize * scaleFactor)
+				end
 			end
 		end
 	end
@@ -401,34 +421,33 @@ local script = G2L["f"];
 		keybindFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
 		keybindFrame.Position = UDim2.new(1, -PADDING_FROM_EDGE, 0, PADDING_FROM_EDGE)
 	
-		-- Scale text
-		local scaleFactor = newWidth / keybindFrame:GetAttribute("OriginalWidth")
-		for _, descendant in pairs(keybindFrame:GetDescendants()) do
-			if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
-				local originalSize = descendant:GetAttribute("OriginalTextSize")
-				if originalSize then
-					descendant.TextSize = math.floor(originalSize * scaleFactor)
-				end
-			end
-		end
-	
-		-- Rearrange grid after resize
+		-- Rearrange grid and scale text
 		task.wait()
 		arrangeButtonsInGrid()
+		scaleAllText()
 	end
 	
 	-- Initial setup
 	arrangeButtonsInGrid()
+	scaleAllText()
 	rescaler()
 	
 	-- Listen for changes
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescaler)
-	keybindFrameMain:GetPropertyChangedSignal("AbsoluteSize"):Connect(arrangeButtonsInGrid)
-	
-	-- Listen for new buttons being added
-	keybindFrameMain.ChildAdded:Connect(function()
-		task.wait()
+	keybindFrameMain:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 		arrangeButtonsInGrid()
+		scaleAllText()
+	end)
+	
+	-- Listen for new elements
+	keybindFrame.DescendantAdded:Connect(function(descendant)
+		if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+			task.wait()
+			if not descendant:GetAttribute("OriginalTextSize") then
+				descendant:SetAttribute("OriginalTextSize", descendant.TextSize)
+			end
+			scaleAllText()
+		end
 	end)
 end;
 task.spawn(C_f);
