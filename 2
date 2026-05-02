@@ -25974,17 +25974,17 @@ local script = G2L["1e1"];
 	local LocalPlayer = Players.LocalPlayer
 	local RunService = game:GetService("RunService")
 	
-	local ToggleGriefRow = script.Parent
-	local GriefGroup = ToggleGriefRow.Parent
-	local ToggleGriefButton = ToggleGriefRow:WaitForChild("GriefAllButton")
+	local GriefAllRow = script.Parent
+	local GriefGroup = GriefAllRow.Parent
+	local GriefAllButton = GriefAllRow:WaitForChild("GriefAllButton")
 	
 	-- State
 	local isGriefing = false
 	local griefLoop = nil
 	
 	-- Text states
-	local TEXT_START = "Start Grief All"
-	local TEXT_STOP = "Stop Grief All"
+	local TEXT_START = "Delete All Blocks"
+	local TEXT_STOP = "Stop Deleting All"
 	local TEXT_NO_BLOCKS = "No Blocks Found"
 	
 	-- Network delay
@@ -26048,18 +26048,19 @@ local script = G2L["1e1"];
 	local function startGrief()
 		local dtools = findDeleteTools()
 		if #dtools == 0 then
-			ToggleGriefButton.Text = "Delete tool not found"
+			GriefAllButton.Text = "Delete tool not found"
 			task.wait(1)
-			ToggleGriefButton.Text = TEXT_START
+			GriefAllButton.Text = TEXT_START
 			return
 		end
 	
 		isGriefing = true
-		ToggleGriefButton.Text = TEXT_STOP
+		GriefAllButton.Text = TEXT_STOP
 	
 		griefLoop = task.spawn(function()
 			local dti = 0
 			local lastRefreshTime = 0
+			local highlights = {}
 	
 			while isGriefing do
 				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -26074,9 +26075,8 @@ local script = G2L["1e1"];
 					local targetBlocks = getAllTargetBlocks()
 	
 					if #targetBlocks > 0 then
-						-- Refresh every 10 seconds (only if not already equipped)
-						if tick() - lastRefreshTime >= 10 then
-							-- Check if any delete tools are already equipped
+						-- Refresh every 5 seconds ONLY when blocks exist
+						if tick() - lastRefreshTime >= 5 then
 							local alreadyEquipped = false
 							for _, dt in pairs(dtools) do
 								if dt.bt.Parent == LocalPlayer.Character then
@@ -26085,9 +26085,7 @@ local script = G2L["1e1"];
 								end
 							end
 	
-							-- Only equip/unequip if they weren't already equipped
 							if not alreadyEquipped then
-								-- EQUIP
 								for _, dt in pairs(dtools) do
 									if dt.bt.Parent == LocalPlayer.Backpack then
 										dt.bt.Parent = LocalPlayer.Character
@@ -26096,7 +26094,6 @@ local script = G2L["1e1"];
 	
 								RunService.RenderStepped:Wait()
 	
-								-- FORCE UNEQUIP (spam until in backpack)
 								for _, dt in pairs(dtools) do
 									while dt.bt.Parent == LocalPlayer.Character do
 										dt.bt.Parent = LocalPlayer.Backpack
@@ -26108,26 +26105,35 @@ local script = G2L["1e1"];
 							lastRefreshTime = tick()
 						end
 	
-						-- Fire delete events
-						for _, block in pairs(targetBlocks) do
+						-- Delete blocks one by one
+						for i, block in ipairs(targetBlocks) do
 							if not isGriefing then break end
 	
 							if block and block:IsDescendantOf(workspace) then
-								-- Highlight block red for 2 seconds before deleting
-								local highlight = Instance.new("Highlight")
-								highlight.Adornee = block
-								highlight.FillColor = Color3.fromRGB(255, 0, 0)
-								highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-								highlight.FillTransparency = 0.5
-								highlight.OutlineTransparency = 1
-								highlight.Parent = block
+								-- Calculate how many blocks ahead to highlight
+								local blocksPerSecond = 1 / (ws / #dtools)
+								local blocksIn2Seconds = math.floor(blocksPerSecond * 2)
 	
-								-- Wait 2 seconds
-								task.wait(2)
+								-- Highlight the block that's 2 seconds ahead
+								local futureIndex = i + blocksIn2Seconds
+								if futureIndex <= #targetBlocks then
+									local futureBlock = targetBlocks[futureIndex]
+									if futureBlock and futureBlock:IsDescendantOf(workspace) and not highlights[futureBlock] then
+										local highlight = Instance.new("Highlight")
+										highlight.Adornee = futureBlock
+										highlight.FillColor = Color3.fromRGB(255, 0, 0)
+										highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+										highlight.FillTransparency = 0.5
+										highlight.OutlineTransparency = 1
+										highlight.Parent = futureBlock
+										highlights[futureBlock] = highlight
+									end
+								end
 	
-								-- Remove highlight
-								if highlight and highlight.Parent then
-									highlight:Destroy()
+								-- Remove highlight from current block
+								if highlights[block] then
+									highlights[block]:Destroy()
+									highlights[block] = nil
 								end
 	
 								-- Delete the block
@@ -26142,6 +26148,7 @@ local script = G2L["1e1"];
 							end
 						end
 					else
+						-- No blocks, don't refresh, just wait
 						task.wait(0.5)
 					end
 				else
@@ -26150,6 +26157,14 @@ local script = G2L["1e1"];
 	
 				task.wait()
 			end
+	
+			-- Clean up ALL highlights when stopping
+			for block, highlight in pairs(highlights) do
+				if highlight and highlight.Parent then
+					highlight:Destroy()
+				end
+			end
+			highlights = {}
 		end)
 	end
 	
@@ -26158,7 +26173,7 @@ local script = G2L["1e1"];
 	-- ============================================================
 	local function stopGrief()
 		isGriefing = false
-		ToggleGriefButton.Text = TEXT_START
+		GriefAllButton.Text = TEXT_START
 	
 		if griefLoop then
 			task.cancel(griefLoop)
@@ -26177,22 +26192,22 @@ local script = G2L["1e1"];
 	-- ============================================================
 	-- BUTTON HANDLERS
 	-- ============================================================
-	ToggleGriefButton.MouseEnter:Connect(function()
+	GriefAllButton.MouseEnter:Connect(function()
 		if not isGriefing then
 			local targetBlocks = getAllTargetBlocks()
 			if #targetBlocks == 0 then
-				ToggleGriefButton.Text = TEXT_NO_BLOCKS
+				GriefAllButton.Text = TEXT_NO_BLOCKS
 			end
 		end
 	end)
 	
-	ToggleGriefButton.MouseLeave:Connect(function()
+	GriefAllButton.MouseLeave:Connect(function()
 		if not isGriefing then
-			ToggleGriefButton.Text = TEXT_START
+			GriefAllButton.Text = TEXT_START
 		end
 	end)
 	
-	ToggleGriefButton.MouseButton1Click:Connect(function()
+	GriefAllButton.MouseButton1Click:Connect(function()
 		if isGriefing then
 			stopGrief()
 		else
