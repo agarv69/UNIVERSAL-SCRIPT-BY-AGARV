@@ -12,8 +12,11 @@ local G2L = {};
 
 -- StarterGui.AgarWareV3
 G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+G2L["1"]["IgnoreGuiInset"] = true;
+G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets;
 G2L["1"]["Name"] = [[AgarWareV3]];
 G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+G2L["1"]["ResetOnSpawn"] = false;
 
 
 -- StarterGui.AgarWareV3.MainFrame
@@ -37,11 +40,9 @@ local script = G2L["3"];
 	local frame = script.Parent.MainFrame
 	
 	-- Configuration
-	local BASE_WIDTH = 500   -- Target size for laptops/iPads
+	local BASE_WIDTH = 500
 	local BASE_HEIGHT = 350
-	local MIN_WIDTH = 350    -- Smaller minimum for phones
-	local MIN_HEIGHT = 250
-	local MAX_WIDTH = 550    -- Max for big PC monitors
+	local MAX_WIDTH = 550
 	local MAX_HEIGHT = 400
 	
 	local function rescaler()
@@ -49,23 +50,30 @@ local script = G2L["3"];
 		local screenX = viewportSize.X
 		local screenY = viewportSize.Y
 	
-		-- Detect device type based on screen size
-		local isMobile = screenX < 600  -- Phones are usually under 600px wide
+		local isMobile = screenX < 600
 	
 		local newWidth, newHeight
 	
 		if isMobile then
-			-- For phones: smaller and more controlled
-			newWidth = math.clamp(screenX * 0.75, MIN_WIDTH, 380)  -- Max 380 on phones
-			newHeight = math.clamp(screenY * 0.5, MIN_HEIGHT, 280)  -- Max 280 on phones
+			newWidth = math.clamp(screenX * 0.65, 280, 340)
+			newHeight = math.clamp(screenY * 0.35, 200, 250)
 		else
-			-- For tablets/laptops/PCs: use fixed size with slight scaling
-			newWidth = math.clamp(screenX * 0.35, BASE_WIDTH - 50, MAX_WIDTH)
-			newHeight = math.clamp(screenY * 0.45, BASE_HEIGHT - 50, MAX_HEIGHT)
+			newWidth = math.clamp(screenX * 0.35, 450, MAX_WIDTH)
+			newHeight = math.clamp(screenY * 0.45, 320, MAX_HEIGHT)
 		end
 	
+		frame.AnchorPoint = Vector2.new(0.5, 0.5)
 		frame.Size = UDim2.new(0, newWidth, 0, newHeight)
-		frame.Position = UDim2.new(0.5, -newWidth/2, 0.5, -newHeight/2)
+		frame.Position = UDim2.new(0.5, 0, 0.52, 0)
+	
+		-- Scale all text in the GUI
+		for _, descendant in pairs(frame:GetDescendants()) do
+			if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+				local baseSize = descendant:GetAttribute("BaseTextSize") or 14  -- Default to 14
+				local scale = isMobile and 0.9 or 1  -- Slightly smaller on mobile
+				descendant.TextSize = baseSize * scale
+			end
+		end
 	end
 	
 	rescaler()
