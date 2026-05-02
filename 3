@@ -70,9 +70,9 @@ G2L["7"] = Instance.new("LocalScript", G2L["1"]);
 G2L["7"]["Name"] = [[MainScript]];
 
 
--- StarterGui.AgarWareV3.test
+-- StarterGui.AgarWareV3.ProtectionScript
 G2L["8"] = Instance.new("LocalScript", G2L["1"]);
-G2L["8"]["Name"] = [[test]];
+G2L["8"]["Name"] = [[ProtectionScript]];
 
 
 -- StarterGui.AgarWareV3.MainFrame.TextButton.LocalScript
@@ -163,87 +163,172 @@ local script = G2L["7"];
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescaler)
 end;
 task.spawn(C_7);
--- StarterGui.AgarWareV3.test
+-- StarterGui.AgarWareV3.ProtectionScript
 local function C_8()
 local script = G2L["8"];
-	local Players = game:GetService("Players")
 	local CoreGui = game:GetService("CoreGui")
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
 	local ScreenGui = script.Parent
 	
-	-- Wait for GUI to fully load
-	task.wait(0.5)
+	task.wait(math.random(1, 3))
 	
-	-- PROTECTION TECHNIQUES
+	-- Store original GUI for recreation
+	local originalGui = ScreenGui:Clone()
 	
-	-- 1. Move to CoreGui and rename ScreenGui
+	-- FAKE DECOY GUI
+	local function createDecoyGui()
+		local decoy = Instance.new("ScreenGui")
+		decoy.Name = "AgarWareV3"
+		decoy.ResetOnSpawn = false
+		decoy.Parent = LocalPlayer:WaitForChild("PlayerGui")
+	
+		local fakeFrame = Instance.new("Frame")
+		fakeFrame.Name = "MainFrame"
+		fakeFrame.Size = UDim2.new(0, 500, 0, 350)
+		fakeFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
+		fakeFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+		fakeFrame.Parent = decoy
+	
+		local fakeLabel = Instance.new("TextLabel")
+		fakeLabel.Size = UDim2.new(1, 0, 0, 50)
+		fakeLabel.Text = "AGAR WARE V3"
+		fakeLabel.TextSize = 20
+		fakeLabel.BackgroundTransparency = 1
+		fakeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		fakeLabel.Parent = fakeFrame
+	
+		local fakeScript = Instance.new("LocalScript")
+		fakeScript.Name = "MainScript"
+		fakeScript.Source = "-- Decoy script\nwait(999999)"
+		fakeScript.Parent = decoy
+	end
+	
+	-- MOVE AND RENAME REAL GUI
 	local function moveAndRename()
 		local success = pcall(function()
-			-- Rename ScreenGui to blend in
 			local robloxNames = {"Backpack", "TopBar", "Chat", "PlayerList", "InGameMenu", "HealthBar"}
 			ScreenGui.Name = robloxNames[math.random(1, #robloxNames)]
-	
-			-- Move to CoreGui
 			ScreenGui.Parent = CoreGui
 		end)
 	
 		if not success then
-			-- If CoreGui blocked, just rename
 			ScreenGui.Name = "Backpack"
 		end
 	end
 	
-	-- 2. Rename all children to look like official Roblox stuff
-	local function disguiseEverything()
+	-- DISGUISE SCRIPTS
+	local function disguiseScripts()
 		for _, descendant in pairs(ScreenGui:GetDescendants()) do
 			if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") then
-				local scriptNames = {"ChatMain", "Animate", "SoundService", "ControlScript", "CameraScript"}
+				local scriptNames = {"ChatMain", "Animate", "SoundService", "ControlScript", "CameraScript", "LocalScript"}
 				descendant.Name = scriptNames[math.random(1, #scriptNames)]
-			elseif descendant:IsA("Frame") then
-				descendant.Name = "Container"
-			elseif descendant:IsA("TextButton") then
-				descendant.Name = "Button"
-			elseif descendant:IsA("TextLabel") then
-				descendant.Name = "Label"
-			elseif descendant:IsA("ImageLabel") or descendant:IsA("ImageButton") then
-				descendant.Name = "Icon"
 			end
 		end
 	end
 	
-	-- 3. Anti-delete protection
+	-- RECREATE GUI IF DELETED
 	ScreenGui.AncestryChanged:Connect(function(_, parent)
 		if not parent then
-			warn("GUI was deleted")
+			task.wait(0.5)
+			local newGui = originalGui:Clone()
+			newGui.Parent = CoreGui
+			local protectionScript = script:Clone()
+			protectionScript.Parent = newGui
 		end
 	end)
 	
-	-- 4. Detect Dex
-	local function detectDex()
-		local suspiciousNames = {"Dex", "Explorer", "RemoteSpy", "SimpleSpy"}
+	-- DETECT PROPERTY TAMPERING
+	local function monitorProperties()
+		ScreenGui:GetPropertyChangedSignal("Enabled"):Connect(function()
+			if not ScreenGui.Enabled then
+				ScreenGui.Enabled = true
+			end
+		end)
+	
+		ScreenGui:GetPropertyChangedSignal("Parent"):Connect(function()
+			if ScreenGui.Parent ~= CoreGui then
+				ScreenGui.Parent = CoreGui
+			end
+		end)
+	end
+	
+	-- DETECT DEX AND SPY TOOLS
+	local function detectTools()
+		local suspiciousNames = {"Dex", "Explorer", "RemoteSpy", "SimpleSpy", "Hydroxide", "UnnamedESP"}
 	
 		for _, gui in pairs(CoreGui:GetChildren()) do
 			for _, susName in pairs(suspiciousNames) do
 				if string.find(string.lower(gui.Name), string.lower(susName)) then
-					warn("Possible Dex detected: " .. gui.Name)
-					-- Optional: hide GUI temporarily
-					-- ScreenGui.Enabled = false
+					ScreenGui.Enabled = false
+					task.wait(5)
+					ScreenGui.Enabled = true
 				end
 			end
 		end
 	end
 	
-	-- RUN PROTECTIONS
-	moveAndRename()
-	disguiseEverything()
+	-- DETECT EXPLOIT FUNCTIONS BEING CALLED
+	local function detectExploitActivity()
+		local dangerousFunctions = {
+			"getgenv", "getrenv", "getrawmetatable", "hookfunction", 
+			"hookmetamethod", "newcclosure", "setreadonly"
+		}
 	
-	-- Check for Dex every 5 seconds
-	task.spawn(function()
-		while task.wait(5) do
-			detectDex()
+		for _, funcName in pairs(dangerousFunctions) do
+			if getgenv and getgenv()[funcName .. "_called"] then
+				ScreenGui.Enabled = false
+				task.wait(3)
+				ScreenGui.Enabled = true
+			end
+		end
+	end
+	
+	-- MONITOR NEW DESCENDANTS (injection detection)
+	ScreenGui.DescendantAdded:Connect(function(descendant)
+		if descendant:IsA("LocalScript") and not descendant:GetAttribute("Trusted") then
+			task.wait(0.1)
+			descendant:Destroy()
 		end
 	end)
 	
-	print("GUI Protection Active")
+	-- MARK TRUSTED SCRIPTS
+	for _, script in pairs(ScreenGui:GetDescendants()) do
+		if script:IsA("LocalScript") or script:IsA("ModuleScript") then
+			script:SetAttribute("Trusted", true)
+		end
+	end
+	
+	-- RANDOM PARENT SWITCHING
+	task.spawn(function()
+		while task.wait(math.random(30, 60)) do
+			local containers = {"RobloxGui", "CoreGui"}
+			local randomContainer = containers[math.random(1, #containers)]
+	
+			if randomContainer == "RobloxGui" then
+				local robloxGui = CoreGui:FindFirstChild("RobloxGui")
+				if robloxGui then
+					ScreenGui.Parent = robloxGui
+				end
+			else
+				ScreenGui.Parent = CoreGui
+			end
+		end
+	end)
+	
+	-- RUN PROTECTIONS
+	createDecoyGui()
+	moveAndRename()
+	disguiseScripts()
+	monitorProperties()
+	
+	-- CONTINUOUS MONITORING
+	task.spawn(function()
+		while task.wait(5) do
+			detectTools()
+			detectExploitActivity()
+		end
+	end)
 end;
 task.spawn(C_8);
 
