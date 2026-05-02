@@ -170,110 +170,80 @@ local script = G2L["8"];
 	local CoreGui = game:GetService("CoreGui")
 	local ScreenGui = script.Parent
 	
-	-- STORE ORIGINAL NAMES AS ATTRIBUTES (so your scripts can still find them)
-	local function storeOriginalNames(parent)
-		for _, child in pairs(parent:GetDescendants()) do
-			if child:IsA("Instance") then
-				child:SetAttribute("OriginalName", child.Name)
-			end
-		end
-	end
+	-- Wait for GUI to fully load
+	task.wait(0.5)
 	
-	-- METHOD 1: Try gethui()
-	local function tryGetHui()
-		local success, result = pcall(function()
-			return gethui()
-		end)
-		if success and result then
-			ScreenGui.Parent = result
-			return true
-		end
-		return false
-	end
+	-- PROTECTION TECHNIQUES
 	
-	-- METHOD 2: Try protect_gui
-	local function tryProtectGui()
+	-- 1. Move to CoreGui and rename ScreenGui
+	local function moveAndRename()
 		local success = pcall(function()
-			if syn and syn.protect_gui then
-				syn.protect_gui(ScreenGui)
-				ScreenGui.Parent = CoreGui
-				return true
-			elseif protect_gui then
-				protect_gui(ScreenGui)
-				ScreenGui.Parent = CoreGui
-				return true
-			end
-			return false
+			-- Rename ScreenGui to blend in
+			local robloxNames = {"Backpack", "TopBar", "Chat", "PlayerList", "InGameMenu", "HealthBar"}
+			ScreenGui.Name = robloxNames[math.random(1, #robloxNames)]
+	
+			-- Move to CoreGui
+			ScreenGui.Parent = CoreGui
 		end)
-		return success
+	
+		if not success then
+			-- If CoreGui blocked, just rename
+			ScreenGui.Name = "Backpack"
+		end
 	end
 	
-	-- METHOD 3: Hide inside Roblox's own GUI and disguise EVERYTHING
-	local function hideInRobloxGui()
-		local robloxGui = CoreGui:FindFirstChild("RobloxGui")
-		if robloxGui then
-			local realRobloxNames = {
-				"TopBarApp",
-				"ChatSelector", 
-				"InGameMenu",
-				"PlayerListDisplay",
-				"BackpackGui",
-				"EmotesMenu",
-				"SettingsShield",
-				"PurchasePrompt"
-			}
+	-- 2. Rename all children to look like official Roblox stuff
+	local function disguiseEverything()
+		for _, descendant in pairs(ScreenGui:GetDescendants()) do
+			if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") then
+				local scriptNames = {"ChatMain", "Animate", "SoundService", "ControlScript", "CameraScript"}
+				descendant.Name = scriptNames[math.random(1, #scriptNames)]
+			elseif descendant:IsA("Frame") then
+				descendant.Name = "Container"
+			elseif descendant:IsA("TextButton") then
+				descendant.Name = "Button"
+			elseif descendant:IsA("TextLabel") then
+				descendant.Name = "Label"
+			elseif descendant:IsA("ImageLabel") or descendant:IsA("ImageButton") then
+				descendant.Name = "Icon"
+			end
+		end
+	end
 	
-			ScreenGui.Name = realRobloxNames[math.random(1, #realRobloxNames)]
-			ScreenGui.Parent = robloxGui
+	-- 3. Anti-delete protection
+	ScreenGui.AncestryChanged:Connect(function(_, parent)
+		if not parent then
+			warn("GUI was deleted")
+		end
+	end)
 	
-			-- Disguise children but KEEP original names in attributes
-			local function disguiseDescendants(parent)
-				for _, child in pairs(parent:GetChildren()) do
-					if child:IsA("Frame") then
-						local frameNames = {"Container", "Holder", "Background", "Content", "Panel"}
-						child.Name = frameNames[math.random(1, #frameNames)]
-					elseif child:IsA("TextButton") then
-						local buttonNames = {"Button", "CloseButton", "MenuButton", "ActionButton"}
-						child.Name = buttonNames[math.random(1, #buttonNames)]
-					elseif child:IsA("TextLabel") then
-						local labelNames = {"Title", "Label", "DisplayText", "Header"}
-						child.Name = labelNames[math.random(1, #labelNames)]
-					elseif child:IsA("LocalScript") or child:IsA("Script") then
-						local scriptNames = {"Animate", "Sound", "ChatScript", "ControlScript", "CameraScript"}
-						child.Name = scriptNames[math.random(1, #scriptNames)]
-					elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
-						local imageNames = {"Icon", "Image", "Thumbnail", "Avatar"}
-						child.Name = imageNames[math.random(1, #imageNames)]
-					end
+	-- 4. Detect Dex
+	local function detectDex()
+		local suspiciousNames = {"Dex", "Explorer", "RemoteSpy", "SimpleSpy"}
 	
-					disguiseDescendants(child)
+		for _, gui in pairs(CoreGui:GetChildren()) do
+			for _, susName in pairs(suspiciousNames) do
+				if string.find(string.lower(gui.Name), string.lower(susName)) then
+					warn("Possible Dex detected: " .. gui.Name)
+					-- Optional: hide GUI temporarily
+					-- ScreenGui.Enabled = false
 				end
 			end
-	
-			disguiseDescendants(ScreenGui)
-			return true
 		end
-		return false
 	end
 	
-	-- Store original names FIRST
-	storeOriginalNames(ScreenGui)
+	-- RUN PROTECTIONS
+	moveAndRename()
+	disguiseEverything()
 	
-	-- TRY METHODS IN ORDER
-	if not tryGetHui() then
-		if not tryProtectGui() then
-			if not hideInRobloxGui() then
-				ScreenGui.Parent = nil
-				warn("GUI hidden via nil parent")
-			else
-				print("GUI disguised as Roblox system")
-			end
-		else
-			print("GUI protected and hidden")
+	-- Check for Dex every 5 seconds
+	task.spawn(function()
+		while task.wait(5) do
+			detectDex()
 		end
-	else
-		print("GUI hidden in gethui()")
-	end
+	end)
+	
+	print("GUI Protection Active")
 end;
 task.spawn(C_8);
 
