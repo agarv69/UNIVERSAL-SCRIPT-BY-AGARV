@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 862 | Scripts: 163 | Modules: 0 | Tags: 0
+-- Instances: 863 | Scripts: 164 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareGui
@@ -9785,6 +9785,11 @@ G2L["35d"]["Name"] = [[MasterScripts]];
 -- StarterGui.AgarWareGui.MasterScripts.ResetCharacter
 G2L["35e"] = Instance.new("LocalScript", G2L["35d"]);
 G2L["35e"]["Name"] = [[ResetCharacter]];
+
+
+-- StarterGui.AgarWareGui.MasterScripts.RefreshBkitTools
+G2L["35f"] = Instance.new("LocalScript", G2L["35d"]);
+G2L["35f"]["Name"] = [[RefreshBkitTools]];
 
 
 -- StarterGui.AgarWareGui.MoveToCorGui
@@ -26101,7 +26106,13 @@ local script = G2L["1e1"];
 		-- GRIEF LOOP (separate thread)
 		griefLoop = task.spawn(function()
 			local dti = 0
-			local lastRefreshTime = tick()
+			local lastRefreshTime = 0
+	
+			-- Initial refresh when starting
+			if shared.DeleteToolRefresh then
+				shared.DeleteToolRefresh()
+			end
+			lastRefreshTime = tick()
 	
 			while isGriefing do
 				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -26116,52 +26127,52 @@ local script = G2L["1e1"];
 					local targetBlocks = getAllTargetBlocks()
 	
 					if #targetBlocks > 0 then
-						-- FORCE refresh every 5 seconds
+						-- Refresh every 5 seconds ONLY when blocks exist
 						if tick() - lastRefreshTime >= 5 then
-							local alreadyEquipped = false
-							for _, dt in pairs(dtools) do
-								if dt.bt.Parent == LocalPlayer.Character then
-									alreadyEquipped = true
-									break
-								end
+							if shared.DeleteToolRefresh then
+								shared.DeleteToolRefresh()
 							end
-	
-							if not alreadyEquipped then
-								for _, dt in pairs(dtools) do
-									if dt.bt.Parent == LocalPlayer.Backpack then
-										dt.bt.Parent = LocalPlayer.Character
-									end
-								end
-	
-								RunService.RenderStepped:Wait()
-	
-								for _, dt in pairs(dtools) do
-									while dt.bt.Parent == LocalPlayer.Character do
-										dt.bt.Parent = LocalPlayer.Backpack
-										task.wait()
-									end
-								end
-							end
-	
 							lastRefreshTime = tick()
 						end
 	
-						-- DELETE ALL BLOCKS
+						-- Check if any blocks are highlighted
+						local hasHighlights = false
+						for _, h in pairs(highlights) do
+							if h and h.Parent then
+								hasHighlights = true
+								break
+							end
+						end
+	
+						-- DELETE ONLY HIGHLIGHTED BLOCKS (or any block if none highlighted)
 						for _, block in ipairs(targetBlocks) do
 							if not isGriefing then break end
 	
 							if block and block:IsDescendantOf(workspace) then
-								dti = dti + 1
-								local dt = dtools[(dti % #dtools) + 1]
+								-- Check if this block is highlighted
+								local isHighlighted = false
+								for _, h in pairs(highlights) do
+									if h and h.Adornee == block then
+										isHighlighted = true
+										break
+									end
+								end
 	
-								pcall(function()
-									dt.e:FireServer(block, hrp.Position)
-								end)
+								-- Only delete if: highlighted OR no highlights exist at all
+								if isHighlighted or not hasHighlights then
+									dti = dti + 1
+									local dt = dtools[(dti % #dtools) + 1]
 	
-								task.wait(ws / #dtools)
+									pcall(function()
+										dt.e:FireServer(block, hrp.Position)
+									end)
+	
+									task.wait(ws / #dtools)
+								end
 							end
 						end
 					else
+						-- No blocks, don't refresh, just wait
 						task.wait(0.5)
 					end
 				else
@@ -36697,5 +36708,197 @@ local script = G2L["35e"];
 	end
 end;
 task.spawn(C_35e);
+-- StarterGui.AgarWareGui.MasterScripts.RefreshBkitTools
+local function C_35f()
+local script = G2L["35f"];
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	-- ============================================================
+	-- TOOL REFRESH FUNCTIONS
+	-- Each tool can be refreshed individually by calling shared functions
+	-- Skips refresh if the tool is already equipped
+	-- ============================================================
+	
+	-- Build Tool Refresh
+	shared.BuildToolRefresh = function()
+		local buildTool = LocalPlayer.Backpack:FindFirstChild("Build") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Build"))
+	
+		if not buildTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if buildTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if buildTool.Parent == LocalPlayer.Backpack then
+			buildTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while buildTool.Parent == LocalPlayer.Character do
+			buildTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Delete Tool Refresh
+	shared.DeleteToolRefresh = function()
+		local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Delete"))
+	
+		if not deleteTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if deleteTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if deleteTool.Parent == LocalPlayer.Backpack then
+			deleteTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while deleteTool.Parent == LocalPlayer.Character do
+			deleteTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Paint Tool Refresh
+	shared.PaintToolRefresh = function()
+		local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Paint"))
+	
+		if not paintTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if paintTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if paintTool.Parent == LocalPlayer.Backpack then
+			paintTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while paintTool.Parent == LocalPlayer.Character do
+			paintTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Shape Tool Refresh
+	shared.ShapeToolRefresh = function()
+		local shapeTool = LocalPlayer.Backpack:FindFirstChild("Shape") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shape"))
+	
+		if not shapeTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if shapeTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if shapeTool.Parent == LocalPlayer.Backpack then
+			shapeTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while shapeTool.Parent == LocalPlayer.Character do
+			shapeTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Shovel Tool Refresh
+	shared.ShovelToolRefresh = function()
+		local shovelTool = LocalPlayer.Backpack:FindFirstChild("Shovel") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shovel"))
+	
+		if not shovelTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if shovelTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if shovelTool.Parent == LocalPlayer.Backpack then
+			shovelTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while shovelTool.Parent == LocalPlayer.Character do
+			shovelTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	-- Sign Tool Refresh
+	shared.SignToolRefresh = function()
+		local signTool = LocalPlayer.Backpack:FindFirstChild("Sign") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Sign"))
+	
+		if not signTool then
+			return false
+		end
+	
+		-- Skip if already equipped
+		if signTool.Parent == LocalPlayer.Character then
+			return false
+		end
+	
+		-- Equip without unequipping other tools
+		if signTool.Parent == LocalPlayer.Backpack then
+			signTool.Parent = LocalPlayer.Character
+		end
+	
+		-- Force unequip (spam until in backpack)
+		while signTool.Parent == LocalPlayer.Character do
+			signTool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+	
+	--[[
+	USAGE:
+		shared.BuildToolRefresh()   -- Refreshes Build tool
+		shared.DeleteToolRefresh()  -- Refreshes Delete tool
+		shared.PaintToolRefresh()   -- Refreshes Paint tool
+		shared.ShapeToolRefresh()   -- Refreshes Shape tool
+		shared.ShovelToolRefresh()  -- Refreshes Shovel tool
+		shared.SignToolRefresh()    -- Refreshes Sign tool
+		
+	Each function:
+	- Returns false if tool already equipped (skips refresh)
+	- Returns false if tool not found
+	- Returns true if refresh successful
+	- Equips tool without unequipping others
+	- Force unequips until in backpack
+	]]
+end;
+task.spawn(C_35f);
 
 return G2L["1"], require;
