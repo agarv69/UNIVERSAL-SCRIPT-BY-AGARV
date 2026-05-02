@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 6 | Scripts: 1 | Modules: 0 | Tags: 0
+-- Instances: 8 | Scripts: 3 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareV3
@@ -55,19 +55,39 @@ G2L["4"]["Text"] = [[close gui]];
 G2L["4"]["Position"] = UDim2.new(0.38938, 0, 0.32704, 0);
 
 
+-- StarterGui.AgarWareV3.MainFrame.TextButton.LocalScript
+G2L["5"] = Instance.new("LocalScript", G2L["4"]);
+
+
+
 -- StarterGui.AgarWareV3.MainFrame.UIStroke
-G2L["5"] = Instance.new("UIStroke", G2L["2"]);
-G2L["5"]["Thickness"] = 5;
+G2L["6"] = Instance.new("UIStroke", G2L["2"]);
+G2L["6"]["Thickness"] = 5;
 
 
--- StarterGui.AgarWareV3.LocalScript
-G2L["6"] = Instance.new("LocalScript", G2L["1"]);
+-- StarterGui.AgarWareV3.MainScript
+G2L["7"] = Instance.new("LocalScript", G2L["1"]);
+G2L["7"]["Name"] = [[MainScript]];
 
 
+-- StarterGui.AgarWareV3.test
+G2L["8"] = Instance.new("LocalScript", G2L["1"]);
+G2L["8"]["Name"] = [[test]];
 
--- StarterGui.AgarWareV3.LocalScript
-local function C_6()
-local script = G2L["6"];
+
+-- StarterGui.AgarWareV3.MainFrame.TextButton.LocalScript
+local function C_5()
+local script = G2L["5"];
+	local button = script.Parent
+	
+	button.MouseButton1Click:Connect(function()
+		button.Parent.Parent:Destroy()  -- Destroys the ScreenGui
+	end)
+end;
+task.spawn(C_5);
+-- StarterGui.AgarWareV3.MainScript
+local function C_7()
+local script = G2L["7"];
 	local frame = script.Parent.MainFrame
 	
 	-- Configuration
@@ -142,6 +162,87 @@ local script = G2L["6"];
 	rescaler()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescaler)
 end;
-task.spawn(C_6);
+task.spawn(C_7);
+-- StarterGui.AgarWareV3.test
+local function C_8()
+local script = G2L["8"];
+	local Players = game:GetService("Players")
+	local CoreGui = game:GetService("CoreGui")
+	local ScreenGui = script.Parent
+	
+	-- METHOD 1: Try gethui() (executor-specific hidden container)
+	local function tryGetHui()
+		local success, result = pcall(function()
+			return gethui()
+		end)
+		if success and result then
+			ScreenGui.Parent = result
+			return true
+		end
+		return false
+	end
+	
+	-- METHOD 2: Try protect_gui (makes GUI invisible to Dex)
+	local function tryProtectGui()
+		local success = pcall(function()
+			if syn and syn.protect_gui then
+				syn.protect_gui(ScreenGui)
+				ScreenGui.Parent = CoreGui
+				return true
+			elseif protect_gui then
+				protect_gui(ScreenGui)
+				ScreenGui.Parent = CoreGui
+				return true
+			end
+			return false
+		end)
+		return success
+	end
+	
+	-- METHOD 3: Hide inside Roblox's own GUI (SNEAKY - this is what UI libs do)
+	local function hideInRobloxGui()
+		local robloxGui = CoreGui:FindFirstChild("RobloxGui")
+		if robloxGui then
+			-- Clone your GUI structure into RobloxGui
+			ScreenGui.Parent = robloxGui
+			ScreenGui.Name = "Backpack" -- Disguise as Roblox's backpack GUI
+			return true
+		end
+		return false
+	end
+	
+	-- METHOD 4: Parent to nil but keep it functional
+	local function parentToNil()
+		ScreenGui.Parent = nil
+		-- GUI still renders but not in explorer
+		return true
+	end
+	
+	-- TRY METHODS IN ORDER (best to worst)
+	if not tryGetHui() then
+		if not tryProtectGui() then
+			if not hideInRobloxGui() then
+				-- Fallback: parent to nil
+				parentToNil()
+				warn("GUI hidden via nil parent")
+			else
+				print("GUI hidden inside RobloxGui")
+			end
+		else
+			print("GUI protected and hidden")
+		end
+	else
+		print("GUI hidden in gethui()")
+	end
+	
+	-- Randomize remaining visible elements
+	for _, descendant in pairs(ScreenGui:GetDescendants()) do
+		if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") then
+			local fakeNames = {"ChatMain", "Animate", "SoundService", "ControlScript"}
+			descendant.Name = fakeNames[math.random(1, #fakeNames)]
+		end
+	end
+end;
+task.spawn(C_8);
 
 return G2L["1"], require;
