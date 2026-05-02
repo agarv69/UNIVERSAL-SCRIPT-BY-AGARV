@@ -26059,8 +26059,8 @@ local script = G2L["1e1"];
 	
 		griefLoop = task.spawn(function()
 			local dti = 0
-			local lastRefreshTime = 0
-			local highlightedBlocks = {}
+			local lastRefreshTime = tick()
+			local highlights = {}
 	
 			while isGriefing do
 				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -26075,8 +26075,9 @@ local script = G2L["1e1"];
 					local targetBlocks = getAllTargetBlocks()
 	
 					if #targetBlocks > 0 then
-						-- Refresh every 5 seconds (only if not already equipped)
-						if tick() - lastRefreshTime >= 5 then
+						-- FORCE refresh every 5 seconds when blocks exist
+						local currentTime = tick()
+						if currentTime - lastRefreshTime >= 5 then
 							local alreadyEquipped = false
 							for _, dt in pairs(dtools) do
 								if dt.bt.Parent == LocalPlayer.Character then
@@ -26102,38 +26103,40 @@ local script = G2L["1e1"];
 								end
 							end
 	
-							lastRefreshTime = tick()
+							lastRefreshTime = currentTime
 						end
 	
-						-- Fire delete events with rolling 2-second highlight
+						-- Calculate how many blocks ahead to highlight (2 seconds)
+						local blocksPerSecond = 1 / (ws / math.max(#dtools, 1))
+						local highlightCount = math.floor(blocksPerSecond * 2)
+	
+						-- Delete blocks
 						for i, block in ipairs(targetBlocks) do
 							if not isGriefing then break end
 	
 							if block and block:IsDescendantOf(workspace) then
-								-- Calculate how many blocks we delete in 2 seconds
-								local blocksPerSecond = 1 / (ws / #dtools)
-								local blocksIn2Seconds = math.floor(blocksPerSecond * 2)
-								local futureIndex = i + blocksIn2Seconds
-	
-								-- Highlight the block that will be deleted in ~2 seconds
-								if futureIndex <= #targetBlocks then
-									local futureBlock = targetBlocks[futureIndex]
-									if futureBlock and not highlightedBlocks[futureBlock] then
+								-- Highlight next block in line (rolling window)
+								local nextIndex = i + highlightCount
+								if nextIndex <= #targetBlocks then
+									local nextBlock = targetBlocks[nextIndex]
+									if nextBlock and nextBlock:IsDescendantOf(workspace) and not highlights[nextBlock] then
 										local highlight = Instance.new("Highlight")
-										highlight.Adornee = futureBlock
+										highlight.Adornee = nextBlock
 										highlight.FillColor = Color3.fromRGB(255, 0, 0)
 										highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
 										highlight.FillTransparency = 0.5
 										highlight.OutlineTransparency = 1
-										highlight.Parent = futureBlock
-										highlightedBlocks[futureBlock] = highlight
+										highlight.Parent = nextBlock
+										highlights[nextBlock] = highlight
 									end
 								end
 	
 								-- Remove highlight from current block before deleting
-								if highlightedBlocks[block] then
-									highlightedBlocks[block]:Destroy()
-									highlightedBlocks[block] = nil
+								if highlights[block] then
+									pcall(function()
+										highlights[block]:Destroy()
+									end)
+									highlights[block] = nil
 								end
 	
 								-- Delete the block
@@ -26157,12 +26160,15 @@ local script = G2L["1e1"];
 				task.wait()
 			end
 	
-			-- Clean up all highlights when stopping
-			for _, highlight in pairs(highlightedBlocks) do
-				if highlight and highlight.Parent then
-					highlight:Destroy()
-				end
+			-- FORCE clean up ALL highlights when stopping
+			for block, highlight in pairs(highlights) do
+				pcall(function()
+					if highlight and highlight.Parent then
+						highlight:Destroy()
+					end
+				end)
 			end
+			highlights = {}
 		end)
 	end
 	
