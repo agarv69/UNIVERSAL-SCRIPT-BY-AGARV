@@ -107,6 +107,7 @@ G2L["b"]["Size"] = UDim2.new(0, 200, 0, 50);
 G2L["b"]["Position"] = UDim2.new(0.67457, 0, 0.17842, 0);
 G2L["b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["b"]["Name"] = [[KeybindFrame]];
+G2L["b"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.AgarWareV3.KeybindFrame.AccentColorFrame
@@ -717,6 +718,8 @@ local function C_1d()
 local script = G2L["1d"];
 	local ScreenGui = script.Parent
 	
+	task.wait(1)  -- Wait for GUI to fully load on mobile
+	
 	for _, descendant in pairs(ScreenGui:GetDescendants()) do
 		if descendant:IsA("GuiObject") and descendant.BackgroundTransparency < 1 then
 			local color = descendant.BackgroundColor3
@@ -725,6 +728,10 @@ local script = G2L["1d"];
 			local b = math.floor(color.B * 255 + 0.5)
 	
 			if r == 25 and g == 25 and b == 25 then
+				-- Remove existing overlays
+				local existing = descendant:FindFirstChild("GradientOverlay")
+				if existing then existing:Destroy() end
+	
 				-- Create white frame overlay
 				local whiteFrame = Instance.new("Frame")
 				whiteFrame.Name = "GradientOverlay"
@@ -732,17 +739,19 @@ local script = G2L["1d"];
 				whiteFrame.Position = UDim2.new(0, 0, 0, 0)
 				whiteFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 				whiteFrame.BorderSizePixel = 0
+				whiteFrame.BackgroundTransparency = 0
 				whiteFrame.ZIndex = descendant.ZIndex + 1
-				whiteFrame.Parent = descendant
 	
-				-- Add UIGradient to the white frame
+				-- Add UIGradient
 				local gradient = Instance.new("UIGradient")
 				gradient.Rotation = 90
 				gradient.Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0.95),  -- Top almost transparent
-					NumberSequenceKeypoint.new(1, 1)      -- Bottom fully transparent
+					NumberSequenceKeypoint.new(0, 0.8),
+					NumberSequenceKeypoint.new(1, 1)
 				})
 				gradient.Parent = whiteFrame
+	
+				whiteFrame.Parent = descendant
 			end
 		end
 	end
