@@ -7,13 +7,16 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 3 | Scripts: 1 | Modules: 0 | Tags: 0
+-- Instances: 4 | Scripts: 1 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareV3
 G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+G2L["1"]["IgnoreGuiInset"] = true;
+G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets;
 G2L["1"]["Name"] = [[AgarWareV3]];
 G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+G2L["1"]["ResetOnSpawn"] = false;
 
 
 -- StarterGui.AgarWareV3.MainFrame
@@ -26,51 +29,65 @@ G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["2"]["Name"] = [[MainFrame]];
 
 
--- StarterGui.AgarWareV3.LocalScript
-G2L["3"] = Instance.new("LocalScript", G2L["1"]);
+-- StarterGui.AgarWareV3.MainFrame.UISizeConstraint
+G2L["3"] = Instance.new("UISizeConstraint", G2L["2"]);
 
 
 
 -- StarterGui.AgarWareV3.LocalScript
-local function C_3()
-local script = G2L["3"];
+G2L["4"] = Instance.new("LocalScript", G2L["1"]);
+
+
+
+-- StarterGui.AgarWareV3.LocalScript
+local function C_4()
+local script = G2L["4"];
 	local frame = script.Parent.MainFrame
 	
 	-- Configuration
-	local BASE_WIDTH = 500   -- Target size for laptops/iPads
+	local BASE_WIDTH = 500
 	local BASE_HEIGHT = 350
-	local MIN_WIDTH = 350    -- Smaller minimum for phones
-	local MIN_HEIGHT = 250
-	local MAX_WIDTH = 550    -- Max for big PC monitors
+	local MAX_WIDTH = 550
 	local MAX_HEIGHT = 400
+	
+	-- Get aspect ratio from your Studio size
+	local ASPECT_RATIO = frame.AbsoluteSize.X / frame.AbsoluteSize.Y  -- Calculates ratio automatically
 	
 	local function rescaler()
 		local viewportSize = workspace.CurrentCamera.ViewportSize
 		local screenX = viewportSize.X
 		local screenY = viewportSize.Y
 	
-		-- Detect device type based on screen size
-		local isMobile = screenX < 600  -- Phones are usually under 600px wide
+		local isMobile = screenX < 600
 	
-		local newWidth, newHeight
+		local newWidth
 	
 		if isMobile then
-			-- For phones: smaller and more controlled
-			newWidth = math.clamp(screenX * 0.75, MIN_WIDTH, 380)  -- Max 380 on phones
-			newHeight = math.clamp(screenY * 0.5, MIN_HEIGHT, 280)  -- Max 280 on phones
+			newWidth = math.clamp(screenX * 0.65, 280, 340)
 		else
-			-- For tablets/laptops/PCs: use fixed size with slight scaling
-			newWidth = math.clamp(screenX * 0.35, BASE_WIDTH - 50, MAX_WIDTH)
-			newHeight = math.clamp(screenY * 0.45, BASE_HEIGHT - 50, MAX_HEIGHT)
+			newWidth = math.clamp(screenX * 0.35, 450, MAX_WIDTH)
 		end
 	
+		-- Calculate height based on aspect ratio to keep proportions
+		local newHeight = newWidth / ASPECT_RATIO
+	
+		frame.AnchorPoint = Vector2.new(0.5, 0.5)
 		frame.Size = UDim2.new(0, newWidth, 0, newHeight)
-		frame.Position = UDim2.new(0.5, -newWidth/2, 0.5, -newHeight/2)
+		frame.Position = UDim2.new(0.5, 0, 0.52, 0)
+	
+		-- Scale all text in the GUI
+		for _, descendant in pairs(frame:GetDescendants()) do
+			if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+				local baseSize = descendant:GetAttribute("BaseTextSize") or 14
+				local scale = isMobile and 0.9 or 1
+				descendant.TextSize = baseSize * scale
+			end
+		end
 	end
 	
 	rescaler()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescaler)
 end;
-task.spawn(C_3);
+task.spawn(C_4);
 
 return G2L["1"], require;
