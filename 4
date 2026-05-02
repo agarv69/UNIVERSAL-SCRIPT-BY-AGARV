@@ -170,7 +170,10 @@ local script = G2L["8"];
 	local CoreGui = game:GetService("CoreGui")
 	local ScreenGui = script.Parent
 	
-	-- METHOD 1: Try gethui() (executor-specific hidden container)
+	-- Wait a moment for GUI to fully load
+	task.wait(0.5)
+	
+	-- METHOD 1: Try gethui()
 	local function tryGetHui()
 		local success, result = pcall(function()
 			return gethui()
@@ -182,7 +185,7 @@ local script = G2L["8"];
 		return false
 	end
 	
-	-- METHOD 2: Try protect_gui (makes GUI invisible to Dex)
+	-- METHOD 2: Try protect_gui
 	local function tryProtectGui()
 		local success = pcall(function()
 			if syn and syn.protect_gui then
@@ -199,48 +202,60 @@ local script = G2L["8"];
 		return success
 	end
 	
-	-- METHOD 3: Hide inside Roblox's own GUI (SNEAKY - this is what UI libs do)
+	-- METHOD 3: Hide inside Roblox's own GUI with SIMPLE names
 	local function hideInRobloxGui()
 		local robloxGui = CoreGui:FindFirstChild("RobloxGui")
 		if robloxGui then
-			-- Clone your GUI structure into RobloxGui
+			-- Use simple, common Roblox names
+			local realRobloxNames = {
+				"Backpack",
+				"TopBar",
+				"Chat",
+				"PlayerList",
+				"InGameMenu"
+			}
+	
+			-- Rename ScreenGui FIRST
+			ScreenGui.Name = realRobloxNames[math.random(1, #realRobloxNames)]
+	
+			-- Move to RobloxGui
 			ScreenGui.Parent = robloxGui
-			ScreenGui.Name = "Backpack" -- Disguise as Roblox's backpack GUI
+	
+			-- Simple renaming for children (NO UNICODE)
+			for _, child in pairs(ScreenGui:GetDescendants()) do
+				if child:IsA("Frame") then
+					child.Name = "Container"
+				elseif child:IsA("TextButton") then
+					child.Name = "Button"
+				elseif child:IsA("TextLabel") then
+					child.Name = "Label"
+				elseif child:IsA("LocalScript") or child:IsA("Script") then
+					child.Name = "LocalScript"
+				elseif child:IsA("ImageLabel") then
+					child.Name = "Icon"
+				end
+			end
+	
 			return true
 		end
 		return false
 	end
 	
-	-- METHOD 4: Parent to nil but keep it functional
-	local function parentToNil()
-		ScreenGui.Parent = nil
-		-- GUI still renders but not in explorer
-		return true
-	end
-	
-	-- TRY METHODS IN ORDER (best to worst)
+	-- TRY METHODS IN ORDER
 	if not tryGetHui() then
 		if not tryProtectGui() then
 			if not hideInRobloxGui() then
-				-- Fallback: parent to nil
-				parentToNil()
-				warn("GUI hidden via nil parent")
+				-- Just rename and stay in current location
+				ScreenGui.Name = "Backpack"
+				warn("GUI renamed but not hidden")
 			else
-				print("GUI hidden inside RobloxGui")
+				print("GUI hidden in RobloxGui")
 			end
 		else
-			print("GUI protected and hidden")
+			print("GUI protected")
 		end
 	else
-		print("GUI hidden in gethui()")
-	end
-	
-	-- Randomize remaining visible elements
-	for _, descendant in pairs(ScreenGui:GetDescendants()) do
-		if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") then
-			local fakeNames = {"ChatMain", "Animate", "SoundService", "ControlScript"}
-			descendant.Name = fakeNames[math.random(1, #fakeNames)]
-		end
+		print("GUI in gethui()")
 	end
 end;
 task.spawn(C_8);
