@@ -25981,6 +25981,8 @@ local script = G2L["1e1"];
 	-- State
 	local isGriefing = false
 	local griefLoop = nil
+	local highlightLoop = nil
+	local highlights = {}
 	
 	-- Text states
 	local TEXT_START = "Delete All Blocks"
@@ -25991,22 +25993,19 @@ local script = G2L["1e1"];
 	local ws = 0.05
 	
 	-- ============================================================
-	-- GET ALL TARGET BLOCKS (INFINITE RANGE - EVERYONE)
+	-- GET ALL TARGET BLOCKS
 	-- ============================================================
 	local function getAllTargetBlocks()
 		local blocks = {}
 		local bricksFolder = workspace:FindFirstChild("Bricks")
-	
 		if not bricksFolder then return blocks end
 	
-		-- Get ALL descendants that are bricks
 		for _, brick in ipairs(bricksFolder:GetDescendants()) do
 			if brick:IsA("BasePart") and brick.Name == "Brick" then
 				table.insert(blocks, brick)
 			end
 		end
 	
-		-- Sort by distance from LocalPlayer (closest first)
 		local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 		if hrp then
 			table.sort(blocks, function(a, b)
@@ -26043,6 +26042,20 @@ local script = G2L["1e1"];
 	end
 	
 	-- ============================================================
+	-- CLEAR ALL HIGHLIGHTS
+	-- ============================================================
+	local function clearHighlights()
+		for _, highlight in pairs(highlights) do
+			if highlight and highlight.Parent then
+				pcall(function()
+					highlight:Destroy()
+				end)
+			end
+		end
+		highlights = {}
+	end
+	
+	-- ============================================================
 	-- START GRIEFING
 	-- ============================================================
 	local function startGrief()
@@ -26057,10 +26070,38 @@ local script = G2L["1e1"];
 		isGriefing = true
 		GriefAllButton.Text = TEXT_STOP
 	
+		-- HIGHLIGHT LOOP (separate thread)
+		highlightLoop = task.spawn(function()
+			while isGriefing do
+				clearHighlights()
+	
+				local targetBlocks = getAllTargetBlocks()
+				local blocksPerSecond = 1 / (ws / math.max(#dtools, 1))
+				local highlightCount = math.floor(blocksPerSecond * 2)
+	
+				for i = 1, math.min(highlightCount, #targetBlocks) do
+					local block = targetBlocks[i]
+					if block and block:IsDescendantOf(workspace) then
+						local highlight = Instance.new("Highlight")
+						highlight.Adornee = block
+						highlight.FillColor = Color3.fromRGB(255, 0, 0)
+						highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+						highlight.FillTransparency = 0.5
+						highlight.OutlineTransparency = 1
+						highlight.Parent = block
+						table.insert(highlights, highlight)
+					end
+				end
+	
+				task.wait(0.1)
+			end
+			clearHighlights()
+		end)
+	
+		-- GRIEF LOOP (separate thread)
 		griefLoop = task.spawn(function()
 			local dti = 0
-			local lastRefreshTime = 0
-			local highlights = {}
+			local lastRefreshTime = tick()
 	
 			while isGriefing do
 				local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -26075,7 +26116,7 @@ local script = G2L["1e1"];
 					local targetBlocks = getAllTargetBlocks()
 	
 					if #targetBlocks > 0 then
-						-- Refresh every 5 seconds ONLY when blocks exist
+						-- FORCE refresh every 5 seconds
 						if tick() - lastRefreshTime >= 5 then
 							local alreadyEquipped = false
 							for _, dt in pairs(dtools) do
@@ -26105,50 +26146,43 @@ local script = G2L["1e1"];
 							lastRefreshTime = tick()
 						end
 	
-						-- Delete blocks one by one
-						for i, block in ipairs(targetBlocks) do
+						-- Check if any blocks are highlighted
+						local hasHighlights = false
+						for _, h in pairs(highlights) do
+							if h and h.Parent then
+								hasHighlights = true
+								break
+							end
+						end
+	
+						-- DELETE ONLY HIGHLIGHTED BLOCKS (or any block if none highlighted)
+						for _, block in ipairs(targetBlocks) do
 							if not isGriefing then break end
 	
 							if block and block:IsDescendantOf(workspace) then
-								-- Calculate how many blocks ahead to highlight
-								local blocksPerSecond = 1 / (ws / #dtools)
-								local blocksIn2Seconds = math.floor(blocksPerSecond * 2)
-	
-								-- Highlight the block that's 2 seconds ahead
-								local futureIndex = i + blocksIn2Seconds
-								if futureIndex <= #targetBlocks then
-									local futureBlock = targetBlocks[futureIndex]
-									if futureBlock and futureBlock:IsDescendantOf(workspace) and not highlights[futureBlock] then
-										local highlight = Instance.new("Highlight")
-										highlight.Adornee = futureBlock
-										highlight.FillColor = Color3.fromRGB(255, 0, 0)
-										highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-										highlight.FillTransparency = 0.5
-										highlight.OutlineTransparency = 1
-										highlight.Parent = futureBlock
-										highlights[futureBlock] = highlight
+								-- Check if this block is highlighted
+								local isHighlighted = false
+								for _, h in pairs(highlights) do
+									if h and h.Adornee == block then
+										isHighlighted = true
+										break
 									end
 								end
 	
-								-- Remove highlight from current block
-								if highlights[block] then
-									highlights[block]:Destroy()
-									highlights[block] = nil
+								-- Only delete if: highlighted OR no highlights exist at all
+								if isHighlighted or not hasHighlights then
+									dti = dti + 1
+									local dt = dtools[(dti % #dtools) + 1]
+	
+									pcall(function()
+										dt.e:FireServer(block, hrp.Position)
+									end)
+	
+									task.wait(ws / #dtools)
 								end
-	
-								-- Delete the block
-								dti = dti + 1
-								local dt = dtools[(dti % #dtools) + 1]
-	
-								pcall(function()
-									dt.e:FireServer(block, hrp.Position)
-								end)
-	
-								task.wait(ws / #dtools)
 							end
 						end
 					else
-						-- No blocks, don't refresh, just wait
 						task.wait(0.5)
 					end
 				else
@@ -26157,14 +26191,6 @@ local script = G2L["1e1"];
 	
 				task.wait()
 			end
-	
-			-- Clean up ALL highlights when stopping
-			for block, highlight in pairs(highlights) do
-				if highlight and highlight.Parent then
-					highlight:Destroy()
-				end
-			end
-			highlights = {}
 		end)
 	end
 	
@@ -26180,7 +26206,15 @@ local script = G2L["1e1"];
 			griefLoop = nil
 		end
 	
+		if highlightLoop then
+			task.cancel(highlightLoop)
+			highlightLoop = nil
+		end
+	
 		task.wait(0.1)
+	
+		clearHighlights()
+	
 		local dtools = findDeleteTools()
 		for _, dt in pairs(dtools) do
 			if dt.bt.Parent == LocalPlayer.Character then
