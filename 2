@@ -107,6 +107,7 @@ G2L["b"]["Size"] = UDim2.new(0, 200, 0, 50);
 G2L["b"]["Position"] = UDim2.new(0.67457, 0, 0.17842, 0);
 G2L["b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["b"]["Name"] = [[KeybindFrame]];
+G2L["b"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.AgarWareV3.KeybindFrame.AccentColorFrame
@@ -619,21 +620,6 @@ local script = G2L["1c"];
 		end
 	end
 	
-	-- DETECT PROPERTY TAMPERING
-	local function monitorProperties()
-		ScreenGui:GetPropertyChangedSignal("Enabled"):Connect(function()
-			if not ScreenGui.Enabled then
-				ScreenGui.Enabled = true
-			end
-		end)
-	
-		ScreenGui:GetPropertyChangedSignal("Parent"):Connect(function()
-			if ScreenGui.Parent ~= CoreGui then
-				ScreenGui.Parent = CoreGui
-			end
-		end)
-	end
-	
 	-- DETECT DEX AND SPY TOOLS
 	local function detectTools()
 		local suspiciousNames = {"Dex", "Explorer", "RemoteSpy", "SimpleSpy", "Hydroxide", "UnnamedESP"}
@@ -680,28 +666,10 @@ local script = G2L["1c"];
 		end
 	end
 	
-	-- RANDOM PARENT SWITCHING
-	task.spawn(function()
-		while task.wait(math.random(30, 60)) do
-			local containers = {"RobloxGui", "CoreGui"}
-			local randomContainer = containers[math.random(1, #containers)]
-	
-			if randomContainer == "RobloxGui" then
-				local robloxGui = CoreGui:FindFirstChild("RobloxGui")
-				if robloxGui then
-					ScreenGui.Parent = robloxGui
-				end
-			else
-				ScreenGui.Parent = CoreGui
-			end
-		end
-	end)
-	
 	-- RUN PROTECTIONS
 	createDecoyGui()
 	moveAndRename()
 	disguiseScripts()
-	monitorProperties()
 	
 	-- CONTINUOUS MONITORING
 	task.spawn(function()
@@ -725,25 +693,30 @@ local script = G2L["1d"];
 			local b = math.floor(color.B * 255 + 0.5)
 	
 			if r == 25 and g == 25 and b == 25 then
-				-- Create CanvasGroup overlay
-				local canvasGroup = Instance.new("CanvasGroup")
-				canvasGroup.Name = "GradientOverlay"
-				canvasGroup.Size = UDim2.new(1, 0, 1, 0)
-				canvasGroup.Position = UDim2.new(0, 0, 0, 0)
-				canvasGroup.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				canvasGroup.BorderSizePixel = 0
-				canvasGroup.BackgroundTransparency = 0
-				canvasGroup.ZIndex = descendant.ZIndex + 1
-				canvasGroup.Parent = descendant
+				-- Remove existing overlays
+				local existing = descendant:FindFirstChild("GradientOverlay")
+				if existing then existing:Destroy() end
 	
-				-- Add UIGradient to CanvasGroup
+				-- Create white frame overlay
+				local whiteFrame = Instance.new("Frame")
+				whiteFrame.Name = "GradientOverlay"
+				whiteFrame.Size = UDim2.new(1, 0, 1, 0)
+				whiteFrame.Position = UDim2.new(0, 0, 0, 0)
+				whiteFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				whiteFrame.BorderSizePixel = 0
+				whiteFrame.BackgroundTransparency = 0
+				whiteFrame.ZIndex = descendant.ZIndex + 1
+	
+				-- Add UIGradient
 				local gradient = Instance.new("UIGradient")
 				gradient.Rotation = 90
 				gradient.Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0.7),   -- Top visible
-					NumberSequenceKeypoint.new(1, 1)      -- Bottom invisible
+					NumberSequenceKeypoint.new(0, 0.8),
+					NumberSequenceKeypoint.new(1, 1)
 				})
-				gradient.Parent = canvasGroup
+				gradient.Parent = whiteFrame
+	
+				whiteFrame.Parent = descendant
 			end
 		end
 	end
