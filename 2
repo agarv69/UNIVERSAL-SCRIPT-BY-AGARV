@@ -3497,7 +3497,6 @@ G2L["12d"]["Name"] = [[DetectionTCOPG]];
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOTrollPage
 G2L["12e"] = Instance.new("ScrollingFrame", G2L["17"]);
-G2L["12e"]["Visible"] = false;
 G2L["12e"]["Active"] = true;
 G2L["12e"]["BorderSizePixel"] = 0;
 G2L["12e"]["Name"] = [[TCOTrollPage]];
@@ -5487,7 +5486,7 @@ G2L["1e2"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 25);
 G2L["1e2"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["1e2"]["Size"] = UDim2.new(0, 161, 0, 16);
 G2L["1e2"]["BorderColor3"] = Color3.fromRGB(58, 58, 58);
-G2L["1e2"]["Text"] = [[Delete All Blocks]];
+G2L["1e2"]["Text"] = [[Delete Aura]];
 G2L["1e2"]["Name"] = [[GriefAllButton]];
 G2L["1e2"]["Position"] = UDim2.new(0.02367, 0, 0.16, 0);
 
@@ -7985,6 +7984,7 @@ G2L["2c1"] = Instance.new("LocalScript", G2L["2c0"]);
 
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.MenuPage
 G2L["2c2"] = Instance.new("ScrollingFrame", G2L["17"]);
+G2L["2c2"]["Visible"] = false;
 G2L["2c2"]["Active"] = true;
 G2L["2c2"]["BorderSizePixel"] = 0;
 G2L["2c2"]["Name"] = [[MenuPage]];
@@ -10971,19 +10971,11 @@ task.spawn(C_7);
 -- StarterGui.AgarWareGui.DropdownMaster
 local function C_8()
 local script = G2L["8"];
-	-- ============================================================
-	-- DROPDOWN MASTER SYSTEM
-	-- Place this LocalScript directly under your ScreenGui
-	-- Runs once and creates shared.DropdownMaster for all dropdowns
-	-- ============================================================
-	
+	-- DropdownMaster - Place under ScreenGui as LocalScript
 	local Players = game:GetService("Players")
 	local UserInputService = game:GetService("UserInputService")
 	local LocalPlayer = Players.LocalPlayer
 	
-	-- ============================================================
-	-- CONSTANTS
-	-- ============================================================
 	local ROW_HEIGHT = 16
 	local MAX_ROWS = 7
 	local BG = Color3.fromRGB(24, 24, 24)
@@ -10994,23 +10986,8 @@ local script = G2L["8"];
 	local HOVER = Color3.fromRGB(36, 36, 36)
 	local BTN_BG = Color3.fromRGB(36, 36, 36)
 	
-	-- ============================================================
-	-- HELPER: GET SCREENGUI
-	-- ============================================================
-	local function getScreenGui(element)
-		local p = element
-		while p do
-			if p:IsA("ScreenGui") then return p end
-			p = p.Parent
-		end
-		return nil
-	end
-	
-	-- ============================================================
-	-- HELPER: GET PLAYER THUMBNAIL
-	-- ============================================================
 	local cachedThumbs = {}
-	local function getPlayerThumbnail(userId)
+	local function getThumb(userId)
 		if cachedThumbs[userId] then return cachedThumbs[userId] end
 		local ok, img = pcall(function()
 			return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
@@ -11020,95 +10997,35 @@ local script = G2L["8"];
 		return result
 	end
 	
-	-- ============================================================
-	-- HELPER: LOAD FRIENDS LIST
-	-- ============================================================
-	local friendsList = {}
-	local function loadFriends()
-		friendsList = {}
-		local ok, pages = pcall(function()
-			return LocalPlayer:GetFriendsAsync(200)
-		end)
-		if not ok then return end
-	
-		local function processPage()
-			for _, v in pairs(pages:GetCurrentPage()) do
-				friendsList[v.Id] = true
-			end
-		end
-	
-		processPage()
-		while not pages.IsFinished do
-			local ok2 = pcall(function() pages:AdvanceToNextPageAsync() end)
-			if not ok2 then break end
-			processPage()
+	local function getScreenGui(element)
+		local p = element
+		while p do
+			if p:IsA("ScreenGui") then return p end
+			p = p.Parent
 		end
 	end
 	
-	task.spawn(loadFriends)
-	
-	-- ============================================================
-	-- CREATE DROPDOWN
-	-- ============================================================
-	local function createDropdown(config)
-		--[[
-		config = {
-			dropdown = GuiObject,           -- The button/frame to click
-			mode = "custom" | "players",    -- List type
-			
-			-- Custom mode options:
-			items = {"item1", "item2"},     -- List of items (custom mode)
-			default = "item1",              -- Default selection (custom mode)
-			
-			-- Player mode options:
-			excludeSelf = true/false,       -- Exclude local player (player mode)
-			multiSelect = true/false,       -- Allow multiple selections (player mode)
-			
-			-- Visual options:
-			searchBar = true/false,         -- Show search box
-			showIcons = true/false,         -- Show player thumbnails (player mode)
-			
-			-- Bottom buttons (array of button configs):
-			bottomButtons = {
-				{text = "Show Display", onClick = function(state) end},
-				{text = "Select All", onClick = function() end}
-			},
-			
-			-- Callbacks:
-			onSelect = function(value) end, -- Called when item selected (custom mode)
-			onSelectPlayer = function(player) end, -- Called when player selected (player mode)
-			onMultiSelectChange = function(selectedPlayers) end, -- Called when multi-select changes
-		}
-		]]
-	
+	local function create(config)
 		local dropdown = config.dropdown
-		local mode = config.mode or "custom"
-		local searchBarEnabled = config.searchBar ~= false -- default true
-		local showIcons = config.showIcons == true
+		local mode = config.mode or "players"
 		local multiSelect = config.multiSelect == true
+		local showIcons = config.showIcons ~= false
+		local getOfflinePlayers = config.getOfflinePlayers
 	
-		-- State
-		local isOpen = false
-		local selectedValue = config.default
-		local selectedPlayer = nil
-		local selectedPlayers = {} -- for multi-select
+		local selectedPlayers = {}
 		local showDisplay = false
-		local showFriends = false
+		local showOffline = false
+		local isOpen = false
 	
-		-- Wait for dropdown to be positioned
 		if not game:IsLoaded() then game.Loaded:Wait() end
 		repeat task.wait() until dropdown.AbsoluteSize.X > 0
-	
-		-- ============================================================
-		-- CREATE UI ELEMENTS
-		-- ============================================================
 	
 		-- Main label
 		local mainLabel = Instance.new("TextLabel")
 		mainLabel.Name = "MainLabel"
 		mainLabel.Size = UDim2.new(1, -24, 1, 0)
 		mainLabel.BackgroundTransparency = 1
-		mainLabel.Text = mode == "custom" and (config.default or "Select") or (multiSelect and "Select Players" or "Select Player")
+		mainLabel.Text = "Select Players"
 		mainLabel.TextColor3 = WHITE
 		mainLabel.TextSize = 14
 		mainLabel.Font = Enum.Font.Code
@@ -11134,7 +11051,6 @@ local script = G2L["8"];
 		-- Panel
 		local screenGui = getScreenGui(dropdown)
 		local panel = Instance.new("Frame")
-		panel.Name = "DropdownPanel"
 		panel.BackgroundColor3 = BG
 		panel.BorderSizePixel = 0
 		panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT)
@@ -11147,50 +11063,42 @@ local script = G2L["8"];
 		panelStroke.Thickness = 1
 		panelStroke.Parent = panel
 	
-		-- Search box (optional)
-		local searchBox = nil
-		local searchArrow = nil
-		local scrollFrameYOffset = 0
+		-- Search box
+		local searchBox = Instance.new("TextBox")
+		searchBox.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
+		searchBox.BackgroundColor3 = BG
+		searchBox.BorderSizePixel = 0
+		searchBox.Text = ""
+		searchBox.PlaceholderText = "Search for users..."
+		searchBox.PlaceholderColor3 = DIM
+		searchBox.TextColor3 = WHITE
+		searchBox.TextSize = 14
+		searchBox.Font = Enum.Font.Code
+		searchBox.TextXAlignment = Enum.TextXAlignment.Left
+		searchBox.ClearTextOnFocus = false
+		searchBox.ZIndex = 1000
+		searchBox.Parent = panel
 	
-		if searchBarEnabled then
-			scrollFrameYOffset = ROW_HEIGHT
+		local searchPad = Instance.new("UIPadding")
+		searchPad.PaddingLeft = UDim.new(0, 6)
+		searchPad.PaddingRight = UDim.new(0, 24)
+		searchPad.Parent = searchBox
 	
-			searchBox = Instance.new("TextBox")
-			searchBox.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
-			searchBox.BackgroundColor3 = BG
-			searchBox.BorderSizePixel = 0
-			searchBox.Text = ""
-			searchBox.PlaceholderText = mode == "players" and "Search for users..." or "Search..."
-			searchBox.PlaceholderColor3 = DIM
-			searchBox.TextColor3 = WHITE
-			searchBox.TextSize = 14
-			searchBox.Font = Enum.Font.Code
-			searchBox.TextXAlignment = Enum.TextXAlignment.Left
-			searchBox.ClearTextOnFocus = false
-			searchBox.ZIndex = 1000
-			searchBox.Parent = panel
-	
-			local searchPad = Instance.new("UIPadding")
-			searchPad.PaddingLeft = UDim.new(0, 6)
-			searchPad.PaddingRight = UDim.new(0, 24)
-			searchPad.Parent = searchBox
-	
-			searchArrow = Instance.new("TextButton")
-			searchArrow.Size = UDim2.new(0, 24, 0, ROW_HEIGHT)
-			searchArrow.Position = UDim2.new(1, -24, 0, 0)
-			searchArrow.BackgroundTransparency = 1
-			searchArrow.Text = "▲"
-			searchArrow.TextColor3 = WHITE
-			searchArrow.TextSize = 14
-			searchArrow.Font = Enum.Font.Code
-			searchArrow.BorderSizePixel = 0
-			searchArrow.ZIndex = 1001
-			searchArrow.Parent = panel
-		end
+		local searchArrow = Instance.new("TextButton")
+		searchArrow.Size = UDim2.new(0, 24, 0, ROW_HEIGHT)
+		searchArrow.Position = UDim2.new(1, -24, 0, 0)
+		searchArrow.BackgroundTransparency = 1
+		searchArrow.Text = "▲"
+		searchArrow.TextColor3 = WHITE
+		searchArrow.TextSize = 14
+		searchArrow.Font = Enum.Font.Code
+		searchArrow.BorderSizePixel = 0
+		searchArrow.ZIndex = 1001
+		searchArrow.Parent = panel
 	
 		-- Scroll frame
 		local scrollFrame = Instance.new("ScrollingFrame")
-		scrollFrame.Position = UDim2.new(0, 0, 0, scrollFrameYOffset)
+		scrollFrame.Position = UDim2.new(0, 0, 0, ROW_HEIGHT)
 		scrollFrame.Size = UDim2.new(1, 0, 0, 0)
 		scrollFrame.BackgroundTransparency = 1
 		scrollFrame.BorderSizePixel = 0
@@ -11204,147 +11112,101 @@ local script = G2L["8"];
 		listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 		listLayout.Parent = scrollFrame
 	
-		-- Bottom buttons
-		local bottomBar = nil
-		local bottomBarHeight = 0
-		local buttonInstances = {}
+		-- Bottom bar
+		local bottomButtons = config.bottomButtons or {}
+		local rows = math.ceil(#bottomButtons / 2)
+		local bottomBarHeight = (ROW_HEIGHT + 2) * rows
 	
-		if config.bottomButtons and #config.bottomButtons > 0 then
-			local rows = math.ceil(#config.bottomButtons / 2)
-			bottomBarHeight = (ROW_HEIGHT + 2) * rows
+		local bottomBar = Instance.new("Frame")
+		bottomBar.Size = UDim2.new(1, 0, 0, bottomBarHeight)
+		bottomBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+		bottomBar.BorderSizePixel = 0
+		bottomBar.ZIndex = 1000
+		bottomBar.Parent = panel
 	
-			bottomBar = Instance.new("Frame")
-			bottomBar.Size = UDim2.new(1, 0, 0, bottomBarHeight)
-			bottomBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-			bottomBar.BorderSizePixel = 0
-			bottomBar.ZIndex = 1000
-			bottomBar.Parent = panel
+		local bottomStroke = Instance.new("UIStroke")
+		bottomStroke.Color = BORDER
+		bottomStroke.Thickness = 1
+		bottomStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		bottomStroke.Parent = bottomBar
 	
-			local bottomStroke = Instance.new("UIStroke")
-			bottomStroke.Color = BORDER
-			bottomStroke.Thickness = 1
-			bottomStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-			bottomStroke.Parent = bottomBar
-	
-			for i, btnConfig in ipairs(config.bottomButtons) do
-				local row = math.ceil(i / 2) - 1
-				local col = (i - 1) % 2
-	
-				local btn = Instance.new("TextButton")
-				btn.Size = UDim2.new(0.5, col == 0 and -1 or 0, 0, ROW_HEIGHT + 2)
-				btn.Position = UDim2.new(col * 0.5, col == 0 and 0 or 1, 0, row * (ROW_HEIGHT + 2))
-				btn.BackgroundColor3 = BTN_BG
-				btn.BorderSizePixel = 0
-				btn.Text = btnConfig.text
-				btn.TextColor3 = WHITE
-				btn.TextSize = 11
-				btn.Font = Enum.Font.Code
-				btn.ZIndex = 1001
-				btn.Parent = bottomBar
-	
-				table.insert(buttonInstances, {button = btn, config = btnConfig})
-	
-				-- Dividers
-				if col == 0 and i < #config.bottomButtons then
-					local divider = Instance.new("Frame")
-					divider.Size = UDim2.new(0, 1, 0, ROW_HEIGHT + 2)
-					divider.Position = UDim2.new(0.5, -1, 0, row * (ROW_HEIGHT + 2))
-					divider.BackgroundColor3 = BORDER
-					divider.BorderSizePixel = 0
-					divider.ZIndex = 1001
-					divider.Parent = bottomBar
+		local function updateMainLabel()
+			local count = 0
+			local names = {}
+			for name, _ in pairs(selectedPlayers) do
+				count = count + 1
+				local player = Players:FindFirstChild(name)
+				if player then
+					local displayText = showDisplay and player.DisplayName or player.Name
+					table.insert(names, displayText)
+				else
+					table.insert(names, name)
 				end
-	
-				if row > 0 and col == 0 then
-					local rowDivider = Instance.new("Frame")
-					rowDivider.Size = UDim2.new(1, 0, 0, 1)
-					rowDivider.Position = UDim2.new(0, 0, 0, row * (ROW_HEIGHT + 2) - 1)
-					rowDivider.BackgroundColor3 = BORDER
-					rowDivider.BorderSizePixel = 0
-					rowDivider.ZIndex = 1001
-					rowDivider.Parent = bottomBar
-				end
+			end
+			if count == 0 then
+				mainLabel.Text = "Select Players"
+			elseif count <= 2 then
+				mainLabel.Text = table.concat(names, ", ")
+			else
+				mainLabel.Text = count .. " Players Selected"
 			end
 		end
 	
-		-- ============================================================
-		-- UPDATE PANEL SIZE
-		-- ============================================================
 		local function updatePanelSize(rowCount)
 			local visibleRows = math.min(rowCount, MAX_ROWS)
 			local scrollH = visibleRows * ROW_HEIGHT
 			scrollFrame.Size = UDim2.new(1, 0, 0, scrollH)
-			panel.Size = UDim2.new(0, 161, 0, scrollFrameYOffset + scrollH + bottomBarHeight)
+			panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT + scrollH + bottomBarHeight)
 			scrollFrame.CanvasSize = UDim2.new(0, 0, 0, rowCount * ROW_HEIGHT)
-			if bottomBar then
-				bottomBar.Position = UDim2.new(0, 0, 0, scrollFrameYOffset + scrollH)
-			end
+			bottomBar.Position = UDim2.new(0, 0, 0, ROW_HEIGHT + scrollH)
 		end
 	
-		-- ============================================================
-		-- BUILD LIST
-		-- ============================================================
 		local function buildList(filter)
-			filter = filter or ""
-	
-			-- Clear existing rows
 			for _, child in pairs(scrollFrame:GetChildren()) do
 				if child:IsA("Frame") then child:Destroy() end
 			end
 	
-			local items = {}
+			local playerList = {}
 	
-			if mode == "custom" then
-				-- Custom items
-				for _, item in ipairs(config.items or {}) do
-					if filter == "" or item:lower():find(filter:lower(), 1, true) then
-						table.insert(items, {
-							value = item,
-							displayText = item:sub(1, 1):upper() .. item:sub(2)
-						})
-					end
-				end
-			elseif mode == "players" then
-				-- Player list
-				local playerList = {}
-				for _, p in pairs(Players:GetPlayers()) do
-					if not (config.excludeSelf and p == LocalPlayer) then
-						if not showFriends or friendsList[p.UserId] then
-							table.insert(playerList, p)
-						end
-					end
-				end
+			-- Add online players
+			for _, p in pairs(Players:GetPlayers()) do
+				table.insert(playerList, {
+					name = p.Name,
+					displayName = p.DisplayName,
+					userId = p.UserId,
+					isOffline = false
+				})
+			end
 	
-				table.sort(playerList, function(a, b)
-					local nameA = showDisplay and a.DisplayName or a.Name
-					local nameB = showDisplay and b.DisplayName or b.Name
-					return nameA:lower() < nameB:lower()
-				end)
-	
-				for _, p in ipairs(playerList) do
-					local displayText = showDisplay and p.DisplayName or p.Name
-					if filter == "" or displayText:lower():find(filter:lower(), 1, true) then
-						table.insert(items, {
-							value = p,
-							displayText = displayText,
-							userId = p.UserId
-						})
-					end
+			-- Add offline players if enabled and function provided
+			if showOffline and getOfflinePlayers then
+				for name, _ in pairs(getOfflinePlayers()) do
+					table.insert(playerList, {
+						name = name,
+						displayName = name .. " (Offline)",
+						userId = nil,
+						isOffline = true
+					})
 				end
 			end
 	
-			-- Create rows
-			for i, item in ipairs(items) do
-				local isSelected = false
-				if mode == "custom" then
-					isSelected = selectedValue == item.value
-				elseif mode == "players" then
-					if multiSelect then
-						isSelected = selectedPlayers[item.value.Name] ~= nil
-					else
-						isSelected = selectedPlayer == item.value
-					end
+			table.sort(playerList, function(a, b)
+				local nameA = showDisplay and a.displayName or a.name
+				local nameB = showDisplay and b.displayName or b.name
+				return nameA:lower() < nameB:lower()
+			end)
+	
+			local filtered = {}
+			for _, p in ipairs(playerList) do
+				local displayText = showDisplay and p.displayName or p.name
+				if filter == "" or displayText:lower():find(filter:lower(), 1, true) then
+					table.insert(filtered, p)
 				end
+			end
+	
+			for i, p in ipairs(filtered) do
+				local isSelected = selectedPlayers[p.name] ~= nil
+				local displayText = showDisplay and p.displayName or p.name
 	
 				local row = Instance.new("Frame")
 				row.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
@@ -11354,8 +11216,7 @@ local script = G2L["8"];
 				row.ZIndex = 1001
 				row.Parent = scrollFrame
 	
-				-- Thumbnail (players only)
-				if mode == "players" and showIcons and item.userId then
+				if showIcons and p.userId then
 					local thumb = Instance.new("ImageLabel")
 					thumb.Size = UDim2.new(0, 12, 0, 12)
 					thumb.Position = UDim2.new(1, -16, 0.5, -6)
@@ -11365,7 +11226,7 @@ local script = G2L["8"];
 					thumb.Parent = row
 	
 					task.spawn(function()
-						thumb.Image = getPlayerThumbnail(item.userId)
+						thumb.Image = getThumb(p.userId)
 					end)
 				end
 	
@@ -11373,7 +11234,7 @@ local script = G2L["8"];
 				nameLabel.Size = UDim2.new(1, -22, 1, 0)
 				nameLabel.Position = UDim2.new(0, 6, 0, 0)
 				nameLabel.BackgroundTransparency = 1
-				nameLabel.Text = item.displayText
+				nameLabel.Text = displayText
 				nameLabel.TextColor3 = isSelected and BLUE or WHITE
 				nameLabel.TextSize = 14
 				nameLabel.Font = Enum.Font.Code
@@ -11390,82 +11251,89 @@ local script = G2L["8"];
 				rowBtn.Parent = row
 	
 				rowBtn.MouseEnter:Connect(function()
-					if not isSelected then
-						row.BackgroundColor3 = HOVER
-					end
+					row.BackgroundColor3 = HOVER
 				end)
 	
 				rowBtn.MouseLeave:Connect(function()
-					if not isSelected then
+					if not selectedPlayers[p.name] then
 						row.BackgroundColor3 = BG
 					end
 				end)
 	
 				rowBtn.MouseButton1Click:Connect(function()
-					if mode == "custom" then
-						selectedValue = item.value
-						mainLabel.Text = item.displayText
-						if config.onSelect then
-							config.onSelect(item.value)
-						end
-						isOpen = false
-						panel.Visible = false
-						mainLabel.Visible = true
-						mainArrow.Visible = true
-					elseif mode == "players" then
-						if multiSelect then
-							-- Toggle selection
-							if selectedPlayers[item.value.Name] then
-								selectedPlayers[item.value.Name] = nil
-								nameLabel.TextColor3 = WHITE
-								row.BackgroundColor3 = BG
-							else
-								selectedPlayers[item.value.Name] = true
-								nameLabel.TextColor3 = BLUE
-								row.BackgroundColor3 = HOVER
-							end
-	
-							-- Update main label
-							local count = 0
-							local names = {}
-							for name, _ in pairs(selectedPlayers) do
-								count = count + 1
-								table.insert(names, name)
-							end
-	
-							if count == 0 then
-								mainLabel.Text = "Select Players"
-							elseif count <= 2 then
-								mainLabel.Text = table.concat(names, ", ")
-							else
-								mainLabel.Text = count .. " Players Selected"
-							end
-	
-							if config.onMultiSelectChange then
-								config.onMultiSelectChange(selectedPlayers)
-							end
-						else
-							-- Single select
-							selectedPlayer = item.value
-							mainLabel.Text = item.displayText
-							if config.onSelectPlayer then
-								config.onSelectPlayer(item.value)
-							end
-							isOpen = false
-							panel.Visible = false
-							mainLabel.Visible = true
-							mainArrow.Visible = true
-						end
+					if selectedPlayers[p.name] then
+						selectedPlayers[p.name] = nil
+						nameLabel.TextColor3 = WHITE
+						row.BackgroundColor3 = BG
+					else
+						selectedPlayers[p.name] = true
+						nameLabel.TextColor3 = BLUE
+						row.BackgroundColor3 = HOVER
+					end
+					updateMainLabel()
+					if config.onMultiSelectChange then
+						config.onMultiSelectChange(selectedPlayers)
 					end
 				end)
 			end
 	
-			updatePanelSize(#items)
+			updatePanelSize(#filtered)
 		end
 	
-		-- ============================================================
-		-- OPEN / CLOSE
-		-- ============================================================
+		-- Bottom buttons
+		for i, btnConfig in ipairs(bottomButtons) do
+			local row = math.ceil(i / 2) - 1
+			local col = (i - 1) % 2
+	
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(0.5, col == 0 and -1 or 0, 0, ROW_HEIGHT + 2)
+			btn.Position = UDim2.new(col * 0.5, col == 0 and 0 or 1, 0, row * (ROW_HEIGHT + 2))
+			btn.BackgroundColor3 = BTN_BG
+			btn.BorderSizePixel = 0
+			btn.Text = btnConfig.text
+			btn.TextColor3 = WHITE
+			btn.TextSize = 11
+			btn.Font = Enum.Font.Code
+			btn.ZIndex = 1001
+			btn.Parent = bottomBar
+	
+			btn.MouseButton1Click:Connect(function()
+				if btnConfig.onClick then
+					btnConfig.onClick({
+						showDisplay = showDisplay,
+						showOffline = showOffline,
+						rebuildList = function() buildList(searchBox.Text) end,
+						setShowDisplay = function(val) showDisplay = val end,
+						setShowOffline = function(val) showOffline = val end,
+						selectedPlayers = selectedPlayers,
+						mainLabel = mainLabel,
+						button = btn
+					})
+				end
+			end)
+	
+			-- Dividers
+			if col == 0 and i < #bottomButtons then
+				local divider = Instance.new("Frame")
+				divider.Size = UDim2.new(0, 1, 0, ROW_HEIGHT + 2)
+				divider.Position = UDim2.new(0.5, -1, 0, row * (ROW_HEIGHT + 2))
+				divider.BackgroundColor3 = BORDER
+				divider.BorderSizePixel = 0
+				divider.ZIndex = 1001
+				divider.Parent = bottomBar
+			end
+	
+			if row > 0 and col == 0 then
+				local rowDivider = Instance.new("Frame")
+				rowDivider.Size = UDim2.new(1, 0, 0, 1)
+				rowDivider.Position = UDim2.new(0, 0, 0, row * (ROW_HEIGHT + 2) - 1)
+				rowDivider.BackgroundColor3 = BORDER
+				rowDivider.BorderSizePixel = 0
+				rowDivider.ZIndex = 1001
+				rowDivider.Parent = bottomBar
+			end
+		end
+	
 		local function openDropdown()
 			isOpen = true
 			mainLabel.Visible = false
@@ -11475,12 +11343,10 @@ local script = G2L["8"];
 	
 			local absPos = dropdown.AbsolutePosition
 			local absSize = dropdown.AbsoluteSize
-			panel.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y)
+			panel.Position = UDim2.new(0, absPos.X + (absSize.X - 161) / 2, 0, absPos.Y + absSize.Y)
 			panel.Visible = true
 	
-			if searchBox then
-				searchBox.Text = ""
-			end
+			searchBox.Text = ""
 			buildList("")
 		end
 	
@@ -11489,11 +11355,9 @@ local script = G2L["8"];
 			panel.Visible = false
 			mainLabel.Visible = true
 			mainArrow.Visible = true
+			updateMainLabel()
 		end
 	
-		-- ============================================================
-		-- CLICK HANDLERS
-		-- ============================================================
 		dropdown.MouseButton1Click:Connect(function()
 			if isOpen then
 				closeDropdown()
@@ -11502,34 +11366,11 @@ local script = G2L["8"];
 			end
 		end)
 	
-		if searchArrow then
-			searchArrow.MouseButton1Click:Connect(closeDropdown)
-		end
+		searchArrow.MouseButton1Click:Connect(closeDropdown)
+		searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+			buildList(searchBox.Text)
+		end)
 	
-		if searchBox then
-			searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-				buildList(searchBox.Text)
-			end)
-		end
-	
-		-- Bottom button handlers
-		for _, btnData in ipairs(buttonInstances) do
-			btnData.button.MouseButton1Click:Connect(function()
-				if btnData.config.onClick then
-					btnData.config.onClick({
-						showDisplay = showDisplay,
-						showFriends = showFriends,
-						rebuildList = function() buildList(searchBox and searchBox.Text or "") end,
-						setShowDisplay = function(val) showDisplay = val end,
-						setShowFriends = function(val) showFriends = val end,
-						selectedPlayers = selectedPlayers,
-						mainLabel = mainLabel
-					})
-				end
-			end)
-		end
-	
-		-- Click outside to close
 		UserInputService.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
 				local mousePos = input.Position
@@ -11549,35 +11390,25 @@ local script = G2L["8"];
 			end
 		end)
 	
-		-- Player updates (for player mode)
-		if mode == "players" then
-			Players.PlayerRemoving:Connect(function(p)
-				if multiSelect and selectedPlayers[p.Name] then
-					selectedPlayers[p.Name] = nil
-					if config.onMultiSelectChange then
-						config.onMultiSelectChange(selectedPlayers)
-					end
-				elseif selectedPlayer == p then
-					selectedPlayer = nil
-					mainLabel.Text = "Select Player"
+		Players.PlayerRemoving:Connect(function(p)
+			if selectedPlayers[p.Name] then
+				selectedPlayers[p.Name] = nil
+				updateMainLabel()
+				if config.onMultiSelectChange then
+					config.onMultiSelectChange(selectedPlayers)
 				end
-				if isOpen then buildList(searchBox and searchBox.Text or "") end
-			end)
+			end
+			if isOpen then buildList(searchBox.Text) end
+		end)
 	
-			Players.PlayerAdded:Connect(function()
-				if isOpen then buildList(searchBox and searchBox.Text or "") end
-			end)
-		end
+		Players.PlayerAdded:Connect(function()
+			if isOpen then buildList(searchBox.Text) end
+		end)
+	
+		updateMainLabel()
 	end
 	
-	-- ============================================================
-	-- EXPORT TO SHARED
-	-- ============================================================
-	shared.DropdownMaster = {
-		create = createDropdown
-	}
-	
-	print("[DropdownMaster] Initialized - Use shared.DropdownMaster.create(config)")
+	shared.DropdownMaster = { create = create }
 end;
 task.spawn(C_8);
 -- StarterGui.AgarWareGui.MainFrame.SideBar.PageHandler
@@ -25019,477 +24850,108 @@ task.spawn(C_1cf);
 local function C_1d5()
 local script = G2L["1d5"];
 	local Players = game:GetService("Players")
-	local UserInputService = game:GetService("UserInputService")
-	
-	local LocalPlayer = Players.LocalPlayer
 	
 	local SelectDRow = script.Parent
-	local SelectDDropdown = SelectDRow.SelectDDropdown
-	local GriefGroup = SelectDRow.Parent
-	local GriefAccentColor = GriefGroup:WaitForChild("GriefAccentColor")
+	local SelectDDropdown = SelectDRow:WaitForChild("SelectDDropdown")
+	
+	repeat task.wait() until shared.DropdownMaster
 	
 	local selectedPlayers = {}
-	local isOpen = false
-	local showDisplay = false
+	local showOffline = false
 	
-	local ROW_HEIGHT = 16
-	local MAX_ROWS = 7
-	local BG = Color3.fromRGB(24, 24, 24)
-	local BORDER = Color3.fromRGB(57, 57, 57)
-	local WHITE = Color3.new(1, 1, 1)
-	local DIM = Color3.fromRGB(120, 120, 120)
-	local BLUE = Color3.fromRGB(0, 123, 255)
-	local HOVER = Color3.fromRGB(36, 36, 36)
-	local BTN_BG = Color3.fromRGB(36, 36, 36)
+	local function getOfflinePlayers()
+		local offline = {}
+		local bricksFolder = workspace:FindFirstChild("Bricks")
+		if not bricksFolder then return offline end
 	
-	if not game:IsLoaded() then
-		game.Loaded:Wait()
-	end
+		for _, child in pairs(bricksFolder:GetChildren()) do
+			if child:IsA("Folder") then
+				local hasBlocks = false
+				for _, brick in pairs(child:GetChildren()) do
+					if brick:IsA("BasePart") and brick.Name == "Brick" then
+						hasBlocks = true
+						break
+					end
+				end
 	
-	repeat task.wait() until SelectDDropdown.AbsoluteSize.X > 0
-	
-	-- ============================================================
-	-- MAIN LABEL + ARROW
-	-- ============================================================
-	local mainLabel = Instance.new("TextLabel")
-	mainLabel.Name = "MainLabel"
-	mainLabel.Size = UDim2.new(1, -24, 1, 0)
-	mainLabel.Position = UDim2.new(0, 0, 0, 0)
-	mainLabel.BackgroundTransparency = 1
-	mainLabel.Text = "Select Players"
-	mainLabel.TextColor3 = WHITE
-	mainLabel.TextSize = 14
-	mainLabel.Font = Enum.Font.Code
-	mainLabel.TextXAlignment = Enum.TextXAlignment.Center
-	mainLabel.TextTruncate = Enum.TextTruncate.AtEnd
-	mainLabel.ZIndex = 2
-	mainLabel.Parent = SelectDDropdown
-	
-	local mainArrow = Instance.new("TextLabel")
-	mainArrow.Name = "MainArrow"
-	mainArrow.Size = UDim2.new(0, 24, 1, 0)
-	mainArrow.Position = UDim2.new(1, -24, 0, 0)
-	mainArrow.BackgroundTransparency = 1
-	mainArrow.Text = "▼"
-	mainArrow.TextColor3 = WHITE
-	mainArrow.TextSize = 14
-	mainArrow.Font = Enum.Font.Code
-	mainArrow.TextXAlignment = Enum.TextXAlignment.Center
-	mainArrow.ZIndex = 2
-	mainArrow.Parent = SelectDDropdown
-	
-	-- ============================================================
-	-- SCREENGUI HELPER
-	-- ============================================================
-	local function getScreenGui()
-		local p = script.Parent
-		while p do
-			if p:IsA("ScreenGui") then return p end
-			p = p.Parent
-		end
-	end
-	
-	local BOTTOM_BAR_HEIGHT = ROW_HEIGHT + 2
-	local TOTAL_BOTTOM_HEIGHT = (BOTTOM_BAR_HEIGHT * 2) + 1
-	
-	-- ============================================================
-	-- PANEL
-	-- ============================================================
-	local panel = Instance.new("Frame")
-	panel.Name = "SelectDPanel"
-	panel.BackgroundColor3 = BG
-	panel.BorderSizePixel = 0
-	panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT)
-	panel.ZIndex = 999
-	panel.Visible = false
-	panel.Parent = getScreenGui()
-	
-	local panelStroke = Instance.new("UIStroke")
-	panelStroke.Color = BORDER
-	panelStroke.Thickness = 1
-	panelStroke.Parent = panel
-	
-	local searchBox = Instance.new("TextBox")
-	searchBox.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
-	searchBox.Position = UDim2.new(0, 0, 0, 0)
-	searchBox.BackgroundColor3 = BG
-	searchBox.BorderSizePixel = 0
-	searchBox.Text = ""
-	searchBox.PlaceholderText = "Search for users..."
-	searchBox.PlaceholderColor3 = DIM
-	searchBox.TextColor3 = WHITE
-	searchBox.TextSize = 14
-	searchBox.Font = Enum.Font.Code
-	searchBox.TextXAlignment = Enum.TextXAlignment.Left
-	searchBox.ClearTextOnFocus = false
-	searchBox.ZIndex = 1000
-	searchBox.Parent = panel
-	
-	local searchPad = Instance.new("UIPadding")
-	searchPad.PaddingLeft = UDim.new(0, 6)
-	searchPad.PaddingRight = UDim.new(0, 24)
-	searchPad.Parent = searchBox
-	
-	local searchArrow = Instance.new("TextButton")
-	searchArrow.Size = UDim2.new(0, 24, 0, ROW_HEIGHT)
-	searchArrow.Position = UDim2.new(1, -24, 0, 0)
-	searchArrow.BackgroundTransparency = 1
-	searchArrow.Text = "▲"
-	searchArrow.TextColor3 = WHITE
-	searchArrow.TextSize = 14
-	searchArrow.Font = Enum.Font.Code
-	searchArrow.BorderSizePixel = 0
-	searchArrow.ZIndex = 1001
-	searchArrow.Parent = panel
-	
-	local scrollFrame = Instance.new("ScrollingFrame")
-	scrollFrame.Position = UDim2.new(0, 0, 0, ROW_HEIGHT)
-	scrollFrame.Size = UDim2.new(1, 0, 0, 0)
-	scrollFrame.BackgroundTransparency = 1
-	scrollFrame.BorderSizePixel = 0
-	scrollFrame.ScrollBarThickness = 2
-	scrollFrame.ScrollBarImageColor3 = BORDER
-	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-	scrollFrame.ZIndex = 1000
-	scrollFrame.Parent = panel
-	
-	local listLayout = Instance.new("UIListLayout")
-	listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	listLayout.Parent = scrollFrame
-	
-	local bottomBar = Instance.new("Frame")
-	bottomBar.Size = UDim2.new(1, 0, 0, TOTAL_BOTTOM_HEIGHT)
-	bottomBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-	bottomBar.BorderSizePixel = 0
-	bottomBar.ZIndex = 1000
-	bottomBar.Parent = panel
-	
-	local bottomStroke = Instance.new("UIStroke")
-	bottomStroke.Color = BORDER
-	bottomStroke.Thickness = 1
-	bottomStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	bottomStroke.Parent = bottomBar
-	
-	-- Row 1: Select All / Unselect All
-	local selectAllBtn = Instance.new("TextButton")
-	selectAllBtn.Size = UDim2.new(0.5, -1, 0, BOTTOM_BAR_HEIGHT)
-	selectAllBtn.Position = UDim2.new(0, 0, 0, 0)
-	selectAllBtn.BackgroundColor3 = BTN_BG
-	selectAllBtn.BorderSizePixel = 0
-	selectAllBtn.Text = "Select All"
-	selectAllBtn.TextColor3 = WHITE
-	selectAllBtn.TextSize = 11
-	selectAllBtn.Font = Enum.Font.Code
-	selectAllBtn.ZIndex = 1001
-	selectAllBtn.Parent = bottomBar
-	
-	local divider1 = Instance.new("Frame")
-	divider1.Size = UDim2.new(0, 1, 0, BOTTOM_BAR_HEIGHT)
-	divider1.Position = UDim2.new(0.5, -1, 0, 0)
-	divider1.BackgroundColor3 = BORDER
-	divider1.BorderSizePixel = 0
-	divider1.ZIndex = 1001
-	divider1.Parent = bottomBar
-	
-	local unselectAllBtn = Instance.new("TextButton")
-	unselectAllBtn.Size = UDim2.new(0.5, 0, 0, BOTTOM_BAR_HEIGHT)
-	unselectAllBtn.Position = UDim2.new(0.5, 1, 0, 0)
-	unselectAllBtn.BackgroundColor3 = BTN_BG
-	unselectAllBtn.BorderSizePixel = 0
-	unselectAllBtn.Text = "Unselect All"
-	unselectAllBtn.TextColor3 = WHITE
-	unselectAllBtn.TextSize = 11
-	unselectAllBtn.Font = Enum.Font.Code
-	unselectAllBtn.ZIndex = 1001
-	unselectAllBtn.Parent = bottomBar
-	
-	-- Divider between Row 1 and Row 2
-	local rowDivider = Instance.new("Frame")
-	rowDivider.Size = UDim2.new(1, 0, 0, 1)
-	rowDivider.Position = UDim2.new(0, 0, 0, BOTTOM_BAR_HEIGHT)
-	rowDivider.BackgroundColor3 = BORDER
-	rowDivider.BorderSizePixel = 0
-	rowDivider.ZIndex = 1001
-	rowDivider.Parent = bottomBar
-	
-	-- Row 2: Show Display (full width)
-	local displayBtn = Instance.new("TextButton")
-	displayBtn.Size = UDim2.new(1, 0, 0, BOTTOM_BAR_HEIGHT)
-	displayBtn.Position = UDim2.new(0, 0, 0, BOTTOM_BAR_HEIGHT + 1)
-	displayBtn.BackgroundColor3 = BTN_BG
-	displayBtn.BorderSizePixel = 0
-	displayBtn.Text = "Show Display"
-	displayBtn.TextColor3 = WHITE
-	displayBtn.TextSize = 11
-	displayBtn.Font = Enum.Font.Code
-	displayBtn.ZIndex = 1001
-	displayBtn.Parent = bottomBar
-	
-	-- ============================================================
-	-- THUMBNAILS
-	-- ============================================================
-	local cachedThumbs = {}
-	local function getThumb(userId)
-		if cachedThumbs[userId] then return cachedThumbs[userId] end
-		local ok, img = pcall(function()
-			return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
-		end)
-		local result = ok and img or ""
-		cachedThumbs[userId] = result
-		return result
-	end
-	
-	-- ============================================================
-	-- LABEL UPDATE
-	-- ============================================================
-	local function updateMainLabel()
-		local count = 0
-		local names = {}
-		for name, _ in pairs(selectedPlayers) do
-			count = count + 1
-			local player = Players:FindFirstChild(name)
-			if player then
-				local displayText = showDisplay and player.DisplayName or player.Name
-				table.insert(names, displayText)
+				if hasBlocks and not Players:FindFirstChild(child.Name) then
+					offline[child.Name] = true
+				end
 			end
 		end
-		if count == 0 then
-			mainLabel.Text = "Select Players"
-		elseif count <= 2 then
-			mainLabel.Text = table.concat(names, ", ")
-		else
-			mainLabel.Text = count .. " Players Selected"
-		end
+	
+		return offline
 	end
 	
-	-- ============================================================
-	-- SHARED ATTRIBUTE (so other scripts can read it)
-	-- ============================================================
 	local function updateSelectedPlayers()
 		local names = {}
 		for name, _ in pairs(selectedPlayers) do
 			table.insert(names, name)
 		end
 		SelectDRow:SetAttribute("SelectedPlayers", table.concat(names, ","))
-		-- Sync to shared so other scripts can read it directly
 		shared.GriefSelectedPlayers = selectedPlayers
 	end
 	
-	-- ============================================================
-	-- LIST BUILD
-	-- ============================================================
-	local function updatePanelSize(rowCount)
-		local visibleRows = math.min(rowCount, MAX_ROWS)
-		local scrollH = visibleRows * ROW_HEIGHT
-		scrollFrame.Size = UDim2.new(1, 0, 0, scrollH)
-		panel.Size = UDim2.new(0, 161, 0, ROW_HEIGHT + scrollH + TOTAL_BOTTOM_HEIGHT)
-		scrollFrame.CanvasSize = UDim2.new(0, 0, 0, rowCount * ROW_HEIGHT)
-		bottomBar.Position = UDim2.new(0, 0, 0, ROW_HEIGHT + scrollH)
-	end
+	shared.DropdownMaster.create({
+		dropdown = SelectDDropdown,
+		mode = "players",
+		multiSelect = true,
+		showIcons = true,
+		getOfflinePlayers = getOfflinePlayers,
 	
-	local function buildList(filter)
-		for _, child in pairs(scrollFrame:GetChildren()) do
-			if child:IsA("Frame") then child:Destroy() end
-		end
-	
-		local playerList = {}
-		for _, p in pairs(Players:GetPlayers()) do
-			table.insert(playerList, p)
-		end
-	
-		table.sort(playerList, function(a, b)
-			local nameA = showDisplay and a.DisplayName or a.Name
-			local nameB = showDisplay and b.DisplayName or b.Name
-			return nameA:lower() < nameB:lower()
-		end)
-	
-		local filtered = {}
-		for _, p in ipairs(playerList) do
-			local displayText = showDisplay and p.DisplayName or p.Name
-			if filter == "" or displayText:lower():find(filter:lower(), 1, true) then
-				table.insert(filtered, p)
+		onMultiSelectChange = function(selected)
+			selectedPlayers = {}
+			for name, _ in pairs(selected) do
+				selectedPlayers[name] = true
 			end
-		end
-	
-		for i, p in ipairs(filtered) do
-			local isSelected = selectedPlayers[p.Name] ~= nil
-			local displayText = showDisplay and p.DisplayName or p.Name
-	
-			local row = Instance.new("Frame")
-			row.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
-			row.BackgroundColor3 = isSelected and HOVER or BG
-			row.BorderSizePixel = 0
-			row.LayoutOrder = i
-			row.ZIndex = 1001
-			row.Parent = scrollFrame
-	
-			local thumb = Instance.new("ImageLabel")
-			thumb.Size = UDim2.new(0, 12, 0, 12)
-			thumb.Position = UDim2.new(1, -16, 0.5, -6)
-			thumb.BackgroundTransparency = 1
-			thumb.Image = ""
-			thumb.ZIndex = 1002
-			thumb.Parent = row
-	
-			task.spawn(function()
-				thumb.Image = getThumb(p.UserId)
-			end)
-	
-			local nameLabel = Instance.new("TextLabel")
-			nameLabel.Size = UDim2.new(1, -22, 1, 0)
-			nameLabel.Position = UDim2.new(0, 6, 0, 0)
-			nameLabel.BackgroundTransparency = 1
-			nameLabel.Text = displayText
-			nameLabel.TextColor3 = isSelected and BLUE or WHITE
-			nameLabel.TextSize = 14
-			nameLabel.Font = Enum.Font.Code
-			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-			nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
-			nameLabel.ZIndex = 1002
-			nameLabel.Parent = row
-	
-			local rowBtn = Instance.new("TextButton")
-			rowBtn.Size = UDim2.new(1, 0, 1, 0)
-			rowBtn.BackgroundTransparency = 1
-			rowBtn.Text = ""
-			rowBtn.ZIndex = 1003
-			rowBtn.Parent = row
-	
-			rowBtn.MouseEnter:Connect(function()
-				row.BackgroundColor3 = HOVER
-			end)
-			rowBtn.MouseLeave:Connect(function()
-				if not selectedPlayers[p.Name] then
-					row.BackgroundColor3 = BG
-				end
-			end)
-	
-			rowBtn.MouseButton1Click:Connect(function()
-				if selectedPlayers[p.Name] then
-					selectedPlayers[p.Name] = nil
-					nameLabel.TextColor3 = WHITE
-					row.BackgroundColor3 = BG
-				else
-					selectedPlayers[p.Name] = true
-					nameLabel.TextColor3 = BLUE
-					row.BackgroundColor3 = HOVER
-				end
-				updateMainLabel()
-				updateSelectedPlayers()
-			end)
-		end
-	
-		updatePanelSize(#filtered)
-	end
-	
-	-- ============================================================
-	-- SELECT ALL / UNSELECT ALL
-	-- ============================================================
-	selectAllBtn.MouseButton1Click:Connect(function()
-		for _, p in pairs(Players:GetPlayers()) do
-			selectedPlayers[p.Name] = true
-		end
-		updateMainLabel()
-		updateSelectedPlayers()
-		buildList(searchBox.Text)
-	end)
-	
-	unselectAllBtn.MouseButton1Click:Connect(function()
-		selectedPlayers = {}
-		updateMainLabel()
-		updateSelectedPlayers()
-		buildList(searchBox.Text)
-	end)
-	
-	-- ============================================================
-	-- SHOW DISPLAY / SHOW USERNAME
-	-- ============================================================
-	displayBtn.MouseButton1Click:Connect(function()
-		showDisplay = not showDisplay
-		displayBtn.Text = showDisplay and "Show Username" or "Show Display"
-		updateMainLabel()
-		if isOpen then buildList(searchBox.Text) end
-	end)
-	
-	-- ============================================================
-	-- OPEN / CLOSE
-	-- ============================================================
-	local function openDropdown()
-		isOpen = true
-		mainLabel.Visible = false
-		mainArrow.Visible = false
-	
-		repeat task.wait() until SelectDDropdown.AbsoluteSize.X > 0
-	
-		local absPos = SelectDDropdown.AbsolutePosition
-		local absSize = SelectDDropdown.AbsoluteSize
-		panel.Position = UDim2.new(0, absPos.X + (absSize.X - 161) / 2, 0, absPos.Y + absSize.Y)
-		panel.Size = UDim2.new(0, absSize.X, 0, ROW_HEIGHT)
-		panel.Visible = true
-	
-		searchBox.Text = ""
-		buildList("")
-	end
-	
-	local function closeDropdown()
-		isOpen = false
-		panel.Visible = false
-		mainLabel.Visible = true
-		mainArrow.Visible = true
-		mainArrow.Text = "▼"
-		updateMainLabel()
-	end
-	
-	SelectDDropdown.MouseButton1Click:Connect(function()
-		if isOpen then
-			closeDropdown()
-		else
-			openDropdown()
-		end
-	end)
-	
-	searchArrow.MouseButton1Click:Connect(function()
-		closeDropdown()
-	end)
-	
-	searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-		buildList(searchBox.Text)
-	end)
-	
-	UserInputService.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
-			local mousePos = input.Position
-			local panelPos = panel.AbsolutePosition
-			local panelSize = panel.AbsoluteSize
-			local btnPos = SelectDDropdown.AbsolutePosition
-			local btnSize = SelectDDropdown.AbsoluteSize
-	
-			local inPanel = mousePos.X >= panelPos.X and mousePos.X <= panelPos.X + panelSize.X
-				and mousePos.Y >= panelPos.Y and mousePos.Y <= panelPos.Y + panelSize.Y
-			local inBtn = mousePos.X >= btnPos.X and mousePos.X <= btnPos.X + btnSize.X
-				and mousePos.Y >= btnPos.Y and mousePos.Y <= btnPos.Y + btnSize.Y
-	
-			if not inPanel and not inBtn then
-				closeDropdown()
-			end
-		end
-	end)
-	
-	Players.PlayerRemoving:Connect(function(p)
-		if selectedPlayers[p.Name] then
-			selectedPlayers[p.Name] = nil
-			updateMainLabel()
 			updateSelectedPlayers()
-		end
-		if isOpen then buildList(searchBox.Text) end
-	end)
+		end,
 	
-	Players.PlayerAdded:Connect(function()
-		if isOpen then buildList(searchBox.Text) end
-	end)
+		bottomButtons = {
+			{
+				text = "Select All",
+				onClick = function(state)
+					for _, p in pairs(Players:GetPlayers()) do
+						selectedPlayers[p.Name] = true
+					end
+					if showOffline then
+						for name, _ in pairs(getOfflinePlayers()) do
+							selectedPlayers[name] = true
+						end
+					end
+					updateSelectedPlayers()
+					state.rebuildList()
+				end
+			},
+			{
+				text = "Unselect All",
+				onClick = function(state)
+					selectedPlayers = {}
+					updateSelectedPlayers()
+					state.rebuildList()
+				end
+			},
+			{
+				text = "Show Display",
+				onClick = function(state)
+					state.setShowDisplay(not state.showDisplay)
+					state.button.Text = state.showDisplay and "Show Username" or "Show Display"
+					state.rebuildList()
+				end
+			},
+			{
+				text = "Show Offline",
+				onClick = function(state)
+					showOffline = not showOffline
+					state.setShowOffline(showOffline)
+					state.button.Text = showOffline and "Hide Offline" or "Show Offline"
+					state.rebuildList()
+				end
+			}
+		}
+	})
 	
 	SelectDRow:SetAttribute("SelectedPlayers", "")
-	updateMainLabel()
 end;
 task.spawn(C_1d5);
 -- StarterGui.AgarWareGui.MainFrame.ContentArea.TCOTrollPage.TCOTrollLeftSide.GriefGroup.HLBlockRow.HLBlockScript
@@ -25970,8 +25432,8 @@ local script = G2L["1e1"];
 	local highlights = {}
 	
 	-- Text states
-	local TEXT_START = "Delete All Blocks"
-	local TEXT_STOP = "Stop Deleting All"
+	local TEXT_START = "Delete Aura"
+	local TEXT_STOP = "Stop Delete Aura"
 	local TEXT_NO_BLOCKS = "No Blocks Found"
 	
 	-- Network delay
