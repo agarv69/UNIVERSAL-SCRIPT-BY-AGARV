@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 29 | Scripts: 6 | Modules: 0 | Tags: 0
+-- Instances: 28 | Scripts: 5 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareV3
@@ -291,14 +291,9 @@ G2L["1b"]["Name"] = [[GuiColorTheme]];
 G2L["1b"]["BackgroundTransparency"] = 1;
 
 
--- StarterGui.AgarWareV3.GuiProtection
-G2L["1c"] = Instance.new("LocalScript", G2L["1"]);
-G2L["1c"]["Name"] = [[GuiProtection]];
-
-
 -- StarterGui.AgarWareV3.GreyFade
-G2L["1d"] = Instance.new("LocalScript", G2L["1"]);
-G2L["1d"]["Name"] = [[GreyFade]];
+G2L["1c"] = Instance.new("LocalScript", G2L["1"]);
+G2L["1c"]["Name"] = [[GreyFade]];
 
 
 -- StarterGui.AgarWareV3.MainFrame.EXIT.EXIT
@@ -552,170 +547,9 @@ local script = G2L["1a"];
 	end
 end;
 task.spawn(C_1a);
--- StarterGui.AgarWareV3.GuiProtection
+-- StarterGui.AgarWareV3.GreyFade
 local function C_1c()
 local script = G2L["1c"];
-	local CoreGui = game:GetService("CoreGui")
-	local Players = game:GetService("Players")
-	local RunService = game:GetService("RunService")
-	local LocalPlayer = Players.LocalPlayer
-	local ScreenGui = script.Parent
-	
-	-- DON'T RUN PROTECTION IN STUDIO
-	if RunService:IsStudio() then
-		return
-	end
-	
-	task.wait(math.random(1, 3))
-	
-	-- FAKE DECOY GUI (DISABLED SO IT DOESN'T SHOW)
-	local function createDecoyGui()
-		local decoy = Instance.new("ScreenGui")
-		decoy.Name = "AgarWareV3"
-		decoy.ResetOnSpawn = false
-		decoy.Enabled = false
-		decoy.Parent = LocalPlayer:WaitForChild("PlayerGui")
-	
-		local fakeFrame = Instance.new("Frame")
-		fakeFrame.Name = "MainFrame"
-		fakeFrame.Size = UDim2.new(0, 500, 0, 350)
-		fakeFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
-		fakeFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-		fakeFrame.Parent = decoy
-	
-		local fakeLabel = Instance.new("TextLabel")
-		fakeLabel.Size = UDim2.new(1, 0, 0, 50)
-		fakeLabel.Text = "AGAR WARE V3"
-		fakeLabel.TextSize = 20
-		fakeLabel.BackgroundTransparency = 1
-		fakeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-		fakeLabel.Parent = fakeFrame
-	
-		local fakeScript = Instance.new("LocalScript")
-		fakeScript.Name = "MainScript"
-		fakeScript.Disabled = true
-		fakeScript.Parent = decoy
-	end
-	
-	-- MOVE AND RENAME REAL GUI
-	local function moveAndRename()
-		local success = pcall(function()
-			local robloxNames = {"Backpack", "TopBar", "Chat", "PlayerList", "InGameMenu", "HealthBar"}
-			ScreenGui.Name = robloxNames[math.random(1, #robloxNames)]
-			ScreenGui.Parent = CoreGui
-		end)
-	
-		if not success then
-			ScreenGui.Name = "Backpack"
-		end
-	end
-	
-	-- DISGUISE SCRIPTS
-	local function disguiseScripts()
-		for _, descendant in pairs(ScreenGui:GetDescendants()) do
-			if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") then
-				local scriptNames = {"ChatMain", "Animate", "SoundService", "ControlScript", "CameraScript", "LocalScript"}
-				descendant.Name = scriptNames[math.random(1, #scriptNames)]
-			end
-		end
-	end
-	
-	-- DETECT PROPERTY TAMPERING
-	local function monitorProperties()
-		ScreenGui:GetPropertyChangedSignal("Enabled"):Connect(function()
-			if not ScreenGui.Enabled then
-				ScreenGui.Enabled = true
-			end
-		end)
-	
-		ScreenGui:GetPropertyChangedSignal("Parent"):Connect(function()
-			if ScreenGui.Parent ~= CoreGui then
-				ScreenGui.Parent = CoreGui
-			end
-		end)
-	end
-	
-	-- DETECT DEX AND SPY TOOLS
-	local function detectTools()
-		local suspiciousNames = {"Dex", "Explorer", "RemoteSpy", "SimpleSpy", "Hydroxide", "UnnamedESP"}
-	
-		for _, gui in pairs(CoreGui:GetChildren()) do
-			for _, susName in pairs(suspiciousNames) do
-				if string.find(string.lower(gui.Name), string.lower(susName)) then
-					ScreenGui.Enabled = false
-					task.wait(5)
-					ScreenGui.Enabled = true
-				end
-			end
-		end
-	end
-	
-	-- DETECT EXPLOIT FUNCTIONS BEING CALLED
-	local function detectExploitActivity()
-		local dangerousFunctions = {
-			"getgenv", "getrenv", "getrawmetatable", "hookfunction", 
-			"hookmetamethod", "newcclosure", "setreadonly"
-		}
-	
-		for _, funcName in pairs(dangerousFunctions) do
-			if getgenv and getgenv()[funcName .. "_called"] then
-				ScreenGui.Enabled = false
-				task.wait(3)
-				ScreenGui.Enabled = true
-			end
-		end
-	end
-	
-	-- MONITOR NEW DESCENDANTS (injection detection)
-	ScreenGui.DescendantAdded:Connect(function(descendant)
-		if descendant:IsA("LocalScript") and not descendant:GetAttribute("Trusted") then
-			task.wait(0.1)
-			descendant:Destroy()
-		end
-	end)
-	
-	-- MARK TRUSTED SCRIPTS
-	for _, script in pairs(ScreenGui:GetDescendants()) do
-		if script:IsA("LocalScript") or script:IsA("ModuleScript") then
-			script:SetAttribute("Trusted", true)
-		end
-	end
-	
-	-- RANDOM PARENT SWITCHING
-	task.spawn(function()
-		while task.wait(math.random(30, 60)) do
-			local containers = {"RobloxGui", "CoreGui"}
-			local randomContainer = containers[math.random(1, #containers)]
-	
-			if randomContainer == "RobloxGui" then
-				local robloxGui = CoreGui:FindFirstChild("RobloxGui")
-				if robloxGui then
-					ScreenGui.Parent = robloxGui
-				end
-			else
-				ScreenGui.Parent = CoreGui
-			end
-		end
-	end)
-	
-	-- RUN PROTECTIONS
-	createDecoyGui()
-	moveAndRename()
-	disguiseScripts()
-	monitorProperties()
-	
-	-- CONTINUOUS MONITORING
-	task.spawn(function()
-		while task.wait(5) do
-			detectTools()
-			detectExploitActivity()
-		end
-	end)
-end;
-task.spawn(C_1c);
--- StarterGui.AgarWareV3.GreyFade
-local function C_1d()
-local script = G2L["1d"];
 	local ScreenGui = script.Parent
 	
 	for _, descendant in pairs(ScreenGui:GetDescendants()) do
@@ -754,6 +588,6 @@ local script = G2L["1d"];
 		end
 	end
 end;
-task.spawn(C_1d);
+task.spawn(C_1c);
 
 return G2L["1"], require;
