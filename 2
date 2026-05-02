@@ -167,84 +167,110 @@ task.spawn(C_7);
 local function C_8()
 local script = G2L["8"];
 	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+	local CoreGui = game:GetService("CoreGui")
+	local ScreenGui = script.Parent
 	
-	-- Wait for your GUI
-	local AgarWareGui = script.Parent
-	
-	-- PROTECTION TECHNIQUES
-	
-	-- 1. Randomize GUI name to avoid easy detection
-	local function randomizeName()
-		local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		local name = ""
-		for i = 1, 12 do
-			local rand = math.random(1, #chars)
-			name = name .. chars:sub(rand, rand)
-		end
-		AgarWareGui.Name = name
-	end
-	
-	-- 2. Parent to CoreGui (harder to find than PlayerGui)
-	local function moveToCore()
-		local success = pcall(function()
-			AgarWareGui.Parent = game:GetService("CoreGui")
+	-- METHOD 1: Try gethui() (executor-specific hidden container)
+	local function tryGetHui()
+		local success, result = pcall(function()
+			return gethui()
 		end)
-	
-		if not success then
-			-- If CoreGui is blocked, stay in PlayerGui but randomize name
-			randomizeName()
+		if success and result then
+			ScreenGui.Parent = result
+			return true
 		end
+		return false
 	end
 	
-	-- 3. Rename all child scripts to look official
-	local function disguiseScripts()
-		for _, descendant in pairs(AgarWareGui:GetDescendants()) do
-			if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") then
-				local fakeNames = {"ChatMain", "Animate", "SoundService", "ControlScript", "CameraScript"}
-				descendant.Name = fakeNames[math.random(1, #fakeNames)]
+	-- METHOD 2: Try protect_gui (makes GUI invisible to Dex)
+	local function tryProtectGui()
+		local success = pcall(function()
+			if syn and syn.protect_gui then
+				syn.protect_gui(ScreenGui)
+				ScreenGui.Parent = CoreGui
+				return true
+			elseif protect_gui then
+				protect_gui(ScreenGui)
+				ScreenGui.Parent = CoreGui
+				return true
 			end
-		end
+			return false
+		end)
+		return success
 	end
 	
-	-- 4. Anti-delete protection - recreate if destroyed
-	local originalParent = AgarWareGui.Parent
-	AgarWareGui.AncestryChanged:Connect(function(_, parent)
-		if not parent then
-			warn("GUI was deleted - attempting restore...")
-			-- You would need to recreate the GUI here or reload the script
-		end
-	end)
+	-- METHOD 3: Hide inside Roblox's own GUI and disguise EVERYTHING
+	local function hideInRobloxGui()
+		local robloxGui = CoreGui:FindFirstChild("RobloxGui")
+		if robloxGui then
+			-- Use REAL Roblox GUI names from their actual structure
+			local realRobloxNames = {
+				"TopBarApp",
+				"ChatSelector", 
+				"InGameMenu",
+				"PlayerListDisplay",
+				"BackpackGui",
+				"EmotesMenu",
+				"SettingsShield",
+				"PurchasePrompt"
+			}
 	
-	-- 5. Detect if someone is using Dex (basic detection)
-	local function detectDex()
-		-- Check for common Dex instances in CoreGui
-		local suspiciousNames = {"Dex", "Explorer", "RemoteSpy", "SimpleSpy"}
+			-- Pick a random real Roblox name
+			ScreenGui.Name = realRobloxNames[math.random(1, #realRobloxNames)]
+			ScreenGui.Parent = robloxGui
 	
-		for _, gui in pairs(game:GetService("CoreGui"):GetChildren()) do
-			for _, susName in pairs(suspiciousNames) do
-				if string.find(string.lower(gui.Name), string.lower(susName)) then
-					warn("Possible Dex detected: " .. gui.Name)
-					-- You could hide your GUI here temporarily
-					-- AgarWareGui.Enabled = false
+			-- Disguise ALL children with realistic Roblox-style names
+			local function disguiseDescendants(parent)
+				for _, child in pairs(parent:GetChildren()) do
+					if child:IsA("Frame") then
+						local frameNames = {"Container", "Holder", "Background", "Content", "Panel"}
+						child.Name = frameNames[math.random(1, #frameNames)]
+					elseif child:IsA("TextButton") then
+						local buttonNames = {"Button", "CloseButton", "MenuButton", "ActionButton"}
+						child.Name = buttonNames[math.random(1, #buttonNames)]
+					elseif child:IsA("TextLabel") then
+						local labelNames = {"Title", "Label", "DisplayText", "Header"}
+						child.Name = labelNames[math.random(1, #labelNames)]
+					elseif child:IsA("LocalScript") or child:IsA("Script") then
+						local scriptNames = {"Animate", "Sound", "ChatScript", "ControlScript", "CameraScript"}
+						child.Name = scriptNames[math.random(1, #scriptNames)]
+					elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
+						local imageNames = {"Icon", "Image", "Thumbnail", "Avatar"}
+						child.Name = imageNames[math.random(1, #imageNames)]
+					end
+	
+					-- Recursively disguise children
+					disguiseDescendants(child)
 				end
 			end
+	
+			disguiseDescendants(ScreenGui)
+			return true
 		end
+		return false
 	end
 	
-	-- RUN PROTECTIONS
-	moveToCore()
-	disguiseScripts()
+	-- METHOD 4: Parent to nil but keep it functional
+	local function parentToNil()
+		ScreenGui.Parent = nil
+		return true
+	end
 	
-	-- Check for Dex every 5 seconds
-	spawn(function()
-		while wait(5) do
-			detectDex()
+	-- TRY METHODS IN ORDER (best to worst)
+	if not tryGetHui() then
+		if not tryProtectGui() then
+			if not hideInRobloxGui() then
+				parentToNil()
+				warn("GUI hidden via nil parent")
+			else
+				print("GUI disguised as Roblox system")
+			end
+		else
+			print("GUI protected and hidden")
 		end
-	end)
-	
-	print("GUI Protection loaded")
+	else
+		print("GUI hidden in gethui()")
+	end
 end;
 task.spawn(C_8);
 
