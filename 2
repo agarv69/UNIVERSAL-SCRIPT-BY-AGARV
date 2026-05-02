@@ -7,18 +7,21 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 3 | Scripts: 1 | Modules: 0 | Tags: 0
+-- Instances: 7 | Scripts: 1 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AgarWareV3
 G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+G2L["1"]["IgnoreGuiInset"] = true;
+G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets;
 G2L["1"]["Name"] = [[AgarWareV3]];
 G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+G2L["1"]["ResetOnSpawn"] = false;
 
 
 -- StarterGui.AgarWareV3.MainFrame
 G2L["2"] = Instance.new("Frame", G2L["1"]);
-G2L["2"]["BorderSizePixel"] = 5;
+G2L["2"]["BorderSizePixel"] = 0;
 G2L["2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["2"]["Size"] = UDim2.new(0, 904, 0, 636);
 G2L["2"]["Position"] = UDim2.new(0.05787, 0, 0.09405, 0);
@@ -26,14 +29,48 @@ G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["2"]["Name"] = [[MainFrame]];
 
 
+-- StarterGui.AgarWareV3.MainFrame.UISizeConstraint
+G2L["3"] = Instance.new("UISizeConstraint", G2L["2"]);
+
+
+
+-- StarterGui.AgarWareV3.MainFrame.TextButton
+G2L["4"] = Instance.new("TextButton", G2L["2"]);
+G2L["4"]["BorderSizePixel"] = 0;
+G2L["4"]["TextSize"] = 14;
+G2L["4"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["4"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["4"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["4"]["Size"] = UDim2.new(0, 200, 0, 50);
+G2L["4"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["4"]["Position"] = UDim2.new(0.13164, 0, 0.21226, 0);
+
+
+-- StarterGui.AgarWareV3.MainFrame.TextButton
+G2L["5"] = Instance.new("TextButton", G2L["2"]);
+G2L["5"]["BorderSizePixel"] = 0;
+G2L["5"]["TextSize"] = 14;
+G2L["5"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["5"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["5"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["5"]["Size"] = UDim2.new(0, 200, 0, 50);
+G2L["5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["5"]["Position"] = UDim2.new(0.38938, 0, 0.32704, 0);
+
+
+-- StarterGui.AgarWareV3.MainFrame.UIStroke
+G2L["6"] = Instance.new("UIStroke", G2L["2"]);
+G2L["6"]["Thickness"] = 5;
+
+
 -- StarterGui.AgarWareV3.LocalScript
-G2L["3"] = Instance.new("LocalScript", G2L["1"]);
+G2L["7"] = Instance.new("LocalScript", G2L["1"]);
 
 
 
 -- StarterGui.AgarWareV3.LocalScript
-local function C_3()
-local script = G2L["3"];
+local function C_7()
+local script = G2L["7"];
 	local frame = script.Parent.MainFrame
 	
 	-- Configuration
@@ -41,7 +78,31 @@ local script = G2L["3"];
 	local BASE_HEIGHT = 350
 	local MAX_WIDTH = 550
 	local MAX_HEIGHT = 400
-	local PADDING = 10  -- Pixels from edge of screen
+	
+	local ASPECT_RATIO = frame.AbsoluteSize.X / frame.AbsoluteSize.Y
+	
+	-- Convert all children to Scale (runs ONCE at start)
+	local function convertToScale()
+		local baseWidth = frame.AbsoluteSize.X
+		local baseHeight = frame.AbsoluteSize.Y
+	
+		for _, child in pairs(frame:GetDescendants()) do
+			if child:IsA("GuiObject") and child ~= frame then
+				-- Store original TextSize before conversion
+				if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+					child:SetAttribute("OriginalTextSize", child.TextSize)
+				end
+	
+				local pixelWidth = child.AbsoluteSize.X
+				local pixelHeight = child.AbsoluteSize.Y
+				child.Size = UDim2.new(pixelWidth / baseWidth, 0, pixelHeight / baseHeight, 0)
+	
+				local pixelX = child.AbsolutePosition.X - frame.AbsolutePosition.X
+				local pixelY = child.AbsolutePosition.Y - frame.AbsolutePosition.Y
+				child.Position = UDim2.new(pixelX / baseWidth, 0, pixelY / baseHeight, 0)
+			end
+		end
+	end
 	
 	local function rescaler()
 		local viewportSize = workspace.CurrentCamera.ViewportSize
@@ -50,40 +111,40 @@ local script = G2L["3"];
 	
 		local isMobile = screenX < 600
 	
-		local newWidth, newHeight
+		local newWidth
 	
 		if isMobile then
-			newWidth = math.clamp(screenX * 0.7, 280, 360)
-			newHeight = math.clamp(screenY * 0.45, 200, 270)
+			newWidth = math.clamp(screenX * 0.55, 280, 320)
 		else
 			newWidth = math.clamp(screenX * 0.35, 450, MAX_WIDTH)
-			newHeight = math.clamp(screenY * 0.45, 320, MAX_HEIGHT)
 		end
 	
-		-- Calculate centered position
-		local posX = (screenX - newWidth) / 2
-		local posY = (screenY - newHeight) / 2
+		local newHeight = newWidth / ASPECT_RATIO
 	
-		-- Check if GUI goes off screen and adjust
-		if posX < PADDING then
-			posX = PADDING  -- Too far left
-		elseif posX + newWidth > screenX - PADDING then
-			posX = screenX - newWidth - PADDING  -- Too far right
-		end
-	
-		if posY < PADDING then
-			posY = PADDING  -- Too far up
-		elseif posY + newHeight > screenY - PADDING then
-			posY = screenY - newHeight - PADDING  -- Too far down
-		end
-	
+		frame.AnchorPoint = Vector2.new(0.5, 0.5)
 		frame.Size = UDim2.new(0, newWidth, 0, newHeight)
-		frame.Position = UDim2.new(0, posX, 0, posY)
+		frame.Position = UDim2.new(0.5, 0, 0.52, 0)
+	
+		-- Scale text proportionally
+		local scaleFactor = newWidth / frame:GetAttribute("OriginalWidth")
+		for _, descendant in pairs(frame:GetDescendants()) do
+			if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+				local originalSize = descendant:GetAttribute("OriginalTextSize")
+				if originalSize then
+					descendant.TextSize = math.floor(originalSize * scaleFactor)
+				end
+			end
+		end
 	end
 	
+	-- Store original MainFrame width
+	frame:SetAttribute("OriginalWidth", frame.AbsoluteSize.X)
+	
+	-- Run conversion FIRST, then rescale
+	convertToScale()
 	rescaler()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescaler)
 end;
-task.spawn(C_3);
+task.spawn(C_7);
 
 return G2L["1"], require;
