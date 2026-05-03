@@ -13,6 +13,7 @@ local G2L = {};
 -- StarterGui.AgarWareV3
 G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
 G2L["1"]["IgnoreGuiInset"] = true;
+G2L["1"]["DisplayOrder"] = 999999999;
 G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets;
 G2L["1"]["Name"] = [[AgarWareV3]];
 G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
@@ -22,7 +23,6 @@ G2L["1"]["ResetOnSpawn"] = false;
 -- StarterGui.AgarWareV3.MainFrame
 G2L["2"] = Instance.new("Frame", G2L["1"]);
 G2L["2"]["ZIndex"] = 100;
-G2L["2"]["BorderSizePixel"] = 0;
 G2L["2"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
 G2L["2"]["Size"] = UDim2.new(0, 799, 0, 457);
 G2L["2"]["Position"] = UDim2.new(0.02941, 0, 0.20747, 0);
@@ -63,10 +63,9 @@ G2L["6"] = Instance.new("Frame", G2L["5"]);
 G2L["6"]["BorderSizePixel"] = 0;
 G2L["6"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["6"]["BorderMode"] = Enum.BorderMode.Middle;
-G2L["6"]["Size"] = UDim2.new(0, 193, 0, 29);
+G2L["6"]["Size"] = UDim2.new(0, 193, 0, 0);
 G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["6"]["Name"] = [[AccentColor]];
-G2L["6"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.AgarWareV3.MainFrame.AccentColorFrame.UIListLayout
@@ -111,7 +110,7 @@ G2L["b"]["Name"] = [[MainScript]];
 
 -- StarterGui.AgarWareV3.KeybindFrame
 G2L["c"] = Instance.new("Frame", G2L["1"]);
-G2L["c"]["ZIndex"] = 100000;
+G2L["c"]["ZIndex"] = 999999999;
 G2L["c"]["BorderSizePixel"] = 0;
 G2L["c"]["BackgroundColor3"] = Color3.fromRGB(21, 21, 21);
 G2L["c"]["Size"] = UDim2.new(0, 200, 0, 50);
@@ -172,7 +171,6 @@ G2L["12"]["CellPadding"] = UDim2.new(0, 0, 0, 0);
 
 -- StarterGui.AgarWareV3.KeybindFrame.KeybindFrameMain.HideGui
 G2L["13"] = Instance.new("TextButton", G2L["11"]);
-G2L["13"]["BorderSizePixel"] = 0;
 G2L["13"]["TextSize"] = 14;
 G2L["13"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["13"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
@@ -212,7 +210,6 @@ G2L["15"]["BackgroundTransparency"] = 1;
 
 -- StarterGui.AgarWareV3.KeybindFrame.KeybindFrameMain.LockGui
 G2L["16"] = Instance.new("TextButton", G2L["11"]);
-G2L["16"]["BorderSizePixel"] = 0;
 G2L["16"]["TextSize"] = 14;
 G2L["16"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["16"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
@@ -253,7 +250,6 @@ G2L["18"]["BackgroundTransparency"] = 1;
 
 -- StarterGui.AgarWareV3.KeybindFrame.KeybindFrameMain.Drag
 G2L["19"] = Instance.new("TextButton", G2L["11"]);
-G2L["19"]["BorderSizePixel"] = 0;
 G2L["19"]["TextSize"] = 14;
 G2L["19"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["19"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
@@ -293,7 +289,6 @@ G2L["1b"]["BackgroundTransparency"] = 1;
 
 -- StarterGui.AgarWareV3.KeybindFrame.KeybindFrameMain.More
 G2L["1c"] = Instance.new("TextButton", G2L["11"]);
-G2L["1c"]["BorderSizePixel"] = 0;
 G2L["1c"]["TextSize"] = 14;
 G2L["1c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["1c"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
@@ -372,7 +367,6 @@ local script = G2L["b"];
 	-- ADD OR REMOVE FRAMES HERE
 	local framesToScale = {
 		script.Parent.MainFrame,
-		-- Add more frames here like: script.Parent.AnotherFrame,
 	}
 	
 	-- Configuration
@@ -381,7 +375,35 @@ local script = G2L["b"];
 	local MAX_WIDTH = 550
 	local MAX_HEIGHT = 400
 	
-	-- Convert all children to Scale (runs ONCE at start)
+	-- Store original transparencies
+	local originalData = {}
+	
+	local function storeAndHide(obj)
+		originalData[obj] = {}
+	
+		if obj:IsA("GuiObject") then
+			originalData[obj].BackgroundTransparency = obj.BackgroundTransparency
+			obj.BackgroundTransparency = 1
+		end
+	
+		if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+			originalData[obj].TextTransparency = obj.TextTransparency
+			obj.TextTransparency = 1
+		end
+	
+		if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+			originalData[obj].ImageTransparency = obj.ImageTransparency
+			obj.ImageTransparency = 1
+		end
+	end
+	
+	-- Hide MainFrame and all descendants
+	storeAndHide(script.Parent.MainFrame)
+	for _, descendant in pairs(script.Parent.MainFrame:GetDescendants()) do
+		storeAndHide(descendant)
+	end
+	
+	-- Convert all children to Scale
 	local function convertToScale(frame)
 		local baseWidth = frame.AbsoluteSize.X
 		local baseHeight = frame.AbsoluteSize.Y
@@ -402,7 +424,6 @@ local script = G2L["b"];
 			end
 		end
 	
-		-- Store original width for this frame
 		frame:SetAttribute("OriginalWidth", frame.AbsoluteSize.X)
 		frame:SetAttribute("AspectRatio", frame.AbsoluteSize.X / frame.AbsoluteSize.Y)
 	end
@@ -413,7 +434,6 @@ local script = G2L["b"];
 		local screenY = viewportSize.Y
 		local isMobile = screenX < 600
 	
-		-- Rescale each frame
 		for _, frame in pairs(framesToScale) do
 			local aspectRatio = frame:GetAttribute("AspectRatio")
 			local newWidth
@@ -430,7 +450,6 @@ local script = G2L["b"];
 			frame.Size = UDim2.new(0, newWidth, 0, newHeight)
 			frame.Position = UDim2.new(0.5, 0, 0.52, 0)
 	
-			-- Scale text proportionally
 			local scaleFactor = newWidth / frame:GetAttribute("OriginalWidth")
 			for _, descendant in pairs(frame:GetDescendants()) do
 				if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
@@ -443,14 +462,33 @@ local script = G2L["b"];
 		end
 	end
 	
-	-- Convert all frames to Scale
 	for _, frame in pairs(framesToScale) do
 		convertToScale(frame)
 	end
 	
-	-- Run rescaler
 	rescaler()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescaler)
+	
+	-- Fade in everything
+	local TweenService = game:GetService("TweenService")
+	
+	for obj, data in pairs(originalData) do
+		local tweenProps = {}
+	
+		if data.BackgroundTransparency then
+			tweenProps.BackgroundTransparency = data.BackgroundTransparency
+		end
+		if data.TextTransparency then
+			tweenProps.TextTransparency = data.TextTransparency
+		end
+		if data.ImageTransparency then
+			tweenProps.ImageTransparency = data.ImageTransparency
+		end
+	
+		if next(tweenProps) then
+			TweenService:Create(obj, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), tweenProps):Play()
+		end
+	end
 end;
 task.spawn(C_b);
 -- StarterGui.AgarWareV3.KeybindFrame.KeybindScript
@@ -458,15 +496,22 @@ local function C_10()
 local script = G2L["10"];
 	local keybindFrame = script.Parent
 	local keybindFrameMain = keybindFrame:WaitForChild("KeybindFrameMain")
+	local TweenService = game:GetService("TweenService")
+	local ScreenGui = keybindFrame:FindFirstAncestorOfClass("ScreenGui")
+	
+	-- Get accent color from GuiColorTheme
+	local accentColor = Color3.fromRGB(70, 130, 255)
+	local guiColorTheme = ScreenGui and ScreenGui:FindFirstChild("GuiColorTheme")
+	if guiColorTheme and guiColorTheme:IsA("Frame") then
+		accentColor = guiColorTheme.BackgroundColor3
+	end
 	
 	-- Configuration
 	local PADDING_FROM_EDGE = 20
 	local ASPECT_RATIO = keybindFrame.AbsoluteSize.X / keybindFrame.AbsoluteSize.Y
 	
-	-- Store original sizes
 	keybindFrame:SetAttribute("OriginalWidth", keybindFrame.AbsoluteSize.X)
 	
-	-- Store original text sizes for ALL text elements under KeybindFrame
 	for _, descendant in pairs(keybindFrame:GetDescendants()) do
 		if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
 			if not descendant:GetAttribute("OriginalTextSize") then
@@ -478,26 +523,21 @@ local script = G2L["10"];
 	-- Custom Grid Layout Function
 	local function arrangeButtonsInGrid()
 		local buttons = {}
-	
-		-- Collect all buttons and sort by LayoutOrder
 		for _, child in pairs(keybindFrameMain:GetChildren()) do
 			if child:IsA("TextButton") or child:IsA("Frame") then
 				table.insert(buttons, child)
 			end
 		end
-	
 		table.sort(buttons, function(a, b)
 			return a.LayoutOrder < b.LayoutOrder
 		end)
 	
-		-- Grid settings
 		local columns = 2
 		local padding = 5
 		local frameWidth = keybindFrameMain.AbsoluteSize.X
 		local cellWidth = (frameWidth - (padding * (columns + 1))) / columns
 		local cellHeight = 50
 	
-		-- Position buttons in grid
 		for i, button in ipairs(buttons) do
 			local row = math.floor((i - 1) / columns)
 			local col = (i - 1) % columns
@@ -512,8 +552,6 @@ local script = G2L["10"];
 	
 	local function scaleAllText()
 		local scaleFactor = keybindFrame.AbsoluteSize.X / keybindFrame:GetAttribute("OriginalWidth")
-	
-		-- Scale ALL text under KeybindFrame
 		for _, descendant in pairs(keybindFrame:GetDescendants()) do
 			if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
 				local originalSize = descendant:GetAttribute("OriginalTextSize")
@@ -521,6 +559,46 @@ local script = G2L["10"];
 					descendant.TextSize = math.floor(originalSize * scaleFactor)
 				end
 			end
+		end
+	end
+	
+	-- Setup hover animations for buttons
+	local function setupButtonHover(button)
+		local textLabel = button:FindFirstChild("Text")
+		if not textLabel then return end
+	
+		local originalTextColor = textLabel.TextColor3
+	
+		button.MouseEnter:Connect(function()
+			TweenService:Create(textLabel, TweenInfo.new(0.2), {
+				TextColor3 = accentColor
+			}):Play()
+		end)
+	
+		button.MouseLeave:Connect(function()
+			TweenService:Create(textLabel, TweenInfo.new(0.2), {
+				TextColor3 = originalTextColor
+			}):Play()
+		end)
+	
+		button.MouseButton1Click:Connect(function()
+			local shrink = TweenService:Create(button, TweenInfo.new(0.1), {
+				Size = UDim2.new(0.95, 0, 0.95, 0)
+			})
+			shrink:Play()
+	
+			shrink.Completed:Connect(function()
+				TweenService:Create(button, TweenInfo.new(0.1), {
+					Size = UDim2.new(1, 0, 1, 0)
+				}):Play()
+			end)
+		end)
+	end
+	
+	-- Apply hover to existing buttons
+	for _, child in pairs(keybindFrameMain:GetChildren()) do
+		if child:IsA("TextButton") and (child.Name == "Drag" or child.Name == "HideGui" or child.Name == "LockGui" or child.Name == "More") then
+			setupButtonHover(child)
 		end
 	end
 	
@@ -543,25 +621,35 @@ local script = G2L["10"];
 		keybindFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
 		keybindFrame.Position = UDim2.new(1, -PADDING_FROM_EDGE, 0, PADDING_FROM_EDGE)
 	
-		-- Rearrange grid and scale text
 		task.wait()
 		arrangeButtonsInGrid()
 		scaleAllText()
 	end
 	
-	-- Initial setup
+	local viewportSize = workspace.CurrentCamera.ViewportSize
+	local startWidth = math.clamp(viewportSize.X * 0.15, 180, 250)
+	local startHeight = startWidth / ASPECT_RATIO
+	
+	keybindFrame.AnchorPoint = Vector2.new(1, 0)
+	keybindFrame.Size = UDim2.new(0, startWidth, 0, startHeight)
+	keybindFrame.Position = UDim2.new(1, 300, 0, PADDING_FROM_EDGE)
+	
 	arrangeButtonsInGrid()
 	scaleAllText()
-	rescaler()
 	
-	-- Listen for changes
+	local slideIn = TweenService:Create(
+		keybindFrame,
+		TweenInfo.new(1.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
+		{Position = UDim2.new(1, -PADDING_FROM_EDGE, 0, PADDING_FROM_EDGE)}
+	)
+	slideIn:Play()
+	
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescaler)
 	keybindFrameMain:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 		arrangeButtonsInGrid()
 		scaleAllText()
 	end)
 	
-	-- Listen for new elements
 	keybindFrame.DescendantAdded:Connect(function(descendant)
 		if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
 			task.wait()
@@ -570,6 +658,11 @@ local script = G2L["10"];
 			end
 			scaleAllText()
 		end
+	
+		-- Setup hover for newly added buttons
+		if descendant:IsA("TextButton") and descendant.Parent == keybindFrameMain then
+			setupButtonHover(descendant)
+		end
 	end)
 end;
 task.spawn(C_10);
@@ -577,6 +670,7 @@ task.spawn(C_10);
 local function C_1f()
 local script = G2L["1f"];
 	local ScreenGui = script.Parent
+	local TweenService = game:GetService("TweenService")
 	
 	-- Get the accent color from GuiColorTheme
 	local guiColorTheme = ScreenGui:FindFirstChild("GuiColorTheme")
@@ -599,9 +693,38 @@ local script = G2L["1f"];
 				-- Set color from GuiColorTheme
 				accentColorFrame.BackgroundColor3 = accentColor
 	
-				-- Resize to 2px height, match parent width
-				accentColorFrame.Size = UDim2.new(1, 0, 0, 2)
+				-- Position at top-left
 				accentColorFrame.Position = UDim2.new(0, 0, 0, 0)
+	
+				-- Check if this is MainFrame's AccentColor
+				if frame.Parent and frame.Parent.Name == "MainFrame" then
+					-- Start at 0 width on the left
+					accentColorFrame.Size = UDim2.new(0, 0, 0, 2)
+	
+					-- Animate to full width (2 seconds)
+					local swipeAnimation = TweenService:Create(
+						accentColorFrame,
+						TweenInfo.new(2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
+						{Size = UDim2.new(1, 0, 0, 2)}
+					)
+					swipeAnimation:Play()
+	
+					-- Check if this is KeybindFrame's AccentColor
+				elseif frame.Parent and frame.Parent.Name == "KeybindFrame" then
+					-- Start at 0 width on the left
+					accentColorFrame.Size = UDim2.new(0, 0, 0, 2)
+	
+					-- Animate to full width (3 seconds - slower)
+					local swipeAnimation = TweenService:Create(
+						accentColorFrame,
+						TweenInfo.new(4, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
+						{Size = UDim2.new(1, 0, 0, 2)}
+					)
+					swipeAnimation:Play()
+				else
+					-- Other AccentColor frames just appear normally
+					accentColorFrame.Size = UDim2.new(1, 0, 0, 2)
+				end
 			end
 		end
 	end
