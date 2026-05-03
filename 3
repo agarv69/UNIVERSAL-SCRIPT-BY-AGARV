@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 36 | Scripts: 3 | Modules: 0 | Tags: 0
+-- Instances: 49 | Scripts: 5 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89
@@ -45,9 +45,10 @@ G2L["5"]["Name"] = [[Utility]];
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame
 G2L["6"] = Instance.new("Frame", G2L["1"]);
+G2L["6"]["ZIndex"] = 999;
 G2L["6"]["BorderSizePixel"] = 0;
-G2L["6"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["6"]["Size"] = UDim2.new(0, 1000, 0, 700);
+G2L["6"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["6"]["Size"] = UDim2.new(0, 1030, 0, 700);
 G2L["6"]["Position"] = UDim2.new(0.27228, 0, 0.121, 0);
 G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["6"]["Name"] = [[MainFrame]];
@@ -57,293 +58,403 @@ G2L["6"]["BackgroundTransparency"] = 1;
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup
 G2L["7"] = Instance.new("CanvasGroup", G2L["6"]);
 G2L["7"]["BorderSizePixel"] = 0;
-G2L["7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["7"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
 G2L["7"]["Size"] = UDim2.new(0, 1000, 0, 700);
 G2L["7"]["Position"] = UDim2.new(-0.00072, 0, -0.00042, 0);
 G2L["7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.TextLabel
-G2L["8"] = Instance.new("TextLabel", G2L["7"]);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.topbar
+G2L["8"] = Instance.new("Frame", G2L["7"]);
 G2L["8"]["BorderSizePixel"] = 0;
-G2L["8"]["TextSize"] = 14;
-G2L["8"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["8"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["8"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["8"]["Size"] = UDim2.new(0, 200, 0, 50);
+G2L["8"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
+G2L["8"]["Size"] = UDim2.new(0, 1000, 0, 50);
 G2L["8"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["8"]["Position"] = UDim2.new(0.074, 0, 0.21429, 0);
+G2L["8"]["Name"] = [[topbar]];
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.TextLabel
-G2L["9"] = Instance.new("TextLabel", G2L["7"]);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.topbar.barFrame
+G2L["9"] = Instance.new("Frame", G2L["8"]);
+G2L["9"]["ZIndex"] = 999999999;
 G2L["9"]["BorderSizePixel"] = 0;
-G2L["9"]["TextSize"] = 28;
-G2L["9"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["9"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["9"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["9"]["Size"] = UDim2.new(0, 200, 0, 50);
+G2L["9"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["9"]["Size"] = UDim2.new(0, 999, 0, 10);
+G2L["9"]["Position"] = UDim2.new(0, 0, 0, 0);
 G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["9"]["Position"] = UDim2.new(0.634, 0, 0.57, 0);
+G2L["9"]["Name"] = [[barFrame]];
+G2L["9"]["BackgroundTransparency"] = 1;
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.topbar.barFrame.bar
+G2L["a"] = Instance.new("Frame", G2L["9"]);
+G2L["a"]["ZIndex"] = 999999999;
+G2L["a"]["BorderSizePixel"] = 0;
+G2L["a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["a"]["Name"] = [[bar]];
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.topbar.barFrame.barCorner
+G2L["b"] = Instance.new("UICorner", G2L["9"]);
+G2L["b"]["Name"] = [[barCorner]];
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.topbar.title
+G2L["c"] = Instance.new("TextLabel", G2L["8"]);
+G2L["c"]["ZIndex"] = 2;
+G2L["c"]["BorderSizePixel"] = 0;
+G2L["c"]["TextSize"] = 22;
+G2L["c"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["c"]["BackgroundTransparency"] = 1;
+G2L["c"]["Size"] = UDim2.new(0, 641, 0, 50);
+G2L["c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["c"]["Text"] = [[AGAR WARE | v3.0.0 | fps: 120.0/s | ping: 0ms | players: 0]];
+G2L["c"]["Name"] = [[title]];
+G2L["c"]["Position"] = UDim2.new(0.019, 0, 0, 0);
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.topbar.whitefade
+G2L["d"] = Instance.new("CanvasGroup", G2L["8"]);
+G2L["d"]["BorderSizePixel"] = 0;
+G2L["d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["d"]["Size"] = UDim2.new(0, 999, 0, 50);
+G2L["d"]["Position"] = UDim2.new(-0, 0, 0, 0);
+G2L["d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["d"]["Name"] = [[whitefade]];
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.topbar.whitefade.UIGradient
+G2L["e"] = Instance.new("UIGradient", G2L["d"]);
+G2L["e"]["Rotation"] = 90;
+G2L["e"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000, 0.9),NumberSequenceKeypoint.new(1.000, 1)};
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.topbar.whitefade.UIStroke
+G2L["f"] = Instance.new("UIStroke", G2L["d"]);
+G2L["f"]["Color"] = Color3.fromRGB(59, 59, 59);
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.topbar.Minimize
+G2L["10"] = Instance.new("TextButton", G2L["8"]);
+G2L["10"]["BorderSizePixel"] = 0;
+G2L["10"]["TextSize"] = 32;
+G2L["10"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["10"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["10"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["10"]["ZIndex"] = 2;
+G2L["10"]["BackgroundTransparency"] = 1;
+G2L["10"]["Size"] = UDim2.new(0, 139, 0, 50);
+G2L["10"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["10"]["Text"] = [[-]];
+G2L["10"]["Name"] = [[Minimize]];
+G2L["10"]["Position"] = UDim2.new(0.85986, 0, 0, 0);
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.UIStroke
+G2L["11"] = Instance.new("UIStroke", G2L["7"]);
+G2L["11"]["Color"] = Color3.fromRGB(59, 59, 59);
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.EXIT
+G2L["12"] = Instance.new("TextButton", G2L["7"]);
+G2L["12"]["BorderSizePixel"] = 0;
+G2L["12"]["TextSize"] = 49;
+G2L["12"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["12"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["12"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["12"]["Size"] = UDim2.new(0, 200, 0, 50);
+G2L["12"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["12"]["Text"] = [[EXIT]];
+G2L["12"]["Name"] = [[EXIT]];
+G2L["12"]["Position"] = UDim2.new(0.209, 0, 0.40714, 0);
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.EXIT.LocalScript
+G2L["13"] = Instance.new("LocalScript", G2L["12"]);
+
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.UIAspectRatioConstraint
+G2L["14"] = Instance.new("UIAspectRatioConstraint", G2L["6"]);
+G2L["14"]["AspectRatio"] = 1.42857;
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame
-G2L["a"] = Instance.new("Frame", G2L["1"]);
-G2L["a"]["BorderSizePixel"] = 0;
-G2L["a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["a"]["Size"] = UDim2.new(0, 600, 0, 150);
-G2L["a"]["Position"] = UDim2.new(0.72772, 0, 0.31507, 0);
-G2L["a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["a"]["Name"] = [[KeybindFrame]];
+G2L["15"] = Instance.new("Frame", G2L["1"]);
+G2L["15"]["ZIndex"] = 999999999;
+G2L["15"]["BorderSizePixel"] = 0;
+G2L["15"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["15"]["Size"] = UDim2.new(0, 600, 0, 150);
+G2L["15"]["Position"] = UDim2.new(0.72772, 0, 0.31507, 0);
+G2L["15"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["15"]["Name"] = [[KeybindFrame]];
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup
-G2L["b"] = Instance.new("CanvasGroup", G2L["a"]);
-G2L["b"]["BorderSizePixel"] = 0;
-G2L["b"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["b"]["Size"] = UDim2.new(0, 600, 0, 150);
-G2L["b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["16"] = Instance.new("CanvasGroup", G2L["15"]);
+G2L["16"]["BorderSizePixel"] = 0;
+G2L["16"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
+G2L["16"]["Size"] = UDim2.new(0, 600, 0, 150);
+G2L["16"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background
-G2L["c"] = Instance.new("Frame", G2L["b"]);
-G2L["c"]["BorderSizePixel"] = 0;
-G2L["c"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
-G2L["c"]["Size"] = UDim2.new(0, 600, 0, 150);
-G2L["c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["c"]["Name"] = [[background]];
+G2L["17"] = Instance.new("Frame", G2L["16"]);
+G2L["17"]["BorderSizePixel"] = 0;
+G2L["17"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
+G2L["17"]["Size"] = UDim2.new(0, 600, 0, 150);
+G2L["17"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17"]["Name"] = [[background]];
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.barFrame
-G2L["d"] = Instance.new("Frame", G2L["c"]);
-G2L["d"]["ZIndex"] = 999999999;
-G2L["d"]["BorderSizePixel"] = 0;
-G2L["d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["d"]["Size"] = UDim2.new(0, 400, 0, 10);
-G2L["d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["d"]["Name"] = [[barFrame]];
-G2L["d"]["BackgroundTransparency"] = 1;
+G2L["18"] = Instance.new("Frame", G2L["17"]);
+G2L["18"]["ZIndex"] = 999999999;
+G2L["18"]["BorderSizePixel"] = 0;
+G2L["18"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18"]["Size"] = UDim2.new(0, 600, 0, 10);
+G2L["18"]["Position"] = UDim2.new(0, 0, 0, 0);
+G2L["18"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["18"]["Name"] = [[barFrame]];
+G2L["18"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.barFrame.bar
-G2L["e"] = Instance.new("Frame", G2L["d"]);
-G2L["e"]["ZIndex"] = 999999999;
-G2L["e"]["BorderSizePixel"] = 0;
-G2L["e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["e"]["Name"] = [[bar]];
+G2L["19"] = Instance.new("Frame", G2L["18"]);
+G2L["19"]["ZIndex"] = 999999999;
+G2L["19"]["BorderSizePixel"] = 0;
+G2L["19"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["19"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["19"]["Name"] = [[bar]];
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.barFrame.barCorner
-G2L["f"] = Instance.new("UICorner", G2L["d"]);
-G2L["f"]["Name"] = [[barCorner]];
+G2L["1a"] = Instance.new("UICorner", G2L["18"]);
+G2L["1a"]["Name"] = [[barCorner]];
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.HideGui
-G2L["10"] = Instance.new("TextButton", G2L["c"]);
-G2L["10"]["BorderSizePixel"] = 0;
-G2L["10"]["TextSize"] = 14;
-G2L["10"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["10"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
-G2L["10"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["10"]["ZIndex"] = 10;
-G2L["10"]["Size"] = UDim2.new(0, 300, 0, 75);
-G2L["10"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["10"]["Text"] = [[]];
-G2L["10"]["Name"] = [[HideGui]];
+G2L["1b"] = Instance.new("TextButton", G2L["17"]);
+G2L["1b"]["BorderSizePixel"] = 0;
+G2L["1b"]["TextSize"] = 14;
+G2L["1b"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1b"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
+G2L["1b"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1b"]["ZIndex"] = 10;
+G2L["1b"]["Size"] = UDim2.new(0, 300, 0, 75);
+G2L["1b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1b"]["Text"] = [[]];
+G2L["1b"]["Name"] = [[HideGui]];
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.HideGui.text
-G2L["11"] = Instance.new("TextLabel", G2L["10"]);
-G2L["11"]["TextWrapped"] = true;
-G2L["11"]["ZIndex"] = 2;
-G2L["11"]["BorderSizePixel"] = 0;
-G2L["11"]["TextSize"] = 36;
-G2L["11"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["11"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11"]["BackgroundTransparency"] = 1;
-G2L["11"]["Size"] = UDim2.new(0, 300, 0, 75);
-G2L["11"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["11"]["Text"] = [[Hide Gui]];
-G2L["11"]["Name"] = [[text]];
+G2L["1c"] = Instance.new("TextLabel", G2L["1b"]);
+G2L["1c"]["TextWrapped"] = true;
+G2L["1c"]["ZIndex"] = 2;
+G2L["1c"]["BorderSizePixel"] = 0;
+G2L["1c"]["TextSize"] = 36;
+G2L["1c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["1c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1c"]["BackgroundTransparency"] = 1;
+G2L["1c"]["Size"] = UDim2.new(0, 300, 0, 75);
+G2L["1c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1c"]["Text"] = [[Hide Gui]];
+G2L["1c"]["Name"] = [[text]];
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.HideGui.CanvasGroup
-G2L["12"] = Instance.new("CanvasGroup", G2L["10"]);
-G2L["12"]["BorderSizePixel"] = 0;
-G2L["12"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["12"]["Size"] = UDim2.new(0, 301, 0, 75);
-G2L["12"]["Position"] = UDim2.new(-0.00333, 0, 0, 0);
-G2L["12"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.HideGui.whitefade
+G2L["1d"] = Instance.new("CanvasGroup", G2L["1b"]);
+G2L["1d"]["BorderSizePixel"] = 0;
+G2L["1d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["1d"]["Size"] = UDim2.new(0, 301, 0, 75);
+G2L["1d"]["Position"] = UDim2.new(-0.00333, 0, 0, 0);
+G2L["1d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["1d"]["Name"] = [[whitefade]];
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.HideGui.CanvasGroup.UIGradient
-G2L["13"] = Instance.new("UIGradient", G2L["12"]);
-G2L["13"]["Rotation"] = 90;
-G2L["13"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000, 0.95),NumberSequenceKeypoint.new(1.000, 1)};
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.HideGui.whitefade.UIGradient
+G2L["1e"] = Instance.new("UIGradient", G2L["1d"]);
+G2L["1e"]["Rotation"] = 90;
+G2L["1e"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000, 0.95),NumberSequenceKeypoint.new(1.000, 1)};
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.HideGui.CanvasGroup.UIStroke
-G2L["14"] = Instance.new("UIStroke", G2L["12"]);
-G2L["14"]["Color"] = Color3.fromRGB(59, 59, 59);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.HideGui.whitefade.UIStroke
+G2L["1f"] = Instance.new("UIStroke", G2L["1d"]);
+G2L["1f"]["Color"] = Color3.fromRGB(59, 59, 59);
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.LockGui
-G2L["15"] = Instance.new("TextButton", G2L["c"]);
-G2L["15"]["BorderSizePixel"] = 0;
-G2L["15"]["TextSize"] = 14;
-G2L["15"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["15"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
-G2L["15"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["15"]["ZIndex"] = 10;
-G2L["15"]["Size"] = UDim2.new(0, 300, 0, 75);
-G2L["15"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["15"]["Text"] = [[]];
-G2L["15"]["Name"] = [[LockGui]];
-G2L["15"]["Position"] = UDim2.new(0.5, 0, 0, 0);
+G2L["20"] = Instance.new("TextButton", G2L["17"]);
+G2L["20"]["BorderSizePixel"] = 0;
+G2L["20"]["TextSize"] = 14;
+G2L["20"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["20"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
+G2L["20"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["20"]["ZIndex"] = 10;
+G2L["20"]["Size"] = UDim2.new(0, 300, 0, 75);
+G2L["20"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["20"]["Text"] = [[]];
+G2L["20"]["Name"] = [[LockGui]];
+G2L["20"]["Position"] = UDim2.new(0.5, 0, 0, 0);
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.LockGui.text
-G2L["16"] = Instance.new("TextLabel", G2L["15"]);
-G2L["16"]["TextWrapped"] = true;
-G2L["16"]["ZIndex"] = 2;
-G2L["16"]["BorderSizePixel"] = 0;
-G2L["16"]["TextSize"] = 36;
-G2L["16"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["16"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["16"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["16"]["BackgroundTransparency"] = 1;
-G2L["16"]["Size"] = UDim2.new(0, 300, 0, 75);
-G2L["16"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["16"]["Text"] = [[Lock Gui]];
-G2L["16"]["Name"] = [[text]];
+G2L["21"] = Instance.new("TextLabel", G2L["20"]);
+G2L["21"]["TextWrapped"] = true;
+G2L["21"]["ZIndex"] = 2;
+G2L["21"]["BorderSizePixel"] = 0;
+G2L["21"]["TextSize"] = 36;
+G2L["21"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["21"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["21"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["21"]["BackgroundTransparency"] = 1;
+G2L["21"]["Size"] = UDim2.new(0, 300, 0, 75);
+G2L["21"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["21"]["Text"] = [[Lock Gui]];
+G2L["21"]["Name"] = [[text]];
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.LockGui.CanvasGroup
-G2L["17"] = Instance.new("CanvasGroup", G2L["15"]);
-G2L["17"]["BorderSizePixel"] = 0;
-G2L["17"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["17"]["Size"] = UDim2.new(0, 300, 0, 75);
-G2L["17"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.LockGui.whitefade
+G2L["22"] = Instance.new("CanvasGroup", G2L["20"]);
+G2L["22"]["BorderSizePixel"] = 0;
+G2L["22"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["22"]["Size"] = UDim2.new(0, 300, 0, 75);
+G2L["22"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["22"]["Name"] = [[whitefade]];
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.LockGui.CanvasGroup.UIGradient
-G2L["18"] = Instance.new("UIGradient", G2L["17"]);
-G2L["18"]["Rotation"] = 90;
-G2L["18"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000, 0.95),NumberSequenceKeypoint.new(1.000, 1)};
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.LockGui.whitefade.UIGradient
+G2L["23"] = Instance.new("UIGradient", G2L["22"]);
+G2L["23"]["Rotation"] = 90;
+G2L["23"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000, 0.95),NumberSequenceKeypoint.new(1.000, 1)};
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.LockGui.CanvasGroup.UIStroke
-G2L["19"] = Instance.new("UIStroke", G2L["17"]);
-G2L["19"]["Color"] = Color3.fromRGB(59, 59, 59);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.LockGui.whitefade.UIStroke
+G2L["24"] = Instance.new("UIStroke", G2L["22"]);
+G2L["24"]["Color"] = Color3.fromRGB(59, 59, 59);
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.More
-G2L["1a"] = Instance.new("TextButton", G2L["c"]);
-G2L["1a"]["BorderSizePixel"] = 0;
-G2L["1a"]["TextSize"] = 14;
-G2L["1a"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1a"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
-G2L["1a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["1a"]["ZIndex"] = 10;
-G2L["1a"]["Size"] = UDim2.new(0, 300, 0, 75);
-G2L["1a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1a"]["Text"] = [[]];
-G2L["1a"]["Name"] = [[More]];
-G2L["1a"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+G2L["25"] = Instance.new("TextButton", G2L["17"]);
+G2L["25"]["BorderSizePixel"] = 0;
+G2L["25"]["TextSize"] = 14;
+G2L["25"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["25"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
+G2L["25"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["25"]["ZIndex"] = 10;
+G2L["25"]["Size"] = UDim2.new(0, 300, 0, 75);
+G2L["25"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["25"]["Text"] = [[]];
+G2L["25"]["Name"] = [[More]];
+G2L["25"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.More.text
-G2L["1b"] = Instance.new("TextLabel", G2L["1a"]);
-G2L["1b"]["TextWrapped"] = true;
-G2L["1b"]["ZIndex"] = 2;
-G2L["1b"]["BorderSizePixel"] = 0;
-G2L["1b"]["TextSize"] = 36;
-G2L["1b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["1b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1b"]["BackgroundTransparency"] = 1;
-G2L["1b"]["Size"] = UDim2.new(0, 300, 0, 75);
-G2L["1b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1b"]["Text"] = [[More]];
-G2L["1b"]["Name"] = [[text]];
+G2L["26"] = Instance.new("TextLabel", G2L["25"]);
+G2L["26"]["TextWrapped"] = true;
+G2L["26"]["ZIndex"] = 2;
+G2L["26"]["BorderSizePixel"] = 0;
+G2L["26"]["TextSize"] = 36;
+G2L["26"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["26"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["26"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["26"]["BackgroundTransparency"] = 1;
+G2L["26"]["Size"] = UDim2.new(0, 300, 0, 75);
+G2L["26"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["26"]["Text"] = [[More]];
+G2L["26"]["Name"] = [[text]];
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.More.CanvasGroup
-G2L["1c"] = Instance.new("CanvasGroup", G2L["1a"]);
-G2L["1c"]["BorderSizePixel"] = 0;
-G2L["1c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1c"]["Size"] = UDim2.new(0, 300, 0, 75);
-G2L["1c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.More.whitefade
+G2L["27"] = Instance.new("CanvasGroup", G2L["25"]);
+G2L["27"]["BorderSizePixel"] = 0;
+G2L["27"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["27"]["Size"] = UDim2.new(0, 300, 0, 75);
+G2L["27"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["27"]["Name"] = [[whitefade]];
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.More.CanvasGroup.UIGradient
-G2L["1d"] = Instance.new("UIGradient", G2L["1c"]);
-G2L["1d"]["Rotation"] = 90;
-G2L["1d"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000, 0.95),NumberSequenceKeypoint.new(1.000, 1)};
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.More.whitefade.UIGradient
+G2L["28"] = Instance.new("UIGradient", G2L["27"]);
+G2L["28"]["Rotation"] = 90;
+G2L["28"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000, 0.95),NumberSequenceKeypoint.new(1.000, 1)};
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.More.CanvasGroup.UIStroke
-G2L["1e"] = Instance.new("UIStroke", G2L["1c"]);
-G2L["1e"]["Color"] = Color3.fromRGB(59, 59, 59);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.More.whitefade.UIStroke
+G2L["29"] = Instance.new("UIStroke", G2L["27"]);
+G2L["29"]["Color"] = Color3.fromRGB(59, 59, 59);
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.Drag
-G2L["1f"] = Instance.new("TextButton", G2L["c"]);
-G2L["1f"]["BorderSizePixel"] = 0;
-G2L["1f"]["TextSize"] = 14;
-G2L["1f"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1f"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
-G2L["1f"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["1f"]["ZIndex"] = 10;
-G2L["1f"]["Size"] = UDim2.new(0, 301, 0, 75);
-G2L["1f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1f"]["Text"] = [[]];
-G2L["1f"]["Name"] = [[Drag]];
-G2L["1f"]["Position"] = UDim2.new(0, -1, 0.5, 0);
+G2L["2a"] = Instance.new("TextButton", G2L["17"]);
+G2L["2a"]["BorderSizePixel"] = 0;
+G2L["2a"]["TextSize"] = 14;
+G2L["2a"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2a"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
+G2L["2a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["2a"]["ZIndex"] = 10;
+G2L["2a"]["Size"] = UDim2.new(0, 301, 0, 75);
+G2L["2a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2a"]["Text"] = [[]];
+G2L["2a"]["Name"] = [[Drag]];
+G2L["2a"]["Position"] = UDim2.new(0, -2, 0.5, 0);
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.Drag.text
-G2L["20"] = Instance.new("TextLabel", G2L["1f"]);
-G2L["20"]["TextWrapped"] = true;
-G2L["20"]["ZIndex"] = 2;
-G2L["20"]["BorderSizePixel"] = 0;
-G2L["20"]["TextSize"] = 36;
-G2L["20"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["20"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["20"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["20"]["BackgroundTransparency"] = 1;
-G2L["20"]["Size"] = UDim2.new(0, 299, 0, 75);
-G2L["20"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["20"]["Text"] = [[Drag]];
-G2L["20"]["Name"] = [[text]];
-G2L["20"]["Position"] = UDim2.new(0.00155, 0, 0, 0);
+G2L["2b"] = Instance.new("TextLabel", G2L["2a"]);
+G2L["2b"]["TextWrapped"] = true;
+G2L["2b"]["ZIndex"] = 2;
+G2L["2b"]["BorderSizePixel"] = 0;
+G2L["2b"]["TextSize"] = 36;
+G2L["2b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2b"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["2b"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2b"]["BackgroundTransparency"] = 1;
+G2L["2b"]["Size"] = UDim2.new(0, 299, 0, 75);
+G2L["2b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2b"]["Text"] = [[Drag]];
+G2L["2b"]["Name"] = [[text]];
+G2L["2b"]["Position"] = UDim2.new(0.00155, 0, 0, 0);
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.Drag.CanvasGroup
-G2L["21"] = Instance.new("CanvasGroup", G2L["1f"]);
-G2L["21"]["BorderSizePixel"] = 0;
-G2L["21"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["21"]["Size"] = UDim2.new(0, 300, 0, 75);
-G2L["21"]["Position"] = UDim2.new(0.00154, 0, 0, 0);
-G2L["21"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.Drag.whitefade
+G2L["2c"] = Instance.new("CanvasGroup", G2L["2a"]);
+G2L["2c"]["BorderSizePixel"] = 0;
+G2L["2c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["2c"]["Size"] = UDim2.new(0, 300, 0, 75);
+G2L["2c"]["Position"] = UDim2.new(0.00154, 0, 0, 0);
+G2L["2c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2c"]["Name"] = [[whitefade]];
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.Drag.CanvasGroup.UIGradient
-G2L["22"] = Instance.new("UIGradient", G2L["21"]);
-G2L["22"]["Rotation"] = 90;
-G2L["22"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000, 0.95),NumberSequenceKeypoint.new(1.000, 1)};
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.Drag.whitefade.UIGradient
+G2L["2d"] = Instance.new("UIGradient", G2L["2c"]);
+G2L["2d"]["Rotation"] = 90;
+G2L["2d"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000, 0.95),NumberSequenceKeypoint.new(1.000, 1)};
 
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.Drag.CanvasGroup.UIStroke
-G2L["23"] = Instance.new("UIStroke", G2L["21"]);
-G2L["23"]["Color"] = Color3.fromRGB(59, 59, 59);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.background.Drag.whitefade.UIStroke
+G2L["2e"] = Instance.new("UIStroke", G2L["2c"]);
+G2L["2e"]["Color"] = Color3.fromRGB(59, 59, 59);
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.CanvasGroup.UIStroke
-G2L["24"] = Instance.new("UIStroke", G2L["b"]);
-G2L["24"]["Color"] = Color3.fromRGB(59, 59, 59);
+G2L["2f"] = Instance.new("UIStroke", G2L["16"]);
+G2L["2f"]["Color"] = Color3.fromRGB(59, 59, 59);
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.UIAspectRatioConstraint
+G2L["30"] = Instance.new("UIAspectRatioConstraint", G2L["15"]);
+G2L["30"]["AspectRatio"] = 4;
+
+
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.KeybindScript
+G2L["31"] = Instance.new("LocalScript", G2L["15"]);
+G2L["31"]["Name"] = [[KeybindScript]];
 
 
 -- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainScript
@@ -353,6 +464,15 @@ local script = G2L["2"];
 	-- Place this in MainScript (under your ScreenGui)
 	
 	local screenGui = script.Parent
+	
+	-- ============================================================
+	-- INDIVIDUAL FRAME SCALE ADJUSTMENTS
+	-- Adjust specific frames to be larger or smaller
+	-- 1.0 = default size, 0.9 = 90% size, 1.2 = 120% size
+	-- ============================================================
+	local frameScaleAdjustments = {
+		["KeybindFrame"] = 0.8,
+	}
 	
 	-- Automatically get all top-level frames
 	local function getAllFrames()
@@ -430,6 +550,11 @@ local script = G2L["2"];
 				local newWidth = originalWidth * globalScaleFactor
 				local newHeight = newWidth / aspectRatio
 	
+				-- Apply individual frame scale adjustment if specified
+				local frameScaleMultiplier = frameScaleAdjustments[frame.Name] or 1.0
+				newWidth = newWidth * frameScaleMultiplier
+				newHeight = newHeight * frameScaleMultiplier
+	
 				-- Only center MainFrame
 				if frame.Name == "MainFrame" then
 					frame.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -456,13 +581,6 @@ local script = G2L["2"];
 	local framesToScale = getAllFrames()
 	for _, frame in pairs(framesToScale) do
 		convertToScale(frame)
-	end
-	
-	-- Make MainFrame draggable
-	local mainFrame = screenGui:FindFirstChild("MainFrame")
-	if mainFrame then
-		mainFrame.Draggable = true
-		mainFrame.Active = true
 	end
 	
 	-- Apply initial scaling
@@ -561,6 +679,23 @@ local script = G2L["5"];
 	local guiColor = script.Parent:WaitForChild("GuiColor")
 	local targetColor = guiColor.BackgroundColor3
 	
+	-- Function to get bar height based on screen size
+	local function getBarHeight()
+		local viewportSize = workspace.CurrentCamera.ViewportSize
+		local screenWidth = viewportSize.X
+	
+		if screenWidth >= 1200 then
+			-- PC/Laptop - large screen
+			return 2
+		elseif screenWidth >= 900 then
+			-- Tablet - medium screen
+			return 1
+		else
+			-- Phone - small screen (under 900px)
+			return 1
+		end
+	end
+	
 	-- Function to find all descendants named "barFrame"
 	local function findAllBarFrames(parent)
 		local barFrames = {}
@@ -579,11 +714,23 @@ local script = G2L["5"];
 		local bar = barFrame:FindFirstChild("bar")
 	
 		if bar and bar:IsA("GuiObject") then
-			-- Resize bar: height = 3px, width = same as barFrame
-			bar.Size = UDim2.new(1, 0, 0, 2)
+			local barHeight = getBarHeight()
+	
+			-- Resize bar: height based on screen size, width = same as barFrame
+			bar.Size = UDim2.new(1, 0, 0, barHeight)
 	
 			-- Change background color to match GuiColor
 			bar.BackgroundColor3 = targetColor
+		end
+	end
+	
+	-- Function to update all bars
+	local function updateAllBars()
+		local startGui = script.Parent.Parent
+		local allBarFrames = findAllBarFrames(startGui)
+	
+		for _, barFrame in pairs(allBarFrames) do
+			modifyBar(barFrame)
 		end
 	end
 	
@@ -595,14 +742,360 @@ local script = G2L["5"];
 		modifyBar(barFrame)
 	end
 	
-	-- Optional: Listen for new barFrames being added
+	-- Listen for new barFrames being added
 	startGui.DescendantAdded:Connect(function(descendant)
 		if descendant:IsA("Frame") and descendant.Name == "barFrame" then
 			wait(0.1)
 			modifyBar(descendant)
 		end
 	end)
+	
+	-- Update bar heights when screen is resized
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+		updateAllBars()
+	end)
 end;
 task.spawn(C_5);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.EXIT.LocalScript
+local function C_13()
+local script = G2L["13"];
+	-- Destroy GUI on Click
+	-- Place this script in a TextButton or ImageButton
+	
+	local button = script.Parent
+	
+	button.MouseButton1Click:Connect(function()
+		-- Find the ScreenGui (goes up the hierarchy until it finds it)
+		local gui = button:FindFirstAncestorOfClass("ScreenGui")
+	
+		if gui then
+			gui:Destroy()
+		end
+	end)
+end;
+task.spawn(C_13);
+-- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.KeybindScript
+local function C_31()
+local script = G2L["31"];
+	-- KeybindFrame Startup Animation
+	-- Place this as a separate LocalScript in KeybindFrame
+	
+	local KeybindFrame = script.Parent
+	local CanvasGroup = KeybindFrame:WaitForChild("CanvasGroup")
+	local TweenService = game:GetService("TweenService")
+	
+	-- Get GuiColor
+	local ScreenGui = KeybindFrame:FindFirstAncestorOfClass("ScreenGui")
+	local guiColor = ScreenGui and ScreenGui:FindFirstChild("GuiColor")
+	local accentColor = guiColor and guiColor.BackgroundColor3 or Color3.fromRGB(70, 130, 255)
+	
+	-- Make MainFrame draggable IMMEDIATELY
+	local MainFrame = ScreenGui and ScreenGui:FindFirstChild("MainFrame")
+	if MainFrame then
+		MainFrame.Draggable = true
+		MainFrame.Active = true
+	end
+	
+	-- Make it invisible immediately
+	CanvasGroup.GroupTransparency = 1
+	
+	-- Set anchor point to top-right
+	KeybindFrame.AnchorPoint = Vector2.new(1, 0)
+	
+	-- Start position: completely off-screen to the right
+	KeybindFrame.Position = UDim2.new(1, KeybindFrame.AbsoluteSize.X + 100, 0, 10)
+	
+	-- Wait for everything to load
+	task.wait(0.5)
+	
+	-- Slide in from right to final position AND fade in at the same time
+	local slideIn = TweenService:Create(
+		KeybindFrame,
+		TweenInfo.new(1, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
+		{Position = UDim2.new(1, -10, 0, 10)}
+	)
+	
+	local fadeIn = TweenService:Create(
+		CanvasGroup,
+		TweenInfo.new(1, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
+		{GroupTransparency = 0}
+	)
+	
+	slideIn:Play()
+	fadeIn:Play()
+	
+	-- Setup hover effect for all TextButtons under background frame
+	local background = CanvasGroup:FindFirstChild("background")
+	if background then
+		-- Animate barFrame sliding in from right
+		local barFrame = background:FindFirstChild("barFrame")
+		if barFrame then
+			-- Save original position
+			local originalPos = barFrame.Position
+	
+			-- Start off-screen to the right (hide it)
+			barFrame.Position = UDim2.new(2, 0, originalPos.Y.Scale, originalPos.Y.Offset)
+	
+			-- Wait 1 second before sliding
+			task.spawn(function()
+				task.wait(0.7)
+	
+				-- Slide in from right to left
+				local barSlideIn = TweenService:Create(
+					barFrame,
+					TweenInfo.new(0.8, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
+					{Position = originalPos}
+				)
+				barSlideIn:Play()
+			end)
+		end
+		-- Drag button functionality
+		local dragButton = background:FindFirstChild("Drag")
+		if dragButton then
+			local UserInputService = game:GetService("UserInputService")
+	
+			local dragging = false
+			local dragStart = nil
+			local startPos = nil
+	
+			dragButton.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					dragging = true
+					dragStart = input.Position
+					startPos = KeybindFrame.Position
+				end
+			end)
+	
+			dragButton.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					dragging = false
+				end
+			end)
+	
+			UserInputService.InputChanged:Connect(function(input)
+				if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+					local delta = input.Position - dragStart
+					KeybindFrame.Position = UDim2.new(
+						startPos.X.Scale,
+						startPos.X.Offset + delta.X,
+						startPos.Y.Scale,
+						startPos.Y.Offset + delta.Y
+					)
+				end
+			end)
+		end
+	
+		-- HideGui toggle functionality
+		local hideGuiButton = background:FindFirstChild("HideGui")
+		if hideGuiButton then
+			local isHidden = false
+	
+			-- Find the actual TextLabel once at startup
+			local textLabel = nil
+			local textContainer = hideGuiButton:FindFirstChild("text")
+			if textContainer then
+				-- Check if it's directly a TextLabel
+				if textContainer:IsA("TextLabel") then
+					textLabel = textContainer
+					-- Or if it's a CanvasGroup containing a TextLabel
+				elseif textContainer:IsA("CanvasGroup") then
+					textLabel = textContainer:FindFirstChildOfClass("TextLabel")
+				end
+			end
+	
+			-- Store the original colors
+			local hiddenColor = Color3.fromRGB(191, 191, 191)
+			local normalColor = Color3.fromRGB(255, 255, 255)
+	
+			-- Detect if keyboard is available
+			local UserInputService = game:GetService("UserInputService")
+			local hasKeyboard = UserInputService.KeyboardEnabled
+	
+			-- Update button text to include keybind if keyboard is available
+			if textLabel and hasKeyboard then
+				textLabel.Text = "Hide Gui (])"
+			end
+	
+			-- Function to toggle hide/show
+			local function toggleHide()
+				isHidden = not isHidden
+	
+				if MainFrame then
+					if isHidden then
+						-- Hide MainFrame
+						MainFrame.Visible = false
+	
+						-- Change button text and color
+						if textLabel then
+							if hasKeyboard then
+								textLabel.Text = "Show Gui (])"
+							else
+								textLabel.Text = "Show Gui"
+							end
+							textLabel.TextColor3 = hiddenColor
+						end
+					else
+						-- Show MainFrame
+						MainFrame.Visible = true
+	
+						-- Change button text back
+						if textLabel then
+							if hasKeyboard then
+								textLabel.Text = "Hide Gui (])"
+							else
+								textLabel.Text = "Hide Gui"
+							end
+							textLabel.TextColor3 = normalColor
+						end
+					end
+				end
+			end
+	
+			-- Button click
+			hideGuiButton.MouseButton1Click:Connect(toggleHide)
+	
+			-- Keyboard shortcut (right bracket) if keyboard is available
+			if hasKeyboard then
+				UserInputService.InputBegan:Connect(function(input, gameProcessed)
+					if gameProcessed then return end
+					-- Check for right bracket key (] or })
+					if input.KeyCode == Enum.KeyCode.RightBracket then
+						toggleHide()
+					end
+				end)
+			end
+	
+			-- Override hover effect for HideGui to use current state color
+			if textLabel then
+				hideGuiButton.MouseEnter:Connect(function()
+					TweenService:Create(textLabel, TweenInfo.new(0.2), {
+						TextColor3 = accentColor
+					}):Play()
+				end)
+	
+				hideGuiButton.MouseLeave:Connect(function()
+					local targetColor = isHidden and hiddenColor or normalColor
+					TweenService:Create(textLabel, TweenInfo.new(0.2), {
+						TextColor3 = targetColor
+					}):Play()
+				end)
+			end
+		end
+	
+		-- LockGui toggle functionality
+		local lockGuiButton = background:FindFirstChild("LockGui")
+		if lockGuiButton then
+			local isLocked = false
+	
+			-- Find the actual TextLabel once at startup
+			local textLabel = nil
+			local textContainer = lockGuiButton:FindFirstChild("text")
+			if textContainer then
+				if textContainer:IsA("TextLabel") then
+					textLabel = textContainer
+				elseif textContainer:IsA("CanvasGroup") then
+					textLabel = textContainer:FindFirstChildOfClass("TextLabel")
+				end
+			end
+	
+			-- Store the original colors
+			local lockedColor = Color3.fromRGB(191, 191, 191)
+			local normalColor = Color3.fromRGB(255, 255, 255)
+	
+			lockGuiButton.MouseButton1Click:Connect(function()
+				isLocked = not isLocked
+	
+				if MainFrame then
+					if isLocked then
+						-- Lock MainFrame (disable dragging)
+						MainFrame.Draggable = false
+	
+						-- Change button text and color
+						if textLabel then
+							textLabel.Text = "Unlock Gui"
+							textLabel.TextColor3 = lockedColor
+						end
+					else
+						-- Unlock MainFrame (enable dragging)
+						MainFrame.Draggable = true
+	
+						-- Change button text back
+						if textLabel then
+							textLabel.Text = "Lock Gui"
+							textLabel.TextColor3 = normalColor
+						end
+					end
+				end
+			end)
+	
+			-- Override hover effect for LockGui to use current state color
+			if textLabel then
+				lockGuiButton.MouseEnter:Connect(function()
+					TweenService:Create(textLabel, TweenInfo.new(0.2), {
+						TextColor3 = accentColor
+					}):Play()
+				end)
+	
+				lockGuiButton.MouseLeave:Connect(function()
+					local targetColor = isLocked and lockedColor or normalColor
+					TweenService:Create(textLabel, TweenInfo.new(0.2), {
+						TextColor3 = targetColor
+					}):Play()
+				end)
+			end
+		end
+	
+		local function setupHover(button)
+			if not button:IsA("TextButton") then return end
+	
+			local textLabel = button:FindFirstChild("text")
+			if textLabel and textLabel:IsA("CanvasGroup") then
+				-- Text is inside a CanvasGroup, find the actual TextLabel
+				for _, child in pairs(textLabel:GetChildren()) do
+					if child:IsA("TextLabel") then
+						textLabel = child
+						break
+					end
+				end
+			end
+	
+			if not textLabel or not textLabel:IsA("TextLabel") then return end
+	
+			local originalColor = textLabel.TextColor3
+	
+			button.MouseEnter:Connect(function()
+				TweenService:Create(textLabel, TweenInfo.new(0.2), {
+					TextColor3 = accentColor
+				}):Play()
+			end)
+	
+			button.MouseLeave:Connect(function()
+				TweenService:Create(textLabel, TweenInfo.new(0.2), {
+					TextColor3 = originalColor
+				}):Play()
+			end)
+		end
+	
+		-- Search for TextButtons recursively under background
+		local function findButtons(parent)
+			for _, child in pairs(parent:GetChildren()) do
+				if child:IsA("TextButton") then
+					setupHover(child)
+				end
+				findButtons(child)
+			end
+		end
+	
+		findButtons(background)
+	
+		-- Setup for new buttons added later
+		background.DescendantAdded:Connect(function(descendant)
+			if descendant:IsA("TextButton") then
+				setupHover(descendant)
+			end
+		end)
+	end
+end;
+task.spawn(C_31);
 
 return G2L["1"], require;
