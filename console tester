@@ -1,410 +1,205 @@
---[=[
- d888b  db    db d888888b      .d888b.      db      db    db  .d8b.  
-88' Y8b 88    88   `88'        VP  `8D      88      88    88 d8' `8b 
-88      88    88    88            odD'      88      88    88 88ooo88 
-88  ooo 88    88    88          .88'        88      88    88 88~~~88 
-88. ~8~ 88b  d88   .88.        j88.         88booo. 88b  d88 88   88    @uniquadev
- Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
-]=]
+-- Gui to Lua
+-- Version: 3.2
 
--- Instances: 15 | Scripts: 3 | Modules: 0 | Tags: 0
-local G2L = {};
+-- Instances:
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89
-G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
-G2L["1"]["IgnoreGuiInset"] = true;
-G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets;
-G2L["1"]["Name"] = [[FAFDS8dF*&*&dAGUYASD89]];
-G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+local FAFDS8dFdAGUYASD89 = Instance.new("ScreenGui")
+local GuiFrame = Instance.new("Frame")
+local topbar = Instance.new("Folder")
+local barFrame = Instance.new("Frame")
+local bar = Instance.new("Frame")
+local barCorner = Instance.new("UICorner")
+local Minimize = Instance.new("TextButton")
+local title = Instance.new("TextLabel")
+local GuiColor = Instance.new("Frame")
+local _300 = Instance.new("TextLabel")
+local KeybindFrame = Instance.new("Frame")
+local hideGui = Instance.new("TextButton")
+local lockGui = Instance.new("TextButton")
+local dragGui = Instance.new("TextButton")
+local more = Instance.new("TextButton")
+local barFrame_2 = Instance.new("Frame")
+local bar_2 = Instance.new("Frame")
+local barCorner_2 = Instance.new("UICorner")
+local Folder = Instance.new("Folder")
+local Keybind = Instance.new("Folder")
+local HideGui = Instance.new("TextLabel")
 
+--Properties:
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame
-G2L["2"] = Instance.new("CanvasGroup", G2L["1"]);
-G2L["2"]["BorderSizePixel"] = 0;
-G2L["2"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["2"]["Size"] = UDim2.new(0, 400, 0, 150);
-G2L["2"]["Position"] = UDim2.new(0.74116, 0, 0.121, 0);
-G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2"]["Name"] = [[KeybindFrame]];
+FAFDS8dFdAGUYASD89.Name = "FAFDS8dF*&*&dAGUYASD89"
+FAFDS8dFdAGUYASD89.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+FAFDS8dFdAGUYASD89.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+FAFDS8dFdAGUYASD89.DisplayOrder = 999999999
 
+GuiFrame.Name = "GuiFrame"
+GuiFrame.Parent = FAFDS8dFdAGUYASD89
+GuiFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+GuiFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+GuiFrame.BorderSizePixel = 0
+GuiFrame.Position = UDim2.new(0.164800718, 0, 0.083818391, 0)
+GuiFrame.Size = UDim2.new(0, 1000, 0, 60)
+GuiFrame.ZIndex = 999
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.UICorner
-G2L["3"] = Instance.new("UICorner", G2L["2"]);
-G2L["3"]["CornerRadius"] = UDim.new(0, 5);
+topbar.Name = "topbar"
+topbar.Parent = GuiFrame
 
+barFrame.Name = "barFrame"
+barFrame.Parent = topbar
+barFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+barFrame.BackgroundTransparency = 1.000
+barFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+barFrame.BorderSizePixel = 0
+barFrame.Size = UDim2.new(0, 1000, 0, 10)
+barFrame.ZIndex = 999999999
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.background
-G2L["4"] = Instance.new("Frame", G2L["2"]);
-G2L["4"]["BorderSizePixel"] = 0;
-G2L["4"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
-G2L["4"]["Size"] = UDim2.new(0, 400, 0, 150);
-G2L["4"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["4"]["Name"] = [[background]];
+bar.Name = "bar"
+bar.Parent = barFrame
+bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+bar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+bar.BorderSizePixel = 0
+bar.ZIndex = 999999999
 
+barCorner.Name = "barCorner"
+barCorner.Parent = barFrame
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.background.barFrame
-G2L["5"] = Instance.new("Frame", G2L["4"]);
-G2L["5"]["BorderSizePixel"] = 0;
-G2L["5"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["5"]["Size"] = UDim2.new(0, 300, 0, 10);
-G2L["5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["5"]["Name"] = [[barFrame]];
-G2L["5"]["BackgroundTransparency"] = 1;
+Minimize.Name = "Minimize"
+Minimize.Parent = topbar
+Minimize.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Minimize.BackgroundTransparency = 1.000
+Minimize.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Minimize.BorderSizePixel = 0
+Minimize.Position = UDim2.new(0.860862911, 0, 0, 0)
+Minimize.Size = UDim2.new(0, 139, 0, 60)
+Minimize.ZIndex = 10
+Minimize.Font = Enum.Font.Code
+Minimize.Text = "-"
+Minimize.TextColor3 = Color3.fromRGB(255, 255, 255)
+Minimize.TextSize = 32.000
 
+title.Name = "title"
+title.Parent = topbar
+title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundTransparency = 1.000
+title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+title.BorderSizePixel = 0
+title.Position = UDim2.new(0.0190000422, 0, 0, 0)
+title.Size = UDim2.new(0, 766, 0, 60)
+title.ZIndex = 2
+title.Font = Enum.Font.Code
+title.Text = "AGAR WARE | vX.X.X | fps: X.X/s | Xms | server: X/X"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 27.000
+title.TextXAlignment = Enum.TextXAlignment.Left
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.background.barFrame.bar
-G2L["6"] = Instance.new("Frame", G2L["5"]);
-G2L["6"]["BorderSizePixel"] = 0;
-G2L["6"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["6"]["Name"] = [[bar]];
+GuiColor.Name = "GuiColor"
+GuiColor.Parent = FAFDS8dFdAGUYASD89
+GuiColor.BackgroundColor3 = Color3.fromRGB(0, 123, 255)
+GuiColor.BackgroundTransparency = 1.000
+GuiColor.BorderColor3 = Color3.fromRGB(0, 0, 0)
+GuiColor.BorderSizePixel = 0
+GuiColor.Size = UDim2.new(0, 100, 0, 100)
 
+_300.Name = "3.0.0"
+_300.Parent = FAFDS8dFdAGUYASD89
+_300.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+_300.BackgroundTransparency = 1.000
+_300.BorderColor3 = Color3.fromRGB(0, 0, 0)
+_300.BorderSizePixel = 0
+_300.Size = UDim2.new(0, 200, 0, 50)
+_300.Font = Enum.Font.SourceSans
+_300.Text = ""
+_300.TextColor3 = Color3.fromRGB(0, 0, 0)
+_300.TextSize = 14.000
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.KeybindFrame.background.barFrame.barCorner
-G2L["7"] = Instance.new("UICorner", G2L["5"]);
-G2L["7"]["Name"] = [[barCorner]];
+KeybindFrame.Name = "KeybindFrame"
+KeybindFrame.Parent = FAFDS8dFdAGUYASD89
+KeybindFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+KeybindFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+KeybindFrame.BorderSizePixel = 0
+KeybindFrame.Position = UDim2.new(0.816756189, 0, 0.083818391, 0)
+KeybindFrame.Size = UDim2.new(0, 360, 0, 120)
+KeybindFrame.ZIndex = 999999999
 
+hideGui.Name = "hideGui"
+hideGui.Parent = KeybindFrame
+hideGui.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+hideGui.BorderColor3 = Color3.fromRGB(0, 0, 0)
+hideGui.BorderSizePixel = 0
+hideGui.Size = UDim2.new(0, 270, 0, 60)
+hideGui.Font = Enum.Font.Code
+hideGui.Text = "Hide Gui"
+hideGui.TextColor3 = Color3.fromRGB(255, 255, 255)
+hideGui.TextSize = 27.000
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainScript
-G2L["8"] = Instance.new("LocalScript", G2L["1"]);
-G2L["8"]["Name"] = [[MainScript]];
+lockGui.Name = "lockGui"
+lockGui.Parent = KeybindFrame
+lockGui.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+lockGui.BorderColor3 = Color3.fromRGB(0, 0, 0)
+lockGui.BorderSizePixel = 0
+lockGui.Position = UDim2.new(-0.00277777785, 0, 0.5, 0)
+lockGui.Size = UDim2.new(0, 271, 0, 60)
+lockGui.Font = Enum.Font.Code
+lockGui.Text = "Lock Gui"
+lockGui.TextColor3 = Color3.fromRGB(255, 255, 255)
+lockGui.TextSize = 27.000
 
+dragGui.Name = "dragGui"
+dragGui.Parent = KeybindFrame
+dragGui.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+dragGui.BorderColor3 = Color3.fromRGB(0, 0, 0)
+dragGui.BorderSizePixel = 0
+dragGui.Position = UDim2.new(0.74981755, 0, 0, 0)
+dragGui.Size = UDim2.new(0, 90, 0, 60)
+dragGui.Font = Enum.Font.Code
+dragGui.Text = "DRAG"
+dragGui.TextColor3 = Color3.fromRGB(188, 188, 188)
+dragGui.TextSize = 27.000
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.GuiColor
-G2L["9"] = Instance.new("Frame", G2L["1"]);
-G2L["9"]["BorderSizePixel"] = 0;
-G2L["9"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
-G2L["9"]["Size"] = UDim2.new(0, 100, 0, 100);
-G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["9"]["Name"] = [[GuiColor]];
-G2L["9"]["BackgroundTransparency"] = 1;
+more.Name = "more"
+more.Parent = KeybindFrame
+more.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+more.BorderColor3 = Color3.fromRGB(0, 0, 0)
+more.BorderSizePixel = 0
+more.Position = UDim2.new(0.74981755, 0, 0.5, 0)
+more.Size = UDim2.new(0, 90, 0, 60)
+more.Font = Enum.Font.Code
+more.Text = ""
+more.TextColor3 = Color3.fromRGB(255, 255, 255)
+more.TextSize = 27.000
 
+barFrame_2.Name = "barFrame"
+barFrame_2.Parent = KeybindFrame
+barFrame_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+barFrame_2.BackgroundTransparency = 1.000
+barFrame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+barFrame_2.BorderSizePixel = 0
+barFrame_2.Size = UDim2.new(0, 359, 0, 10)
+barFrame_2.ZIndex = 999999999
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.GuiProtection
-G2L["a"] = Instance.new("LocalScript", G2L["1"]);
-G2L["a"]["Name"] = [[GuiProtection]];
+bar_2.Name = "bar"
+bar_2.Parent = barFrame_2
+bar_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+bar_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+bar_2.BorderSizePixel = 0
+bar_2.ZIndex = 999999999
 
+barCorner_2.Name = "barCorner"
+barCorner_2.Parent = barFrame_2
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.Utility
-G2L["b"] = Instance.new("LocalScript", G2L["1"]);
-G2L["b"]["Name"] = [[Utility]];
+Folder.Parent = FAFDS8dFdAGUYASD89
 
+Keybind.Name = "Keybind"
+Keybind.Parent = Folder
 
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame
-G2L["c"] = Instance.new("Frame", G2L["1"]);
-G2L["c"]["BorderSizePixel"] = 0;
-G2L["c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["c"]["Size"] = UDim2.new(0, 1000, 0, 700);
-G2L["c"]["Position"] = UDim2.new(0.27228, 0, 0.121, 0);
-G2L["c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["c"]["Name"] = [[MainFrame]];
-G2L["c"]["BackgroundTransparency"] = 1;
-
-
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup
-G2L["d"] = Instance.new("CanvasGroup", G2L["c"]);
-G2L["d"]["BorderSizePixel"] = 0;
-G2L["d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["d"]["Size"] = UDim2.new(0, 1000, 0, 700);
-G2L["d"]["Position"] = UDim2.new(-0.00072, 0, -0.00042, 0);
-G2L["d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-
-
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.TextLabel
-G2L["e"] = Instance.new("TextLabel", G2L["d"]);
-G2L["e"]["BorderSizePixel"] = 0;
-G2L["e"]["TextSize"] = 14;
-G2L["e"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["e"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["e"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["e"]["Size"] = UDim2.new(0, 200, 0, 50);
-G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["e"]["Position"] = UDim2.new(0.074, 0, 0.21429, 0);
-
-
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainFrame.CanvasGroup.TextLabel
-G2L["f"] = Instance.new("TextLabel", G2L["d"]);
-G2L["f"]["BorderSizePixel"] = 0;
-G2L["f"]["TextSize"] = 28;
-G2L["f"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-G2L["f"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["f"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["f"]["Size"] = UDim2.new(0, 200, 0, 50);
-G2L["f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["f"]["Position"] = UDim2.new(0.634, 0, 0.57, 0);
-
-
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.MainScript
-local function C_8()
-local script = G2L["8"];
-	-- Automatic GUI Scaler - Scales ALL frames in the ScreenGui
-	-- Place this in MainScript (under your ScreenGui)
-	
-	local screenGui = script.Parent
-	
-	-- Automatically get all top-level frames
-	local function getAllFrames()
-		local frames = {}
-		for _, child in pairs(screenGui:GetChildren()) do
-			if child:IsA("Frame") or child:IsA("CanvasGroup") then
-				table.insert(frames, child)
-			end
-		end
-		return frames
-	end
-	
-	-- Convert all children to Scale
-	local function convertToScale(frame)
-		local baseWidth = frame.AbsoluteSize.X
-		local baseHeight = frame.AbsoluteSize.Y
-	
-		for _, child in pairs(frame:GetChildren()) do
-			if child:IsA("GuiObject") then
-				if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
-					child:SetAttribute("OriginalTextSize", child.TextSize)
-				end
-	
-				-- Save original UICorner radius
-				local uiCorner = child:FindFirstChildOfClass("UICorner")
-				if uiCorner then
-					uiCorner:SetAttribute("OriginalRadius", uiCorner.CornerRadius.Offset)
-				end
-	
-				local pixelWidth = child.AbsoluteSize.X
-				local pixelHeight = child.AbsoluteSize.Y
-				child.Size = UDim2.new(pixelWidth / baseWidth, 0, pixelHeight / baseHeight, 0)
-	
-				local pixelX = child.AbsolutePosition.X - frame.AbsolutePosition.X
-				local pixelY = child.AbsolutePosition.Y - frame.AbsolutePosition.Y
-				child.Position = UDim2.new(pixelX / baseWidth, 0, pixelY / baseHeight, 0)
-	
-				-- Recursively convert children of this child
-				convertToScale(child)
-			end
-		end
-	
-		frame:SetAttribute("OriginalWidth", frame.AbsoluteSize.X)
-		frame:SetAttribute("AspectRatio", frame.AbsoluteSize.X / frame.AbsoluteSize.Y)
-	end
-	
-	local function rescaler()
-		local viewportSize = workspace.CurrentCamera.ViewportSize
-		local screenX = viewportSize.X
-		local screenY = viewportSize.Y
-	
-		-- Determine scale percentage based on screen size
-		local scalePercentage
-		if screenX < 600 then
-			-- Mobile - increased by 1.5x
-			scalePercentage = 1.0095
-		elseif screenX < 1024 then
-			-- iPad - increased by 1.2x
-			scalePercentage = 0.612
-		elseif screenX < 1600 then
-			-- Laptop - keep same
-			scalePercentage = 0.326
-		else
-			-- PC - keep same
-			scalePercentage = 0.34
-		end
-	
-		-- Calculate target width for MainFrame (1000px in studio)
-		local mainFrameTargetWidth = screenX * scalePercentage
-		-- Calculate the overall scale factor based on MainFrame
-		local globalScaleFactor = mainFrameTargetWidth / 1000
-	
-		local framesToScale = getAllFrames()
-	
-		for _, frame in pairs(framesToScale) do
-			local aspectRatio = frame:GetAttribute("AspectRatio")
-			local originalWidth = frame:GetAttribute("OriginalWidth")
-	
-			if aspectRatio and originalWidth then
-				-- Scale each frame by the same factor, maintaining their size relationships
-				local newWidth = originalWidth * globalScaleFactor
-				local newHeight = newWidth / aspectRatio
-	
-				-- Only center MainFrame
-				if frame.Name == "MainFrame" then
-					frame.AnchorPoint = Vector2.new(0.5, 0.5)
-					frame.Position = UDim2.new(0.5, 0, 0.5, 0)
-				end
-	
-				frame.Size = UDim2.new(0, newWidth, 0, newHeight)
-	
-				local scaleFactor = newWidth / originalWidth
-	
-				for _, descendant in pairs(frame:GetDescendants()) do
-					if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
-						local originalSize = descendant:GetAttribute("OriginalTextSize")
-						if originalSize then
-							descendant.TextSize = math.floor(originalSize * scaleFactor)
-						end
-					end
-	
-					-- Scale UICorner radius
-					if descendant:IsA("UICorner") then
-						local originalRadius = descendant:GetAttribute("OriginalRadius")
-						if originalRadius then
-							descendant.CornerRadius = UDim2.new(0, math.floor(originalRadius * scaleFactor))
-						end
-					end
-				end
-			end
-		end
-	end
-	
-	-- Initialize: Convert all frames to scale
-	local framesToScale = getAllFrames()
-	for _, frame in pairs(framesToScale) do
-		convertToScale(frame)
-	end
-	
-	-- Make MainFrame draggable
-	local mainFrame = screenGui:FindFirstChild("MainFrame")
-	if mainFrame then
-		mainFrame.Draggable = true
-		mainFrame.Active = true
-	end
-	
-	-- Apply initial scaling
-	rescaler()
-	
-	-- Update on screen resize
-	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescaler)
-end;
-task.spawn(C_8);
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.GuiProtection
-local function C_a()
-local script = G2L["a"];
-	-- GUI Protection Script
-	-- Place this at the top of your main script
-	
-	-- Cancel if running in Studio
-	if game:GetService("RunService"):IsStudio() then
-		return
-	end
-	
-	local Players = game:GetService("Players")
-	local CoreGui = game:GetService("CoreGui")
-	local LocalPlayer = Players.LocalPlayer
-	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-	
-	local RealGui = script.Parent
-	
-	-- ============================================================
-	-- STEP 1: Move real GUI to CoreGui
-	-- ============================================================
-	RealGui.Parent = CoreGui
-	
-	-- ============================================================
-	-- STEP 2: Rename all scripts to "LocalScript" and folders to "Folder"
-	-- ============================================================
-	for _, descendant in pairs(RealGui:GetDescendants()) do
-		if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") or descendant:IsA("Script") then
-			descendant.Name = "LocalScript"
-		elseif descendant:IsA("Folder") then
-			descendant.Name = "Folder"
-		end
-	end
-	
-	-- ============================================================
-	-- STEP 3: Create fake GUI in PlayerGui (AgarWareV3)
-	-- ============================================================
-	local fakePlayerGui = Instance.new("ScreenGui")
-	fakePlayerGui.Name = "AgarWareV3"
-	fakePlayerGui.Enabled = false
-	fakePlayerGui.Parent = PlayerGui
-	
-	-- Add fake instances
-	local fakeFrame1 = Instance.new("Frame")
-	fakeFrame1.Name = "MainFrame"
-	fakeFrame1.Parent = fakePlayerGui
-	
-	local fakeScript1 = Instance.new("LocalScript")
-	fakeScript1.Name = "Handler"
-	fakeScript1.Disabled = true
-	fakeScript1.Parent = fakePlayerGui
-	
-	local fakeFolder1 = Instance.new("Folder")
-	fakeFolder1.Name = "Scripts"
-	fakeFolder1.Parent = fakePlayerGui
-	
-	-- ============================================================
-	-- STEP 4: Create fake GUI in CoreGui (AgarWareGui)
-	-- ============================================================
-	local fakeCoreGui = Instance.new("ScreenGui")
-	fakeCoreGui.Name = "AgarWare"
-	fakeCoreGui.Enabled = false
-	fakeCoreGui.Parent = CoreGui
-	
-	-- Add fake instances
-	local fakeFrame2 = Instance.new("Frame")
-	fakeFrame2.Name = "Container"
-	fakeFrame2.Parent = fakeCoreGui
-	
-	local fakeScript2 = Instance.new("LocalScript")
-	fakeScript2.Name = "Core"
-	fakeScript2.Disabled = true
-	fakeScript2.Parent = fakeCoreGui
-	
-	local fakeFolder2 = Instance.new("Folder")
-	fakeFolder2.Name = "Modules"
-	fakeFolder2.Parent = fakeCoreGui
-end;
-task.spawn(C_a);
--- StarterGui.FAFDS8dF*&*&dAGUYASD89.Utility
-local function C_b()
-local script = G2L["b"];
-	-- Roblox Script: Find and modify all barFrame > bar elements
-	-- Place this script inside the GUI that contains GuiColor
-	
-	local script = script
-	local guiColor = script.Parent:WaitForChild("GuiColor")
-	local targetColor = guiColor.BackgroundColor3
-	
-	-- Function to find all descendants named "barFrame"
-	local function findAllBarFrames(parent)
-		local barFrames = {}
-	
-		for _, descendant in pairs(parent:GetDescendants()) do
-			if descendant:IsA("Frame") and descendant.Name == "barFrame" then
-				table.insert(barFrames, descendant)
-			end
-		end
-	
-		return barFrames
-	end
-	
-	-- Function to modify bar inside barFrame
-	local function modifyBar(barFrame)
-		local bar = barFrame:FindFirstChild("bar")
-	
-		if bar and bar:IsA("GuiObject") then
-			-- Resize bar: height = 3px, width = same as barFrame
-			bar.Size = UDim2.new(1, 0, 0, 3)
-	
-			-- Change background color to match GuiColor
-			bar.BackgroundColor3 = targetColor
-		end
-	end
-	
-	-- Main execution
-	local startGui = script.Parent.Parent
-	local allBarFrames = findAllBarFrames(startGui)
-	
-	for _, barFrame in pairs(allBarFrames) do
-		modifyBar(barFrame)
-	end
-	
-	-- Optional: Listen for new barFrames being added
-	startGui.DescendantAdded:Connect(function(descendant)
-		if descendant:IsA("Frame") and descendant.Name == "barFrame" then
-			wait(0.1)
-			modifyBar(descendant)
-		end
-	end)
-end;
-task.spawn(C_b);
-
-return G2L["1"], require;
+HideGui.Name = "HideGui"
+HideGui.Parent = Keybind
+HideGui.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+HideGui.BorderColor3 = Color3.fromRGB(0, 0, 0)
+HideGui.BorderSizePixel = 0
+HideGui.Size = UDim2.new(0, 200, 0, 50)
+HideGui.Visible = false
+HideGui.Font = Enum.Font.SourceSans
+HideGui.Text = "]"
+HideGui.TextColor3 = Color3.fromRGB(0, 0, 0)
+HideGui.TextSize = 14.000
