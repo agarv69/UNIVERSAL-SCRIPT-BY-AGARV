@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 88 | Scripts: 4 | Modules: 0 | Tags: 0
+-- Instances: 87 | Scripts: 4 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.T5784YHRGE89ES98T
@@ -759,7 +759,7 @@ G2L["54"] = Instance.new("TextLabel", G2L["51"]);
 G2L["54"]["TextWrapped"] = true;
 G2L["54"]["ZIndex"] = 999999999;
 G2L["54"]["BorderSizePixel"] = 0;
-G2L["54"]["TextSize"] = 14;
+G2L["54"]["TextSize"] = 12;
 G2L["54"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["54"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["54"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
@@ -786,11 +786,6 @@ G2L["57"] = Instance.new("LocalScript", G2L["51"]);
 G2L["57"]["Name"] = [[tooltipScript]];
 
 
--- StarterGui.T5784YHRGE89ES98T.Tooltip.UIScale
-G2L["58"] = Instance.new("UIScale", G2L["51"]);
-G2L["58"]["Scale"] = 0.7;
-
-
 -- StarterGui.T5784YHRGE89ES98T.MainFrame.innerframe.contentarea.ScrollingFrame.leftside.playerinfoTab.playerinfoScript
 local function C_4a()
 local script = G2L["4a"];
@@ -805,11 +800,33 @@ local script = G2L["4a"];
 	local screenGui = getScreenGui()
 	if not screenGui then return end
 	
+	local UserInputService = game:GetService("UserInputService")
+	local HttpService = game:GetService("HttpService")
+	
 	local colorFrame = screenGui:FindFirstChild("Color")
 	if not colorFrame then return end
 	
 	local targetColor = colorFrame.BackgroundColor3
 	local toggleStates = {}
+	
+	_G.ConfigData = _G.ConfigData or {}
+	
+	local CONFIG_FILE = "myconfig.json"
+	
+	local function saveConfig()
+		local success, err = pcall(function()
+			writefile(CONFIG_FILE, HttpService:JSONEncode(_G.ConfigData))
+		end)
+	end
+	
+	local function loadConfig()
+		local success, data = pcall(function()
+			return readfile(CONFIG_FILE)
+		end)
+		if success and data then
+			_G.ConfigData = HttpService:JSONDecode(data)
+		end
+	end
 	
 	local function createToggle(frameName, tooltipText)
 		local frame = script.Parent:FindFirstChild(frameName)
@@ -822,21 +839,11 @@ local script = G2L["4a"];
 	
 		if not button or not toggleFrame or not outlineStroke then return end
 	
-		local isToggled = false
+		local isToggled = _G.ConfigData[frameName] or false
 		local isHovering = false
-		toggleStates[button] = false
+		toggleStates[button] = isToggled
 	
-		toggleFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-		toggleFrame.BorderColor3 = Color3.fromRGB(50, 50, 50)
-		outlineStroke.Color = Color3.fromRGB(0, 0, 0)
-		outlineStroke.Transparency = 0
-		outlineStroke.Thickness = 2
-		if toggleFade then toggleFade.Visible = true end
-	
-		button.MouseButton1Click:Connect(function()
-			isToggled = not isToggled
-			toggleStates[button] = isToggled
-	
+		local function updateVisuals()
 			if isToggled then
 				toggleFrame.BackgroundColor3 = targetColor
 				toggleFrame.BorderColor3 = targetColor
@@ -858,6 +865,16 @@ local script = G2L["4a"];
 					outlineStroke.Transparency = 0
 				end
 			end
+		end
+	
+		updateVisuals()
+	
+		button.MouseButton1Click:Connect(function()
+			isToggled = not isToggled
+			toggleStates[button] = isToggled
+			_G.ConfigData[frameName] = isToggled
+			updateVisuals()
+			saveConfig()
 		end)
 	
 		button.MouseEnter:Connect(function()
@@ -866,24 +883,39 @@ local script = G2L["4a"];
 			outlineStroke.Thickness = 1
 			outlineStroke.Transparency = 0
 			if tooltipText then
+				local mousePos = UserInputService:GetMouseLocation()
+				local guiInset = game:GetService("GuiService"):GetGuiInset()
+				local uiScale = screenGui:FindFirstChildOfClass("UIScale")
+				local scale = uiScale and uiScale.Scale or 1
+				local tooltip = screenGui:FindFirstChild("Tooltip")
+				if tooltip then
+					tooltip.Position = UDim2.new(0, (mousePos.X - guiInset.X + 12) / scale, 0, (mousePos.Y - guiInset.Y + 12) / scale)
+				end
 				_G.ShowTooltip(tooltipText)
 			end
 		end)
 	
 		button.MouseLeave:Connect(function()
 			isHovering = false
-			if toggleStates[button] then
-				outlineStroke.Color = targetColor
-				outlineStroke.Transparency = 0.5
-				outlineStroke.Thickness = 1
-			else
-				outlineStroke.Color = Color3.fromRGB(0, 0, 0)
-				outlineStroke.Transparency = 0
-				outlineStroke.Thickness = 2
-			end
+			updateVisuals()
 			_G.HideTooltip()
 		end)
+	
+		return {
+			SetValue = function(value)
+				isToggled = value
+				toggleStates[button] = value
+				_G.ConfigData[frameName] = value
+				updateVisuals()
+				saveConfig()
+			end,
+			GetValue = function()
+				return isToggled
+			end
+		}
 	end
+	
+	loadConfig()
 	
 	-- toggle
 	createToggle("example", "This is example tooltip")
@@ -989,7 +1021,11 @@ local script = G2L["57"];
 	local function updatePosition()
 		local mousePos = UserInputService:GetMouseLocation()
 		local guiInset = game:GetService("GuiService"):GetGuiInset()
-		tooltip.Position = UDim2.new(0, mousePos.X - guiInset.X + offsetX, 0, mousePos.Y - guiInset.Y + offsetY)
+	
+		local uiScale = screenGui:FindFirstChildOfClass("UIScale")
+		local scale = uiScale and uiScale.Scale or 1
+	
+		tooltip.Position = UDim2.new(0, (mousePos.X - guiInset.X + offsetX) / scale, 0, (mousePos.Y - guiInset.Y + offsetY) / scale)
 	end
 	
 	UserInputService.TouchMoved:Connect(updatePosition)
