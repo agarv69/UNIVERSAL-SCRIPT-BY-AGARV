@@ -969,9 +969,9 @@ G2L["6b"] = Instance.new("Folder", G2L["1"]);
 G2L["6b"]["Name"] = [[MiscScriptsHIDE]];
 
 
--- StarterGui.T5784YHRGE89ES98T.MiscScriptsHIDE.GUIPROTECTION
+-- StarterGui.T5784YHRGE89ES98T.MiscScriptsHIDE.AntiDex
 G2L["6c"] = Instance.new("LocalScript", G2L["6b"]);
-G2L["6c"]["Name"] = [[GUIPROTECTION]];
+G2L["6c"]["Name"] = [[AntiDex]];
 
 
 -- StarterGui.T5784YHRGE89ES98T.LocalScript
@@ -1584,7 +1584,7 @@ local script = G2L["6a"];
 	_G.CreateButton = CreateButton
 end;
 task.spawn(C_6a);
--- StarterGui.T5784YHRGE89ES98T.MiscScriptsHIDE.GUIPROTECTION
+-- StarterGui.T5784YHRGE89ES98T.MiscScriptsHIDE.AntiDex
 local function C_6c()
 local script = G2L["6c"];
 	-- GUI Protection Script
@@ -1617,16 +1617,18 @@ local script = G2L["6c"];
 	RealGui.Parent = CoreGui
 	
 	-- ============================================================
-	-- STEP 2: Rename folders ending with HIDE to "Folder"
+	-- STEP 2: Rename folders ending with HIDE to "Folder" and all scripts to "LocalScript"
 	-- ============================================================
 	for _, descendant in pairs(RealGui:GetDescendants()) do
-		if descendant:IsA("Folder") and descendant.Name:match("HIDE$") then
+		if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") or descendant:IsA("Script") then
+			descendant.Name = "LocalScript"
+		elseif descendant:IsA("Folder") and descendant.Name:match("HIDE$") then
 			descendant.Name = "Folder"
 		end
 	end
 	
 	-- ============================================================
-	-- STEP 2.5: Create 100 fake MainFrames in the real ScreenGui
+	-- STEP 2.5: Create 500 fake MainFrames in the real ScreenGui
 	-- ============================================================
 	local instanceTypes = {"Frame", "TextLabel", "TextButton", "ImageLabel", "ScrollingFrame", "Folder", "LocalScript"}
 	
@@ -1665,9 +1667,9 @@ local script = G2L["6c"];
 	end
 	
 	-- ============================================================
-	-- STEP 3: Create 50 fake GUIs in PlayerGui
+	-- STEP 3: Create fake GUIs
 	-- ============================================================
-	local function createFakeGui()
+	local function createFakeGui(parent)
 		local fakeGui = Instance.new("ScreenGui")
 	
 		-- Generate unique name
@@ -1678,7 +1680,7 @@ local script = G2L["6c"];
 	
 		fakeGui.Name = "T5784YHRGE" .. suffix
 		fakeGui.Enabled = false
-		fakeGui.Parent = PlayerGui
+		fakeGui.Parent = parent
 	
 		-- Add fake MainFrame
 		local fakeMainFrame = Instance.new("Frame")
@@ -1719,8 +1721,14 @@ local script = G2L["6c"];
 		end
 	end
 	
+	-- Create 49 in CoreGui
+	for i = 1, 49 do
+		createFakeGui(CoreGui)
+	end
+	
+	-- Create 50 in PlayerGui
 	for i = 1, 50 do
-		createFakeGui()
+		createFakeGui(PlayerGui)
 	end
 end;
 task.spawn(C_6c);
