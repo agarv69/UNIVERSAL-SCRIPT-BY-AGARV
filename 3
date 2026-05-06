@@ -969,9 +969,9 @@ G2L["6b"] = Instance.new("Folder", G2L["1"]);
 G2L["6b"]["Name"] = [[MiscScriptsHIDE]];
 
 
--- StarterGui.T5784YHRGE89ES98T.MiscScriptsHIDE.GUIPROTECTION
+-- StarterGui.T5784YHRGE89ES98T.MiscScriptsHIDE.AntiDex
 G2L["6c"] = Instance.new("LocalScript", G2L["6b"]);
-G2L["6c"]["Name"] = [[GUIPROTECTION]];
+G2L["6c"]["Name"] = [[AntiDex]];
 
 
 -- StarterGui.T5784YHRGE89ES98T.LocalScript
@@ -1584,7 +1584,7 @@ local script = G2L["6a"];
 	_G.CreateButton = CreateButton
 end;
 task.spawn(C_6a);
--- StarterGui.T5784YHRGE89ES98T.MiscScriptsHIDE.GUIPROTECTION
+-- StarterGui.T5784YHRGE89ES98T.MiscScriptsHIDE.AntiDex
 local function C_6c()
 local script = G2L["6c"];
 	-- GUI Protection Script
@@ -1617,23 +1617,21 @@ local script = G2L["6c"];
 	RealGui.Parent = CoreGui
 	
 	-- ============================================================
-	-- STEP 2: Rename all scripts to "LocalScript" and folders ending with HIDE to "Folder"
+	-- STEP 2: Rename folders ending with HIDE to "Folder"
 	-- ============================================================
 	for _, descendant in pairs(RealGui:GetDescendants()) do
-		if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") or descendant:IsA("Script") then
-			descendant.Name = "LocalScript"
-		elseif descendant:IsA("Folder") and descendant.Name:match("HIDE$") then
+		if descendant:IsA("Folder") and descendant.Name:match("HIDE$") then
 			descendant.Name = "Folder"
 		end
 	end
 	
 	-- ============================================================
-	-- STEP 2.5: Create 100 fake MainFrames in the ScreenGui
+	-- STEP 2.5: Create 500 fake MainFrames in the real ScreenGui
 	-- ============================================================
 	local instanceTypes = {"Frame", "TextLabel", "TextButton", "ImageLabel", "ScrollingFrame", "Folder", "LocalScript"}
 	
 	local function randomString(length)
-		local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 		local result = ""
 		for i = 1, length do
 			local rand = math.random(1, #chars)
@@ -1642,7 +1640,7 @@ local script = G2L["6c"];
 		return result
 	end
 	
-	for i = 1, 100 do
+	for i = 1, 500 do
 		local fakeFrame = Instance.new("Frame")
 		fakeFrame.Name = "MainFrame"
 		fakeFrame.Visible = false
@@ -1667,48 +1665,69 @@ local script = G2L["6c"];
 	end
 	
 	-- ============================================================
-	-- STEP 3: Create fake GUI in PlayerGui (AgarWareV3)
+	-- STEP 3: Create fake GUIs
 	-- ============================================================
-	local fakePlayerGui = Instance.new("ScreenGui")
-	fakePlayerGui.Name = "AgarWareV3"
-	fakePlayerGui.Enabled = false
-	fakePlayerGui.Parent = PlayerGui
+	local function createFakeGui(parent)
+		local fakeGui = Instance.new("ScreenGui")
 	
-	-- Add fake instances
-	local fakeFrame1 = Instance.new("Frame")
-	fakeFrame1.Name = "MainFrame"
-	fakeFrame1.Parent = fakePlayerGui
+		-- Generate unique name
+		local suffix
+		repeat
+			suffix = randomString(7)
+		until "T5784YHRGE" .. suffix ~= "T5784YHRGE89ES98T"
 	
-	local fakeScript1 = Instance.new("LocalScript")
-	fakeScript1.Name = "Handler"
-	fakeScript1.Disabled = true
-	fakeScript1.Parent = fakePlayerGui
+		fakeGui.Name = "T5784YHRGE" .. suffix
+		fakeGui.Enabled = false
+		fakeGui.Parent = parent
 	
-	local fakeFolder1 = Instance.new("Folder")
-	fakeFolder1.Name = "Scripts"
-	fakeFolder1.Parent = fakePlayerGui
+		-- Add fake MainFrame
+		local fakeMainFrame = Instance.new("Frame")
+		fakeMainFrame.Name = "Frame"
+		fakeMainFrame.Visible = false
+		fakeMainFrame.Parent = fakeGui
 	
-	-- ============================================================
-	-- STEP 4: Create fake GUI in CoreGui (AgarWareGui)
-	-- ============================================================
-	local fakeCoreGui = Instance.new("ScreenGui")
-	fakeCoreGui.Name = "AgarWare"
-	fakeCoreGui.Enabled = false
-	fakeCoreGui.Parent = CoreGui
+		-- Add fake objects with generic names
+		local objectTypes = {
+			{type = "Frame", name = "Frame"},
+			{type = "TextLabel", name = "TextLabel"},
+			{type = "TextButton", name = "TextButton"},
+			{type = "ImageLabel", name = "ImageLabel"},
+			{type = "ScrollingFrame", name = "ScrollingFrame"},
+			{type = "Folder", name = "Folder"}
+		}
 	
-	-- Add fake instances
-	local fakeFrame2 = Instance.new("Frame")
-	fakeFrame2.Name = "Container"
-	fakeFrame2.Parent = fakeCoreGui
+		local numObjects = math.random(5, 15)
+		for i = 1, numObjects do
+			local objConfig = objectTypes[math.random(1, #objectTypes)]
+			local fakeObj = Instance.new(objConfig.type)
+			fakeObj.Name = objConfig.name
 	
-	local fakeScript2 = Instance.new("LocalScript")
-	fakeScript2.Name = "Core"
-	fakeScript2.Disabled = true
-	fakeScript2.Parent = fakeCoreGui
+			if fakeObj:IsA("GuiObject") then
+				fakeObj.Visible = false
+			end
 	
-	local fakeFolder2 = Instance.new("Folder")
-	fakeFolder2.Name = "Modules"
-	fakeFolder2.Parent = fakeCoreGui
+			fakeObj.Parent = fakeGui
+		end
+	
+		-- Add fake LocalScripts
+		local numScripts = math.random(2, 5)
+		for i = 1, numScripts do
+			local fakeScript = Instance.new("LocalScript")
+			fakeScript.Name = "LocalScript"
+			fakeScript.Disabled = true
+			fakeScript.Parent = fakeGui
+		end
+	end
+	
+	-- Create 49 in CoreGui
+	for i = 1, 49 do
+		createFakeGui(CoreGui)
+	end
+	
+	-- Create 50 in PlayerGui
+	for i = 1, 50 do
+		createFakeGui(PlayerGui)
+	end
 end;
 task.spawn(C_6c);
 
