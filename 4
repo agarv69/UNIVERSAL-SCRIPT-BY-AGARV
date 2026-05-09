@@ -1437,6 +1437,7 @@ G2L["96"]["Position"] = UDim2.new(1, -40, 0, 0);
 
 -- StarterGui.T5784YHRGE89ES98T.MainFrame.innerframe.contentarea.Home.rightside.exmapleTab.colorpicker.picker1.colorFrame
 G2L["97"] = Instance.new("Frame", G2L["96"]);
+G2L["97"]["ZIndex"] = 99;
 G2L["97"]["BorderSizePixel"] = 0;
 G2L["97"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["97"]["Size"] = UDim2.new(1, 0, 1, 0);
@@ -3344,6 +3345,7 @@ G2L["168"]["Name"] = [[text]];
 -- StarterGui.T5784YHRGE89ES98T.ColorPicker
 G2L["169"] = Instance.new("Frame", G2L["1"]);
 G2L["169"]["Visible"] = false;
+G2L["169"]["ZIndex"] = 999999999;
 G2L["169"]["BackgroundColor3"] = Color3.fromRGB(21, 21, 21);
 G2L["169"]["Size"] = UDim2.new(0, 200, 0, 270);
 G2L["169"]["Position"] = UDim2.new(0.54615, 0, 0.6233, 0);
@@ -6149,11 +6151,18 @@ local script = G2L["15f"];
 		end
 	
 		-- Click button to open/close picker
+		local RunService = game:GetService("RunService")
+		local updateConnection = nil
+	
 		pickerButton.MouseButton1Click:Connect(function()
 			if mainColorPicker.Visible and activePickerButton == pickerButton then
 				-- Close (act as cancel)
 				mainColorPicker.Visible = false
 				activePickerButton = nil
+				if updateConnection then
+					updateConnection:Disconnect()
+					updateConnection = nil
+				end
 			else
 				-- Open
 				positionPicker()
@@ -6165,6 +6174,21 @@ local script = G2L["15f"];
 				activeCallback = callback
 				activeButtonColorFrame = buttonColorFrame
 				activeButtonStroke = buttonStroke
+	
+				-- Continuously update position while open
+				if updateConnection then
+					updateConnection:Disconnect()
+				end
+				updateConnection = RunService.RenderStepped:Connect(function()
+					if mainColorPicker.Visible and activePickerButton == pickerButton then
+						positionPicker()
+					else
+						if updateConnection then
+							updateConnection:Disconnect()
+							updateConnection = nil
+						end
+					end
+				end)
 	
 				-- Set picker to current button color
 				if _G.SetColorPickerColor then
@@ -6208,6 +6232,7 @@ local script = G2L["15f"];
 	
 			if activeButtonColorFrame then
 				activeButtonColorFrame.BackgroundColor3 = selectedColor
+				activeButtonColorFrame.BackgroundTransparency = 0
 			end
 			if activeButtonStroke then
 				activeButtonStroke.Color = selectedColor
@@ -6412,13 +6437,17 @@ local script = G2L["16a"];
 	
 	local UserInputService = game:GetService("UserInputService")
 	local GuiService = game:GetService("GuiService")
-	local RunService = game:GetService("RunService")
 	
 	-- Current color state
 	local currentHue = 0
 	local currentSat = 1
 	local currentVal = 1
 	local currentAlpha = 0
+	
+	-- Dragging states
+	local canvasDragging = false
+	local hueDragging = false
+	local alphaDragging = false
 	
 	-- Helper: HSV to RGB
 	local function hsvToRgb(h, s, v)
@@ -6555,10 +6584,12 @@ local script = G2L["16a"];
 	
 	-- Setup canvas
 	canvas.AutoButtonColor = false
+	canvas.Active = true
 	
 	-- Setup hue gradient
 	hue.AutoButtonColor = false
 	hue.BackgroundTransparency = 1
+	hue.Active = true
 	if not hue:FindFirstChild("HueGradientFrame") then
 		local hueFrame = Instance.new("Frame")
 		hueFrame.Name = "HueGradientFrame"
@@ -6584,6 +6615,7 @@ local script = G2L["16a"];
 	-- Setup transparency gradient (checkerboard + color gradient)
 	slider.AutoButtonColor = false
 	slider.BackgroundTransparency = 1
+	slider.Active = true
 	if not slider:FindFirstChild("TransCheckerboard") then
 		local checkerboard = Instance.new("Frame")
 		checkerboard.Name = "TransCheckerboard"
@@ -6625,17 +6657,12 @@ local script = G2L["16a"];
 		transColorFrame.Parent = slider
 	end
 	
-	-- Canvas interaction
-	local canvasDragging = false
-	
-	local function updateCanvasFromMouse()
-		local mouse = UserInputService:GetMouseLocation()
-		local guiInset = GuiService:GetGuiInset()
+	local function updateCanvasFromInput(input)
 		local canvasPos = canvas.AbsolutePosition
 		local canvasSize = canvas.AbsoluteSize
 	
-		local relativeX = math.clamp((mouse.X - guiInset.X) - canvasPos.X, 0, canvasSize.X - 4)
-		local relativeY = math.clamp((mouse.Y - guiInset.Y) - canvasPos.Y, 0, canvasSize.Y - 4)
+		local relativeX = math.clamp(input.Position.X - canvasPos.X, 0, canvasSize.X - 4)
+		local relativeY = math.clamp(input.Position.Y - canvasPos.Y, 0, canvasSize.Y - 4)
 	
 		currentSat = relativeX / canvasSize.X
 		currentVal = 1 - (relativeY / canvasSize.Y)
@@ -6644,74 +6671,67 @@ local script = G2L["16a"];
 		updateColor()
 	end
 	
-	canvas.MouseButton1Down:Connect(function()
-		canvasDragging = true
-		updateCanvasFromMouse()
-	end)
-	
-	RunService.RenderStepped:Connect(function()
-		if canvasDragging then
-			updateCanvasFromMouse()
+	canvas.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			canvasDragging = true
+			updateCanvasFromInput(input)
 		end
 	end)
 	
 	-- Hue slider interaction
-	local hueDragging = false
-	
-	local function updateHueFromMouse()
-		local mouse = UserInputService:GetMouseLocation()
-		local guiInset = GuiService:GetGuiInset()
+	local function updateHueFromInput(input)
 		local huePos = hue.AbsolutePosition
 		local hueSize = hue.AbsoluteSize
 	
-		local relativeY = math.clamp((mouse.Y - guiInset.Y) - huePos.Y, 0, hueSize.Y)
+		local relativeY = math.clamp(input.Position.Y - huePos.Y, 0, hueSize.Y)
 		currentHue = relativeY / hueSize.Y
 	
 		hueLine.Position = UDim2.new(0, 0, currentHue, 0)
 		updateColor()
 	end
 	
-	hue.MouseButton1Down:Connect(function()
-		hueDragging = true
-		updateHueFromMouse()
-	end)
-	
-	RunService.RenderStepped:Connect(function()
-		if hueDragging then
-			updateHueFromMouse()
+	hue.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			hueDragging = true
+			updateHueFromInput(input)
 		end
 	end)
 	
-	-- Transparency slider interaction
-	local alphaDragging = false
-	
-	local function updateAlphaFromMouse()
-		local mouse = UserInputService:GetMouseLocation()
-		local guiInset = GuiService:GetGuiInset()
+	local function updateAlphaFromInput(input)
 		local sliderPos = slider.AbsolutePosition
 		local sliderSize = slider.AbsoluteSize
 	
-		local relativeX = math.clamp((mouse.X - guiInset.X) - sliderPos.X, 0, sliderSize.X)
+		local relativeX = math.clamp(input.Position.X - sliderPos.X, 0, sliderSize.X)
 		currentAlpha = relativeX / sliderSize.X
 	
 		sliderLine.Position = UDim2.new(currentAlpha, 0, 0, 0)
 		applyButtonFrame.BackgroundTransparency = currentAlpha
 	end
 	
-	slider.MouseButton1Down:Connect(function()
-		alphaDragging = true
-		updateAlphaFromMouse()
-	end)
-	
-	RunService.RenderStepped:Connect(function()
-		if alphaDragging then
-			updateAlphaFromMouse()
+	slider.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			alphaDragging = true
+			updateAlphaFromInput(input)
 		end
 	end)
 	
-	-- Single InputEnded handler for all drags
+	-- Global input handlers for dragging
+	UserInputService.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			if canvasDragging then
+				updateCanvasFromInput(input)
+			end
+			if hueDragging then
+				updateHueFromInput(input)
+			end
+			if alphaDragging then
+				updateAlphaFromInput(input)
+			end
+		end
+	end)
+	
 	UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			canvasDragging = false
 			hueDragging = false
 			alphaDragging = false
