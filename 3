@@ -5777,8 +5777,7 @@ local script = G2L["168"];
 	local pickupLoop = nil
 	local unequipLoop = nil
 	local autoPickedTools = {}
-	local DEATH_TAG = "DeathItem" -- Adjust if your death tag is different
-	local BLOCKED_USER_ID = 10587072700
+	local DEATH_TAG = "DeathItem"
 	
 	_G.CreateToggle({
 		frame = "autograb",
@@ -5797,15 +5796,6 @@ local script = G2L["168"];
 							local currentTool = char:FindFirstChildOfClass("Tool")
 							for _, obj in ipairs(workspace:GetChildren()) do
 								if obj:IsA("Tool") and obj:FindFirstChild("Handle") and not obj:HasTag(DEATH_TAG) then
-									-- Check if tool owner is blocked user
-									local creator = obj:FindFirstChild("creator")
-									if creator and creator.Value then
-										local creatorPlayer = creator.Value
-										if creatorPlayer.UserId == BLOCKED_USER_ID then
-											continue -- Skip this tool
-										end
-									end
-	
 									autoPickedTools[obj] = tick() + 0.5
 									pcall(function()
 										hum:EquipTool(obj)
@@ -5817,7 +5807,7 @@ local script = G2L["168"];
 								hum:EquipTool(currentTool)
 							end
 						end
-						task.wait(0.1)
+						task.wait()
 					end
 				end)
 	
