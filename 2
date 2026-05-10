@@ -5778,25 +5778,6 @@ local script = G2L["168"];
 	local unequipLoop = nil
 	local autoPickedTools = {}
 	local DEATH_TAG = "DeathItem"
-	local MY_USER_ID = 10587072700
-	
-	-- Mark tools dropped by me
-	local function markMyTools()
-		if LocalPlayer.UserId == MY_USER_ID then
-			LocalPlayer.CharacterAdded:Connect(function(char)
-				char.ChildRemoved:Connect(function(child)
-					if child:IsA("Tool") then
-						task.wait(0.1)
-						if child.Parent == workspace then
-							child:SetAttribute("Owner_" .. MY_USER_ID, true)
-						end
-					end
-				end)
-			end)
-		end
-	end
-	
-	markMyTools()
 	
 	_G.CreateToggle({
 		frame = "autograb",
@@ -5815,18 +5796,6 @@ local script = G2L["168"];
 							local currentTool = char:FindFirstChildOfClass("Tool")
 							for _, obj in ipairs(workspace:GetChildren()) do
 								if obj:IsA("Tool") and obj:FindFirstChild("Handle") and not obj:HasTag(DEATH_TAG) then
-									-- If I'm the blocked user, only pick up my own marked tools
-									if LocalPlayer.UserId == MY_USER_ID then
-										if not obj:GetAttribute("Owner_" .. MY_USER_ID) then
-											continue -- Skip tools not marked as mine
-										end
-									else
-										-- If I'm NOT the blocked user, skip tools marked by blocked user
-										if obj:GetAttribute("Owner_" .. MY_USER_ID) then
-											continue -- Skip blocked user's tools
-										end
-									end
-	
 									autoPickedTools[obj] = tick() + 0.5
 									pcall(function()
 										hum:EquipTool(obj)
@@ -5838,7 +5807,7 @@ local script = G2L["168"];
 								hum:EquipTool(currentTool)
 							end
 						end
-						task.wait(0.1)
+						task.wait()
 					end
 				end)
 	
@@ -6041,6 +6010,13 @@ local script = G2L["196"];
 		local isToggled = _G.ConfigData[frameName] or false
 		local isHovering = false
 		toggleStates[button] = isToggled
+		
+		-- Call callback on load if toggled is true
+		if isToggled and callback then
+			task.spawn(function()
+				callback(true)
+			end)
+		end
 	
 		local function updateVisuals()
 			if isToggled then
