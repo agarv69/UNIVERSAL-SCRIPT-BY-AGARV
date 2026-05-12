@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 945 | Scripts: 27 | Modules: 0 | Tags: 0
+-- Instances: 947 | Scripts: 28 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.T5784YHRGE89ES98T
@@ -8630,6 +8630,16 @@ G2L["3b1"] = Instance.new("LocalScript", G2L["3b0"]);
 G2L["3b1"]["Name"] = [[LabelsTags]];
 
 
+-- StarterGui.T5784YHRGE89ES98T.MOREMasterHIDE
+G2L["3b2"] = Instance.new("Folder", G2L["1"]);
+G2L["3b2"]["Name"] = [[MOREMasterHIDE]];
+
+
+-- StarterGui.T5784YHRGE89ES98T.MOREMasterHIDE.tcotoolrefresh
+G2L["3b3"] = Instance.new("LocalScript", G2L["3b2"]);
+G2L["3b3"]["Name"] = [[tcotoolrefresh]];
+
+
 -- StarterGui.T5784YHRGE89ES98T.mainScript
 local function C_2()
 local script = G2L["2"];
@@ -8643,41 +8653,60 @@ local script = G2L["2"];
 	local screenGui = getScreenGui()
 	if not screenGui then return end
 	local UserInputService = game:GetService("UserInputService")
+	
 	for _, frame in pairs(screenGui:GetChildren()) do
 		if frame.Name == "MainFrame" and frame:FindFirstChild("itsthisone") then
 			frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 			frame.AnchorPoint = Vector2.new(0.5, 0.5)
 			frame.Active = true
+	
 			local uiScale = screenGui:FindFirstChildOfClass("UIScale")
+			local dragging = false
+			local dragStart, startPos
+	
+			local inputBeganConn, inputChangedConn, inputEndedConn
+	
 			local function setupDragging()
+				if inputBeganConn then inputBeganConn:Disconnect() end
+				if inputChangedConn then inputChangedConn:Disconnect() end
+				if inputEndedConn then inputEndedConn:Disconnect() end
+	
 				local scale = uiScale and uiScale.Scale or 1
+	
 				if scale == 1 then
 					frame.Draggable = true
 				else
 					frame.Draggable = false
-					local dragging = false
-					local dragStart, startPos
-					frame.InputBegan:Connect(function(input)
+	
+					inputBeganConn = frame.InputBegan:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 							dragging = true
 							dragStart = input.Position
 							startPos = frame.Position
 						end
 					end)
-					UserInputService.InputChanged:Connect(function(input)
+	
+					inputChangedConn = UserInputService.InputChanged:Connect(function(input)
 						if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 							local delta = input.Position - dragStart
 							local currentScale = uiScale and uiScale.Scale or 1
-							frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X / currentScale, startPos.Y.Scale, startPos.Y.Offset + delta.Y / currentScale)
+							frame.Position = UDim2.new(
+								startPos.X.Scale, 
+								startPos.X.Offset + delta.X / currentScale, 
+								startPos.Y.Scale, 
+								startPos.Y.Offset + delta.Y / currentScale
+							)
 						end
 					end)
-					UserInputService.InputEnded:Connect(function(input)
+	
+					inputEndedConn = UserInputService.InputEnded:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 							dragging = false
 						end
 					end)
 				end
 			end
+	
 			if uiScale then
 				uiScale:GetPropertyChangedSignal("Scale"):Connect(setupDragging)
 			end
@@ -8817,7 +8846,7 @@ local script = G2L["9"];
 			maxPlayers
 		)
 	
-		TitleText.Text = "AGAR WARE | v3.0.0 | " .. statsText
+		TitleText.Text = "AGAR WARE | v3.0.0-alpha.1 | " .. statsText
 		TitleText.RichText = true
 	end)
 end;
@@ -9840,7 +9869,7 @@ task.spawn(C_191);
 -- StarterGui.T5784YHRGE89ES98T.MainFrame.innerframe.contentarea.Main.rightside.antiTab.antiScript
 local function C_1d1()
 local script = G2L["1d1"];
-	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
+	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox and _G.CreateSlider and _G.CreateDropdown
 	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
@@ -9872,61 +9901,342 @@ local script = G2L["1d1"];
 	
 	
 	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
+	-- ANTI AFK
 	-- ====================================================================================================
+	local afkConnection = nil
+	
 	_G.CreateToggle({
 		frame = "afk",
 		groupbox = script,
 		tooltip = "Prevents you from disconnecting from being AFK for 20 minutes.",
 		callback = function(isEnabled)
+			if isEnabled then
+				-- Enable Anti-AFK
+				afkConnection = task.spawn(function()
+					while isEnabled and _G.ConfigData["afk"] do
+						local virtualUser = game:GetService("VirtualUser")
+						virtualUser:CaptureController()
+						virtualUser:ClickButton2(Vector2.new())
+						task.wait(60)
+					end
+				end)
+			else
+				-- Disable Anti-AFK
+				if afkConnection then
+					task.cancel(afkConnection)
+					afkConnection = nil
+				end
+			end
 		end
 	})
+	
+	-- ====================================================================================================
+	-- ANTI FLING
+	-- ====================================================================================================
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local RunService = game:GetService("RunService")
+	
+	local antiFlingConnection = nil
 	
 	_G.CreateToggle({
 		frame = "fling",
 		groupbox = script,
 		tooltip = "Disables collision with other players to prevent you from getting flung.",
 		callback = function(isEnabled)
+			if isEnabled then
+				-- Enable Anti-Fling
+				-- Set all current players to no collide
+				for _, player in pairs(Players:GetPlayers()) do
+					if player ~= LocalPlayer and player.Character then
+						for _, part in pairs(player.Character:GetDescendants()) do
+							if part:IsA("BasePart") then
+								part.CanCollide = false
+							end
+						end
+					end
+				end
+	
+				-- Use Stepped for better anti-fling
+				if antiFlingConnection then
+					antiFlingConnection:Disconnect()
+				end
+	
+				antiFlingConnection = RunService.Stepped:Connect(function()
+					if not _G.ConfigData["fling"] then return end
+	
+					for _, player in pairs(Players:GetPlayers()) do
+						if player ~= LocalPlayer and player.Character then
+							for _, part in pairs(player.Character:GetDescendants()) do
+								if part:IsA("BasePart") then
+									part.CanCollide = false
+								end
+							end
+						end
+					end
+				end)
+			else
+				-- Disable Anti-Fling
+				if antiFlingConnection then
+					antiFlingConnection:Disconnect()
+					antiFlingConnection = nil
+				end
+	
+				-- Re-enable collision for all players
+				for _, player in pairs(Players:GetPlayers()) do
+					if player ~= LocalPlayer and player.Character then
+						for _, part in pairs(player.Character:GetDescendants()) do
+							if part:IsA("BasePart") then
+								part.CanCollide = true
+							end
+						end
+					end
+				end
+			end
 		end
 	})
+	
+	-- ====================================================================================================
+	-- ANTI RAGDOLL
+	-- ====================================================================================================
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local RunService = game:GetService("RunService")
+	
+	local ragdollConnection = nil
 	
 	_G.CreateToggle({
 		frame = "ragdoll",
 		groupbox = script,
 		tooltip = "Prevents your character from ragdolling.",
 		callback = function(isEnabled)
+			if isEnabled then
+				-- Enable Anti-Ragdoll
+				local character = LocalPlayer.Character
+				if character then
+					local humanoid = character:FindFirstChildOfClass("Humanoid")
+					if humanoid then
+						humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+						humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+					end
+				end
+	
+				-- Loop to constantly prevent ragdoll
+				ragdollConnection = RunService.Heartbeat:Connect(function()
+					if not _G.ConfigData["ragdoll"] then return end
+	
+					local chr = LocalPlayer.Character
+					if not chr then return end
+	
+					local hum = chr:FindFirstChildOfClass("Humanoid")
+					if not hum then return end
+	
+					-- Disable ragdoll constraints
+					for _, part in pairs(chr:GetDescendants()) do
+						if part:IsA("BallSocketConstraint") or part:IsA("HingeConstraint") then
+							if part:FindFirstAncestorOfClass("Motor6D") == nil then
+								part.Enabled = false
+							end
+						end
+					end
+	
+					-- Force humanoid out of ragdoll state
+					if hum:GetState() == Enum.HumanoidStateType.Ragdoll or
+						hum:GetState() == Enum.HumanoidStateType.FallingDown then
+						hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+					end
+				end)
+			else
+				-- Disable Anti-Ragdoll
+				if ragdollConnection then
+					ragdollConnection:Disconnect()
+					ragdollConnection = nil
+				end
+	
+				local character = LocalPlayer.Character
+				if character then
+					local humanoid = character:FindFirstChildOfClass("Humanoid")
+					if humanoid then
+						humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+						humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+					end
+				end
+			end
 		end
 	})
+	
+	-- ====================================================================================================
+	-- ANTI VOID
+	-- ====================================================================================================
+	local voidConnection = nil
 	
 	_G.CreateToggle({
 		frame = "void",
 		groupbox = script,
 		tooltip = "Disables you from dying in the void.",
 		callback = function(isEnabled)
+			if isEnabled then
+				-- Enable Anti-Void
+				workspace.FallenPartsDestroyHeight = 0/0
+	
+				-- Keep it set to NaN even if game tries to change it
+				voidConnection = workspace:GetPropertyChangedSignal("FallenPartsDestroyHeight"):Connect(function()
+					if not _G.ConfigData["void"] then return end
+	
+					if workspace.FallenPartsDestroyHeight ~= 0/0 then
+						workspace.FallenPartsDestroyHeight = 0/0
+					end
+				end)
+			else
+				-- Disable Anti-Void
+				if voidConnection then
+					voidConnection:Disconnect()
+					voidConnection = nil
+				end
+	
+				-- Reset to default Roblox value
+				workspace.FallenPartsDestroyHeight = -500
+			end
 		end
 	})
+	
+	-- ====================================================================================================
+	-- ANTI GAMEPLAY PAUSED
+	-- ====================================================================================================
+	local CoreGui = game:GetService("CoreGui")
+	local networkPausedConnection = nil
 	
 	_G.CreateToggle({
 		frame = "gameplaypaused",
 		groupbox = script,
 		tooltip = "Disables 'Gameplay Paused' messages.",
 		callback = function(isEnabled)
+			if isEnabled then
+				-- Enable Anti-Gameplay Paused
+				pcall(function()
+					if networkPausedConnection then
+						networkPausedConnection:Disconnect()
+					end
+				end)
+	
+				networkPausedConnection = CoreGui.RobloxGui.ChildAdded:Connect(function(obj)
+					if obj.Name == "CoreScripts/NetworkPause" then
+						obj:Destroy()
+					end
+				end)
+	
+				-- Remove existing pause screen
+				pcall(function()
+					CoreGui.RobloxGui["CoreScripts/NetworkPause"]:Destroy()
+				end)
+			else
+				-- Disable Anti-Gameplay Paused
+				if networkPausedConnection then
+					networkPausedConnection:Disconnect()
+					networkPausedConnection = nil
+				end
+			end
 		end
 	})
+	
+	-- ====================================================================================================
+	-- ANTI KICK
+	-- ====================================================================================================
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local oldhmmi = nil
+	local oldhmmnc = nil
+	local oldKickFunction = nil
 	
 	_G.CreateToggle({
 		frame = "kick",
 		groupbox = script,
 		tooltip = "Prevents only client kicks from kicking you out of the game. Enabling this might cause lag issues.",
 		callback = function(isEnabled)
+			if isEnabled then
+				-- Enable Anti-Kick
+				if not hookmetamethod then return end
+	
+				if hookfunction then
+					oldKickFunction = hookfunction(LocalPlayer.Kick, function() end)
+				end
+	
+				oldhmmi = hookmetamethod(game, "__index", function(self, method)
+					if self == LocalPlayer and method:lower() == "kick" then
+						return error("Expected ':' not '.' calling member function Kick", 2)
+					end
+					return oldhmmi(self, method)
+				end)
+	
+				oldhmmnc = hookmetamethod(game, "__namecall", function(self, ...)
+					if self == LocalPlayer and getnamecallmethod():lower() == "kick" then
+						return
+					end
+					return oldhmmnc(self, ...)
+				end)
+			else
+				-- Disable Anti-Kick
+				if oldKickFunction and hookfunction then
+					pcall(function()
+						hookfunction(LocalPlayer.Kick, oldKickFunction)
+					end)
+					oldKickFunction = nil
+				end
+	
+				if oldhmmi and hookmetamethod then
+					pcall(function()
+						hookmetamethod(game, "__index", oldhmmi)
+					end)
+					oldhmmi = nil
+				end
+	
+				if oldhmmnc and hookmetamethod then
+					pcall(function()
+						hookmetamethod(game, "__namecall", oldhmmnc)
+					end)
+					oldhmmnc = nil
+				end
+			end
 		end
 	})
+	
+	-- ====================================================================================================
+	-- ANTI KNOCKBACK
+	-- ====================================================================================================
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local RunService = game:GetService("RunService")
+	
+	local knockbackConnection = nil
 	
 	_G.CreateToggle({
 		frame = "knockback",
 		groupbox = script,
 		tooltip = "Prevents your character from getting knockback.",
 		callback = function(isEnabled)
+			if isEnabled then
+				-- Enable Anti-Knockback
+				knockbackConnection = RunService.Heartbeat:Connect(function()
+					if not _G.ConfigData["knockback"] then return end
+	
+					local character = LocalPlayer.Character
+					if not character then return end
+	
+					local hrp = character:FindFirstChild("HumanoidRootPart")
+					if not hrp then return end
+	
+					-- Cancel horizontal velocity, keep vertical (for jumping/falling)
+					hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+					hrp.AssemblyAngularVelocity = Vector3.zero
+				end)
+			else
+				-- Disable Anti-Knockback
+				if knockbackConnection then
+					knockbackConnection:Disconnect()
+					knockbackConnection = nil
+				end
+			end
 		end
 	})
 	
@@ -9935,7 +10245,7 @@ task.spawn(C_1d1);
 -- StarterGui.T5784YHRGE89ES98T.MainFrame.innerframe.contentarea.Main.leftside.characterTab.characterScript
 local function C_233()
 local script = G2L["233"];
-	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
+	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox and _G.CreateSlider and _G.CreateDropdown
 	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
@@ -9969,11 +10279,116 @@ local script = G2L["233"];
 	-- ====================================================================================================
 	-- GROUPBOX/TAB CONFIGS
 	-- ====================================================================================================
+	-- ====================================================================================================
+	-- FORCE R6
+	-- ====================================================================================================
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local AnimCache = {}
+	local r6Connection = nil
+	
+	-- R6 Animation IDs (standard Roblox R6 animations)
+	local Animations = {
+		Run = {
+			RunAnim = 180426354
+		},
+		Walk = {
+			WalkAnim = 180426354
+		},
+		Jump = {
+			JumpAnim = 125750702
+		},
+		Idle = {
+			Animation1 = 180435571,
+			Animation2 = 180435571
+		},
+		Fall = {
+			FallAnim = 180436148
+		},
+		Climb = {
+			ClimbAnim = 180436334
+		},
+		Sit = {
+			SitAnim = 178130996
+		}
+	}
+	
+	local function StopAnimations(Humanoid)
+		for _, Animation in Humanoid:GetPlayingAnimationTracks() do
+			Animation:Stop()
+		end
+	end
+	
+	local function LoadAnimations(Animate)
+		AnimCache = {}
+		for Animation, Child in Animations do
+			for ChildName, ID in Child do
+				local Found = Animate:FindFirstChild(Animation:lower())
+				if not Found then continue end
+	
+				local Child = Found:FindFirstChild(ChildName)
+				if not Child then continue end
+	
+				table.insert(AnimCache, {Child, Child.AnimationId})
+				Child.AnimationId = ("rbxassetid://%s"):format(ID)
+			end
+		end
+	end
+	
+	local function Animate(Character)
+		local Humanoid = Character:WaitForChild("Humanoid")
+		local Animate = Character:WaitForChild("Animate")
+	
+		task.wait(0.5)
+	
+		StopAnimations(Humanoid)
+		LoadAnimations(Animate)
+		StopAnimations(Humanoid)
+	end
+	
 	_G.CreateToggle({
 		frame = "R6",
 		groupbox = script,
 		tooltip = "Forces your character's rig type to R6.",
 		callback = function(isEnabled)
+			if isEnabled then
+				-- Enable Force R6
+				local function HandleCharacter(Char)
+					if not Char then return end
+	
+					local Hum = Char:WaitForChild("Humanoid")
+					if not Hum or Hum.RigType ~= Enum.HumanoidRigType.R15 then return end
+	
+					Animate(Char)
+				end
+	
+				HandleCharacter(LocalPlayer.Character)
+				r6Connection = LocalPlayer.CharacterAdded:Connect(HandleCharacter)
+			else
+				-- Disable Force R6
+				if r6Connection then
+					r6Connection:Disconnect()
+					r6Connection = nil
+				end
+	
+				local Char = LocalPlayer.Character
+				if not Char then return end
+	
+				local Hum = Char:FindFirstChildOfClass("Humanoid")
+				if not Hum or Hum.RigType ~= Enum.HumanoidRigType.R15 then return end
+	
+				StopAnimations(Hum)
+				for _, Data in AnimCache do
+					local Child, Id = Data[1], Data[2]
+					if not Child then continue end
+	
+					Child.AnimationId = Id
+				end
+				StopAnimations(Hum)
+	
+				AnimCache = {}
+			end
 		end
 	})
 	
@@ -9982,19 +10397,27 @@ local script = G2L["233"];
 	
 	
 	
+	-- ====================================================================================================
+	-- RESET CHARACTER
+	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "Reset",
 		groupbox = script,
 		tooltip = "Resets your character, hold for 1 second.",
-		callback = function()
-		end,
-		afterMessage = "Character reseted!",
+		afterMessage = "Character reset!",
 		afterMessageWait = 1,
 		canClickDuringAfter = true,
 		holdtime = 1,
-		holdtext = "Hold... (%.1f)",
-		holdvisual = true,  -- show fillbar
+		holdtext = "Hold... (%.1fs)",
+		holdvisual = true,
 		holdtextcolor = "frameColor",
+		callback = function()
+			if shared.ResetCharacter then
+				shared.ResetCharacter()
+				return true
+			end
+			return false
+		end,
 	})
 	
 	
@@ -10008,7 +10431,7 @@ task.spawn(C_233);
 -- StarterGui.T5784YHRGE89ES98T.MainFrame.innerframe.contentarea.TCOMain.rightside.antiTab.antiScriptTCO
 local function C_25b()
 local script = G2L["25b"];
-	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
+	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox and _G.CreateSlider and _G.CreateDropdown
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -10039,12 +10462,85 @@ local script = G2L["25b"];
 	-- ====================================================================================================
 	-- GROUPBOX/TAB CONFIGS
 	-- ====================================================================================================
+	
+	_G.CreateToggle({
+		frame = "visual",
+		groupbox = script,
+		tooltip = "Hides all main visual effects which includes: blind, colorless, fog, and myopic.",
+		callback = function(isEnabled)
+		end
+	})
+	
+	
+	_G.CreateToggle({
+		frame = "vampire",
+		groupbox = script,
+		tooltip = "Blocks out the Vampire Vanquisher gear from breaking your camera and inventory.",
+		callback = function(isEnabled)
+		end
+	})
+	
+	_G.CreateToggle({
+		frame = "glitch",
+		groupbox = script,
+		tooltip = "Prevents the glitch command from glitching you.",
+		callback = function(isEnabled)
+		end
+	})
+	
+	_G.CreateToggle({
+		frame = "jail",
+		groupbox = script,
+		tooltip = "Removes/Hides the jail cell from your view.",
+		callback = function(isEnabled)
+		end
+	})
+	
+	_G.CreateToggle({
+		frame = "maptidenan",
+		groupbox = script,
+		tooltip = "Prevents spawn loop kill when a player sets the terrain tide to NaN.",
+		callback = function(isEnabled)
+		end
+	})
+	
+	_G.CreateToggle({
+		frame = "freeze",
+		groupbox = script,
+		tooltip = "Auto resets your character when you get frozen.",
+		callback = function(isEnabled)
+		end
+	})
+	
+	_G.CreateToggle({
+		frame = "invisible",
+		groupbox = script,
+		tooltip = "Auto resets your character when you turn invisible.",
+		callback = function(isEnabled)
+		end
+	})
+	
+	_G.CreateToggle({
+		frame = "morph",
+		groupbox = script,
+		tooltip = "Auto resets your character when you get morphed.",
+		callback = function(isEnabled)
+		end
+	})
+	
+	_G.CreateToggle({
+		frame = "noclip",
+		groupbox = script,
+		tooltip = "Auto joins on noclip.",
+		callback = function(isEnabled)
+		end
+	})
 end;
 task.spawn(C_25b);
 -- StarterGui.T5784YHRGE89ES98T.MainFrame.innerframe.contentarea.TCOMain.leftside.mainTab.mainScriptTCO
 local function C_2e3()
 local script = G2L["2e3"];
-	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
+	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox and _G.CreateSlider and _G.CreateDropdown
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -10285,13 +10781,61 @@ local script = G2L["2e3"];
 		callback = function()
 			local token = _G.SetButtonText("disabledeletesound", "Processing...", 999)
 	
-			-- Your code here
-			local success = true  -- Set to false if it fails
+			local success, err = pcall(function()
+				local Players = game:GetService("Players")
+				local LocalPlayer = Players.LocalPlayer
+				local workspace = game:GetService("Workspace")
 	
-			return success
+				local isog = workspace:FindFirstChild("Cubes") ~= nil
+	
+				if isog then
+					error("OG not supported!")
+				end
+	
+				local character = LocalPlayer.Character
+				if not character then error("No character") end
+	
+				if character:FindFirstChild("Delete") then
+					error("Unequip Delete tool!")
+				end
+	
+				local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+				if not deleteTool then error("Delete tool needed!") end
+	
+				if shared.RefreshTool then
+					shared.RefreshTool("Delete")
+					task.wait(0.1)
+				end
+	
+				deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+				if not deleteTool then error("Delete tool not found") end
+	
+				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				if not hrp then error("No HumanoidRootPart") end
+	
+				local brick = hrp:FindFirstChild("Brick")
+				if not brick then error("Brick not found in HumanoidRootPart") end
+	
+				for i = 1, 2 do
+					event:FireServer(brick, hrp.Position)
+					task.wait(0.01)
+				end
+			end)
+	
+			if success then
+				_G.SetButtonText("disabledeletesound", "Disabled sounds!", 1)
+				return true
+			else
+				_G.SetButtonText("disabledeletesound", err or "Failed!", 1)
+				return false
+			end
 		end,
 	})
 	
+	-- ====================================================================================================
+	-- DISABLE BKIT
+	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "disablebkit",
 		groupbox = script,
@@ -10306,13 +10850,61 @@ local script = G2L["2e3"];
 		callback = function()
 			local token = _G.SetButtonText("disablebkit", "Processing...", 999)
 	
-			-- Your code here
-			local success = true  -- Set to false if it fails
+			local success, err = pcall(function()
+				local Players = game:GetService("Players")
+				local LocalPlayer = Players.LocalPlayer
+				local rs = game:GetService("ReplicatedStorage")
 	
-			return success
+				local character = LocalPlayer.Character
+				if not character then error("No character") end
+	
+				if character:FindFirstChild("Delete") then
+					error("Unequip Delete tool!")
+				end
+	
+				local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+				if not deleteTool then error("Delete tool needed!") end
+	
+				if shared.RefreshTool then
+					shared.RefreshTool("Delete")
+					task.wait(0.1)
+				end
+	
+				deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete")
+				if not deleteTool then error("Delete tool not found after refresh") end
+	
+				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
+				local brick = rs:FindFirstChild("Brick")
+				if not brick then error("No Brick in ReplicatedStorage") end
+	
+				local startTime = tick()
+				local maxTime = 5
+	
+				while tick() - startTime < maxTime and not token.cancelled do
+					if not rs:FindFirstChild("Brick") then
+						return true
+					end
+	
+					event:FireServer(brick, character.HumanoidRootPart.Position)
+					task.wait(0.01)
+				end
+	
+				error("Timeout - Brick not deleted")
+			end)
+	
+			if success then
+				_G.SetButtonText("disablebkit", "Disabled B-Kit!", 1)
+				return true
+			else
+				_G.SetButtonText("disablebkit", err or "Failed!", 1)
+				return false
+			end
 		end,
 	})
 	
+	-- ====================================================================================================
+	-- FIX BRICK
+	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "fixbrick",
 		groupbox = script,
@@ -10324,10 +10916,68 @@ local script = G2L["2e3"];
 		callback = function()
 			local token = _G.SetButtonText("fixbrick", "Processing...", 999)
 	
-			-- Your code here
-			local success = true  -- Set to false if it fails
+			local success, err = pcall(function()
+				local Players = game:GetService("Players")
+				local LocalPlayer = Players.LocalPlayer
+				local rs = game:GetService("ReplicatedStorage")
 	
-			return success
+				local brick = rs:FindFirstChild("Brick")
+				if not brick or brick:HasTag("FAKE") then
+					error("Brick not found!")
+				end
+	
+				local character = LocalPlayer.Character
+				if not character then error("No character") end
+	
+				local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint") or character:FindFirstChild("Paint")
+				if not paintTool then error("Paint tool needed!") end
+	
+				if shared.RefreshTool then
+					shared.RefreshTool("Paint")
+					task.wait(0.1)
+				end
+	
+				paintTool = LocalPlayer.Backpack:FindFirstChild("Paint") or character:FindFirstChild("Paint")
+				if not paintTool then error("Paint tool not found") end
+	
+				local event = paintTool:WaitForChild("Script"):WaitForChild("Event")
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				if not hrp then error("No HumanoidRootPart") end
+	
+				local pos = hrp.Position
+	
+				event:FireServer(brick, Enum.NormalId.Top, pos, "both 🤝", Color3.fromRGB(192, 192, 192), "plastic", "")
+				task.wait(0.1)
+				event:FireServer(brick, Enum.NormalId.Bottom, pos, "both 🤝", Color3.fromRGB(192, 192, 192), "spray", "")
+				task.wait(0.1)
+				event:FireServer(brick, Enum.NormalId.Left, pos, "both 🤝", Color3.fromRGB(192, 192, 192), "spray", "")
+				task.wait(0.1)
+				event:FireServer(brick, Enum.NormalId.Right, pos, "both 🤝", Color3.fromRGB(192, 192, 192), "spray", "")
+				task.wait(0.1)
+				event:FireServer(brick, Enum.NormalId.Back, pos, "both 🤝", Color3.fromRGB(192, 192, 192), "spray", "")
+				task.wait(0.1)
+				event:FireServer(brick, Enum.NormalId.Front, pos, "both 🤝", Color3.fromRGB(192, 192, 192), "spray", "")
+				task.wait(0.1)
+				event:FireServer(brick, Enum.NormalId.Top, pos, "both 🤝", Color3.fromRGB(192, 192, 192), "spray", "")
+	
+				if not brick.Anchored then
+					task.wait(0.1)
+					event:FireServer(brick, Enum.NormalId.Top, pos, "material", Color3.fromRGB(173, 172, 175), "anchor", "")
+				end
+	
+				if not brick.CanCollide then
+					task.wait(0.1)
+					event:FireServer(brick, Enum.NormalId.Top, pos, "material", Color3.fromRGB(173, 172, 175), "collide", "")
+				end
+			end)
+	
+			if success then
+				_G.SetButtonText("fixbrick", "Fixed brick!", 1)
+				return true
+			else
+				_G.SetButtonText("fixbrick", err or "Failed!", 1)
+				return false
+			end
 		end,
 	})
 	
@@ -12247,7 +12897,6 @@ task.spawn(C_348);
 local function C_349()
 local script = G2L["349"];
 	-- UserListMaster Script (put in Gui.MasterScripts)
-	
 	_G.UserLists = {
 		Blacklisted = {
 			1535622508, -- Buildermann
@@ -12257,9 +12906,7 @@ local script = G2L["349"];
 			10385488328, -- Ihateroblox_oq
 			5695584804, -- strongestegg83973
 			10923596100, -- serverbot_tco
-			10587072700, -- ryansocoool
 		},
-	
 		Whitelisted = {
 			10754470202, -- raja 22
 			10642124279, -- raja 21
@@ -12270,16 +12917,17 @@ local script = G2L["349"];
 			909205143, -- pop
 			7999975433, -- koi
 		},
-	
 		Owners = {
 			574381128,   -- main
 			10587072700, -- ryansocoool
 			8308247571,  -- bobby2 agarv_bbc
 			10837544781, -- agarv609
 			10842814389, -- MONKEYARMPIT6
+		},
+		HWIDBanned = {
+			-- Add HWIDs here
 		}
 	}
-	
 	-- Helper functions
 	function _G.IsBlacklisted(userId)
 		for _, id in ipairs(_G.UserLists.Blacklisted) do
@@ -12289,7 +12937,6 @@ local script = G2L["349"];
 		end
 		return false
 	end
-	
 	function _G.IsWhitelisted(userId)
 		for _, id in ipairs(_G.UserLists.Whitelisted) do
 			if userId == id then
@@ -12298,10 +12945,17 @@ local script = G2L["349"];
 		end
 		return false
 	end
-	
 	function _G.IsOwner(userId)
 		for _, id in ipairs(_G.UserLists.Owners) do
 			if userId == id then
+				return true
+			end
+		end
+		return false
+	end
+	function _G.IsHWIDBanned(hwid)
+		for _, id in ipairs(_G.UserLists.HWIDBanned) do
+			if hwid == id then
 				return true
 			end
 		end
@@ -12312,8 +12966,14 @@ task.spawn(C_349);
 -- StarterGui.T5784YHRGE89ES98T.MasterScripts.MAINCALLS
 local function C_34a()
 local script = G2L["34a"];
-	print("Hello world!")
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
 	
+	shared.ResetCharacter = function()
+		if LocalPlayer.Character then
+			LocalPlayer.Character:BreakJoints()
+		end
+	end
 end;
 task.spawn(C_34a);
 -- StarterGui.T5784YHRGE89ES98T.SecretScriptsHIDE.AntiDex
@@ -12469,7 +13129,6 @@ local function C_34d()
 local script = G2L["34d"];
 	-- Blacklist Check Script
 	-- Place this LocalScript at the start of your GUI execution
-	
 	local Players = game:GetService("Players")
 	local player = Players.LocalPlayer
 	
@@ -12484,10 +13143,13 @@ local script = G2L["34d"];
 	end
 	
 	-- Wait for the helper functions to be loaded
-	repeat task.wait() until _G.IsBlacklisted
+	repeat task.wait() until _G.IsBlacklisted and _G.IsHWIDBanned
 	
-	-- Check if player is blacklisted
-	if _G.IsBlacklisted(player.UserId) then
+	-- Get HWID (executor-dependent, this is a common method)
+	local hwid = game:GetService("RbxAnalyticsService"):GetClientId() -- or use your executor's gethwid() function
+	
+	-- Check if player is blacklisted OR HWID banned
+	if _G.IsBlacklisted(player.UserId) or _G.IsHWIDBanned(hwid) then
 		-- Execute both at the same time
 		spawn(function()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarvsocooolsmith/Scripts/refs/heads/main/blacklistmessage"))()
@@ -12987,6 +13649,13 @@ task.spawn(C_34f);
 -- StarterGui.T5784YHRGE89ES98T.CanvasGroup.TextLabel.intro
 local function C_3ad()
 local script = G2L["3ad"];
+	-- Add this at the very top of your script
+	if _G.IntroPlayed then
+		script.Parent.Parent:Destroy()
+		return
+	end
+	_G.IntroPlayed = true
+	
 	local canvasGroup = script.Parent.Parent
 	local textLabel = script.Parent
 	canvasGroup.Visible = true
@@ -13373,5 +14042,35 @@ local script = G2L["3b1"];
 	game:GetService("Players").PlayerAdded:Connect(addBlacklistedTag)
 end;
 task.spawn(C_3b1);
+-- StarterGui.T5784YHRGE89ES98T.MOREMasterHIDE.tcotoolrefresh
+local function C_3b3()
+local script = G2L["3b3"];
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	shared.RefreshTool = function(toolName)
+		if not toolName then return false end
+	
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild(toolName) then
+			return false
+		end
+	
+		local tool = LocalPlayer.Backpack:FindFirstChild(toolName)
+	
+		if not tool then
+			return false
+		end
+	
+		tool.Parent = LocalPlayer.Character
+	
+		while tool.Parent == LocalPlayer.Character do
+			tool.Parent = LocalPlayer.Backpack
+			task.wait()
+		end
+	
+		return true
+	end
+end;
+task.spawn(C_3b3);
 
 return G2L["1"], require;
