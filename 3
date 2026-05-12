@@ -10981,6 +10981,9 @@ local script = G2L["2e3"];
 		end,
 	})
 	
+	-- ====================================================================================================
+	-- RESTORE BRICK
+	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "restorebrick",
 		groupbox = script,
@@ -10992,10 +10995,222 @@ local script = G2L["2e3"];
 		callback = function()
 			local token = _G.SetButtonText("restorebrick", "Processing...", 999)
 	
-			-- Your code here
-			local success = true  -- Set to false if it fails
+			if getgenv().brickcollection == nil then
+				getgenv().brickcollection = {}
+			end
 	
-			return success
+			local success, result = pcall(function()
+				local Players = game:GetService("Players")
+				local LocalPlayer = Players.LocalPlayer
+				local rs = game:GetService("ReplicatedStorage")
+				local workspace = game:GetService("Workspace")
+	
+				local brickname = "Brick"
+				local ws = 0.235
+				local cfolder = workspace:FindFirstChild("Bricks") or workspace:FindFirstChild("Blocks")
+	
+				if not cfolder then
+					return "No blocks folder!"
+				end
+	
+				local character = LocalPlayer.Character
+				if not character then return "No character!" end
+	
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				if not hrp then return "No HumanoidRootPart!" end
+	
+				local function getplrpos()
+					return hrp.Position
+				end
+	
+				local function findtool(toolname)
+					for _, v in pairs(character:GetChildren()) do
+						if v:IsA("Tool") and v.Name:find(toolname) then
+							return v
+						end
+					end
+					for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
+						if v:IsA("Tool") and v.Name:find(toolname) then
+							return v
+						end
+					end
+					return nil
+				end
+	
+				if not rs:FindFirstChild(brickname) then
+					local brick = Instance.new("Part")
+					brick.Name = brickname
+					brick.Parent = rs
+				end
+	
+				for _, v in pairs(character:GetChildren()) do
+					if v:HasTag("The Chosen One by TomazDev") then
+						v.Script.Enabled = false
+						v.Script.Enabled = true
+					end
+				end
+	
+				for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
+					if v:HasTag("The Chosen One by TomazDev") then
+						v.Script.Enabled = false
+						v.Script.Enabled = true
+					end
+				end
+	
+				local buildtool = findtool("Build")
+				local painttool = findtool("Paint")
+				local shapetool = findtool("Shape")
+	
+				if not buildtool then
+					return "Build tool needed!"
+				end
+	
+				if buildtool.Parent == LocalPlayer.Backpack then
+					buildtool.Parent = character
+				end
+				if painttool and painttool.Parent == LocalPlayer.Backpack then
+					painttool.Parent = character
+				end
+				if shapetool and shapetool.Parent == LocalPlayer.Backpack then
+					shapetool.Parent = character
+				end
+	
+				task.wait(ws)
+	
+				local currbc = {}
+				for _, v in pairs(getgenv().brickcollection) do
+					if v ~= nil and typeof(v) == "Instance" then
+						if v:GetFullName() ~= brickname and v.Name ~= "Debris" then
+							table.insert(currbc, 1, v)
+						else
+							table.insert(currbc, v)
+						end
+					end
+				end
+	
+				if #currbc == 0 then
+					return "No blocks found!"
+				end
+	
+				local playerfolder = cfolder:FindFirstChild(LocalPlayer.Name)
+				if not playerfolder then
+					return "Player folder not found!"
+				end
+	
+				local block = nil
+				local beforeamt = #playerfolder:GetChildren()
+	
+				for _, v in pairs(currbc) do
+					if v ~= nil and typeof(v) == "Instance" then
+						block = v
+						if buildtool:FindFirstChild("Script") and buildtool.Script:FindFirstChild("Event") then
+							buildtool.Script.Event:FireServer(
+								block,
+								Enum.NormalId.Top,
+								getplrpos(),
+								"detailed"
+							)
+						end
+	
+						task.wait(ws)
+						if beforeamt < #playerfolder:GetChildren() then
+							break
+						end
+					end
+				end
+	
+				task.wait(1)
+				block = playerfolder:FindFirstChildWhichIsA("BasePart")
+	
+				if not block then
+					return "No block created!"
+				end
+	
+				block = playerfolder:GetChildren()[#playerfolder:GetChildren()]
+	
+				if painttool then
+					if block.Material ~= Enum.Material.Plastic then
+						painttool.Script.Event:FireServer(
+							block,
+							Enum.NormalId.Top,
+							getplrpos(),
+							"material",
+							Color3.fromRGB(192, 192, 192),
+							"plastic",
+							""
+						)
+						task.wait(ws * 2)
+					end
+	
+					if not block.Anchored or block.CFrame - block.Position ~= CFrame.new() then
+						local l = tick()
+						repeat
+							if tick() > l then
+								l = tick() + (ws * 2)
+								painttool.Script.Event:FireServer(
+									block,
+									Enum.NormalId.Top,
+									getplrpos(),
+									"both 🤝",
+									Color3.fromRGB(192, 192, 192),
+									"anchor",
+									""
+								)
+							end
+							task.wait()
+						until block.Anchored and block.CFrame - block.Position == CFrame.new()
+					end
+				end
+	
+				if shapetool then
+					local blockpos = block.Position
+					blockpos = Vector3.new(blockpos.X % 4, blockpos.Y % 4, blockpos.Z % 4)
+					blockpos = blockpos - Vector3.new(0.5, 0.5, 0.5)
+	
+					for i = 1, blockpos.X do
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Left, block.Position, "increase")
+						task.wait(0.15)
+					end
+	
+					for i = 1, 3 - blockpos.X do
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Right, block.Position, "increase")
+						task.wait(0.15)
+					end
+	
+					for i = 1, blockpos.Y do
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Bottom, block.Position, "increase")
+						task.wait(0.15)
+					end
+	
+					for i = 1, 3 - blockpos.Y do
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Top, block.Position, "increase")
+						task.wait(0.15)
+					end
+	
+					for i = 1, blockpos.Z do
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Front, block.Position, "increase")
+						task.wait(0.15)
+					end
+	
+					for i = 1, 3 - blockpos.Z do
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Back, block.Position, "increase")
+						task.wait(0.15)
+					end
+				end
+	
+				return true
+			end)
+	
+			if success and result == true then
+				_G.SetButtonText("restorebrick", "Restored brick!", 1)
+				return true
+			elseif type(result) == "string" then
+				_G.SetButtonText("restorebrick", result, 1)
+				return false
+			else
+				_G.SetButtonText("restorebrick", "Failed!", 1)
+				return false
+			end
 		end,
 	})
 end;
