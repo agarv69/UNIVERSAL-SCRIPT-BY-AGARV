@@ -8838,43 +8838,31 @@ local script = G2L["1ae"];
 					local root = character:FindFirstChild("HumanoidRootPart")
 					if not root then return end
 	
-					if not lastPosition then
+					local currentPos = root.Position
+	
+					-- Check if in glitch zone
+					local inGlitchZone = math.abs(currentPos.X - 1234567) < 5
+	
+					if not lastPosition and not inGlitchZone then
 						lastPosition = root.Position
 						lastOrientation = root.CFrame - root.Position
-						hasTeleportedBack = false
 						return
 					end
 	
-					local currentPos = root.Position
-	
-					-- Check if X coordinate is 1234567 (glitch zone)
-					if math.abs(currentPos.X - 1234567) < 5 and not hasTeleportedBack then
-						-- Teleported to the glitch zone, send back with same rotation
-						root.CFrame = CFrame.new(lastPosition) * lastOrientation
-						hasTeleportedBack = true
+					if inGlitchZone and not hasTeleportedBack then
+						-- First time detecting glitch
 						_G.Notify("Blocked glitch command!", 2)
+						hasTeleportedBack = true
+					end
 	
-						-- Force camera fix in separate task
-						task.spawn(function()
-							local humanoid = character:FindFirstChildOfClass("Humanoid")
-							if not humanoid then return end
-	
-							local startTime = tick()
-							while tick() - startTime < 1 do
-								workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-								workspace.CurrentCamera.CameraSubject = humanoid
-								task.wait()
-							end
-						end)
-					elseif math.abs(currentPos.X - 1234567) >= 5 then
-						-- Not in the glitch zone anymore, reset flag and update position
+					-- Only update lastPosition when NOT in glitch zone
+					if not inGlitchZone then
 						hasTeleportedBack = false
 						lastPosition = currentPos
 						lastOrientation = root.CFrame - root.Position
 					end
 				end)
 			else
-				-- Stop the loop when disabled
 				if _G.AntiGlitchLoop then
 					_G.AntiGlitchLoop:Disconnect()
 					_G.AntiGlitchLoop = nil
