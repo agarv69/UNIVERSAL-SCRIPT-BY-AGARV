@@ -8717,40 +8717,14 @@ local script = G2L["1ae"];
 		tooltip = "Hides all main visual effects which includes: blind, colorless, fog, and myopic.",
 		callback = function(isEnabled)
 			if isEnabled then
-				local trackedEffects = {}
-				local Lighting = game:GetService("Lighting")
-				local LocalPlayer = game:GetService("Players").LocalPlayer
-	
-				-- Track what already exists (don't notify on first detection)
-				if Lighting:FindFirstChild("Blur") then
-					trackedEffects["myopic"] = true
-				end
-				if Lighting:FindFirstChild("Fog") then
-					trackedEffects["fog"] = true
-				end
-				if Lighting:FindFirstChild("RGB") then
-					trackedEffects["colorless"] = true
-				end
-				local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-				if playerGui and playerGui:FindFirstChild("Blind") then
-					trackedEffects["blind"] = true
-				end
-	
 				-- Start the anti visual loop
 				_G.AntiVisualLoop = game:GetService("RunService").Heartbeat:Connect(function()
+					local Lighting = game:GetService("Lighting")
+					local LocalPlayer = game:GetService("Players").LocalPlayer
+	
 					-- Anti Myopic
 					local blur = Lighting:FindFirstChild("Blur")
-					if blur then
-						if blur.Enabled then
-							if not trackedEffects["myopic"] then
-								_G.Notify("Blocked: Myopic", 2)
-								trackedEffects["myopic"] = true
-							end
-							blur.Enabled = false
-						end
-					else
-						trackedEffects["myopic"] = nil
-					end
+					if blur then blur.Enabled = false end
 	
 					-- Anti Blind
 					local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
@@ -8758,45 +8732,19 @@ local script = G2L["1ae"];
 						local blind = playerGui:FindFirstChild("Blind")
 						if blind then
 							local frame = blind:FindFirstChildOfClass("Frame")
-							if frame and frame.BackgroundTransparency < 1 then
-								if not trackedEffects["blind"] then
-									_G.Notify("Blocked: Blind", 2)
-									trackedEffects["blind"] = true
-								end
+							if frame then
 								frame.BackgroundTransparency = 1
 							end
-						else
-							trackedEffects["blind"] = nil
 						end
 					end
 	
 					-- Anti Fog
 					local fog = Lighting:FindFirstChild("Fog")
-					if fog then
-						if fog.Density > 0 then
-							if not trackedEffects["fog"] then
-								_G.Notify("Blocked: Fog", 2)
-								trackedEffects["fog"] = true
-							end
-							fog.Density = 0
-						end
-					else
-						trackedEffects["fog"] = nil
-					end
+					if fog then fog.Density = 0 end
 	
 					-- Anti Colorless
 					local rgb = Lighting:FindFirstChild("RGB")
-					if rgb then
-						if rgb.Enabled then
-							if not trackedEffects["colorless"] then
-								_G.Notify("Blocked: Colorless", 2)
-								trackedEffects["colorless"] = true
-							end
-							rgb.Enabled = false
-						end
-					else
-						trackedEffects["colorless"] = nil
-					end
+					if rgb then rgb.Enabled = false end
 				end)
 			else
 				-- Stop the loop when disabled
@@ -8811,55 +8759,301 @@ local script = G2L["1ae"];
 	
 	
 	
-	
+	-- ====================================================================================================
+	-- VAMP
+	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "vampire",
 		groupbox = script,
 		tooltip = "Blocks out the Vampire Vanquisher gear from breaking your camera and inventory.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local StarterGui = game:GetService("StarterGui")
+				local RunService = game:GetService("RunService")
+	
+				-- Function to run anti-vamp for 5 seconds after respawn
+				local function onCharacterAdded(character)
+					local humanoid = character:WaitForChild("Humanoid")
+	
+					-- Run anti-vamp loop for 5 seconds
+					local startTime = tick()
+					local tempLoop = RunService.Heartbeat:Connect(function()
+						if tick() - startTime >= 5 then
+							-- Stop after 5 seconds
+							tempLoop:Disconnect()
+							return
+						end
+	
+						if humanoid and humanoid.Health > 0 then
+							pcall(function()
+								StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
+							end)
+							workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+							workspace.CurrentCamera.CameraSubject = humanoid
+						end
+					end)
+				end
+	
+				-- Connect to character respawn
+				_G.AntiVampConnection = LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+	
+				-- Also run for current character if it exists
+				if LocalPlayer.Character then
+					onCharacterAdded(LocalPlayer.Character)
+				end
+			else
+				-- Disconnect when disabled
+				if _G.AntiVampConnection then
+					_G.AntiVampConnection:Disconnect()
+					_G.AntiVampConnection = nil
+				end
+			end
 		end
 	})
 	
+	
+	
+	
+	
+	
+	-- ====================================================================================================
+	-- GLITCH
+	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "glitch",
 		groupbox = script,
 		tooltip = "Prevents the glitch command from glitching you.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local RunService = game:GetService("RunService")
+				local lastPosition = nil
+				local lastOrientation = nil
+				local hasTeleportedBack = false
+	
+				_G.AntiGlitchLoop = RunService.Heartbeat:Connect(function()
+					local character = LocalPlayer.Character
+					if not character then return end
+					local root = character:FindFirstChild("HumanoidRootPart")
+					if not root then return end
+	
+					if not lastPosition then
+						lastPosition = root.Position
+						lastOrientation = root.CFrame - root.Position  -- Store rotation only
+						hasTeleportedBack = false
+						return
+					end
+	
+					local currentPos = root.Position
+	
+					-- Check if X coordinate is 1234567 (glitch zone)
+					if math.abs(currentPos.X - 1234567) < 5 and not hasTeleportedBack then
+						-- Teleported to the glitch zone, send back with same rotation
+						root.CFrame = CFrame.new(lastPosition) * lastOrientation
+						hasTeleportedBack = true
+						_G.Notify("Blocked glitch command!", 2)
+					elseif math.abs(currentPos.X - 1234567) >= 5 then
+						-- Not in the glitch zone anymore, reset flag and update position
+						hasTeleportedBack = false
+						lastPosition = currentPos
+						lastOrientation = root.CFrame - root.Position  -- Update rotation
+					end
+				end)
+			else
+				-- Stop the loop when disabled
+				if _G.AntiGlitchLoop then
+					_G.AntiGlitchLoop:Disconnect()
+					_G.AntiGlitchLoop = nil
+				end
+			end
 		end
 	})
 	
+	-- ====================================================================================================
+	-- JAIL
+	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "jail",
 		groupbox = script,
-		tooltip = "Removes/Hides the jail cell from your view.",
+		tooltip = "Visually removes your jail cell.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local RunService = game:GetService("RunService")
+				local hasNotified = false
+	
+				_G.AntiJailLoop = RunService.Heartbeat:Connect(function()
+					local char = workspace:FindFirstChild(LocalPlayer.Name)
+					if not char then return end
+	
+					local jail = char:FindFirstChild("Jail")
+					if not jail then 
+						hasNotified = false
+						return 
+					end
+	
+					-- Notify once when jail is detected
+					if not hasNotified then
+						_G.Notify("Blocked jail command!", 2)
+						hasNotified = true
+					end
+	
+					for _, part in pairs(jail:GetChildren()) do
+						if part:IsA("BasePart") and part.Name == "Part" then
+							part.CanCollide = false
+							part.Transparency = 1
+						end
+					end
+				end)
+			else
+				-- Stop the loop when disabled
+				if _G.AntiJailLoop then
+					_G.AntiJailLoop:Disconnect()
+					_G.AntiJailLoop = nil
+				end
+			end
 		end
 	})
 	
+	-- ====================================================================================================
+	-- MAPTIDE NAN
+	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "maptidenan",
 		groupbox = script,
 		tooltip = "Prevents spawn loop kill when a player sets the terrain tide to NaN.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+	
+				local function isVoided()
+					local spawn = workspace:FindFirstChild("Spawn")
+					if not spawn then return false end
+					local acm = spawn.AssemblyCenterOfMass
+					return acm.X == 0 and acm.Y == -1000000 and acm.Z == 0
+				end
+	
+				local function onCharacterAdded(character)
+					local hrp = character:WaitForChild("HumanoidRootPart")
+					if not isVoided() then return end
+					hrp.Anchored = true
+					task.wait(0.1)
+					hrp.CFrame = CFrame.new(0, 3, 0)
+					hrp.Anchored = false
+	
+					-- Notify when teleported
+					_G.Notify("Blocked NaN spawn kill!", 2)
+				end
+	
+				-- Connect to character respawn
+				_G.AntiNanConnection = LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+	
+				-- Also run for current character if it exists
+				if LocalPlayer.Character then
+					onCharacterAdded(LocalPlayer.Character)
+				end
+			else
+				-- Disconnect when disabled
+				if _G.AntiNanConnection then
+					_G.AntiNanConnection:Disconnect()
+					_G.AntiNanConnection = nil
+				end
+			end
 		end
 	})
 	
+	-- ====================================================================================================
+	-- FREEZE
+	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "freeze",
 		groupbox = script,
 		tooltip = "Auto resets your character when you get frozen.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local RunService = game:GetService("RunService")
+				local isResetting = false
+	
+				_G.AntiFreezeLoop = RunService.Heartbeat:Connect(function()
+					local char = workspace:FindFirstChild(LocalPlayer.Name)
+					if not char then return end
+	
+					if char:FindFirstChild("Hielo") and not isResetting then
+						isResetting = true
+						_G.Notify("Frozen detected! Resetting...", 2)
+	
+						if shared.ResetCharacter then
+							shared.ResetCharacter()
+						else
+							-- Fallback reset method
+							LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
+						end
+	
+						LocalPlayer.CharacterAdded:Wait()
+						task.wait(0.2)
+						isResetting = false
+					end
+				end)
+			else
+				-- Stop the loop when disabled
+				if _G.AntiFreezeLoop then
+					_G.AntiFreezeLoop:Disconnect()
+					_G.AntiFreezeLoop = nil
+				end
+			end
 		end
 	})
 	
+	-- ====================================================================================================
+	-- INVIS
+	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "invisible",
 		groupbox = script,
 		tooltip = "Auto resets your character when you turn invisible.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local RunService = game:GetService("RunService")
+				local isResetting = false
+	
+				_G.AntiInvisLoop = RunService.Heartbeat:Connect(function()
+					local char = workspace:FindFirstChild(LocalPlayer.Name)
+					if not char then return end
+	
+					local upperTorso = char:FindFirstChild("UpperTorso")
+					if upperTorso and upperTorso.Transparency >= 1 and not isResetting then
+						isResetting = true
+						_G.Notify("Invisible detected! Resetting...", 2)
+	
+						if shared.ResetCharacter then
+							shared.ResetCharacter()
+						else
+							-- Fallback reset method
+							LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
+						end
+	
+						LocalPlayer.CharacterAdded:Wait()
+						task.wait(0.2)
+						isResetting = false
+					end
+				end)
+			else
+				-- Stop the loop when disabled
+				if _G.AntiInvisLoop then
+					_G.AntiInvisLoop:Disconnect()
+					_G.AntiInvisLoop = nil
+				end
+			end
 		end
 	})
 	
+	
+	-- ====================================================================================================
+	-- MORPH
+	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "morph",
 		groupbox = script,
@@ -8868,6 +9062,10 @@ local script = G2L["1ae"];
 		end
 	})
 	
+	
+	-- ====================================================================================================
+	-- NOCLIP
+	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "noclip",
 		groupbox = script,
