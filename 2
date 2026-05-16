@@ -8837,7 +8837,6 @@ local script = G2L["1ae"];
 					if not character then return end
 					local root = character:FindFirstChild("HumanoidRootPart")
 					if not root then return end
-					local humanoid = character:FindFirstChildOfClass("Humanoid")
 	
 					if not lastPosition then
 						lastPosition = root.Position
@@ -8849,20 +8848,13 @@ local script = G2L["1ae"];
 					local currentPos = root.Position
 	
 					-- Check if X coordinate is 1234567 (glitch zone)
-					if math.abs(currentPos.X - 1234567) < 5 then
-						if not hasTeleportedBack then
-							_G.Notify("Blocked glitch command!", 2)
-							hasTeleportedBack = true
-						end
-						-- Keep trying to TP back
+					if math.abs(currentPos.X - 1234567) < 5 and not hasTeleportedBack then
+						-- Teleported to the glitch zone, send back with same rotation
 						root.CFrame = CFrame.new(lastPosition) * lastOrientation
-	
-						-- FORCE CAMERA TO YOUR ACTUAL POSITION WHILE GLITCHED
-						if humanoid then
-							workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-							workspace.CurrentCamera.CameraSubject = humanoid
-						end
-					else
+						hasTeleportedBack = true
+						_G.Notify("Blocked glitch command!", 2)
+					elseif math.abs(currentPos.X - 1234567) >= 5 then
+						-- Not in the glitch zone anymore, reset flag and update position
 						hasTeleportedBack = false
 						lastPosition = currentPos
 						lastOrientation = root.CFrame - root.Position
