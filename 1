@@ -8854,9 +8854,19 @@ local script = G2L["1ae"];
 						hasTeleportedBack = true
 						_G.Notify("Blocked glitch command!", 2)
 	
-						-- Fix camera immediately after 0.1 seconds
-						task.delay(0.1, function()
-							local humanoid = character:FindFirstChildOfClass("Humanoid")
+						-- Force TP for 1 second
+						task.spawn(function()
+							local startTime = tick()
+							while tick() - startTime < 1 do
+								if character and character:FindFirstChild("HumanoidRootPart") then
+									character.HumanoidRootPart.CFrame = CFrame.new(lastPosition) * lastOrientation
+								end
+								task.wait()
+							end
+	
+							-- Fix camera after 1.5 seconds total
+							task.wait(0.5)
+							local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 							if humanoid then
 								workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
 								workspace.CurrentCamera.CameraSubject = humanoid
