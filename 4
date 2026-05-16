@@ -8841,7 +8841,7 @@ local script = G2L["1ae"];
 	
 					if not lastPosition then
 						lastPosition = root.Position
-						lastOrientation = root.CFrame - root.Position  -- Store rotation only
+						lastOrientation = root.CFrame - root.Position
 						hasTeleportedBack = false
 						return
 					end
@@ -8854,25 +8854,17 @@ local script = G2L["1ae"];
 						root.CFrame = CFrame.new(lastPosition) * lastOrientation
 						hasTeleportedBack = true
 						_G.Notify("Blocked glitch command!", 2)
+					end
 	
-						-- Force camera to player for 1 second
-						if humanoid then
-							local startTime = tick()
-							local cameraFixLoop = RunService.Heartbeat:Connect(function()
-								if tick() - startTime >= 1 then
-									cameraFixLoop:Disconnect()
-									return
-								end
-	
-								workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-								workspace.CurrentCamera.CameraSubject = humanoid
-							end)
-						end
+					-- If still in glitch zone (frozen), keep fixing camera
+					if math.abs(currentPos.X - 1234567) < 5 and humanoid then
+						workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+						workspace.CurrentCamera.CameraSubject = humanoid
 					elseif math.abs(currentPos.X - 1234567) >= 5 then
 						-- Not in the glitch zone anymore, reset flag and update position
 						hasTeleportedBack = false
 						lastPosition = currentPos
-						lastOrientation = root.CFrame - root.Position  -- Update rotation
+						lastOrientation = root.CFrame - root.Position
 					end
 				end)
 			else
