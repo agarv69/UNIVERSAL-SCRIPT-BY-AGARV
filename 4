@@ -8837,6 +8837,7 @@ local script = G2L["1ae"];
 					if not character then return end
 					local root = character:FindFirstChild("HumanoidRootPart")
 					if not root then return end
+					local humanoid = character:FindFirstChildOfClass("Humanoid")
 	
 					if not lastPosition then
 						lastPosition = root.Position
@@ -8853,6 +8854,20 @@ local script = G2L["1ae"];
 						root.CFrame = CFrame.new(lastPosition) * lastOrientation
 						hasTeleportedBack = true
 						_G.Notify("Blocked glitch command!", 2)
+	
+						-- Force camera to player for 1 second
+						if humanoid then
+							local startTime = tick()
+							local cameraFixLoop = RunService.Heartbeat:Connect(function()
+								if tick() - startTime >= 1 then
+									cameraFixLoop:Disconnect()
+									return
+								end
+	
+								workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+								workspace.CurrentCamera.CameraSubject = humanoid
+							end)
+						end
 					elseif math.abs(currentPos.X - 1234567) >= 5 then
 						-- Not in the glitch zone anymore, reset flag and update position
 						hasTeleportedBack = false
@@ -9014,6 +9029,39 @@ local script = G2L["1ae"];
 		groupbox = script,
 		tooltip = "Auto resets your character when you turn invisible.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local RunService = game:GetService("RunService")
+				local isResetting = false
+	
+				_G.AntiInvisLoop = RunService.Heartbeat:Connect(function()
+					local char = workspace:FindFirstChild(LocalPlayer.Name)
+					if not char then return end
+	
+					local upperTorso = char:FindFirstChild("UpperTorso")
+					if upperTorso and upperTorso.Transparency >= 1 and not isResetting then
+						isResetting = true
+						_G.Notify("Invisible detected! Resetting...", 2)
+	
+						if shared.ResetCharacter then
+							shared.ResetCharacter()
+						else
+							-- Fallback reset method
+							LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
+						end
+	
+						LocalPlayer.CharacterAdded:Wait()
+						task.wait(0.2)
+						isResetting = false
+					end
+				end)
+			else
+				-- Stop the loop when disabled
+				if _G.AntiInvisLoop then
+					_G.AntiInvisLoop:Disconnect()
+					_G.AntiInvisLoop = nil
+				end
+			end
 		end
 	})
 	
@@ -9026,6 +9074,121 @@ local script = G2L["1ae"];
 		groupbox = script,
 		tooltip = "Auto resets your character when you get morphed.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local isResetting = false
+				local originalShirt = nil
+				local originalPants = nil
+				local originalAccessories = {}
+	
+				local function captureOriginalAppearance(character)
+					-- Capture shirt
+					local shirt = character:FindFirstChildOfClass("Shirt")
+					originalShirt = shirt and shirt.ShirtTemplate or nil
+	
+					-- Capture pants
+					local pants = character:FindFirstChildOfClass("Pants")
+					originalPants = pants and pants.PantsTemplate or nil
+	
+					-- Capture accessories
+					originalAccessories = {}
+					for _, accessory in pairs(character:GetChildren()) do
+						if accessory:IsA("Accessory") then
+							table.insert(originalAccessories, accessory.Name)
+						end
+					end
+				end
+	
+				local function checkForMorph(character)
+					if isResetting then return end
+	
+					-- Check shirt change
+					local shirt = character:FindFirstChildOfClass("Shirt")
+					local currentShirt = shirt and shirt.ShirtTemplate or nil
+					if currentShirt ~= originalShirt then
+						return true
+					end
+	
+					-- Check pants change
+					local pants = character:FindFirstChildOfClass("Pants")
+					local currentPants = pants and pants.PantsTemplate or nil
+					if currentPants ~= originalPants then
+						return true
+					end
+	
+					-- Check accessories change
+					local currentAccessories = {}
+					for _, accessory in pairs(character:GetChildren()) do
+						if accessory:IsA("Accessory") then
+							table.insert(currentAccessories, accessory.Name)
+						end
+					end
+	
+					-- Compare accessories (if count or names changed)
+					if #currentAccessories ~= #originalAccessories then
+						return true
+					end
+	
+					for _, accName in pairs(currentAccessories) do
+						local found = false
+						for _, origName in pairs(originalAccessories) do
+							if accName == origName then
+								found = true
+								break
+							end
+						end
+						if not found then
+							return true
+						end
+					end
+	
+					return false
+				end
+	
+				local function onCharacterAdded(character)
+					task.wait(0.5) -- Wait for character to fully load
+					captureOriginalAppearance(character)
+					isResetting = false
+				end
+	
+				-- Capture initial appearance
+				if LocalPlayer.Character then
+					captureOriginalAppearance(LocalPlayer.Character)
+				end
+	
+				-- Monitor for changes
+				_G.AntiMorphLoop = game:GetService("RunService").Heartbeat:Connect(function()
+					local char = workspace:FindFirstChild(LocalPlayer.Name)
+					if not char then return end
+	
+					if checkForMorph(char) then
+						isResetting = true
+						_G.Notify("Morph detected! Resetting...", 2)
+	
+						if shared.ResetCharacter then
+							shared.ResetCharacter()
+						else
+							LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
+						end
+	
+						LocalPlayer.CharacterAdded:Wait()
+						task.wait(0.2)
+					end
+				end)
+	
+				-- Track respawns
+				_G.AntiMorphRespawn = LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+			else
+				-- Stop the loop when disabled
+				if _G.AntiMorphLoop then
+					_G.AntiMorphLoop:Disconnect()
+					_G.AntiMorphLoop = nil
+				end
+				if _G.AntiMorphRespawn then
+					_G.AntiMorphRespawn:Disconnect()
+					_G.AntiMorphRespawn = nil
+				end
+			end
 		end
 	})
 	
