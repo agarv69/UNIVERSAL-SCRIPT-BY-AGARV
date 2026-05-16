@@ -8829,6 +8829,7 @@ local script = G2L["1ae"];
 				local LocalPlayer = game:GetService("Players").LocalPlayer
 				local RunService = game:GetService("RunService")
 				local lastPosition = nil
+				local lastOrientation = nil
 				local hasTeleportedBack = false
 	
 				_G.AntiGlitchLoop = RunService.Heartbeat:Connect(function()
@@ -8839,6 +8840,7 @@ local script = G2L["1ae"];
 	
 					if not lastPosition then
 						lastPosition = root.Position
+						lastOrientation = root.CFrame - root.Position  -- Store rotation only
 						hasTeleportedBack = false
 						return
 					end
@@ -8847,13 +8849,15 @@ local script = G2L["1ae"];
 	
 					-- Check if X coordinate is 1234567 (glitch zone)
 					if math.abs(currentPos.X - 1234567) < 5 and not hasTeleportedBack then
-						-- Teleported to the glitch zone, send back
-						root.CFrame = CFrame.new(lastPosition)
+						-- Teleported to the glitch zone, send back with same rotation
+						root.CFrame = CFrame.new(lastPosition) * lastOrientation
 						hasTeleportedBack = true
+						_G.Notify("Blocked glitch command!", 2)
 					elseif math.abs(currentPos.X - 1234567) >= 5 then
 						-- Not in the glitch zone anymore, reset flag and update position
 						hasTeleportedBack = false
 						lastPosition = currentPos
+						lastOrientation = root.CFrame - root.Position  -- Update rotation
 					end
 				end)
 			else
@@ -8872,8 +8876,43 @@ local script = G2L["1ae"];
 	_G.CreateToggle({
 		frame = "jail",
 		groupbox = script,
-		tooltip = "Removes/Hides the jail cell from your view.",
+		tooltip = "Visually removes your jail cell.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local RunService = game:GetService("RunService")
+				local hasNotified = false
+	
+				_G.AntiJailLoop = RunService.Heartbeat:Connect(function()
+					local char = workspace:FindFirstChild(LocalPlayer.Name)
+					if not char then return end
+	
+					local jail = char:FindFirstChild("Jail")
+					if not jail then 
+						hasNotified = false
+						return 
+					end
+	
+					-- Notify once when jail is detected
+					if not hasNotified then
+						_G.Notify("Blocked jail command!", 2)
+						hasNotified = true
+					end
+	
+					for _, part in pairs(jail:GetChildren()) do
+						if part:IsA("BasePart") and part.Name == "Part" then
+							part.CanCollide = false
+							part.Transparency = 1
+						end
+					end
+				end)
+			else
+				-- Stop the loop when disabled
+				if _G.AntiJailLoop then
+					_G.AntiJailLoop:Disconnect()
+					_G.AntiJailLoop = nil
+				end
+			end
 		end
 	})
 	
@@ -8975,6 +9014,39 @@ local script = G2L["1ae"];
 		groupbox = script,
 		tooltip = "Auto resets your character when you turn invisible.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local RunService = game:GetService("RunService")
+				local isResetting = false
+	
+				_G.AntiInvisLoop = RunService.Heartbeat:Connect(function()
+					local char = workspace:FindFirstChild(LocalPlayer.Name)
+					if not char then return end
+	
+					local upperTorso = char:FindFirstChild("UpperTorso")
+					if upperTorso and upperTorso.Transparency >= 1 and not isResetting then
+						isResetting = true
+						_G.Notify("Invisible detected! Resetting...", 2)
+	
+						if shared.ResetCharacter then
+							shared.ResetCharacter()
+						else
+							-- Fallback reset method
+							LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
+						end
+	
+						LocalPlayer.CharacterAdded:Wait()
+						task.wait(0.2)
+						isResetting = false
+					end
+				end)
+			else
+				-- Stop the loop when disabled
+				if _G.AntiInvisLoop then
+					_G.AntiInvisLoop:Disconnect()
+					_G.AntiInvisLoop = nil
+				end
+			end
 		end
 	})
 	
@@ -8987,6 +9059,121 @@ local script = G2L["1ae"];
 		groupbox = script,
 		tooltip = "Auto resets your character when you get morphed.",
 		callback = function(isEnabled)
+			if isEnabled then
+				local LocalPlayer = game:GetService("Players").LocalPlayer
+				local isResetting = false
+				local originalShirt = nil
+				local originalPants = nil
+				local originalAccessories = {}
+	
+				local function captureOriginalAppearance(character)
+					-- Capture shirt
+					local shirt = character:FindFirstChildOfClass("Shirt")
+					originalShirt = shirt and shirt.ShirtTemplate or nil
+	
+					-- Capture pants
+					local pants = character:FindFirstChildOfClass("Pants")
+					originalPants = pants and pants.PantsTemplate or nil
+	
+					-- Capture accessories
+					originalAccessories = {}
+					for _, accessory in pairs(character:GetChildren()) do
+						if accessory:IsA("Accessory") then
+							table.insert(originalAccessories, accessory.Name)
+						end
+					end
+				end
+	
+				local function checkForMorph(character)
+					if isResetting then return end
+	
+					-- Check shirt change
+					local shirt = character:FindFirstChildOfClass("Shirt")
+					local currentShirt = shirt and shirt.ShirtTemplate or nil
+					if currentShirt ~= originalShirt then
+						return true
+					end
+	
+					-- Check pants change
+					local pants = character:FindFirstChildOfClass("Pants")
+					local currentPants = pants and pants.PantsTemplate or nil
+					if currentPants ~= originalPants then
+						return true
+					end
+	
+					-- Check accessories change
+					local currentAccessories = {}
+					for _, accessory in pairs(character:GetChildren()) do
+						if accessory:IsA("Accessory") then
+							table.insert(currentAccessories, accessory.Name)
+						end
+					end
+	
+					-- Compare accessories (if count or names changed)
+					if #currentAccessories ~= #originalAccessories then
+						return true
+					end
+	
+					for _, accName in pairs(currentAccessories) do
+						local found = false
+						for _, origName in pairs(originalAccessories) do
+							if accName == origName then
+								found = true
+								break
+							end
+						end
+						if not found then
+							return true
+						end
+					end
+	
+					return false
+				end
+	
+				local function onCharacterAdded(character)
+					task.wait(0.5) -- Wait for character to fully load
+					captureOriginalAppearance(character)
+					isResetting = false
+				end
+	
+				-- Capture initial appearance
+				if LocalPlayer.Character then
+					captureOriginalAppearance(LocalPlayer.Character)
+				end
+	
+				-- Monitor for changes
+				_G.AntiMorphLoop = game:GetService("RunService").Heartbeat:Connect(function()
+					local char = workspace:FindFirstChild(LocalPlayer.Name)
+					if not char then return end
+	
+					if checkForMorph(char) then
+						isResetting = true
+						_G.Notify("Morph detected! Resetting...", 2)
+	
+						if shared.ResetCharacter then
+							shared.ResetCharacter()
+						else
+							LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
+						end
+	
+						LocalPlayer.CharacterAdded:Wait()
+						task.wait(0.2)
+					end
+				end)
+	
+				-- Track respawns
+				_G.AntiMorphRespawn = LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+			else
+				-- Stop the loop when disabled
+				if _G.AntiMorphLoop then
+					_G.AntiMorphLoop:Disconnect()
+					_G.AntiMorphLoop = nil
+				end
+				if _G.AntiMorphRespawn then
+					_G.AntiMorphRespawn:Disconnect()
+					_G.AntiMorphRespawn = nil
+				end
+			end
 		end
 	})
 	
