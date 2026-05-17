@@ -1,0 +1,80 @@
+local HttpService = game:GetService("HttpService")
+
+local MaterialSymbols = {
+	[Enum.Material.SmoothPlastic] = "!",
+	[Enum.Material.Plastic] = "@",
+	[Enum.Material.CeramicTiles] = "#",
+	[Enum.Material.Brick] = "$",
+	[Enum.Material.WoodPlanks] = "%",
+	[Enum.Material.Ice] = "^",
+	[Enum.Material.Grass] = "&",
+	[Enum.Material.Sand] = "*",
+	[Enum.Material.Snow] = "(",
+	[Enum.Material.Glass] = ")",
+	[Enum.Material.Wood] = "-",
+	[Enum.Material.Slate] = "_",
+	[Enum.Material.Pebble] = "=",
+	[Enum.Material.Marble] = "+",
+	[Enum.Material.Granite] = "[",
+	[Enum.Material.DiamondPlate] = "]",
+	[Enum.Material.Metal] = "{",
+	[Enum.Material.Asphalt] = "}",
+	[Enum.Material.Concrete] = "~",
+	[Enum.Material.Pavement] = "`",
+	[Enum.Material.Neon] = "?"
+}
+
+local function colorToHex(color3)
+	local r = math.floor(color3.R * 255)
+	local g = math.floor(color3.G * 255)
+	local b = math.floor(color3.B * 255)
+	return string.format("%02X%02X%02X", r, g, b)
+end
+
+local function hasDecimal(num)
+	return num % 1 ~= 0
+end
+
+-- Find Bricks folder
+local bricksFolder = workspace:FindFirstChild("Bricks")
+if not bricksFolder then
+	warn("Bricks folder not found!")
+	return
+end
+
+local buildString = ""
+local blockCount = 0
+
+-- Find all parts named "Brick"
+for _, descendant in pairs(bricksFolder:GetDescendants()) do
+	if descendant:IsA("BasePart") and descendant.Name == "Brick" then
+		local size = descendant.Size
+		
+		-- Skip if any size has decimals
+		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
+			continue
+		end
+		
+		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
+		local colorHex = colorToHex(descendant.Color)
+		local cf = descendant.CFrame
+		
+		-- Format: |000000!1,1,1.-42,2,6|
+		buildString = buildString .. string.format(
+			"|%s%s%.0f,%.0f,%.0f.%.0f,%.0f,%.0f|",
+			colorHex,
+			materialSymbol,
+			size.X, size.Y, size.Z,
+			cf.X, cf.Y, cf.Z
+		)
+		
+		blockCount = blockCount + 1
+	end
+end
+
+-- Copy to clipboard
+setclipboard(buildString)
+
+print("Build saved to clipboard!")
+print("Total blocks: " .. blockCount)
+print("String length: " .. #buildString)
