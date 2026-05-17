@@ -49,25 +49,25 @@ local blockCount = 0
 for _, descendant in pairs(bricksFolder:GetDescendants()) do
 	if descendant:IsA("BasePart") and descendant.Name == "Brick" then
 		local size = descendant.Size
-		
+
 		-- Skip if any size has decimals
 		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
 			continue
 		end
-		
+
 		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
 		local colorHex = colorToHex(descendant.Color)
 		local cf = descendant.CFrame
-		
+
 		-- Format: |000000!1,1,1.-42,2,6|
 		buildString = buildString .. string.format(
-			"|%s%s%.0f,%.0f,%.0f.%.0f,%.0f,%.0f|",
+			"|%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
 			colorHex,
 			materialSymbol,
 			size.X, size.Y, size.Z,
 			cf.X, cf.Y, cf.Z
 		)
-		
+
 		blockCount = blockCount + 1
 	end
 end
