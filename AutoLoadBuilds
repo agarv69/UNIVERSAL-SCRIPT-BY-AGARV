@@ -1,0 +1,127 @@
+local HttpService = game:GetService("HttpService")
+local MaterialSymbols = {
+	[Enum.Material.SmoothPlastic] = "!",
+	[Enum.Material.Plastic] = "@",
+	[Enum.Material.CeramicTiles] = "#",
+	[Enum.Material.Brick] = "$",
+	[Enum.Material.WoodPlanks] = "%",
+	[Enum.Material.Ice] = "^",
+	[Enum.Material.Grass] = "&",
+	[Enum.Material.Sand] = "*",
+	[Enum.Material.Snow] = "(",
+	[Enum.Material.Glass] = ")",
+	[Enum.Material.Wood] = "-",
+	[Enum.Material.Slate] = "_",
+	[Enum.Material.Pebble] = "=",
+	[Enum.Material.Marble] = "+",
+	[Enum.Material.Granite] = "[",
+	[Enum.Material.DiamondPlate] = "]",
+	[Enum.Material.Metal] = "{",
+	[Enum.Material.Asphalt] = "}",
+	[Enum.Material.Concrete] = "~",
+	[Enum.Material.Pavement] = "`",
+	[Enum.Material.Neon] = "?"
+}
+local function colorToHex(color3)
+	local r = math.floor(color3.R * 255)
+	local g = math.floor(color3.G * 255)
+	local b = math.floor(color3.B * 255)
+	return string.format("%02X%02X%02X", r, g, b)
+end
+local function hasDecimal(num)
+	return num % 1 ~= 0
+end
+local bricksFolder = workspace:FindFirstChild("Bricks")
+if not bricksFolder then
+	warn("Bricks folder not found!")
+	return
+end
+local buildString = ""
+local blockCount = 0
+for _, descendant in pairs(bricksFolder:GetDescendants()) do
+	if descendant:IsA("BasePart") and descendant.Name == "Brick" then
+		local size = descendant.Size
+		-- Skip if any size has decimals
+		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
+			continue
+		end
+		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
+		local colorHex = colorToHex(descendant.Color)
+		local cf = descendant.CFrame
+	
+		buildString = buildString .. string.format(
+			"|%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
+			colorHex,
+			materialSymbol,
+			size.X, size.Y, size.Z,
+			cf.X, cf.Y, cf.Z
+		)
+		blockCount = blockCount + 1
+	end
+end
+
+-- Create the full executable script
+local fullScript = [[local HttpService = game:GetService("HttpService")
+local buildString = "]] .. buildString .. [["
+local SymbolToMaterial = {
+	["!"] = Enum.Material.SmoothPlastic,
+	["@"] = Enum.Material.Plastic,
+	["#"] = Enum.Material.CeramicTiles,
+	["$"] = Enum.Material.Brick,
+	["%"] = Enum.Material.WoodPlanks,
+	["^"] = Enum.Material.Ice,
+	["&"] = Enum.Material.Grass,
+	["*"] = Enum.Material.Sand,
+	["("] = Enum.Material.Snow,
+	[")"] = Enum.Material.Glass,
+	["-"] = Enum.Material.Wood,
+	["_"] = Enum.Material.Slate,
+	["="] = Enum.Material.Pebble,
+	["+"] = Enum.Material.Marble,
+	["["] = Enum.Material.Granite,
+	["]"] = Enum.Material.DiamondPlate,
+	["{"] = Enum.Material.Metal,
+	["}"] = Enum.Material.Asphalt,
+	["~"] = Enum.Material.Concrete,
+	["`"] = Enum.Material.Pavement,
+	["?"] = Enum.Material.Neon
+}
+local function hexToColor(hex)
+	local r = tonumber(hex:sub(1, 2), 16) / 255
+	local g = tonumber(hex:sub(3, 4), 16) / 255
+	local b = tonumber(hex:sub(5, 6), 16) / 255
+	return Color3.new(r, g, b)
+end
+local visualFolder = Instance.new("Folder")
+visualFolder.Name = "BuildPreview"
+visualFolder.Parent = workspace
+local blockCount = 0
+for blockData in buildString:gmatch("|([^|]+)") do
+	local colorHex = blockData:sub(1, 6)
+	local materialSymbol = blockData:sub(7, 7)
+	local rest = blockData:sub(8)
+	local sizeData, posData = rest:match("([^%.]+)%.(.+)")
+	if sizeData and posData then
+		local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
+		local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
+		if sizeX and posX then
+			local block = Instance.new("Part")
+			block.Name = "Block_" .. blockCount
+			block.Size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
+			block.Anchored = true
+			block.CanCollide = false
+			block.CFrame = CFrame.new(tonumber(posX), tonumber(posY), tonumber(posZ))
+			block.Material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic
+			block.Color = hexToColor(colorHex)
+			block.Parent = visualFolder
+			blockCount = blockCount + 1
+		end
+	end
+end
+print("Build loaded!")
+print("Total blocks created: " .. blockCount)
+print("Blocks are in workspace.BuildPreview")]]
+
+setclipboard(fullScript)
+print("Full executable script copied to clipboard!")
+print("Blocks scanned: " .. blockCount)
