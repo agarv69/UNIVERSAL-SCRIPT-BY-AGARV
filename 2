@@ -1,4 +1,4 @@
--- BLOCK SAVE & AUTO-BUILD SCRIPT
+-- BLOCK SAVE & AUTO-BUILD SCRIPT (FIXED)
 local HttpService = game:GetService("HttpService")
 
 local MaterialSymbols = {
@@ -52,18 +52,18 @@ for _, descendant in pairs(bricksFolder:GetDescendants()) do
 			skippedCount = skippedCount + 1
 			continue
 		end
-
+		
 		local size = descendant.Size
 		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
 			skippedCount = skippedCount + 1
 			continue
 		end
-
+		
 		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
 		local colorHex = colorToHex(descendant.Color)
 		local cf = descendant.CFrame
 		local canCollideMarker = descendant.CanCollide and "" or "^"
-
+		
 		buildString = buildString .. string.format(
 			"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
 			colorHex,
@@ -72,7 +72,7 @@ for _, descendant in pairs(bricksFolder:GetDescendants()) do
 			size.X, size.Y, size.Z,
 			cf.X, cf.Y, cf.Z
 		)
-
+		
 		blockCount = blockCount + 1
 	end
 end
@@ -121,10 +121,10 @@ end
 
 local function findBuildTools()
 	local tools = {}
-	local character = LocalPlayer.Character
 	
-	if character then
-		for _, item in pairs(character:GetChildren()) do
+	local char = LocalPlayer.Character
+	if char then
+		for _, item in pairs(char:GetChildren()) do
 			if item:IsA("Tool") and item.Name == "Build" then
 				local script = item:FindFirstChild("Script")
 				local remote = script and script:FindFirstChild("Event")
@@ -192,8 +192,7 @@ for blockData in buildString:gmatch("|([^|]+)") do
 				position = position,
 				placePosition = placePosition,
 				preview = preview,
-				placed = false,
-				attempts = 0
+				placed = false
 			})
 		end
 	end
@@ -215,96 +214,212 @@ local ws = 0.05
 local bricksFolder = workspace:FindFirstChild("Bricks")
 local playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
 
-task.spawn(function()
+local function safeGetCharacter()
+	return LocalPlayer.Character
+end
+
+local function safeGetHRP()
+	local char = safeGetCharacter()
+	if char then
+		return char:FindFirstChild("HumanoidRootPart")
+	end
+	return nil
+end
+
+local function safeTeleport(position)
+	local hrp = safeGetHRP()
+	if hrp then
+		-- Stay in one spot, just update position periodically
+		hrp.CFrame = CFrame.new(position)
+		return true
+	end
+	return false
+end
+
+local function safeEquipTool(tool)
+	local char = safeGetCharacter()
+	if char and tool.Parent ~= char then
+		local humanoid = char:FindFirstChild("Humanoid")
+		if humanoid then
+			humanoid:EquipTool(tool)
+			return true
+		end
+	end
+	return false
+end
+
+local function checkBlockExists(blockData)
+	if not playerFolder then
+		playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
+	end
+	
+	if playerFolder then
+		for _, brick in pairs(playerFolder:GetChildren()) do
+			if brick:IsA("BasePart") and brick.Name == "Brick" then
+				local distance = (brick.Position - blockData.position).Magnitude
+				if distance < 5 then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+local function findClosestBlock()
+	local hrp = safeGetHRP()
+	if not hrp then return nil, nil end
+	
+	local playerPos = hrp.Position
+	local closestBlock = nil
+	local closestDistance = math.huge
+	local closestIndex = nil
+	
 	for i, blockData in ipairs(blocks) do
-		bti = bti + 1
-		local bt = btools[(bti % #btools) + 1]
-		
-		local character = LocalPlayer.Character
-		if character and character:FindFirstChild("HumanoidRootPart") then
-			character.HumanoidRootPart.CFrame = CFrame.new(blockData.position)
+		if not blockData.placed then
+			local distance = (blockData.position - playerPos).Magnitude
+			if distance < closestDistance then
+				closestDistance = distance
+				closestBlock = blockData
+				closestIndex = i
+			end
+		end
+	end
+	
+	return closestBlock, closestIndex
+end
+
+task.spawn(function()
+	local placedCount = 0
+	local totalBlocks = #blocks
+	local buildRadius = 20 -- Place blocks within 20 studs
+	
+	-- First pass: place all blocks
+	while placedCount < totalBlocks do
+		local hrp = safeGetHRP()
+		if not hrp then
+			task.wait(1)
+			continue
 		end
 		
-		if bt.bt.Parent ~= LocalPlayer.Character then
-			LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
-			task.wait(0.1)
-		end
+		local playerPos = hrp.Position
+		local blocksInRange = {}
 		
-		local buildMode = "normal"
-		local placePos = blockData.position
-		
-		if blockData.size ~= Vector3.new(4, 4, 4) then
-			buildMode = "detailed"
-			placePos = blockData.placePosition
-		end
-		
-		bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
-		blockData.attempts = blockData.attempts + 1
-		
-		task.wait(ws / #btools)
-		
-		if playerFolder then
-			for _, brick in pairs(playerFolder:GetChildren()) do
-				if brick:IsA("BasePart") and brick.Name == "Brick" then
-					local distance = (brick.Position - blockData.position).Magnitude
-					if distance < 5 then
-						blockData.placed = true
-						if blockData.preview then
-							blockData.preview:Destroy()
-						end
-						break
-					end
+		-- Find all unplaced blocks within range
+		for i, blockData in ipairs(blocks) do
+			if not blockData.placed then
+				local distance = (blockData.position - playerPos).Magnitude
+				if distance <= buildRadius then
+					table.insert(blocksInRange, {index = i, data = blockData, distance = distance})
 				end
 			end
 		end
 		
-		if blockData.placed then
-			print("Placed block " .. i .. "/" .. #blocks .. " (mode: " .. buildMode .. ")")
-		else
-			print("Block " .. i .. " failed, will retry later")
-		end
-		
-		if i % 20 == 0 then
-			btools = findBuildTools()
-		end
-	end
-	
-	print("First pass complete! Retrying failed blocks...")
-	local retryCount = 0
-	local maxRetries = 3
-	
-	while retryCount < maxRetries do
-		local failedBlocks = {}
-		
-		for i, blockData in ipairs(blocks) do
-			if not blockData.placed then
-				table.insert(failedBlocks, {index = i, data = blockData})
+		-- If no blocks in range, teleport to closest unplaced block
+		if #blocksInRange == 0 then
+			local blockData, blockIndex = findClosestBlock()
+			if not blockData then
+				break
 			end
+			pcall(function()
+				safeTeleport(blockData.position)
+			end)
+			task.wait(0.5)
+			continue
 		end
 		
-		if #failedBlocks == 0 then
-			print("All blocks placed successfully!")
-			break
-		end
+		-- Sort by distance (closest first)
+		table.sort(blocksInRange, function(a, b)
+			return a.distance < b.distance
+		end)
 		
-		print("Retry pass " .. (retryCount + 1) .. ": " .. #failedBlocks .. " blocks remaining")
-		
-		for _, failed in ipairs(failedBlocks) do
-			local blockData = failed.data
-			local i = failed.index
+		-- Place all blocks in range
+		for _, blockInfo in ipairs(blocksInRange) do
+			local blockData = blockInfo.data
 			
 			bti = bti + 1
 			local bt = btools[(bti % #btools) + 1]
 			
-			local character = LocalPlayer.Character
-			if character and character:FindFirstChild("HumanoidRootPart") then
-				character.HumanoidRootPart.CFrame = CFrame.new(blockData.position)
+			-- Equip tool
+			pcall(function()
+				safeEquipTool(bt.bt)
+			end)
+			
+			-- Determine build mode
+			local buildMode = "normal"
+			local placePos = blockData.position
+			
+			if blockData.size ~= Vector3.new(4, 4, 4) then
+				buildMode = "detailed"
+				placePos = blockData.placePosition
 			end
 			
-			if bt.bt.Parent ~= LocalPlayer.Character then
-				LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
-				task.wait(0.1)
+			-- Place block
+			pcall(function()
+				bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
+			end)
+			
+			blockData.placed = true
+			if blockData.preview then
+				pcall(function()
+					blockData.preview:Destroy()
+				end)
 			end
+			
+			placedCount = placedCount + 1
+			
+			task.wait(ws / #btools)
+			
+			if placedCount % 50 == 0 then
+				print("Placed " .. placedCount .. "/" .. totalBlocks .. " blocks")
+			end
+			
+			if placedCount % 20 == 0 then
+				btools = findBuildTools()
+			end
+		end
+	end
+	
+	print("First pass complete! Checking for missing blocks...")
+	task.wait(2)
+	
+	-- Validation and retry loop
+	local maxRetries = 5
+	
+	for retryCount = 1, maxRetries do
+		-- Check which blocks are actually placed
+		local missingBlocks = {}
+		
+		for i, blockData in ipairs(blocks) do
+			if not checkBlockExists(blockData) then
+				blockData.placed = false
+				table.insert(missingBlocks, {index = i, data = blockData})
+			else
+				blockData.placed = true
+			end
+		end
+		
+		if #missingBlocks == 0 then
+			print("All blocks verified and placed!")
+			break
+		end
+		
+		print("Retry " .. retryCount .. "/" .. maxRetries .. ": Found " .. #missingBlocks .. " missing blocks, rebuilding...")
+		
+		-- Rebuild only missing blocks
+		for _, missing in ipairs(missingBlocks) do
+			local blockData = missing.data
+			
+			bti = bti + 1
+			local bt = btools[(bti % #btools) + 1]
+			
+			pcall(function()
+				safeTeleport(blockData.position)
+			end)
+			
+			pcall(function()
+				safeEquipTool(bt.bt)
+			end)
 			
 			local buildMode = "normal"
 			local placePos = blockData.position
@@ -314,40 +429,31 @@ task.spawn(function()
 				placePos = blockData.placePosition
 			end
 			
-			bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
-			blockData.attempts = blockData.attempts + 1
+			pcall(function()
+				bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
+			end)
 			
 			task.wait(ws / #btools)
-			
-			if playerFolder then
-				for _, brick in pairs(playerFolder:GetChildren()) do
-					if brick:IsA("BasePart") and brick.Name == "Brick" then
-						local distance = (brick.Position - blockData.position).Magnitude
-						if distance < 5 then
-							blockData.placed = true
-							if blockData.preview then
-								blockData.preview:Destroy()
-							end
-							print("Retry success: block " .. i)
-							break
-						end
-					end
-				end
-			end
 		end
 		
-		retryCount = retryCount + 1
+		print("Retry pass complete, waiting before next check...")
+		task.wait(2)
 	end
 	
-	local placedCount = 0
+	-- Final count
+	local finalPlacedCount = 0
 	for _, blockData in ipairs(blocks) do
-		if blockData.placed then
-			placedCount = placedCount + 1
+		if checkBlockExists(blockData) then
+			finalPlacedCount = finalPlacedCount + 1
 		end
 	end
 	
-	print("Auto-build complete!")
-	print("Placed: " .. placedCount .. "/" .. #blocks)
+	print("=== AUTO-BUILD COMPLETE ===")
+	print("Successfully placed: " .. finalPlacedCount .. "/" .. #blocks)
+	if finalPlacedCount < #blocks then
+		print("Missing: " .. (#blocks - finalPlacedCount) .. " blocks")
+	end
+	
 	visualFolder:Destroy()
 end)]]
 
