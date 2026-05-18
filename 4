@@ -1,5 +1,4 @@
 local HttpService = game:GetService("HttpService")
-
 local MaterialSymbols = {
 	[Enum.Material.SmoothPlastic] = "!",
 	[Enum.Material.Plastic] = "@",
@@ -35,7 +34,6 @@ local function hasDecimal(num)
 	return num % 1 ~= 0
 end
 
--- Find Bricks folder
 local bricksFolder = workspace:FindFirstChild("Bricks")
 if not bricksFolder then
 	warn("Bricks folder not found!")
@@ -44,37 +42,189 @@ end
 
 local buildString = ""
 local blockCount = 0
+local skippedCount = 0
 
--- Find all parts named "Brick"
 for _, descendant in pairs(bricksFolder:GetDescendants()) do
 	if descendant:IsA("BasePart") and descendant.Name == "Brick" then
-		local size = descendant.Size
-
-		-- Skip if any size has decimals
-		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
+		if not descendant.Anchored then
+			skippedCount = skippedCount + 1
 			continue
 		end
-
+		
+		local size = descendant.Size
+		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
+			skippedCount = skippedCount + 1
+			continue
+		end
+		
 		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
 		local colorHex = colorToHex(descendant.Color)
 		local cf = descendant.CFrame
-
-		-- Format: |000000!1,1,1.-42,2,6|
+		local canCollideMarker = descendant.CanCollide and "" or "^"
+		
 		buildString = buildString .. string.format(
-			"|%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
+			"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
 			colorHex,
 			materialSymbol,
+			canCollideMarker,
 			size.X, size.Y, size.Z,
 			cf.X, cf.Y, cf.Z
 		)
-
+		
 		blockCount = blockCount + 1
 	end
 end
 
--- Copy to clipboard
-setclipboard(buildString)
+-- CREATE THE FULL AUTO-BUILD SCRIPT
+local fullScript = [[local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local buildString = "]] .. buildString .. [["
 
-print("Build saved to clipboard!")
-print("Total blocks: " .. blockCount)
-print("String length: " .. #buildString)
+local SymbolToMaterial = {
+	["!"] = Enum.Material.SmoothPlastic,
+	["@"] = Enum.Material.Plastic,
+	["#"] = Enum.Material.CeramicTiles,
+	["$"] = Enum.Material.Brick,
+	["%"] = Enum.Material.WoodPlanks,
+	["^"] = Enum.Material.Ice,
+	["&"] = Enum.Material.Grass,
+	["*"] = Enum.Material.Sand,
+	["("] = Enum.Material.Snow,
+	[")"] = Enum.Material.Glass,
+	["-"] = Enum.Material.Wood,
+	["_"] = Enum.Material.Slate,
+	["="] = Enum.Material.Pebble,
+	["+"] = Enum.Material.Marble,
+	["["] = Enum.Material.Granite,
+	["]"] = Enum.Material.DiamondPlate,
+	["{"] = Enum.Material.Metal,
+	["}"] = Enum.Material.Asphalt,
+	["~"] = Enum.Material.Concrete,
+	["`"] = Enum.Material.Pavement,
+	["?"] = Enum.Material.Neon
+}
+
+local function hexToColor(hex)
+	local r = tonumber(hex:sub(1, 2), 16) / 255
+	local g = tonumber(hex:sub(3, 4), 16) / 255
+	local b = tonumber(hex:sub(5, 6), 16) / 255
+	return Color3.new(r, g, b)
+end
+
+-- Find all build tools
+local function findBuildTools()
+	local tools = {}
+	local character = LocalPlayer.Character
+	
+	if character then
+		for _, item in pairs(character:GetChildren()) do
+			if item:IsA("Tool") and item.Name:lower():find("build") then
+				local remote = item:FindFirstChildOfClass("RemoteEvent")
+				if remote then
+					table.insert(tools, {bt = item, e = remote})
+				end
+			end
+		end
+	end
+	
+	for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
+		if item:IsA("Tool") and item.Name:lower():find("build") then
+			local remote = item:FindFirstChildOfClass("RemoteEvent")
+			if remote then
+				table.insert(tools, {bt = item, e = remote})
+			end
+		end
+	end
+	
+	return tools
+end
+
+-- Check if game is OG version
+local isog = workspace.Terrain:FindFirstChild("Mesh", true) ~= nil
+
+-- Parse blocks
+local blocks = {}
+for blockData in buildString:gmatch("|([^|]+)") do
+	local colorHex = blockData:sub(1, 6)
+	local materialSymbol = blockData:sub(7, 7)
+	local rest = blockData:sub(8)
+	
+	local canCollide = true
+	if rest:sub(1, 1) == "^" then
+		canCollide = false
+		rest = rest:sub(2)
+	end
+	
+	local sizeData, posData = rest:match("([^%.]+)%.(.+)")
+	if sizeData and posData then
+		local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
+		local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
+		
+		if sizeX and posX then
+			table.insert(blocks, {
+				position = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ)),
+				material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic,
+				color = hexToColor(colorHex)
+			})
+		end
+	end
+end
+
+print("Loaded " .. #blocks .. " blocks")
+
+-- Auto-build
+local btools = findBuildTools()
+if #btools == 0 then
+	warn("No build tools found!")
+	return
+end
+
+print("Found " .. #btools .. " build tools")
+print("Starting auto-build...")
+
+local bti = 0
+local ws = 0.05 -- Wait time between blocks
+
+task.spawn(function()
+	for i, blockData in ipairs(blocks) do
+		while #btools > 0 do
+			bti = bti + 1
+			local bt = btools[(bti % #btools) + 1]
+			
+			-- Get current build mode from GUI
+			local buildMode = "normal"
+			if LocalPlayer.PlayerGui:FindFirstChild("Build") and LocalPlayer.PlayerGui.Build:FindFirstChild("Button") then
+				buildMode = LocalPlayer.PlayerGui.Build.Button.Text
+			end
+			
+			-- Fire the remote to place block
+			if isog then
+				bt.e:FireServer(blockData.position, Enum.NormalId.Top, workspace.Terrain:FindFirstChild("Mesh", true), blockData.color, "Smooth")
+			else
+				-- Equip tool if not equipped
+				if bt.bt.Parent ~= LocalPlayer.Character then
+					LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
+					task.wait(0.1)
+				end
+				bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, blockData.position, buildMode)
+			end
+			
+			print("Placed block " .. i .. "/" .. #blocks)
+			task.wait(ws / #btools)
+			break
+		end
+		
+		-- Refresh tools every 20 blocks
+		if i % 20 == 0 then
+			btools = findBuildTools()
+		end
+	end
+	
+	print("Auto-build complete!")
+end)]]
+
+setclipboard(fullScript)
+print("Auto-build script copied to clipboard!")
+print("Blocks saved: " .. blockCount)
+print("Skipped: " .. skippedCount)
+print("Execute your clipboard to start auto-building!")
