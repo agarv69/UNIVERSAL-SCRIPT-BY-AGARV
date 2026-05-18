@@ -1,4 +1,83 @@
 local HttpService = game:GetService("HttpService")
+local MaterialSymbols = {
+	[Enum.Material.SmoothPlastic] = "!",
+	[Enum.Material.Plastic] = "@",
+	[Enum.Material.CeramicTiles] = "#",
+	[Enum.Material.Brick] = "$",
+	[Enum.Material.WoodPlanks] = "%",
+	[Enum.Material.Ice] = "^",
+	[Enum.Material.Grass] = "&",
+	[Enum.Material.Sand] = "*",
+	[Enum.Material.Snow] = "(",
+	[Enum.Material.Glass] = ")",
+	[Enum.Material.Wood] = "-",
+	[Enum.Material.Slate] = "_",
+	[Enum.Material.Pebble] = "=",
+	[Enum.Material.Marble] = "+",
+	[Enum.Material.Granite] = "[",
+	[Enum.Material.DiamondPlate] = "]",
+	[Enum.Material.Metal] = "{",
+	[Enum.Material.Asphalt] = "}",
+	[Enum.Material.Concrete] = "~",
+	[Enum.Material.Pavement] = "`",
+	[Enum.Material.Neon] = "?"
+}
+
+local function colorToHex(color3)
+	local r = math.floor(color3.R * 255)
+	local g = math.floor(color3.G * 255)
+	local b = math.floor(color3.B * 255)
+	return string.format("%02X%02X%02X", r, g, b)
+end
+
+local function hasDecimal(num)
+	return num % 1 ~= 0
+end
+
+local bricksFolder = workspace:FindFirstChild("Bricks")
+if not bricksFolder then
+	warn("Bricks folder not found!")
+	return
+end
+
+local buildString = ""
+local blockCount = 0
+local skippedCount = 0
+
+for _, descendant in pairs(bricksFolder:GetDescendants()) do
+	if descendant:IsA("BasePart") and descendant.Name == "Brick" then
+		if not descendant.Anchored then
+			skippedCount = skippedCount + 1
+			continue
+		end
+		
+		local size = descendant.Size
+		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
+			skippedCount = skippedCount + 1
+			continue
+		end
+		
+		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
+		local colorHex = colorToHex(descendant.Color)
+		local cf = descendant.CFrame
+		local canCollideMarker = descendant.CanCollide and "" or "^"
+		
+		buildString = buildString .. string.format(
+			"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
+			colorHex,
+			materialSymbol,
+			canCollideMarker,
+			size.X, size.Y, size.Z,
+			cf.X, cf.Y, cf.Z
+		)
+		
+		blockCount = blockCount + 1
+	end
+end
+
+local fullScript = [[local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local buildString = "]] .. buildString .. [["
 
 local SymbolToMaterial = {
 	["!"] = Enum.Material.SmoothPlastic,
@@ -31,49 +110,179 @@ local function hexToColor(hex)
 	return Color3.new(r, g, b)
 end
 
--- Get clipboard data
-local buildString = getclipboard()
+local function findBuildTools()
+	local tools = {}
+	local character = LocalPlayer.Character
+	
+	if character then
+		for _, item in pairs(character:GetChildren()) do
+			if item:IsA("Tool") and item.Name == "Build" then
+				local script = item:FindFirstChild("Script")
+				local remote = script and script:FindFirstChild("Event")
+				if remote then
+					table.insert(tools, {bt = item, e = remote})
+				end
+			end
+		end
+	end
+	
+	for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
+		if item:IsA("Tool") and item.Name == "Build" then
+			local script = item:FindFirstChild("Script")
+			local remote = script and script:FindFirstChild("Event")
+			if remote then
+				table.insert(tools, {bt = item, e = remote})
+			end
+		end
+	end
+	
+	return tools
+end
 
--- Create folder for visualization
 local visualFolder = Instance.new("Folder")
 visualFolder.Name = "BuildPreview"
 visualFolder.Parent = workspace
 
-local blockCount = 0
-
--- Parse each block (split by |)
+local blocks = {}
 for blockData in buildString:gmatch("|([^|]+)") do
-	-- Parse format: |COLORHEX!SIZE,SIZE,SIZE.POS,POS,POS|
 	local colorHex = blockData:sub(1, 6)
 	local materialSymbol = blockData:sub(7, 7)
 	local rest = blockData:sub(8)
 	
-	-- Split size and position by "."
-	local sizeData, posData = rest:match("([^%.]+)%.([^%.]+)")
+	local canCollide = true
+	if rest:sub(1, 1) == "^" then
+		canCollide = false
+		rest = rest:sub(2)
+	end
 	
+	local sizeData, posData = rest:match("([^%.]+)%.(.+)")
 	if sizeData and posData then
-		-- Parse size (X,Y,Z)
 		local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
-		
-		-- Parse position (X,Y,Z) - handle negatives
-		local posX, posY, posZ = posData:match("([%-]?%d+),([%-]?%d+),([%-]?%d+)")
+		local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
 		
 		if sizeX and posX then
-			-- Create the block
-			local block = Instance.new("Part")
-			block.Name = "Block_" .. blockCount
-			block.Size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
-			block.Position = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
-			block.Material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic
-			block.Color = hexToColor(colorHex)
-			block.Anchored = true
-			block.Parent = visualFolder
+			local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
+			local position = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
 			
-			blockCount = blockCount + 1
+			-- Calculate corner position for detailed blocks (bottom-left-front corner)
+			local cornerOffset = Vector3.new(-size.X/2, -size.Y/2, -size.Z/2)
+			local placePosition = position + cornerOffset
+			
+			local preview = Instance.new("Part")
+			preview.Name = "PreviewBlock"
+			preview.Size = size
+			preview.Anchored = true
+			preview.CanCollide = false
+			preview.CFrame = CFrame.new(position)
+			preview.Material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic
+			preview.Color = hexToColor(colorHex)
+			preview.Transparency = 0.5
+			preview.Parent = visualFolder
+			
+			table.insert(blocks, {
+				size = size,
+				position = position,
+				placePosition = placePosition,
+				preview = preview,
+				placed = false
+			})
 		end
 	end
 end
 
-print("Build loaded from clipboard!")
-print("Total blocks created: " .. blockCount)
-print("Blocks are in workspace.BuildPreview")
+print("Loaded " .. #blocks .. " blocks")
+
+local btools = findBuildTools()
+if #btools == 0 then
+	warn("No build tools found!")
+	return
+end
+
+print("Found " .. #btools .. " build tools")
+print("Starting auto-build...")
+
+local bti = 0
+local ws = 0.05
+local bricksFolder = workspace:FindFirstChild("Bricks")
+local playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
+
+task.spawn(function()
+	local i = 1
+	while i <= #blocks do
+		local blockData = blocks[i]
+		
+		if not blockData.placed then
+			bti = bti + 1
+			local bt = btools[(bti % #btools) + 1]
+			
+			-- Teleport to block position
+			local character = LocalPlayer.Character
+			if character and character:FindFirstChild("HumanoidRootPart") then
+				character.HumanoidRootPart.CFrame = CFrame.new(blockData.position)
+			end
+			
+			-- Equip tool
+			if bt.bt.Parent ~= LocalPlayer.Character then
+				LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
+				task.wait(0.1)
+			end
+			
+			-- Check if block is 4x4x4 (normal) or needs detailed mode
+			local buildMode = "normal"
+			local placePos = blockData.position
+			
+			if blockData.size ~= Vector3.new(4, 4, 4) then
+				buildMode = "detailed"
+				placePos = blockData.placePosition -- Use corner for detailed
+			end
+			
+			-- Fire remote
+			bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
+			
+			task.wait(ws / #btools)
+			
+			-- Check if block was actually placed
+			if playerFolder then
+				local blockPlaced = false
+				for _, brick in pairs(playerFolder:GetChildren()) do
+					if brick:IsA("BasePart") and brick.Name == "Brick" then
+						local distance = (brick.Position - blockData.position).Magnitude
+						if distance < 5 then
+							blockPlaced = true
+							blockData.placed = true
+							if blockData.preview then
+								blockData.preview:Destroy()
+							end
+							break
+						end
+					end
+				end
+				
+				if blockPlaced then
+					print("Placed block " .. i .. "/" .. #blocks .. " (mode: " .. buildMode .. ")")
+					i = i + 1
+				else
+					print("Block " .. i .. " failed to place, retrying...")
+				end
+			else
+				i = i + 1
+			end
+			
+			-- Refresh tools every 20 blocks
+			if i % 20 == 0 then
+				btools = findBuildTools()
+			end
+		else
+			i = i + 1
+		end
+	end
+	
+	print("Auto-build complete!")
+	visualFolder:Destroy()
+end)]]
+
+setclipboard(fullScript)
+print("Auto-build script copied to clipboard!")
+print("Blocks saved: " .. blockCount)
+print("Skipped: " .. skippedCount)
+print("Execute your clipboard to start auto-building!")
