@@ -1,6 +1,92 @@
+-- BLOCK SAVE & AUTO-BUILD SCRIPT (CLOSEST FIRST)
+local HttpService = game:GetService("HttpService")
+
+local MaterialSymbols = {
+	[Enum.Material.SmoothPlastic] = "!",
+	[Enum.Material.Plastic] = "@",
+	[Enum.Material.CeramicTiles] = "#",
+	[Enum.Material.Brick] = "$",
+	[Enum.Material.WoodPlanks] = "%",
+	[Enum.Material.Ice] = "^",
+	[Enum.Material.Grass] = "&",
+	[Enum.Material.Sand] = "*",
+	[Enum.Material.Snow] = "(",
+	[Enum.Material.Glass] = ")",
+	[Enum.Material.Wood] = "-",
+	[Enum.Material.Slate] = "_",
+	[Enum.Material.Pebble] = "=",
+	[Enum.Material.Marble] = "+",
+	[Enum.Material.Granite] = "[",
+	[Enum.Material.DiamondPlate] = "]",
+	[Enum.Material.Metal] = "{",
+	[Enum.Material.Asphalt] = "}",
+	[Enum.Material.Concrete] = "~",
+	[Enum.Material.Pavement] = "`",
+	[Enum.Material.Neon] = "?"
+}
+
+local function colorToHex(color3)
+	local r = math.floor(color3.R * 255)
+	local g = math.floor(color3.G * 255)
+	local b = math.floor(color3.B * 255)
+	return string.format("%02X%02X%02X", r, g, b)
+end
+
+local function hasDecimal(num)
+	return num % 1 ~= 0
+end
+
+local bricksFolder = workspace:FindFirstChild("Bricks")
+if not bricksFolder then
+	warn("Bricks folder not found!")
+	return
+end
+
+local buildString = ""
+local blockCount = 0
+local skippedCount = 0
+
+for _, descendant in pairs(bricksFolder:GetDescendants()) do
+	if descendant:IsA("BasePart") and descendant.Name == "Brick" then
+		if not descendant.Anchored then
+			skippedCount = skippedCount + 1
+			continue
+		end
+		
+		local size = descendant.Size
+		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
+			skippedCount = skippedCount + 1
+			continue
+		end
+		
+		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
+		local colorHex = colorToHex(descendant.Color)
+		local cf = descendant.CFrame
+		local canCollideMarker = descendant.CanCollide and "" or "^"
+		
+		buildString = buildString .. string.format(
+			"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
+			colorHex,
+			materialSymbol,
+			canCollideMarker,
+			size.X, size.Y, size.Z,
+			cf.X, cf.Y, cf.Z
+		)
+		
+		blockCount = blockCount + 1
+	end
+end
+
+if buildString == "" or not buildString then
+	warn("No blocks found to save!")
+	print("Blocks scanned: " .. blockCount)
+	print("Blocks skipped: " .. skippedCount)
+	return
+end
+
 local fullScript = [[local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local buildString = "]] .. buildString .. [["
+local buildString = ]] .. string.format("%q", buildString) .. [[
 
 local SymbolToMaterial = {
 	["!"] = Enum.Material.SmoothPlastic,
@@ -35,10 +121,9 @@ end
 
 local function findBuildTools()
 	local tools = {}
-	local character = LocalPlayer.Character
 	
-	if character then
-		for _, item in pairs(character:GetChildren()) do
+	if LocalPlayer.Character then
+		for _, item in pairs(LocalPlayer.Character:GetChildren()) do
 			if item:IsA("Tool") and item.Name == "Build" then
 				local script = item:FindFirstChild("Script")
 				local remote = script and script:FindFirstChild("Event")
@@ -106,8 +191,7 @@ for blockData in buildString:gmatch("|([^|]+)") do
 				position = position,
 				placePosition = placePosition,
 				preview = preview,
-				placed = false,
-				attempts = 0
+				placed = false
 			})
 		end
 	end
@@ -122,32 +206,65 @@ if #btools == 0 then
 end
 
 print("Found " .. #btools .. " build tools")
-print("Starting auto-build...")
+print("Starting auto-build (closest first)...")
 
 local bti = 0
 local ws = 0.05
 local bricksFolder = workspace:FindFirstChild("Bricks")
 local playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
 
-task.spawn(function()
-	-- First pass: try all blocks once
+local function getPlayerPosition()
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		return LocalPlayer.Character.HumanoidRootPart.Position
+	end
+	return Vector3.new(0, 0, 0)
+end
+
+local function findClosestBlock()
+	local playerPos = getPlayerPosition()
+	local closestBlock = nil
+	local closestDistance = math.huge
+	local closestIndex = nil
+	
 	for i, blockData in ipairs(blocks) do
+		if not blockData.placed then
+			local distance = (blockData.position - playerPos).Magnitude
+			if distance < closestDistance then
+				closestDistance = distance
+				closestBlock = blockData
+				closestIndex = i
+			end
+		end
+	end
+	
+	return closestBlock, closestIndex
+end
+
+task.spawn(function()
+	local placedCount = 0
+	local totalBlocks = #blocks
+	
+	while placedCount < totalBlocks do
+		local blockData, blockIndex = findClosestBlock()
+		
+		if not blockData then
+			break
+		end
+		
 		bti = bti + 1
 		local bt = btools[(bti % #btools) + 1]
 		
-		-- Teleport to block position
-		local character = LocalPlayer.Character
-		if character and character:FindFirstChild("HumanoidRootPart") then
-			character.HumanoidRootPart.CFrame = CFrame.new(blockData.position)
+		-- Teleport to block
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(blockData.position)
 		end
 		
 		-- Equip tool
-		if bt.bt.Parent ~= LocalPlayer.Character then
+		if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
 			LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
-			task.wait(0.1)
 		end
 		
-		-- Check if block is 4x4x4 (normal) or needs detailed mode
+		-- Determine build mode
 		local buildMode = "normal"
 		local placePos = blockData.position
 		
@@ -156,50 +273,58 @@ task.spawn(function()
 			placePos = blockData.placePosition
 		end
 		
-		-- Fire remote
+		-- Place block
 		bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
-		blockData.attempts = blockData.attempts + 1
+		
+		-- Mark as placed
+		blockData.placed = true
+		if blockData.preview then
+			blockData.preview:Destroy()
+		end
+		
+		placedCount = placedCount + 1
 		
 		task.wait(ws / #btools)
 		
-		-- Check if block was actually placed
-		if playerFolder then
-			for _, brick in pairs(playerFolder:GetChildren()) do
-				if brick:IsA("BasePart") and brick.Name == "Brick" then
-					local distance = (brick.Position - blockData.position).Magnitude
-					if distance < 5 then
-						blockData.placed = true
-						if blockData.preview then
-							blockData.preview:Destroy()
-						end
-						break
-					end
-				end
-			end
-		end
-		
-		if blockData.placed then
-			print("Placed block " .. i .. "/" .. #blocks .. " (mode: " .. buildMode .. ")")
-		else
-			print("Block " .. i .. " failed, will retry later")
+		if placedCount % 50 == 0 then
+			print("Placed " .. placedCount .. "/" .. totalBlocks .. " blocks")
 		end
 		
 		-- Refresh tools every 20 blocks
-		if i % 20 == 0 then
+		if placedCount % 20 == 0 then
 			btools = findBuildTools()
 		end
 	end
 	
-	-- Second pass: retry failed blocks
-	print("First pass complete! Retrying failed blocks...")
-	local retryCount = 0
+	print("First pass complete! Checking for missing blocks...")
+	task.wait(2)
+	
+	-- Retry pass for failed blocks
 	local maxRetries = 3
 	
-	while retryCount < maxRetries do
+	for retryCount = 1, maxRetries do
 		local failedBlocks = {}
 		
+		if not playerFolder then
+			playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
+		end
+		
 		for i, blockData in ipairs(blocks) do
-			if not blockData.placed then
+			local found = false
+			if playerFolder then
+				for _, brick in pairs(playerFolder:GetChildren()) do
+					if brick:IsA("BasePart") and brick.Name == "Brick" then
+						local distance = (brick.Position - blockData.position).Magnitude
+						if distance < 5 then
+							found = true
+							blockData.placed = true
+							break
+						end
+					end
+				end
+			end
+			
+			if not found then
 				table.insert(failedBlocks, {index = i, data = blockData})
 			end
 		end
@@ -209,28 +334,22 @@ task.spawn(function()
 			break
 		end
 		
-		print("Retry pass " .. (retryCount + 1) .. ": " .. #failedBlocks .. " blocks remaining")
+		print("Retry pass " .. retryCount .. "/" .. maxRetries .. ": " .. #failedBlocks .. " blocks missing")
 		
 		for _, failed in ipairs(failedBlocks) do
 			local blockData = failed.data
-			local i = failed.index
 			
 			bti = bti + 1
 			local bt = btools[(bti % #btools) + 1]
 			
-			-- Teleport
-			local character = LocalPlayer.Character
-			if character and character:FindFirstChild("HumanoidRootPart") then
-				character.HumanoidRootPart.CFrame = CFrame.new(blockData.position)
+			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(blockData.position)
 			end
 			
-			-- Equip tool
-			if bt.bt.Parent ~= LocalPlayer.Character then
+			if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
 				LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
-				task.wait(0.1)
 			end
 			
-			-- Place block
 			local buildMode = "normal"
 			local placePos = blockData.position
 			
@@ -240,41 +359,21 @@ task.spawn(function()
 			end
 			
 			bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
-			blockData.attempts = blockData.attempts + 1
-			
 			task.wait(ws / #btools)
-			
-			-- Check placement
-			if playerFolder then
-				for _, brick in pairs(playerFolder:GetChildren()) do
-					if brick:IsA("BasePart") and brick.Name == "Brick" then
-						local distance = (brick.Position - blockData.position).Magnitude
-						if distance < 5 then
-							blockData.placed = true
-							if blockData.preview then
-								blockData.preview:Destroy()
-							end
-							print("Retry success: block " .. i)
-							break
-						end
-					end
-				end
-			end
 		end
 		
-		retryCount = retryCount + 1
+		task.wait(1)
 	end
 	
-	-- Final report
-	local placedCount = 0
+	local finalPlacedCount = 0
 	for _, blockData in ipairs(blocks) do
 		if blockData.placed then
-			placedCount = placedCount + 1
+			finalPlacedCount = finalPlacedCount + 1
 		end
 	end
 	
 	print("Auto-build complete!")
-	print("Placed: " .. placedCount .. "/" .. #blocks)
+	print("Placed: " .. finalPlacedCount .. "/" .. #blocks)
 	visualFolder:Destroy()
 end)]]
 
