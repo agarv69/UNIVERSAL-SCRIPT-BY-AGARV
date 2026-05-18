@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService")
+-- Just copies the block data string, nothing else
 local MaterialSymbols = {
 	[Enum.Material.SmoothPlastic] = "!",
 	[Enum.Material.Plastic] = "@",
@@ -22,64 +22,51 @@ local MaterialSymbols = {
 	[Enum.Material.Pavement] = "`",
 	[Enum.Material.Neon] = "?"
 }
+
 local function colorToHex(color3)
 	local r = math.floor(color3.R * 255)
 	local g = math.floor(color3.G * 255)
 	local b = math.floor(color3.B * 255)
 	return string.format("%02X%02X%02X", r, g, b)
 end
+
 local function hasDecimal(num)
 	return num % 1 ~= 0
 end
--- Find Bricks folder
+
 local bricksFolder = workspace:FindFirstChild("Bricks")
-if not bricksFolder then
-	warn("Bricks folder not found!")
-	return
-end
+if not bricksFolder then warn("Bricks folder not found!") return end
+
 local buildString = ""
 local blockCount = 0
 local skippedCount = 0
--- Find all parts named "Brick"
+
 for _, descendant in pairs(bricksFolder:GetDescendants()) do
 	if descendant:IsA("BasePart") and descendant.Name == "Brick" then
-		-- Skip if not anchored
-		if not descendant.Anchored then
-			skippedCount = skippedCount + 1
-			continue
-		end
-		
+		if not descendant.Anchored then skippedCount += 1 continue end
 		local size = descendant.Size
-		
-		-- Skip if any size has decimals
-		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
-			skippedCount = skippedCount + 1
-			continue
-		end
-		
+		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then skippedCount += 1 continue end
+
 		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
 		local colorHex = colorToHex(descendant.Color)
 		local cf = descendant.CFrame
-		
-		-- Add ^ if CanCollide is false
 		local canCollideMarker = descendant.CanCollide and "" or "^"
-		
-		-- Format: |000000!1,1,1.-42,2,6| or |000000!^1,1,1.-42,2,6|
+
 		buildString = buildString .. string.format(
 			"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
-			colorHex,
-			materialSymbol,
-			canCollideMarker,
+			colorHex, materialSymbol, canCollideMarker,
 			size.X, size.Y, size.Z,
 			cf.X, cf.Y, cf.Z
 		)
-		
-		blockCount = blockCount + 1
+		blockCount += 1
 	end
 end
--- Copy to clipboard
+
+if buildString == "" then
+	warn("No blocks found!")
+	return
+end
+
 setclipboard(buildString)
-print("Build saved to clipboard!")
-print("Total blocks: " .. blockCount)
-print("Skipped blocks: " .. skippedCount)
-print("String length: " .. #buildString)
+print("Block data copied! Blocks: " .. blockCount .. " Skipped: " .. skippedCount)
+print("Now paste into the Builder script's buildString variable.")
