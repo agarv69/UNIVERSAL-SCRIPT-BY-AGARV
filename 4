@@ -174,9 +174,6 @@ for blockData in buildString:gmatch("|([^|]+)") do
 			local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
 			local position = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
 			
-			local cornerOffset = Vector3.new(-size.X/2, -size.Y/2, -size.Z/2)
-			local placePosition = position + cornerOffset
-			
 			local preview = Instance.new("Part")
 			preview.Name = "PreviewBlock"
 			preview.Size = size
@@ -191,10 +188,7 @@ for blockData in buildString:gmatch("|([^|]+)") do
 			table.insert(blocks, {
 				size = size,
 				position = position,
-				placePosition = placePosition,
-				preview = preview,
-				placed = false,
-				index = #blocks + 1
+				preview = preview
 			})
 		end
 	end
@@ -211,7 +205,6 @@ end
 print("Found " .. #btools .. " build tools")
 
 local bti = 0
-local ws = 0.02
 local bricksFolder = workspace:FindFirstChild("Bricks")
 local playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
 
@@ -241,8 +234,18 @@ local function checkBlockExists(blockData)
 	
 	for _, brick in pairs(playerFolder:GetChildren()) do
 		if brick:IsA("BasePart") and brick.Name == "Brick" then
-			local distance = (brick.Position - blockData.position).Magnitude
-			if distance < 3 then
+			-- Check if brick's CENTER is inside the visual block bounds
+			local halfSize = blockData.size / 2
+			local minBounds = blockData.position - halfSize
+			local maxBounds = blockData.position + halfSize
+			
+			local brickPos = brick.Position
+			
+			local insideX = brickPos.X >= minBounds.X and brickPos.X <= maxBounds.X
+			local insideY = brickPos.Y >= minBounds.Y and brickPos.Y <= maxBounds.Y
+			local insideZ = brickPos.Z >= minBounds.Z and brickPos.Z <= maxBounds.Z
+			
+			if insideX and insideY and insideZ then
 				return true
 			end
 		end
@@ -251,124 +254,56 @@ local function checkBlockExists(blockData)
 	return false
 end
 
-local function placeBlock(blockData)
-	bti = bti + 1
-	local bt = btools[(bti % #btools) + 1]
-	
-	if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
-		pcall(function()
-			LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
-		end)
-	end
-	
-	local buildMode = "normal"
-	local placePos = blockData.position
-	
-	if blockData.size ~= Vector3.new(4, 4, 4) then
-		buildMode = "detailed"
-		placePos = blockData.placePosition
-	end
-	
-	pcall(function()
-		bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
-	end)
-end
-
-local verifyQueue = {}
-local failedBlocks = {}
-
 task.spawn(function()
 	print("Starting auto-build...")
 	
-	local currentIndex = 1
-	
-	while true do
-		local shouldContinue = false
+	for i, blockData in ipairs(blocks) do
+		local abovePos = blockData.position + Vector3.new(0, 12, 0)
+		lockPosition(abovePos)
+		task.wait(0.1)
 		
-		-- Handle failed blocks FIRST
-		if #failedBlocks > 0 then
-			local failedBlock = table.remove(failedBlocks, 1)
-			
-			print("Retrying failed block " .. failedBlock.index)
-			
-			-- TP, WAIT 0.01, PLACE, WAIT 0.01
-			local abovePos = failedBlock.position + Vector3.new(0, 10, 0)
-			lockPosition(abovePos)
-			task.wait(0.01)
-			
-			placeBlock(failedBlock)
-			task.wait(0.01)
-			
-			-- Add back to verify queue
-			table.insert(verifyQueue, {
-				blockData = failedBlock,
-				verifyTime = tick() + 1
-			})
-			
-			shouldContinue = true
-		end
+		local maxAttempts = 50
+		local attempts = 0
 		
-		-- Place new blocks
-		if currentIndex <= #blocks then
-			local blockData = blocks[currentIndex]
+		while not checkBlockExists(blockData) and attempts < maxAttempts do
+			bti = bti + 1
+			local bt = btools[(bti % #btools) + 1]
 			
-			if not blockData.placed then
-				-- TP, WAIT 0.01, PLACE, WAIT 0.01
-				local abovePos = blockData.position + Vector3.new(0, 10, 0)
-				lockPosition(abovePos)
-				task.wait(0.01)
-				
-				placeBlock(blockData)
-				task.wait(0.01)
-				
-				table.insert(verifyQueue, {
-					blockData = blockData,
-					verifyTime = tick() + 1
-				})
+			if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
+				pcall(function()
+					LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
+				end)
 			end
 			
-			currentIndex = currentIndex + 1
-			shouldContinue = true
+			local buildMode = "normal"
+			local placePos = blockData.position
 			
-			if currentIndex % 20 == 0 then
+			if blockData.size ~= Vector3.new(4, 4, 4) then
+				buildMode = "detailed"
+				placePos = blockData.position
+			end
+			
+			pcall(function()
+				bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
+			end)
+			
+			task.wait(0.03)
+			attempts = attempts + 1
+			
+			if attempts % 10 == 0 then
 				btools = findBuildTools()
 			end
 		end
 		
-		-- Check verify queue
-		local i = 1
-		while i <= #verifyQueue do
-			local item = verifyQueue[i]
-			
-			if tick() >= item.verifyTime then
-				if checkBlockExists(item.blockData) then
-					-- VERIFIED
-					item.blockData.placed = true
-					if item.blockData.preview then
-						pcall(function()
-							item.blockData.preview:Destroy()
-						end)
-					end
-					print("✓ Block " .. item.blockData.index)
-					table.remove(verifyQueue, i)
-				else
-					-- FAILED - ADD TO FAILED QUEUE
-					print("✗ Block " .. item.blockData.index .. " FAILED")
-					table.insert(failedBlocks, item.blockData)
-					table.remove(verifyQueue, i)
-				end
-			else
-				i = i + 1
+		if checkBlockExists(blockData) then
+			print("✓ Placed block " .. i .. "/" .. #blocks)
+			if blockData.preview then
+				pcall(function()
+					blockData.preview:Destroy()
+				end)
 			end
-		end
-		
-		-- Check if we're done
-		if currentIndex > #blocks and #failedBlocks == 0 and #verifyQueue == 0 then
-			break
-		end
-		
-		if not shouldContinue then
-			task.wait()
+		else
+			print("✗ Failed block " .. i .. " after " .. maxAttempts .. " attempts")
 		end
 	end
 	
@@ -377,15 +312,7 @@ task.spawn(function()
 		positionLock = nil
 	end
 	
-	local finalPlaced = 0
-	for _, blockData in ipairs(blocks) do
-		if blockData.placed then
-			finalPlaced = finalPlaced + 1
-		end
-	end
-	
 	print("=== BUILD COMPLETE ===")
-	print("Placed: " .. finalPlaced .. "/" .. #blocks)
 	visualFolder:Destroy()
 end)]]
 
