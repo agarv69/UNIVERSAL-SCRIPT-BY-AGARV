@@ -1,4 +1,4 @@
--- BLOCK SAVE & AUTO-BUILD SCRIPT
+-- BLOCK SAVE & AUTO-BUILD SCRIPT WITH RESIZING
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 
@@ -149,6 +149,19 @@ local function findBuildTools()
 	return tools
 end
 
+local function getShapeTool()
+	return LocalPlayer.Backpack:FindFirstChild("Shape")
+		or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shape"))
+end
+
+local function getShapeEvent()
+	local tool = getShapeTool()
+	if tool then
+		return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
+	end
+	return nil
+end
+
 local visualFolder = Instance.new("Folder")
 visualFolder.Name = "BuildPreview"
 visualFolder.Parent = workspace
@@ -188,7 +201,9 @@ for blockData in buildString:gmatch("|([^|]+)") do
 			table.insert(blocks, {
 				size = size,
 				position = position,
-				preview = preview
+				preview = preview,
+				needsResize = (size ~= Vector3.new(4, 4, 4)),
+				resized = false
 			})
 		end
 	end
@@ -229,12 +244,11 @@ local function checkBlockExists(blockData)
 	end
 	
 	if not playerFolder then
-		return false
+		return false, nil
 	end
 	
 	for _, brick in pairs(playerFolder:GetChildren()) do
 		if brick:IsA("BasePart") and brick.Name == "Brick" then
-			-- Check if brick's CENTER is inside the visual block bounds
 			local halfSize = blockData.size / 2
 			local minBounds = blockData.position - halfSize
 			local maxBounds = blockData.position + halfSize
@@ -246,14 +260,15 @@ local function checkBlockExists(blockData)
 			local insideZ = brickPos.Z >= minBounds.Z and brickPos.Z <= maxBounds.Z
 			
 			if insideX and insideY and insideZ then
-				return true
+				return true, brick
 			end
 		end
 	end
 	
-	return false
+	return false, nil
 end
 
+-- BUILD LOOP
 task.spawn(function()
 	print("Starting auto-build...")
 	
@@ -265,7 +280,13 @@ task.spawn(function()
 		local maxAttempts = 50
 		local attempts = 0
 		
-		while not checkBlockExists(blockData) and attempts < maxAttempts do
+		while attempts < maxAttempts do
+			local exists, brick = checkBlockExists(blockData)
+			if exists then
+				blockData.placedBrick = brick
+				break
+			end
+			
 			bti = bti + 1
 			local bt = btools[(bti % #btools) + 1]
 			
@@ -280,7 +301,6 @@ task.spawn(function()
 			
 			if blockData.size ~= Vector3.new(4, 4, 4) then
 				buildMode = "detailed"
-				placePos = blockData.position
 			end
 			
 			pcall(function()
@@ -295,15 +315,17 @@ task.spawn(function()
 			end
 		end
 		
-		if checkBlockExists(blockData) then
+		local exists, brick = checkBlockExists(blockData)
+		if exists then
 			print("✓ Placed block " .. i .. "/" .. #blocks)
+			blockData.placedBrick = brick
 			if blockData.preview then
 				pcall(function()
 					blockData.preview:Destroy()
 				end)
 			end
 		else
-			print("✗ Failed block " .. i .. " after " .. maxAttempts .. " attempts")
+			print("✗ Failed block " .. i)
 		end
 	end
 	
@@ -312,7 +334,83 @@ task.spawn(function()
 		positionLock = nil
 	end
 	
-	print("=== BUILD COMPLETE ===")
+	print("Building complete, starting resize phase...")
+end)
+
+-- RESIZE LOOP (separate thread)
+task.spawn(function()
+	task.wait(2)
+	
+	local shapeTool = getShapeTool()
+	local shapeEvent = getShapeEvent()
+	
+	if not shapeTool or not shapeEvent then
+		warn("Shape tool not found, skipping resize!")
+		return
+	end
+	
+	if shapeTool.Parent == LocalPlayer.Backpack then
+		LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
+		task.wait(0.2)
+	end
+	
+	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		warn("No HumanoidRootPart!")
+		return
+	end
+	
+	print("Starting resize phase...")
+	
+	for i, blockData in ipairs(blocks) do
+		if blockData.needsResize and blockData.placedBrick and blockData.placedBrick:IsDescendantOf(workspace) then
+			local brick = blockData.placedBrick
+			local targetSize = blockData.size
+			
+			print("Resizing block " .. i .. " to " .. tostring(targetSize))
+			
+			local attempts = 0
+			local maxAttempts = 200
+			
+			while attempts < maxAttempts do
+				local currentSize = brick.Size
+				
+				if currentSize.X == targetSize.X and currentSize.Y == targetSize.Y and currentSize.Z == targetSize.Z then
+					print("✓ Resized block " .. i)
+					blockData.resized = true
+					break
+				end
+				
+				-- Fire ONCE per 0.1 - decide which axis needs it most
+				local diffX = math.abs(currentSize.X - targetSize.X)
+				local diffY = math.abs(currentSize.Y - targetSize.Y)
+				local diffZ = math.abs(currentSize.Z - targetSize.Z)
+				
+				if diffX >= diffY and diffX >= diffZ and currentSize.X ~= targetSize.X then
+					pcall(function()
+						shapeEvent:FireServer(brick, Enum.NormalId.Right, hrp.Position, currentSize.X < targetSize.X and "increase" or "decrease")
+					end)
+				elseif diffY >= diffZ and currentSize.Y ~= targetSize.Y then
+					pcall(function()
+						shapeEvent:FireServer(brick, Enum.NormalId.Top, hrp.Position, currentSize.Y < targetSize.Y and "increase" or "decrease")
+					end)
+				elseif currentSize.Z ~= targetSize.Z then
+					pcall(function()
+						shapeEvent:FireServer(brick, Enum.NormalId.Back, hrp.Position, currentSize.Z < targetSize.Z and "increase" or "decrease")
+					end)
+				end
+				
+				task.wait(0.1)
+				attempts = attempts + 1
+			end
+			
+			if attempts >= maxAttempts then
+				print("✗ Failed to resize block " .. i)
+			end
+		end
+	end
+	
+	print("=== ALL COMPLETE ===")
 	visualFolder:Destroy()
 end)]]
 
