@@ -118,8 +118,9 @@ local function findBuildTools()
 	
 	if character then
 		for _, item in pairs(character:GetChildren()) do
-			if item:IsA("Tool") and item.Name:lower():find("build") then
-				local remote = item:FindFirstChildOfClass("RemoteEvent")
+			if item:IsA("Tool") and item.Name == "Build" then
+				local script = item:FindFirstChild("Script")
+				local remote = script and script:FindFirstChild("Event")
 				if remote then
 					table.insert(tools, {bt = item, e = remote})
 				end
@@ -128,8 +129,9 @@ local function findBuildTools()
 	end
 	
 	for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
-		if item:IsA("Tool") and item.Name:lower():find("build") then
-			local remote = item:FindFirstChildOfClass("RemoteEvent")
+		if item:IsA("Tool") and item.Name == "Build" then
+			local script = item:FindFirstChild("Script")
+			local remote = script and script:FindFirstChild("Event")
 			if remote then
 				table.insert(tools, {bt = item, e = remote})
 			end
