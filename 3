@@ -1,396 +1,115 @@
--- BLOCK SAVE & AUTO-BUILD SCRIPT
-local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-
-local MaterialSymbols = {
-	[Enum.Material.SmoothPlastic] = "!",
-	[Enum.Material.Plastic] = "@",
-	[Enum.Material.CeramicTiles] = "#",
-	[Enum.Material.Brick] = "$",
-	[Enum.Material.WoodPlanks] = "%",
-	[Enum.Material.Ice] = "^",
-	[Enum.Material.Grass] = "&",
-	[Enum.Material.Sand] = "*",
-	[Enum.Material.Snow] = "(",
-	[Enum.Material.Glass] = ")",
-	[Enum.Material.Wood] = "-",
-	[Enum.Material.Slate] = "_",
-	[Enum.Material.Pebble] = "=",
-	[Enum.Material.Marble] = "+",
-	[Enum.Material.Granite] = "[",
-	[Enum.Material.DiamondPlate] = "]",
-	[Enum.Material.Metal] = "{",
-	[Enum.Material.Asphalt] = "}",
-	[Enum.Material.Concrete] = "~",
-	[Enum.Material.Pavement] = "`",
-	[Enum.Material.Neon] = "?"
-}
-
-local function colorToHex(color3)
-	local r = math.floor(color3.R * 255)
-	local g = math.floor(color3.G * 255)
-	local b = math.floor(color3.B * 255)
-	return string.format("%02X%02X%02X", r, g, b)
-end
-
-local function hasDecimal(num)
-	return num % 1 ~= 0
-end
-
-local bricksFolder = workspace:FindFirstChild("Bricks")
-if not bricksFolder then
-	warn("Bricks folder not found!")
-	return
-end
-
-local buildString = ""
-local blockCount = 0
-local skippedCount = 0
-
-for _, descendant in pairs(bricksFolder:GetDescendants()) do
-	if descendant:IsA("BasePart") and descendant.Name == "Brick" then
-		if not descendant.Anchored then
-			skippedCount = skippedCount + 1
-			continue
-		end
-		
-		local size = descendant.Size
-		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
-			skippedCount = skippedCount + 1
-			continue
-		end
-		
-		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
-		local colorHex = colorToHex(descendant.Color)
-		local cf = descendant.CFrame
-		local canCollideMarker = descendant.CanCollide and "" or "^"
-		
-		buildString = buildString .. string.format(
-			"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
-			colorHex,
-			materialSymbol,
-			canCollideMarker,
-			size.X, size.Y, size.Z,
-			cf.X, cf.Y, cf.Z
-		)
-		
-		blockCount = blockCount + 1
-	end
-end
-
-if buildString == "" or not buildString then
-	warn("No blocks found to save!")
-	print("Blocks scanned: " .. blockCount)
-	print("Blocks skipped: " .. skippedCount)
-	return
-end
-
-local fullScript = [[local Players = game:GetService("Players")
+local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local buildString = ]] .. string.format("%q", buildString) .. [[
 
-local SymbolToMaterial = {
-	["!"] = Enum.Material.SmoothPlastic,
-	["@"] = Enum.Material.Plastic,
-	["#"] = Enum.Material.CeramicTiles,
-	["$"] = Enum.Material.Brick,
-	["%"] = Enum.Material.WoodPlanks,
-	["^"] = Enum.Material.Ice,
-	["&"] = Enum.Material.Grass,
-	["*"] = Enum.Material.Sand,
-	["("] = Enum.Material.Snow,
-	[")"] = Enum.Material.Glass,
-	["-"] = Enum.Material.Wood,
-	["_"] = Enum.Material.Slate,
-	["="] = Enum.Material.Pebble,
-	["+"] = Enum.Material.Marble,
-	["["] = Enum.Material.Granite,
-	["]"] = Enum.Material.DiamondPlate,
-	["{"] = Enum.Material.Metal,
-	["}"] = Enum.Material.Asphalt,
-	["~"] = Enum.Material.Concrete,
-	["`"] = Enum.Material.Pavement,
-	["?"] = Enum.Material.Neon
-}
-
-local function hexToColor(hex)
-	local r = tonumber(hex:sub(1, 2), 16) / 255
-	local g = tonumber(hex:sub(3, 4), 16) / 255
-	local b = tonumber(hex:sub(5, 6), 16) / 255
-	return Color3.new(r, g, b)
+local function getShapeTool()
+	return LocalPlayer.Backpack:FindFirstChild("Shape")
+		or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shape"))
 end
 
-local function findBuildTools()
-	local tools = {}
-	
-	if LocalPlayer.Character then
-		for _, item in pairs(LocalPlayer.Character:GetChildren()) do
-			if item:IsA("Tool") and item.Name == "Build" then
-				local script = item:FindFirstChild("Script")
-				local remote = script and script:FindFirstChild("Event")
-				if remote then
-					table.insert(tools, {bt = item, e = remote})
-				end
-			end
-		end
+local function getShapeEvent()
+	local tool = getShapeTool()
+	if tool then
+		return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
 	end
-	
-	for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
-		if item:IsA("Tool") and item.Name == "Build" then
-			local script = item:FindFirstChild("Script")
-			local remote = script and script:FindFirstChild("Event")
-			if remote then
-				table.insert(tools, {bt = item, e = remote})
-			end
-		end
-	end
-	
-	return tools
+	return nil
 end
 
-local visualFolder = Instance.new("Folder")
-visualFolder.Name = "BuildPreview"
-visualFolder.Parent = workspace
-
-local blocks = {}
-for blockData in buildString:gmatch("|([^|]+)") do
-	local colorHex = blockData:sub(1, 6)
-	local materialSymbol = blockData:sub(7, 7)
-	local rest = blockData:sub(8)
+local function resizeBlockInfiniteRange(block, targetSize)
+	print("Starting resize for block at " .. tostring(block.Position))
+	print("Current size: " .. tostring(block.Size))
+	print("Target size: " .. targetSize .. "," .. targetSize .. "," .. targetSize)
 	
-	local canCollide = true
-	if rest:sub(1, 1) == "^" then
-		canCollide = false
-		rest = rest:sub(2)
+	if block.Size.X == targetSize and block.Size.Y == targetSize and block.Size.Z == targetSize then
+		print("Already correct size!")
+		return true
 	end
 	
-	local sizeData, posData = rest:match("([^%.]+)%.(.+)")
-	if sizeData and posData then
-		local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
-		local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
-		
-		if sizeX and posX then
-			local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
-			local position = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
-			
-			local cornerOffset = Vector3.new(-size.X/2, -size.Y/2, -size.Z/2)
-			local placePosition = position + cornerOffset
-			
-			local preview = Instance.new("Part")
-			preview.Name = "PreviewBlock"
-			preview.Size = size
-			preview.Anchored = true
-			preview.CanCollide = false
-			preview.CFrame = CFrame.new(position)
-			preview.Material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic
-			preview.Color = hexToColor(colorHex)
-			preview.Transparency = 0.5
-			preview.Parent = visualFolder
-			
-			table.insert(blocks, {
-				size = size,
-				position = position,
-				placePosition = placePosition,
-				preview = preview,
-				placed = false,
-				index = #blocks + 1
-			})
-		end
-	end
-end
-
-print("Loaded " .. #blocks .. " blocks")
-
-local btools = findBuildTools()
-if #btools == 0 then
-	warn("No build tools found!")
-	return
-end
-
-print("Found " .. #btools .. " build tools")
-
-local bti = 0
-local ws = 0.02
-local bricksFolder = workspace:FindFirstChild("Bricks")
-local playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
-
-local positionLock = nil
-
-local function lockPosition(targetPos)
-	if positionLock then
-		positionLock:Disconnect()
-	end
+	local shapeTool = getShapeTool()
+	local shapeEvent = getShapeEvent()
 	
-	positionLock = RunService.RenderStepped:Connect(function()
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
-			LocalPlayer.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-		end
-	end)
-end
-
-local function checkBlockExists(blockData)
-	if not playerFolder then
-		playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
-	end
-	
-	if not playerFolder then
+	if not shapeTool or not shapeEvent then
+		warn("Shape tool not found!")
 		return false
 	end
 	
-	for _, brick in pairs(playerFolder:GetChildren()) do
-		if brick:IsA("BasePart") and brick.Name == "Brick" then
-			local distance = (brick.Position - blockData.position).Magnitude
-			if distance < 3 then
-				return true
-			end
-		end
+	-- Equip shape tool
+	if shapeTool.Parent == LocalPlayer.Backpack then
+		LocalPlayer.Character.Humanoid:EquipTool(shapeTool)
+		task.wait(0.2)
 	end
 	
+	local maxIterations = 100
+	local iterations = 0
+	
+	while iterations < maxIterations do
+		local currentSize = block.Size
+		
+		-- Check if done
+		if currentSize.X == targetSize and currentSize.Y == targetSize and currentSize.Z == targetSize then
+			print("✓ Resize complete!")
+			return true
+		end
+		
+		iterations = iterations + 1
+		
+		local pos = block.Position
+		local size = block.Size
+		
+		-- Resize X axis
+		if currentSize.X ~= targetSize then
+			pcall(function()
+				local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
+				shapeEvent:FireServer(block, Enum.NormalId.Right, rightPos, currentSize.X < targetSize and "increase" or "decrease")
+			end)
+			task.wait(0.05)
+		end
+		
+		-- Resize Y axis
+		if currentSize.Y ~= targetSize then
+			pcall(function()
+				local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
+				shapeEvent:FireServer(block, Enum.NormalId.Top, topPos, currentSize.Y < targetSize and "increase" or "decrease")
+			end)
+			task.wait(0.05)
+		end
+		
+		-- Resize Z axis
+		if currentSize.Z ~= targetSize then
+			pcall(function()
+				local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
+				shapeEvent:FireServer(block, Enum.NormalId.Back, backPos, currentSize.Z < targetSize and "increase" or "decrease")
+			end)
+			task.wait(0.05)
+		end
+		
+		task.wait(0.1)
+		
+		print("Iteration " .. iterations .. " - Current: " .. tostring(block.Size))
+	end
+	
+	warn("Failed to resize after " .. maxIterations .. " attempts")
 	return false
 end
 
-local function placeBlock(blockData)
-	bti = bti + 1
-	local bt = btools[(bti % #btools) + 1]
-	
-	if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
-		pcall(function()
-			LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
-		end)
+-- Usage: Select a block in workspace and run
+local bricksFolder = workspace:FindFirstChild("Bricks")
+if bricksFolder then
+	local playerFolder = bricksFolder:FindFirstChild(LocalPlayer.Name)
+	if playerFolder then
+		for _, block in pairs(playerFolder:GetChildren()) do
+			if block:IsA("BasePart") and block.Name == "Brick" then
+				-- Resize each block to random size between 1 and 10
+				local randomSize = math.random(1, 10)
+				print("\n=== Resizing block ===")
+				resizeBlockInfiniteRange(block, randomSize)
+				task.wait(0.5)
+			end
+		end
+	else
+		warn("Player folder not found!")
 	end
-	
-	local buildMode = "normal"
-	local placePos = blockData.position
-	
-	if blockData.size ~= Vector3.new(4, 4, 4) then
-		buildMode = "detailed"
-		placePos = blockData.placePosition
-	end
-	
-	pcall(function()
-		bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
-	end)
+else
+	warn("Bricks folder not found!")
 end
 
-local verifyQueue = {}
-local failedBlocks = {}
-
-task.spawn(function()
-	print("Starting auto-build...")
-	
-	local currentIndex = 1
-	
-	while true do
-		local shouldContinue = false
-		
-		-- Handle failed blocks FIRST
-		if #failedBlocks > 0 then
-			local failedBlock = table.remove(failedBlocks, 1)
-			
-			print("Retrying failed block " .. failedBlock.index)
-			
-			-- TP, WAIT 0.4, THEN PLACE
-			local abovePos = failedBlock.position + Vector3.new(0, 10, 0)
-			lockPosition(abovePos)
-			task.wait(0.4)
-			
-			placeBlock(failedBlock)
-			
-			-- Add back to verify queue
-			table.insert(verifyQueue, {
-				blockData = failedBlock,
-				verifyTime = tick() + 1
-			})
-			
-			task.wait(ws / #btools)
-			shouldContinue = true
-		end
-		
-		-- Place new blocks
-		if currentIndex <= #blocks then
-			local blockData = blocks[currentIndex]
-			
-			if not blockData.placed then
-				local abovePos = blockData.position + Vector3.new(0, 10, 0)
-				lockPosition(abovePos)
-				task.wait(0.05)
-				
-				placeBlock(blockData)
-				
-				table.insert(verifyQueue, {
-					blockData = blockData,
-					verifyTime = tick() + 1
-				})
-				
-				task.wait(ws / #btools)
-			end
-			
-			currentIndex = currentIndex + 1
-			shouldContinue = true
-			
-			if currentIndex % 20 == 0 then
-				btools = findBuildTools()
-			end
-		end
-		
-		-- Check verify queue
-		local i = 1
-		while i <= #verifyQueue do
-			local item = verifyQueue[i]
-			
-			if tick() >= item.verifyTime then
-				if checkBlockExists(item.blockData) then
-					-- VERIFIED
-					item.blockData.placed = true
-					if item.blockData.preview then
-						pcall(function()
-							item.blockData.preview:Destroy()
-						end)
-					end
-					print("✓ Block " .. item.blockData.index)
-					table.remove(verifyQueue, i)
-				else
-					-- FAILED - ADD TO FAILED QUEUE
-					print("✗ Block " .. item.blockData.index .. " FAILED")
-					table.insert(failedBlocks, item.blockData)
-					table.remove(verifyQueue, i)
-				end
-			else
-				i = i + 1
-			end
-		end
-		
-		-- Check if we're done
-		if currentIndex > #blocks and #failedBlocks == 0 and #verifyQueue == 0 then
-			break
-		end
-		
-		if not shouldContinue then
-			task.wait()
-		end
-	end
-	
-	if positionLock then
-		positionLock:Disconnect()
-		positionLock = nil
-	end
-	
-	local finalPlaced = 0
-	for _, blockData in ipairs(blocks) do
-		if blockData.placed then
-			finalPlaced = finalPlaced + 1
-		end
-	end
-	
-	print("=== BUILD COMPLETE ===")
-	print("Placed: " .. finalPlaced .. "/" .. #blocks)
-	visualFolder:Destroy()
-end)]]
-
-setclipboard(fullScript)
-print("Auto-build script copied to clipboard!")
-print("Blocks saved: " .. blockCount)
-print("Skipped: " .. skippedCount)
-print("Execute your clipboard to start auto-building!")
+print("\n=== All blocks processed ===")
