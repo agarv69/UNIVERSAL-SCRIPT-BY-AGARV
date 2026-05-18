@@ -174,9 +174,6 @@ for blockData in buildString:gmatch("|([^|]+)") do
 			local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
 			local position = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
 			
-			local cornerOffset = Vector3.new(-size.X/2, -size.Y/2, -size.Z/2)
-			local placePosition = position + cornerOffset
-			
 			local preview = Instance.new("Part")
 			preview.Name = "PreviewBlock"
 			preview.Size = size
@@ -191,7 +188,6 @@ for blockData in buildString:gmatch("|([^|]+)") do
 			table.insert(blocks, {
 				size = size,
 				position = position,
-				placePosition = placePosition,
 				preview = preview
 			})
 		end
@@ -239,7 +235,7 @@ local function checkBlockExists(blockData)
 	for _, brick in pairs(playerFolder:GetChildren()) do
 		if brick:IsA("BasePart") and brick.Name == "Brick" then
 			local distance = (brick.Position - blockData.position).Magnitude
-			if distance < 3 then
+			if distance < 0.3 then
 				return true
 			end
 		end
@@ -252,12 +248,10 @@ task.spawn(function()
 	print("Starting auto-build...")
 	
 	for i, blockData in ipairs(blocks) do
-		-- TP to 5 studs above block
-		local abovePos = blockData.position + Vector3.new(0, 5, 0)
+		local abovePos = blockData.position + Vector3.new(0, 12, 0)
 		lockPosition(abovePos)
 		task.wait(0.1)
 		
-		-- Keep firing until block appears
 		local maxAttempts = 50
 		local attempts = 0
 		
@@ -283,7 +277,7 @@ task.spawn(function()
 				bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
 			end)
 			
-			task.wait(0.05)
+			task.wait(0.03)
 			attempts = attempts + 1
 			
 			if attempts % 10 == 0 then
