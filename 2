@@ -192,8 +192,7 @@ for blockData in buildString:gmatch("|([^|]+)") do
 				size = size,
 				position = position,
 				placePosition = placePosition,
-				preview = preview,
-				placed = false
+				preview = preview
 			})
 		end
 	end
@@ -210,7 +209,6 @@ end
 print("Found " .. #btools .. " build tools")
 
 local bti = 0
-local ws = 0.02
 local bricksFolder = workspace:FindFirstChild("Bricks")
 local playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
 
@@ -250,125 +248,59 @@ local function checkBlockExists(blockData)
 	return false
 end
 
-local verifyQueue = {}
-
 task.spawn(function()
 	print("Starting auto-build...")
 	
-	local currentIndex = 1
-	
-	while currentIndex <= #blocks or #verifyQueue > 0 do
-		-- Place new blocks
-		if currentIndex <= #blocks then
-			local blockData = blocks[currentIndex]
+	for i, blockData in ipairs(blocks) do
+		-- TP to 5 studs above block
+		local abovePos = blockData.position + Vector3.new(0, 5, 0)
+		lockPosition(abovePos)
+		task.wait(0.1)
+		
+		-- Keep firing until block appears
+		local maxAttempts = 50
+		local attempts = 0
+		
+		while not checkBlockExists(blockData) and attempts < maxAttempts do
+			bti = bti + 1
+			local bt = btools[(bti % #btools) + 1]
 			
-			if not blockData.placed then
-				-- Move to 10 studs above block
-				local abovePos = blockData.position + Vector3.new(0, 10, 0)
-				lockPosition(abovePos)
-				
-				task.wait(0.05)
-				
-				-- Get tool
-				bti = bti + 1
-				local bt = btools[(bti % #btools) + 1]
-				
-				-- Equip tool
-				if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
-					pcall(function()
-						LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
-					end)
-				end
-				
-				-- Build mode
-				local buildMode = "normal"
-				local placePos = blockData.position
-				
-				if blockData.size ~= Vector3.new(4, 4, 4) then
-					buildMode = "detailed"
-					placePos = blockData.placePosition
-				end
-				
-				-- Fire remote
+			if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
 				pcall(function()
-					bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
+					LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
 				end)
-				
-				-- Add to verify queue
-				table.insert(verifyQueue, {
-					blockData = blockData,
-					index = currentIndex,
-					verifyTime = tick() + 1
-				})
-				
-				task.wait(ws / #btools)
 			end
 			
-			currentIndex = currentIndex + 1
+			local buildMode = "normal"
+			local placePos = blockData.position
 			
-			if currentIndex % 20 == 0 then
+			if blockData.size ~= Vector3.new(4, 4, 4) then
+				buildMode = "detailed"
+				placePos = blockData.position
+			end
+			
+			pcall(function()
+				bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
+			end)
+			
+			task.wait(0.05)
+			attempts = attempts + 1
+			
+			if attempts % 10 == 0 then
 				btools = findBuildTools()
 			end
 		end
 		
-		-- Check verify queue
-		local i = 1
-		while i <= #verifyQueue do
-			local item = verifyQueue[i]
-			
-			if tick() >= item.verifyTime then
-				-- Check if block exists
-				if checkBlockExists(item.blockData) then
-					-- BLOCK VERIFIED - MARK AS PLACED
-					item.blockData.placed = true
-					if item.blockData.preview then
-						pcall(function()
-							item.blockData.preview:Destroy()
-						end)
-					end
-					print("✓ Verified block " .. item.index)
-					table.remove(verifyQueue, i)
-				else
-					-- BLOCK MISSING - TP, WAIT 0.2, THEN PLACE
-					print("✗ Block " .. item.index .. " MISSING, rebuilding...")
-					
-					local abovePos = item.blockData.position + Vector3.new(0, 10, 0)
-					lockPosition(abovePos)
-					task.wait(0.2)
-					
-					bti = bti + 1
-					local bt = btools[(bti % #btools) + 1]
-					
-					if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
-						pcall(function()
-							LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
-						end)
-					end
-					
-					local buildMode = "normal"
-					local placePos = item.blockData.position
-					
-					if item.blockData.size ~= Vector3.new(4, 4, 4) then
-						buildMode = "detailed"
-						placePos = item.blockData.placePosition
-					end
-					
-					pcall(function()
-						bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
-					end)
-					
-					-- Update verify time
-					item.verifyTime = tick() + 1
-					i = i + 1
-					
-					task.wait(ws / #btools)
-				end
-			else
-				i = i + 1
+		if checkBlockExists(blockData) then
+			print("✓ Placed block " .. i .. "/" .. #blocks)
+			if blockData.preview then
+				pcall(function()
+					blockData.preview:Destroy()
+				end)
 			end
+		else
+			print("✗ Failed block " .. i .. " after " .. maxAttempts .. " attempts")
 		end
-		
-		task.wait()
 	end
 	
 	if positionLock then
@@ -376,15 +308,7 @@ task.spawn(function()
 		positionLock = nil
 	end
 	
-	local finalPlaced = 0
-	for _, blockData in ipairs(blocks) do
-		if blockData.placed then
-			finalPlaced = finalPlaced + 1
-		end
-	end
-	
 	print("=== BUILD COMPLETE ===")
-	print("Placed: " .. finalPlaced .. "/" .. #blocks)
 	visualFolder:Destroy()
 end)]]
 
