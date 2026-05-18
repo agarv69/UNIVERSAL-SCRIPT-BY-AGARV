@@ -1,4 +1,6 @@
+-- BLOCK SAVE & AUTO-BUILD SCRIPT
 local HttpService = game:GetService("HttpService")
+
 local MaterialSymbols = {
 	[Enum.Material.SmoothPlastic] = "!",
 	[Enum.Material.Plastic] = "@",
@@ -50,18 +52,18 @@ for _, descendant in pairs(bricksFolder:GetDescendants()) do
 			skippedCount = skippedCount + 1
 			continue
 		end
-		
+
 		local size = descendant.Size
 		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then
 			skippedCount = skippedCount + 1
 			continue
 		end
-		
+
 		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
 		local colorHex = colorToHex(descendant.Color)
 		local cf = descendant.CFrame
 		local canCollideMarker = descendant.CanCollide and "" or "^"
-		
+
 		buildString = buildString .. string.format(
 			"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
 			colorHex,
@@ -70,14 +72,21 @@ for _, descendant in pairs(bricksFolder:GetDescendants()) do
 			size.X, size.Y, size.Z,
 			cf.X, cf.Y, cf.Z
 		)
-		
+
 		blockCount = blockCount + 1
 	end
 end
 
+if buildString == "" or not buildString then
+	warn("No blocks found to save!")
+	print("Blocks scanned: " .. blockCount)
+	print("Blocks skipped: " .. skippedCount)
+	return
+end
+
 local fullScript = [[local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local buildString = "]] .. buildString .. [["
+local buildString = ]] .. string.format("%q", buildString) .. [[
 
 local SymbolToMaterial = {
 	["!"] = Enum.Material.SmoothPlastic,
@@ -161,21 +170,30 @@ for blockData in buildString:gmatch("|([^|]+)") do
 		local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
 		
 		if sizeX and posX then
+			local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
+			local position = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
+			
+			local cornerOffset = Vector3.new(-size.X/2, -size.Y/2, -size.Z/2)
+			local placePosition = position + cornerOffset
+			
 			local preview = Instance.new("Part")
 			preview.Name = "PreviewBlock"
-			preview.Size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
+			preview.Size = size
 			preview.Anchored = true
 			preview.CanCollide = false
-			preview.CFrame = CFrame.new(tonumber(posX), tonumber(posY), tonumber(posZ))
+			preview.CFrame = CFrame.new(position)
 			preview.Material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic
 			preview.Color = hexToColor(colorHex)
 			preview.Transparency = 0.5
 			preview.Parent = visualFolder
 			
 			table.insert(blocks, {
-				size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ)),
-				position = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ)),
-				preview = preview
+				size = size,
+				position = position,
+				placePosition = placePosition,
+				preview = preview,
+				placed = false,
+				attempts = 0
 			})
 		end
 	end
@@ -194,42 +212,142 @@ print("Starting auto-build...")
 
 local bti = 0
 local ws = 0.05
+local bricksFolder = workspace:FindFirstChild("Bricks")
+local playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
 
 task.spawn(function()
 	for i, blockData in ipairs(blocks) do
 		bti = bti + 1
 		local bt = btools[(bti % #btools) + 1]
 		
-		-- Equip tool
+		local character = LocalPlayer.Character
+		if character and character:FindFirstChild("HumanoidRootPart") then
+			character.HumanoidRootPart.CFrame = CFrame.new(blockData.position)
+		end
+		
 		if bt.bt.Parent ~= LocalPlayer.Character then
 			LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
 			task.wait(0.1)
 		end
 		
-		-- Check if block is 4x4x4 (normal) or needs detailed mode
 		local buildMode = "normal"
+		local placePos = blockData.position
+		
 		if blockData.size ~= Vector3.new(4, 4, 4) then
 			buildMode = "detailed"
+			placePos = blockData.placePosition
 		end
 		
-		-- Fire remote
-		bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, blockData.position, buildMode)
+		bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
+		blockData.attempts = blockData.attempts + 1
 		
-		-- Remove preview
-		if blockData.preview then
-			blockData.preview:Destroy()
-		end
-		
-		print("Placed block " .. i .. "/" .. #blocks .. " (mode: " .. buildMode .. ")")
 		task.wait(ws / #btools)
 		
-		-- Refresh tools every 20 blocks
+		if playerFolder then
+			for _, brick in pairs(playerFolder:GetChildren()) do
+				if brick:IsA("BasePart") and brick.Name == "Brick" then
+					local distance = (brick.Position - blockData.position).Magnitude
+					if distance < 5 then
+						blockData.placed = true
+						if blockData.preview then
+							blockData.preview:Destroy()
+						end
+						break
+					end
+				end
+			end
+		end
+		
+		if blockData.placed then
+			print("Placed block " .. i .. "/" .. #blocks .. " (mode: " .. buildMode .. ")")
+		else
+			print("Block " .. i .. " failed, will retry later")
+		end
+		
 		if i % 20 == 0 then
 			btools = findBuildTools()
 		end
 	end
 	
+	print("First pass complete! Retrying failed blocks...")
+	local retryCount = 0
+	local maxRetries = 3
+	
+	while retryCount < maxRetries do
+		local failedBlocks = {}
+		
+		for i, blockData in ipairs(blocks) do
+			if not blockData.placed then
+				table.insert(failedBlocks, {index = i, data = blockData})
+			end
+		end
+		
+		if #failedBlocks == 0 then
+			print("All blocks placed successfully!")
+			break
+		end
+		
+		print("Retry pass " .. (retryCount + 1) .. ": " .. #failedBlocks .. " blocks remaining")
+		
+		for _, failed in ipairs(failedBlocks) do
+			local blockData = failed.data
+			local i = failed.index
+			
+			bti = bti + 1
+			local bt = btools[(bti % #btools) + 1]
+			
+			local character = LocalPlayer.Character
+			if character and character:FindFirstChild("HumanoidRootPart") then
+				character.HumanoidRootPart.CFrame = CFrame.new(blockData.position)
+			end
+			
+			if bt.bt.Parent ~= LocalPlayer.Character then
+				LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
+				task.wait(0.1)
+			end
+			
+			local buildMode = "normal"
+			local placePos = blockData.position
+			
+			if blockData.size ~= Vector3.new(4, 4, 4) then
+				buildMode = "detailed"
+				placePos = blockData.placePosition
+			end
+			
+			bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
+			blockData.attempts = blockData.attempts + 1
+			
+			task.wait(ws / #btools)
+			
+			if playerFolder then
+				for _, brick in pairs(playerFolder:GetChildren()) do
+					if brick:IsA("BasePart") and brick.Name == "Brick" then
+						local distance = (brick.Position - blockData.position).Magnitude
+						if distance < 5 then
+							blockData.placed = true
+							if blockData.preview then
+								blockData.preview:Destroy()
+							end
+							print("Retry success: block " .. i)
+							break
+						end
+					end
+				end
+			end
+		end
+		
+		retryCount = retryCount + 1
+	end
+	
+	local placedCount = 0
+	for _, blockData in ipairs(blocks) do
+		if blockData.placed then
+			placedCount = placedCount + 1
+		end
+	end
+	
 	print("Auto-build complete!")
+	print("Placed: " .. placedCount .. "/" .. #blocks)
 	visualFolder:Destroy()
 end)]]
 
