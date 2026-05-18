@@ -1,4 +1,4 @@
--- BLOCK SAVE & AUTO-BUILD SCRIPT (FIXED)
+-- BLOCK SAVE & AUTO-BUILD SCRIPT (8-24 STUD RANGE)
 local HttpService = game:GetService("HttpService")
 
 local MaterialSymbols = {
@@ -86,6 +86,7 @@ end
 
 local fullScript = [[local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 local buildString = ]] .. string.format("%q", buildString) .. [[
 
 local SymbolToMaterial = {
@@ -122,9 +123,8 @@ end
 local function findBuildTools()
 	local tools = {}
 	
-	local char = LocalPlayer.Character
-	if char then
-		for _, item in pairs(char:GetChildren()) do
+	if LocalPlayer.Character then
+		for _, item in pairs(LocalPlayer.Character:GetChildren()) do
 			if item:IsA("Tool") and item.Name == "Build" then
 				local script = item:FindFirstChild("Script")
 				local remote = script and script:FindFirstChild("Event")
@@ -191,8 +191,7 @@ for blockData in buildString:gmatch("|([^|]+)") do
 				size = size,
 				position = position,
 				placePosition = placePosition,
-				preview = preview,
-				placed = false
+				preview = preview
 			})
 		end
 	end
@@ -207,46 +206,22 @@ if #btools == 0 then
 end
 
 print("Found " .. #btools .. " build tools")
-print("Starting auto-build...")
 
 local bti = 0
 local ws = 0.05
 local bricksFolder = workspace:FindFirstChild("Bricks")
 local playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
 
-local function safeGetCharacter()
-	return LocalPlayer.Character
-end
-
-local function safeGetHRP()
-	local char = safeGetCharacter()
-	if char then
-		return char:FindFirstChild("HumanoidRootPart")
-	end
-	return nil
-end
-
-local function safeTeleport(position)
-	local hrp = safeGetHRP()
-	if hrp then
-		-- Stay in one spot, just update position periodically
-		hrp.CFrame = CFrame.new(position)
-		return true
-	end
-	return false
-end
-
-local function safeEquipTool(tool)
-	local char = safeGetCharacter()
-	if char and tool.Parent ~= char then
-		local humanoid = char:FindFirstChild("Humanoid")
-		if humanoid then
-			humanoid:EquipTool(tool)
-			return true
+-- Make all placed bricks CanCollide = false on client
+local canCollideConnection = RunService.Heartbeat:Connect(function()
+	if playerFolder then
+		for _, brick in pairs(playerFolder:GetChildren()) do
+			if brick:IsA("BasePart") and brick.Name == "Brick" then
+				brick.CanCollide = false
+			end
 		end
 	end
-	return false
-end
+end)
 
 local function checkBlockExists(blockData)
 	if not playerFolder then
@@ -266,74 +241,91 @@ local function checkBlockExists(blockData)
 	return false
 end
 
-local function findClosestBlock()
-	local hrp = safeGetHRP()
-	if not hrp then return nil, nil end
+local function getPlayerPos()
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		return LocalPlayer.Character.HumanoidRootPart.Position
+	end
+	return nil
+end
+
+local function findBlocksInRange()
+	local playerPos = getPlayerPos()
+	if not playerPos then return {} end
 	
-	local playerPos = hrp.Position
-	local closestBlock = nil
-	local closestDistance = math.huge
-	local closestIndex = nil
+	local blocksInRange = {}
 	
 	for i, blockData in ipairs(blocks) do
-		if not blockData.placed then
-			local distance = (blockData.position - playerPos).Magnitude
-			if distance < closestDistance then
-				closestDistance = distance
-				closestBlock = blockData
-				closestIndex = i
-			end
+		local distance = (blockData.position - playerPos).Magnitude
+		if distance >= 8 and distance <= 24 then
+			table.insert(blocksInRange, {data = blockData, distance = distance})
 		end
 	end
 	
-	return closestBlock, closestIndex
+	table.sort(blocksInRange, function(a, b)
+		return a.distance < b.distance
+	end)
+	
+	return blocksInRange
+end
+
+local function findNearestUnbuiltBlock()
+	local playerPos = getPlayerPos()
+	if not playerPos then return nil end
+	
+	local nearest = nil
+	local nearestDist = math.huge
+	
+	for i, blockData in ipairs(blocks) do
+		local distance = (blockData.position - playerPos).Magnitude
+		if distance < nearestDist then
+			nearestDist = distance
+			nearest = blockData
+		end
+	end
+	
+	return nearest
+end
+
+local function teleportNear(targetPos)
+	if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		return
+	end
+	
+	-- Teleport 8 studs away, keep same Y position to not fall
+	local hrp = LocalPlayer.Character.HumanoidRootPart
+	local currentY = hrp.Position.Y
+	
+	local direction = (targetPos - hrp.Position).Unit
+	local offset = direction * 8
+	local newPos = targetPos - offset
+	newPos = Vector3.new(newPos.X, currentY, newPos.Z)
+	
+	pcall(function()
+		hrp.CFrame = CFrame.new(newPos)
+	end)
 end
 
 task.spawn(function()
-	local placedCount = 0
-	local totalBlocks = #blocks
-	local buildRadius = 20 -- Place blocks within 20 studs
+	print("Starting auto-build...")
 	
-	-- First pass: place all blocks
-	while placedCount < totalBlocks do
-		local hrp = safeGetHRP()
-		if not hrp then
-			task.wait(1)
-			continue
-		end
+	while true do
+		local blocksInRange = findBlocksInRange()
 		
-		local playerPos = hrp.Position
-		local blocksInRange = {}
-		
-		-- Find all unplaced blocks within range
-		for i, blockData in ipairs(blocks) do
-			if not blockData.placed then
-				local distance = (blockData.position - playerPos).Magnitude
-				if distance <= buildRadius then
-					table.insert(blocksInRange, {index = i, data = blockData, distance = distance})
-				end
-			end
-		end
-		
-		-- If no blocks in range, teleport to closest unplaced block
+		-- If no blocks in 8-24 stud range, teleport to nearest block
 		if #blocksInRange == 0 then
-			local blockData, blockIndex = findClosestBlock()
-			if not blockData then
+			local nearestBlock = findNearestUnbuiltBlock()
+			if not nearestBlock then
+				print("No more blocks to build!")
 				break
 			end
-			pcall(function()
-				safeTeleport(blockData.position)
-			end)
+			
+			print("No blocks in range, teleporting...")
+			teleportNear(nearestBlock.position)
 			task.wait(0.5)
 			continue
 		end
 		
-		-- Sort by distance (closest first)
-		table.sort(blocksInRange, function(a, b)
-			return a.distance < b.distance
-		end)
-		
-		-- Place all blocks in range
+		-- SPAM BUILD all blocks in range
 		for _, blockInfo in ipairs(blocksInRange) do
 			local blockData = blockInfo.data
 			
@@ -341,11 +333,13 @@ task.spawn(function()
 			local bt = btools[(bti % #btools) + 1]
 			
 			-- Equip tool
-			pcall(function()
-				safeEquipTool(bt.bt)
-			end)
+			if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
+				pcall(function()
+					LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
+				end)
+			end
 			
-			-- Determine build mode
+			-- Build mode
 			local buildMode = "normal"
 			local placePos = blockData.position
 			
@@ -354,104 +348,97 @@ task.spawn(function()
 				placePos = blockData.placePosition
 			end
 			
-			-- Place block
+			-- Fire remote
 			pcall(function()
 				bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
 			end)
 			
-			blockData.placed = true
 			if blockData.preview then
 				pcall(function()
 					blockData.preview:Destroy()
 				end)
 			end
 			
-			placedCount = placedCount + 1
-			
 			task.wait(ws / #btools)
 			
-			if placedCount % 50 == 0 then
-				print("Placed " .. placedCount .. "/" .. totalBlocks .. " blocks")
-			end
-			
-			if placedCount % 20 == 0 then
+			if bti % 20 == 0 then
 				btools = findBuildTools()
 			end
 		end
+		
+		-- VERIFY what's actually placed
+		print("Verifying cluster...")
+		task.wait(1)
+		
+		local missingInRange = {}
+		for _, blockInfo in ipairs(blocksInRange) do
+			if not checkBlockExists(blockInfo.data) then
+				table.insert(missingInRange, blockInfo.data)
+			end
+		end
+		
+		if #missingInRange > 0 then
+			print("Found " .. #missingInRange .. " missing, retrying...")
+			
+			-- Retry missing blocks
+			for _, blockData in ipairs(missingInRange) do
+				bti = bti + 1
+				local bt = btools[(bti % #btools) + 1]
+				
+				if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
+					pcall(function()
+						LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
+					end)
+				end
+				
+				local buildMode = "normal"
+				local placePos = blockData.position
+				
+				if blockData.size ~= Vector3.new(4, 4, 4) then
+					buildMode = "detailed"
+					placePos = blockData.placePosition
+				end
+				
+				pcall(function()
+					bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
+				end)
+				
+				task.wait(ws / #btools)
+			end
+			
+			task.wait(1)
+		end
+		
+		print("Cluster complete, moving to next...")
 	end
 	
-	print("First pass complete! Checking for missing blocks...")
+	-- Final verification
+	print("=== FINAL VERIFICATION ===")
 	task.wait(2)
 	
-	-- Validation and retry loop
-	local maxRetries = 5
-	
-	for retryCount = 1, maxRetries do
-		-- Check which blocks are actually placed
-		local missingBlocks = {}
-		
-		for i, blockData in ipairs(blocks) do
-			if not checkBlockExists(blockData) then
-				blockData.placed = false
-				table.insert(missingBlocks, {index = i, data = blockData})
-			else
-				blockData.placed = true
-			end
-		end
-		
-		if #missingBlocks == 0 then
-			print("All blocks verified and placed!")
-			break
-		end
-		
-		print("Retry " .. retryCount .. "/" .. maxRetries .. ": Found " .. #missingBlocks .. " missing blocks, rebuilding...")
-		
-		-- Rebuild only missing blocks
-		for _, missing in ipairs(missingBlocks) do
-			local blockData = missing.data
-			
-			bti = bti + 1
-			local bt = btools[(bti % #btools) + 1]
-			
-			pcall(function()
-				safeTeleport(blockData.position)
-			end)
-			
-			pcall(function()
-				safeEquipTool(bt.bt)
-			end)
-			
-			local buildMode = "normal"
-			local placePos = blockData.position
-			
-			if blockData.size ~= Vector3.new(4, 4, 4) then
-				buildMode = "detailed"
-				placePos = blockData.placePosition
-			end
-			
-			pcall(function()
-				bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
-			end)
-			
-			task.wait(ws / #btools)
-		end
-		
-		print("Retry pass complete, waiting before next check...")
-		task.wait(2)
-	end
-	
-	-- Final count
-	local finalPlacedCount = 0
+	local finalMissing = {}
 	for _, blockData in ipairs(blocks) do
-		if checkBlockExists(blockData) then
-			finalPlacedCount = finalPlacedCount + 1
+		if not checkBlockExists(blockData) then
+			table.insert(finalMissing, blockData)
 		end
 	end
 	
-	print("=== AUTO-BUILD COMPLETE ===")
-	print("Successfully placed: " .. finalPlacedCount .. "/" .. #blocks)
-	if finalPlacedCount < #blocks then
-		print("Missing: " .. (#blocks - finalPlacedCount) .. " blocks")
+	if #finalMissing > 0 then
+		print("Final pass: " .. #finalMissing .. " missing blocks")
+	end
+	
+	local finalPlaced = #blocks - #finalMissing
+	print("=== BUILD COMPLETE ===")
+	print("Placed: " .. finalPlaced .. "/" .. #blocks)
+	
+	-- Re-enable CanCollide
+	canCollideConnection:Disconnect()
+	if playerFolder then
+		for _, brick in pairs(playerFolder:GetChildren()) do
+			if brick:IsA("BasePart") and brick.Name == "Brick" then
+				brick.CanCollide = true
+			end
+		end
 	end
 	
 	visualFolder:Destroy()
