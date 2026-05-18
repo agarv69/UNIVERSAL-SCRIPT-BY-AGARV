@@ -75,10 +75,10 @@ for _, descendant in pairs(bricksFolder:GetDescendants()) do
 	end
 end
 
--- CREATE THE FULL AUTO-BUILD SCRIPT
 local fullScript = [[local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local buildString = "]] .. buildString .. [["
+
 local SymbolToMaterial = {
 	["!"] = Enum.Material.SmoothPlastic,
 	["@"] = Enum.Material.Plastic,
@@ -102,29 +102,64 @@ local SymbolToMaterial = {
 	["`"] = Enum.Material.Pavement,
 	["?"] = Enum.Material.Neon
 }
+
 local function hexToColor(hex)
 	local r = tonumber(hex:sub(1, 2), 16) / 255
 	local g = tonumber(hex:sub(3, 4), 16) / 255
 	local b = tonumber(hex:sub(5, 6), 16) / 255
 	return Color3.new(r, g, b)
 end
+
+local function findBuildTools()
+	local tools = {}
+	local character = LocalPlayer.Character
+	
+	if character then
+		for _, item in pairs(character:GetChildren()) do
+			if item:IsA("Tool") and item.Name == "Build" then
+				local script = item:FindFirstChild("Script")
+				local remote = script and script:FindFirstChild("Event")
+				if remote then
+					table.insert(tools, {bt = item, e = remote})
+				end
+			end
+		end
+	end
+	
+	for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
+		if item:IsA("Tool") and item.Name == "Build" then
+			local script = item:FindFirstChild("Script")
+			local remote = script and script:FindFirstChild("Event")
+			if remote then
+				table.insert(tools, {bt = item, e = remote})
+			end
+		end
+	end
+	
+	return tools
+end
+
 local visualFolder = Instance.new("Folder")
 visualFolder.Name = "BuildPreview"
 visualFolder.Parent = workspace
+
 local blocks = {}
 for blockData in buildString:gmatch("|([^|]+)") do
 	local colorHex = blockData:sub(1, 6)
 	local materialSymbol = blockData:sub(7, 7)
 	local rest = blockData:sub(8)
+	
 	local canCollide = true
 	if rest:sub(1, 1) == "^" then
 		canCollide = false
 		rest = rest:sub(2)
 	end
+	
 	local sizeData, posData = rest:match("([^%.]+)%.(.+)")
 	if sizeData and posData then
 		local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
 		local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
+		
 		if sizeX and posX then
 			local preview = Instance.new("Part")
 			preview.Name = "PreviewBlock"
@@ -136,68 +171,65 @@ for blockData in buildString:gmatch("|([^|]+)") do
 			preview.Color = hexToColor(colorHex)
 			preview.Transparency = 0.5
 			preview.Parent = visualFolder
+			
 			table.insert(blocks, {
 				size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ)),
 				position = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ)),
-				material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic,
-				color = hexToColor(colorHex),
-				canCollide = canCollide,
 				preview = preview
 			})
 		end
 	end
 end
-print("Preview created: " .. #blocks .. " blocks")
-local buildTool = nil
-local character = LocalPlayer.Character
-if character then
-	for _, item in pairs(character:GetDescendants()) do
-		if item:IsA("Tool") and item.Name:lower():find("build") then
-			buildTool = item
-			break
-		end
-	end
-end
-if not buildTool then
-	for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
-		if item:IsA("Tool") and item.Name:lower():find("build") then
-			buildTool = item
-			break
-		end
-	end
-end
-if not buildTool then
-	warn("Build tool not found!")
+
+print("Loaded " .. #blocks .. " blocks")
+
+local btools = findBuildTools()
+if #btools == 0 then
+	warn("No build tools found!")
 	return
 end
-print("Found tool: " .. buildTool.Name)
-if buildTool.Parent ~= character then
-	LocalPlayer.Character.Humanoid:EquipTool(buildTool)
-	task.wait(0.5)
-end
+
+print("Found " .. #btools .. " build tools")
 print("Starting auto-build...")
+
+local bti = 0
+local ws = 0.05
+
 task.spawn(function()
 	for i, blockData in ipairs(blocks) do
-		local remote = buildTool:FindFirstChild("ServerControls") 
-			or buildTool:FindFirstChild("Remote")
-			or buildTool:FindFirstChild("Event")
-		if remote and remote:IsA("RemoteEvent") then
-			remote:FireServer(
-				"CreatePart",
-				blockData.size,
-				blockData.position,
-				blockData.material,
-				blockData.color,
-				blockData.canCollide
-			)
+		bti = bti + 1
+		local bt = btools[(bti % #btools) + 1]
+		
+		-- Equip tool
+		if bt.bt.Parent ~= LocalPlayer.Character then
+			LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
+			task.wait(0.1)
 		end
+		
+		-- Check if block is 4x4x4 (normal) or needs detailed mode
+		local buildMode = "normal"
+		if blockData.size ~= Vector3.new(4, 4, 4) then
+			buildMode = "detailed"
+		end
+		
+		-- Fire remote
+		bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, blockData.position, buildMode)
+		
+		-- Remove preview
 		if blockData.preview then
 			blockData.preview:Destroy()
 		end
-		print("Built: " .. i .. "/" .. #blocks)
-		task.wait(0.1)
+		
+		print("Placed block " .. i .. "/" .. #blocks .. " (mode: " .. buildMode .. ")")
+		task.wait(ws / #btools)
+		
+		-- Refresh tools every 20 blocks
+		if i % 20 == 0 then
+			btools = findBuildTools()
+		end
 	end
-	print("Build complete!")
+	
+	print("Auto-build complete!")
 	visualFolder:Destroy()
 end)]]
 
