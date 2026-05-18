@@ -1,5 +1,6 @@
--- BLOCK SAVE & AUTO-BUILD SCRIPT (SPAM BUILD VERSION)
+-- BLOCK SAVE & AUTO-BUILD SCRIPT
 local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 
 local MaterialSymbols = {
 	[Enum.Material.SmoothPlastic] = "!",
@@ -86,6 +87,7 @@ end
 
 local fullScript = [[local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 local buildString = ]] .. string.format("%q", buildString) .. [[
 
 local SymbolToMaterial = {
@@ -190,7 +192,9 @@ for blockData in buildString:gmatch("|([^|]+)") do
 				size = size,
 				position = position,
 				placePosition = placePosition,
-				preview = preview
+				preview = preview,
+				placed = false,
+				verifyTime = nil
 			})
 		end
 	end
@@ -205,12 +209,26 @@ if #btools == 0 then
 end
 
 print("Found " .. #btools .. " build tools")
-print("Starting spam build...")
 
 local bti = 0
 local ws = 0.05
 local bricksFolder = workspace:FindFirstChild("Bricks")
 local playerFolder = bricksFolder and bricksFolder:FindFirstChild(LocalPlayer.Name)
+
+local positionLock = nil
+
+local function lockPosition(targetPos)
+	if positionLock then
+		positionLock:Disconnect()
+	end
+	
+	positionLock = RunService.RenderStepped:Connect(function()
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+			LocalPlayer.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+		end
+	end)
+end
 
 local function checkBlockExists(blockData)
 	if not playerFolder then
@@ -230,49 +248,23 @@ local function checkBlockExists(blockData)
 	return false
 end
 
-local function findClosestBlock()
-	if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-		return nil
-	end
-	
-	local playerPos = LocalPlayer.Character.HumanoidRootPart.Position
-	local closestBlock = nil
-	local closestDistance = math.huge
-	
-	for i, blockData in ipairs(blocks) do
-		local distance = (blockData.position - playerPos).Magnitude
-		if distance < closestDistance then
-			closestDistance = distance
-			closestBlock = blockData
-		end
-	end
-	
-	return closestBlock
-end
-
 task.spawn(function()
-	local buildAttempts = 0
-	local maxAttempts = 5000
+	print("Starting auto-build...")
 	
-	-- SPAM BUILD PASS - just keep building closest blocks
-	print("=== SPAM BUILD PHASE ===")
-	while buildAttempts < maxAttempts do
-		local blockData = findClosestBlock()
+	local currentIndex = 1
+	
+	while currentIndex <= #blocks do
+		local blockData = blocks[currentIndex]
 		
-		if not blockData then
-			break
-		end
+		-- Move to 10 studs above block
+		local abovePos = blockData.position + Vector3.new(0, 10, 0)
+		lockPosition(abovePos)
 		
+		task.wait(0.1)
+		
+		-- Get tool
 		bti = bti + 1
 		local bt = btools[(bti % #btools) + 1]
-		
-		-- Teleport nearby (offset so not centered on block)
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-			pcall(function()
-				local offset = Vector3.new(math.random(-10, 10), 0, math.random(-10, 10))
-				LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(blockData.position + offset)
-			end)
-		end
 		
 		-- Equip tool
 		if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
@@ -295,60 +287,64 @@ task.spawn(function()
 			bt.e:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, buildMode)
 		end)
 		
-		if blockData.preview then
-			pcall(function()
-				blockData.preview:Destroy()
-			end)
-		end
+		-- Set verify time
+		blockData.verifyTime = tick() + 1
 		
-		buildAttempts = buildAttempts + 1
 		task.wait(ws / #btools)
 		
-		if buildAttempts % 100 == 0 then
-			print("Build attempts: " .. buildAttempts)
+		-- Move to next block
+		currentIndex = currentIndex + 1
+		
+		if currentIndex % 20 == 0 then
 			btools = findBuildTools()
 		end
 	end
 	
-	print("=== VERIFICATION PHASE ===")
+	print("First pass complete, verifying...")
+	
+	-- Unlock position
+	if positionLock then
+		positionLock:Disconnect()
+		positionLock = nil
+	end
+	
 	task.wait(2)
 	
-	-- VERIFICATION PASSES - check every block and rebuild missing ones
-	local maxVerifyPasses = 10
-	
-	for pass = 1, maxVerifyPasses do
-		print("Verification pass " .. pass .. "/" .. maxVerifyPasses)
+	-- Verification phase
+	for pass = 1, 5 do
+		print("Verification pass " .. pass)
 		
 		local missingBlocks = {}
 		
-		-- CHECK EVERY SINGLE BLOCK IN WORKSPACE
 		for i, blockData in ipairs(blocks) do
 			if not checkBlockExists(blockData) then
 				table.insert(missingBlocks, blockData)
+			else
+				blockData.placed = true
+				if blockData.preview then
+					pcall(function()
+						blockData.preview:Destroy()
+					end)
+				end
 			end
 		end
 		
 		if #missingBlocks == 0 then
-			print("ALL BLOCKS VERIFIED!")
+			print("All blocks verified!")
 			break
 		end
 		
-		print("Found " .. #missingBlocks .. " missing blocks, rebuilding...")
+		print("Rebuilding " .. #missingBlocks .. " missing blocks...")
 		
-		-- Rebuild missing blocks
+		-- Rebuild missing
 		for _, blockData in ipairs(missingBlocks) do
-			-- Teleport nearby
-			if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-				pcall(function()
-					local offset = Vector3.new(math.random(-10, 10), 0, math.random(-10, 10))
-					LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(blockData.position + offset)
-				end)
-			end
+			local abovePos = blockData.position + Vector3.new(0, 10, 0)
+			lockPosition(abovePos)
+			task.wait(0.1)
 			
 			bti = bti + 1
 			local bt = btools[(bti % #btools) + 1]
 			
-			-- Equip
 			if LocalPlayer.Character and bt.bt.Parent ~= LocalPlayer.Character then
 				pcall(function()
 					LocalPlayer.Character.Humanoid:EquipTool(bt.bt)
@@ -370,19 +366,23 @@ task.spawn(function()
 			task.wait(ws / #btools)
 		end
 		
+		if positionLock then
+			positionLock:Disconnect()
+			positionLock = nil
+		end
+		
 		task.wait(2)
 	end
 	
-	-- Final count
-	local finalCount = 0
+	local finalPlaced = 0
 	for _, blockData in ipairs(blocks) do
 		if checkBlockExists(blockData) then
-			finalCount = finalCount + 1
+			finalPlaced = finalPlaced + 1
 		end
 	end
 	
 	print("=== BUILD COMPLETE ===")
-	print("Placed: " .. finalCount .. "/" .. #blocks)
+	print("Placed: " .. finalPlaced .. "/" .. #blocks)
 	visualFolder:Destroy()
 end)]]
 
