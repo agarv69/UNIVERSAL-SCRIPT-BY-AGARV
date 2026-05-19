@@ -178,22 +178,25 @@ local function calculateResizeFaces(targetSize, targetPos, actualPos)
 	local growY = sizeY - 1
 	local growZ = sizeZ - 1
 	
-	-- For X dimension (Left/Right)
-	local leftResize, rightResize
+	-- For X dimension (Right/Left)
+	-- Right is positive X direction, Left is negative X direction
+	local rightResize, leftResize
 	if sizeX % 2 == 1 then
 		-- Odd size: centers perfectly, equal on both sides
-		leftResize = growX / 2
 		rightResize = growX / 2
+		leftResize = growX / 2
 	else
 		-- Even size: off-center by 0.5 studs
-		if offsetX < 0 then
-			-- Block is to the left
-			leftResize = growX / 2 - 0.5
-			rightResize = growX / 2 + 0.5
-		else
-			-- Block is to the right
-			leftResize = growX / 2 + 0.5
+		if offsetX > 0 then
+			-- Block is to the right of target (positive X)
+			-- Need more on the left side to reach back to center
 			rightResize = growX / 2 - 0.5
+			leftResize = growX / 2 + 0.5
+		else
+			-- Block is to the left of target (negative X)
+			-- Need more on the right side
+			rightResize = growX / 2 + 0.5
+			leftResize = growX / 2 - 0.5
 		end
 	end
 	
@@ -203,31 +206,34 @@ local function calculateResizeFaces(targetSize, targetPos, actualPos)
 		topResize = growY / 2
 		bottomResize = growY / 2
 	else
-		if offsetY < 0 then
-			-- Block is below center
-			bottomResize = growY / 2 - 0.5
-			topResize = growY / 2 + 0.5
-		else
+		if offsetY > 0 then
 			-- Block is above center
-			bottomResize = growY / 2 + 0.5
 			topResize = growY / 2 - 0.5
+			bottomResize = growY / 2 + 0.5
+		else
+			-- Block is below center
+			topResize = growY / 2 + 0.5
+			bottomResize = growY / 2 - 0.5
 		end
 	end
 	
-	-- For Z dimension (Front/Back)
+	-- For Z dimension (Front/Back) - REVERSED LOGIC
+	-- Front is positive Z, Back is negative Z
 	local frontResize, backResize
 	if sizeZ % 2 == 1 then
 		frontResize = growZ / 2
 		backResize = growZ / 2
 	else
-		if offsetZ < 0 then
-			-- Block is toward back
-			backResize = growZ / 2 - 0.5
+		if offsetZ > 0 then
+			-- Block is toward front (positive Z)
+			-- REVERSED: Need more on back
 			frontResize = growZ / 2 + 0.5
+			backResize = growZ / 2 - 0.5
 		else
-			-- Block is toward front
-			backResize = growZ / 2 + 0.5
+			-- Block is toward back (negative Z)
+			-- REVERSED: Need more on front
 			frontResize = growZ / 2 - 0.5
+			backResize = growZ / 2 + 0.5
 		end
 	end
 	
@@ -244,16 +250,23 @@ end
 -- ============================================================================
 -- SHAPE TOOL RESIZING
 -- ============================================================================
-local function resizeBlock(brick, targetSize, targetPos, actualPos)
+local function resizeBlock(brick, targetSize, targetPos)
 	local shapeTool = findShapeTool()
 	if not shapeTool then
 		warn("Shape tool not found!")
 		return false
 	end
 	
+	if not brick then
+		warn("No brick provided to resize!")
+		return false
+	end
+	
+	local actualPos = brick.Position
 	local resizeFaces = calculateResizeFaces(targetSize, targetPos, actualPos)
 	
 	print(string.format("\n=== RESIZING BLOCK ==="))
+	print(string.format("Brick: %s", tostring(brick)))
 	print(string.format("Target Size: %.1fx%.1fx%.1f", targetSize.X, targetSize.Y, targetSize.Z))
 	print(string.format("Target Pos: (%.1f, %.1f, %.1f)", targetPos.X, targetPos.Y, targetPos.Z))
 	print(string.format("Actual Pos: (%.1f, %.1f, %.1f)", actualPos.X, actualPos.Y, actualPos.Z))
@@ -369,7 +382,7 @@ end
 -- ============================================================================
 -- BLOCK PLACEMENT
 -- ============================================================================
-local function placeBlock(blockData, buildTools, blockIndex)
+local function placeBlock(blockData, buildTools, blockIndex, totalBlocks)
 	if #buildTools == 0 then
 		warn("No build tools available!")
 		return false
@@ -387,7 +400,7 @@ local function placeBlock(blockData, buildTools, blockIndex)
 		
 		-- If needs shape resize, do it
 		if blockData.needsShapeResize then
-			resizeBlock(existing, blockData.size, blockData.centerPos, existing.Position)
+			resizeBlock(existing, blockData.size, blockData.centerPos)
 		end
 		
 		return true
@@ -415,11 +428,12 @@ local function placeBlock(blockData, buildTools, blockIndex)
 		local brick = findBlockNear(blockData.centerPos, 3)
 		if brick then
 			blockData.placedBrick = brick
+			print(string.format("✓ [%d/%d] Block placed at (%.1f, %.1f, %.1f)", blockIndex, totalBlocks, brick.Position.X, brick.Position.Y, brick.Position.Z))
 			
 			-- If it's a detailed block that needs shape resizing, resize it
+			-- Pass the EXACT brick that was just placed
 			if blockData.needsShapeResize then
-				local actualPos = brick.Position
-				resizeBlock(brick, blockData.size, blockData.centerPos, actualPos)
+				resizeBlock(brick, blockData.size, blockData.centerPos)
 			end
 			
 			return true
@@ -479,13 +493,13 @@ local function main()
 	-- Build blocks
 	local successCount = 0
 	local failCount = 0
+	local totalBlocks = #blocks
 	
 	for i, blockData in ipairs(blocks) do
-		local success = placeBlock(blockData, buildTools, i)
+		local success = placeBlock(blockData, buildTools, i, totalBlocks)
 		
 		if success then
 			successCount = successCount + 1
-			print(string.format("✓ [%d/%d] Block placed", i, #blocks))
 			
 			-- Destroy preview
 			if blockData.preview then
@@ -493,7 +507,7 @@ local function main()
 			end
 		else
 			failCount = failCount + 1
-			warn(string.format("✗ [%d/%d] Block FAILED", i, #blocks))
+			warn(string.format("✗ [%d/%d] Block FAILED", i, totalBlocks))
 		end
 		
 		-- Unlock after this block is done
