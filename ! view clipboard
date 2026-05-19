@@ -1,7 +1,25 @@
-local HttpService = game:GetService("HttpService")
+-- OPTIMIZED AUTO-BUILD SCRIPT (PLACEMENT ONLY - NO RESIZE)
+-- Paste your build string below:
+local buildString = "|7C5C46@4,4,4.-6.0,26.0,-22.0||7C5C46@4,4,4.-2.0,26.0,-22.0||7C5C46@4,4,4.2.0,26.0,-22.0||4B974B@4,4,4.6.0,26.0,-22.0||C0C0C0@4,4,4.-6.0,26.0,-30.0||C0C0C0@4,4,4.2.0,26.0,-26.0||C0C0C0@4,4,4.6.0,26.0,-30.0||C0C0C0@4,4,4.-2.0,26.0,-30.0||C0C0C0@4,4,4.-6.0,26.0,-2.0||C0C0C0@4,4,4.-6.0,26.0,-6.0||C0C0C0@4,4,4.-10.0,26.0,-6.0||C0C0C0@4,4,4.-14.0,26.0,-6.0||C0C0C0@4,4,4.-10.0,26.0,2.0||C0C0C0@4,4,4.-6.0,26.0,2.0||C0C0C0@4,4,4.-14.0,26.0,2.0||C0C0C0@4,4,4.-14.0,26.0,-2.0||C0C0C0@4,2,4.26.0,25.0,-10.0||C0C0C0@4,2,4.26.0,25.0,-6.0||C0C0C0@4,2,4.26.0,25.0,-2.0||C0C0C0@4,2,4.26.0,25.0,2.0||C0C0C0@4,2,4.26.0,27.0,-10.0||C0C0C0@4,2,4.26.0,27.0,-6.0||C0C0C0@4,2,4.26.0,27.0,-2.0||C0C0C0@4,2,4.26.0,29.0,-6.0||C0C0C0@4,2,4.26.0,31.0,-6.0||C0C0C0@4,2,4.26.0,33.0,-6.0||C0C0C0@1,1,1.24.5,28.5,-3.5||C0C0C0@1,1,1.25.5,28.5,-3.5||C0C0C0@1,1,1.26.5,28.5,-3.5||C0C0C0@1,1,1.27.5,28.5,-3.5||C0C0C0@1,1,1.24.5,28.5,-2.5||C0C0C0@1,1,1.25.5,28.5,-2.5||C0C0C0@1,1,1.26.5,28.5,-2.5||C0C0C0@1,1,1.27.5,28.5,-2.5||C0C0C0@1,1,1.24.5,28.5,-1.5||C0C0C0@1,1,1.25.5,28.5,-1.5||C0C0C0@1,1,1.26.5,28.5,-1.5||C0C0C0@1,1,1.27.5,28.5,-1.5||C0C0C0@1,1,1.24.5,29.5,-3.5||C0C0C0@1,1,1.25.5,29.5,-3.5||C0C0C0@1,1,1.26.5,29.5,-3.5||C0C0C0@1,1,1.27.5,29.5,-3.5||C0C0C0@1,1,1.24.5,29.5,-2.5||C0C0C0@1,1,1.25.5,29.5,-2.5||C0C0C0@1,1,1.26.5,29.5,-2.5||C0C0C0@1,1,1.27.5,29.5,-2.5||C0C0C0@1,1,1.25.5,30.5,-3.5||C0C0C0@1,1,1.24.5,30.5,-3.5||C0C0C0@1,1,1.26.5,30.5,-3.5||C0C0C0@1,1,1.27.5,30.5,-3.5||C0C0C0@1,1,7.13.5,24.5,14.5||C0C0C0@1,1,1.13.5,24.5,10.5||C0C0C0@4,1,1.12.0,24.5,18.5||C0C0C0@4,1,1.16.0,24.5,18.5||C0C0C0@1,1,1.7.5,24.5,16.5||C0C0C0@1,1,3.7.5,24.5,14.5||C0C0C0@1,1,2.7.5,24.5,12.0||C0C0C0@2,1,1.6.0,24.5,16.5||C0C0C0@3,1,1.5.5,24.5,11.5||C0C0C0@3,1,1.5.5,24.5,13.5||C0C0C0@1,1,1.4.5,24.5,16.5||C0C0C0@2,1,1.-1.0,24.5,16.5||C0C0C0@1,1,1.0.5,24.5,16.5||C0C0C0@1,1,1.1.5,24.5,16.5||C0C0C0@1,1,1.2.5,24.5,15.5||C0C0C0@1,1,1.2.5,24.5,14.5||C0C0C0@3,1,1.0.5,24.5,13.5||C0C0C0@1,1,1.-1.5,24.5,12.5||C0C0C0@4,1,1.1.0,24.5,11.5||C0C0C0@1,1,12.-5.5,24.5,17.0||C0C0C0@9,1,1.-5.5,24.5,24.5|"
 
-local buildString = "aaaaaaaaaaaaa"
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
+-- ============================================================================
+-- CONFIGURATION
+-- ============================================================================
+local CONFIG = {
+	PLACEMENT_TIMEOUT = 5,
+	PLACEMENT_CHECK_INTERVAL = 0.1,
+	TOOL_EQUIP_INTERVAL = 2,
+	POSITION_CHECK_TOLERANCE = 0.5,
+	BUILD_HEIGHT_OFFSET = 12
+}
+
+-- ============================================================================
+-- MATERIAL LOOKUP
+-- ============================================================================
 local SymbolToMaterial = {
 	["!"] = Enum.Material.SmoothPlastic,
 	["@"] = Enum.Material.Plastic,
@@ -26,6 +44,9 @@ local SymbolToMaterial = {
 	["?"] = Enum.Material.Neon
 }
 
+-- ============================================================================
+-- UTILITY FUNCTIONS
+-- ============================================================================
 local function hexToColor(hex)
 	local r = tonumber(hex:sub(1, 2), 16) / 255
 	local g = tonumber(hex:sub(3, 4), 16) / 255
@@ -33,47 +54,291 @@ local function hexToColor(hex)
 	return Color3.new(r, g, b)
 end
 
--- Create folder for visualization
-local visualFolder = Instance.new("Folder")
-visualFolder.Name = "BuildPreview"
-visualFolder.Parent = workspace
-
-local blockCount = 0
-
--- Parse each block (split by |)
-for blockData in buildString:gmatch("|([^|]+)") do
-	-- Parse format: COLORHEX!SIZE,SIZE,SIZE.POS,POS,POS
-	local colorHex = blockData:sub(1, 6)
-	local materialSymbol = blockData:sub(7, 7)
-	local rest = blockData:sub(8)
+local function equipAllTools()
+	if not LocalPlayer.Character then return end
 	
-	-- Split size and position by "."
-	local sizeData, posData = rest:match("([^%.]+)%.(.+)")
-	
-	if sizeData and posData then
-		-- Parse size (X,Y,Z)
-		local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
-		
-		-- Parse position (X,Y,Z) - handle negatives
-		local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
-		
-		if sizeX and posX then
-			-- Create the block
-			local block = Instance.new("Part")
-			block.Name = "Block_" .. blockCount
-			block.Size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
-			block.Anchored = true
-			block.CanCollide = false  -- Disable collision to prevent shifting
-			block.CFrame = CFrame.new(tonumber(posX), tonumber(posY), tonumber(posZ))  -- USE CFRAME!
-			block.Material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic
-			block.Color = hexToColor(colorHex)
-			block.Parent = visualFolder
-			
-			blockCount = blockCount + 1
+	for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+		if tool:IsA("Tool") then
+			tool.Parent = LocalPlayer.Character
 		end
 	end
 end
 
-print("Build loaded!")
-print("Total blocks created: " .. blockCount)
-print("Blocks are in workspace.BuildPreview")
+local function findBuildTools()
+	local tools = {}
+	local locations = {LocalPlayer.Character, LocalPlayer.Backpack}
+	
+	for _, location in pairs(locations) do
+		if location then
+			for _, item in pairs(location:GetChildren()) do
+				if item:IsA("Tool") and item.Name == "Build" then
+					local remote = item:FindFirstChild("Script", true) 
+						and item.Script:FindFirstChild("Event")
+					if remote then
+						table.insert(tools, {tool = item, event = remote})
+					end
+				end
+			end
+		end
+	end
+	
+	return tools
+end
+
+local function getPlayerBricksFolder()
+	local bricksFolder = workspace:FindFirstChild("Bricks")
+	if not bricksFolder then return nil end
+	
+	return bricksFolder:FindFirstChild(LocalPlayer.Name)
+end
+
+-- ============================================================================
+-- POSITION LOCKING
+-- ============================================================================
+local positionLock = nil
+
+local function lockPosition(targetPos)
+	if positionLock then
+		positionLock:Disconnect()
+	end
+	
+	positionLock = RunService.RenderStepped:Connect(function()
+		local char = LocalPlayer.Character
+		if char and char:FindFirstChild("HumanoidRootPart") then
+			local hrp = char.HumanoidRootPart
+			hrp.CFrame = CFrame.new(targetPos)
+			hrp.AssemblyLinearVelocity = Vector3.zero
+			hrp.AssemblyAngularVelocity = Vector3.zero
+		end
+	end)
+end
+
+local function unlockPosition()
+	if positionLock then
+		positionLock:Disconnect()
+		positionLock = nil
+	end
+end
+
+-- ============================================================================
+-- BLOCK DETECTION
+-- ============================================================================
+local function findBlockNear(targetPos, searchRadius)
+	local playerFolder = getPlayerBricksFolder()
+	if not playerFolder then return nil end
+	
+	local closestBrick = nil
+	local closestDist = searchRadius or CONFIG.POSITION_CHECK_TOLERANCE
+	
+	for _, brick in pairs(playerFolder:GetChildren()) do
+		if brick:IsA("BasePart") and brick.Name == "Brick" then
+			local dist = (brick.Position - targetPos).Magnitude
+			if dist < closestDist then
+				closestBrick = brick
+				closestDist = dist
+			end
+		end
+	end
+	
+	return closestBrick
+end
+
+-- ============================================================================
+-- PARSE BUILD STRING
+-- ============================================================================
+local function parseBlocks(buildStr)
+	local blocks = {}
+	
+	for blockData in buildStr:gmatch("|([^|]+)") do
+		local colorHex = blockData:sub(1, 6)
+		local materialSymbol = blockData:sub(7, 7)
+		local rest = blockData:sub(8)
+		
+		local canCollide = true
+		if rest:sub(1, 1) == "^" then
+			canCollide = false
+			rest = rest:sub(2)
+		end
+		
+		local sizeData, posData = rest:match("([^%.]+)%.(.+)")
+		if sizeData and posData then
+			local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
+			local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
+			
+			if sizeX and posX then
+				local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
+				local centerPos = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
+				
+				table.insert(blocks, {
+					size = size,
+					centerPos = centerPos,
+					color = hexToColor(colorHex),
+					material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic,
+					canCollide = canCollide,
+					needsResize = (size ~= Vector3.new(4, 4, 4))
+				})
+			end
+		end
+	end
+	
+	return blocks
+end
+
+-- ============================================================================
+-- VISUALIZATION
+-- ============================================================================
+local function createPreviews(blocks)
+	local folder = Instance.new("Folder")
+	folder.Name = "BuildPreview"
+	folder.Parent = workspace
+	
+	for i, blockData in ipairs(blocks) do
+		local preview = Instance.new("Part")
+		preview.Name = "Preview_" .. i
+		preview.Size = blockData.size
+		preview.CFrame = CFrame.new(blockData.centerPos)
+		preview.Anchored = true
+		preview.CanCollide = false
+		preview.Material = blockData.material
+		preview.Color = blockData.color
+		preview.Transparency = 0.6
+		preview.Parent = folder
+		
+		blockData.preview = preview
+	end
+	
+	return folder
+end
+
+-- ============================================================================
+-- BLOCK PLACEMENT
+-- ============================================================================
+local function placeBlock(blockData, buildTools)
+	if #buildTools == 0 then
+		warn("No build tools available!")
+		return false
+	end
+	
+	-- Teleport above the block position for building range
+	local buildPos = blockData.centerPos + Vector3.new(0, CONFIG.BUILD_HEIGHT_OFFSET, 0)
+	lockPosition(buildPos)
+	task.wait(0.1)
+	
+	-- Check if already exists
+	local existing = findBlockNear(blockData.centerPos, 1)
+	if existing then
+		blockData.placedBrick = existing
+		return true
+	end
+	
+	-- Always place at center for both normal and detailed
+	local placeMode = blockData.needsResize and "detailed" or "normal"
+	local placePos = blockData.centerPos
+	
+	-- Try placement with each tool until success
+	local toolIndex = 0
+	local startTime = tick()
+	
+	while tick() - startTime < CONFIG.PLACEMENT_TIMEOUT do
+		toolIndex = (toolIndex % #buildTools) + 1
+		local bt = buildTools[toolIndex]
+		
+		pcall(function()
+			bt.event:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, placeMode)
+		end)
+		
+		task.wait(0.05)
+		
+		-- Check if block appeared
+		local brick = findBlockNear(blockData.centerPos, 3)
+		if brick then
+			blockData.placedBrick = brick
+			return true
+		end
+	end
+	
+	return false
+end
+
+-- ============================================================================
+-- MAIN BUILD PROCESS
+-- ============================================================================
+local function main()
+	print("=== AUTO-BUILD STARTING ===")
+	
+	-- Parse blocks
+	local blocks = parseBlocks(buildString)
+	print("Loaded " .. #blocks .. " blocks to build")
+	
+	if #blocks == 0 then
+		warn("No blocks found in build string!")
+		return
+	end
+	
+	-- Create previews
+	local previewFolder = createPreviews(blocks)
+	print("Created preview visualization")
+	
+	-- Equip tools
+	equipAllTools()
+	task.wait(0.5)
+	
+	-- Find build tools
+	local buildTools = findBuildTools()
+	if #buildTools == 0 then
+		warn("No build tools found! Make sure you have Build tools equipped.")
+		return
+	end
+	print("Found " .. #buildTools .. " build tools")
+	
+	-- Tool re-equip loop
+	task.spawn(function()
+		while true do
+			task.wait(CONFIG.TOOL_EQUIP_INTERVAL)
+			equipAllTools()
+		end
+	end)
+	
+	-- Build blocks
+	local successCount = 0
+	local failCount = 0
+	
+	for i, blockData in ipairs(blocks) do
+		local success = placeBlock(blockData, buildTools)
+		
+		if success then
+			successCount = successCount + 1
+			print(string.format("✓ [%d/%d] Block placed", i, #blocks))
+			
+			-- Destroy preview
+			if blockData.preview then
+				pcall(function() blockData.preview:Destroy() end)
+			end
+		else
+			failCount = failCount + 1
+			warn(string.format("✗ [%d/%d] Block FAILED", i, #blocks))
+		end
+		
+		-- Unlock after this block is done
+		unlockPosition()
+		task.wait(0.05)
+		
+		-- Refresh build tools periodically
+		if i % 20 == 0 then
+			buildTools = findBuildTools()
+		end
+	end
+	
+	print(string.format("\n=== BUILD COMPLETE ===\nSuccess: %d | Failed: %d", successCount, failCount))
+	
+	-- Cleanup
+	task.wait(1)
+	if previewFolder then
+		pcall(function() previewFolder:Destroy() end)
+	end
+	
+	print("\n=== ALL DONE ===")
+end
+
+-- Run
+main()
