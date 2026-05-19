@@ -272,38 +272,39 @@ local function resizeBlock(brick, targetSize, targetPos)
 	end
 	
 	local hrpPos = hrp.Position
-	local actualPos = brick.Position
-	local resizeFaces = calculateResizeFaces(targetSize, targetPos, actualPos)
 	
 	print(string.format("\n=== RESIZING BLOCK ==="))
 	print(string.format("Target Size: %.1fx%.1fx%.1f", targetSize.X, targetSize.Y, targetSize.Z))
 	print(string.format("Target Pos: (%.1f, %.1f, %.1f)", targetPos.X, targetPos.Y, targetPos.Z))
-	print(string.format("Actual Pos: (%.1f, %.1f, %.1f)", actualPos.X, actualPos.Y, actualPos.Z))
-	print(string.format("Offset: (%.1f, %.1f, %.1f)", actualPos.X - targetPos.X, actualPos.Y - targetPos.Y, actualPos.Z - targetPos.Z))
-	print("\nRESIZE PLAN:")
-	print(string.format("  Left:   %.1f studs", resizeFaces.Left))
-	print(string.format("  Right:  %.1f studs", resizeFaces.Right))
-	print(string.format("  Top:    %.1f studs", resizeFaces.Top))
-	print(string.format("  Bottom: %.1f studs", resizeFaces.Bottom))
-	print(string.format("  Front:  %.1f studs", resizeFaces.Front))
-	print(string.format("  Back:   %.1f studs", resizeFaces.Back))
 	
 	local faceOrder = {
-		{face = Enum.NormalId.Left, amount = resizeFaces.Left, name = "Left"},
-		{face = Enum.NormalId.Right, amount = resizeFaces.Right, name = "Right"},
-		{face = Enum.NormalId.Top, amount = resizeFaces.Top, name = "Top"},
-		{face = Enum.NormalId.Bottom, amount = resizeFaces.Bottom, name = "Bottom"},
-		{face = Enum.NormalId.Front, amount = resizeFaces.Front, name = "Front"},
-		{face = Enum.NormalId.Back, amount = resizeFaces.Back, name = "Back"}
+		{face = Enum.NormalId.Left, name = "Left"},
+		{face = Enum.NormalId.Right, name = "Right"},
+		{face = Enum.NormalId.Top, name = "Top"},
+		{face = Enum.NormalId.Bottom, name = "Bottom"},
+		{face = Enum.NormalId.Front, name = "Front"},
+		{face = Enum.NormalId.Back, name = "Back"}
 	}
 	
 	for _, faceData in ipairs(faceOrder) do
-		local amount = faceData.amount
+		-- Get newest brick and recalculate BEFORE each face
+		local currentBrick = getNewestBrick()
+		if not currentBrick then
+			warn("Lost track of brick!")
+			return false
+		end
+		
+		local actualPos = currentBrick.Position
+		local resizeFaces = calculateResizeFaces(targetSize, targetPos, actualPos)
+		
+		local amount = resizeFaces[faceData.name]
+		
 		if amount > 0 then
-			print(string.format("\nResizing %s face: %.1f studs", faceData.name, amount))
+			print(string.format("\nResizing %s face: %.1f studs (Pos: %.1f, %.1f, %.1f)", faceData.name, amount, actualPos.X, actualPos.Y, actualPos.Z))
 			
 			for i = 1, math.floor(amount) do
-				local currentBrick = getNewestBrick()
+				-- Get newest brick again before each resize
+				currentBrick = getNewestBrick()
 				if not currentBrick then
 					warn("Lost track of brick!")
 					return false
