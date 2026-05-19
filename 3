@@ -15,7 +15,8 @@ local CONFIG = {
 	TOOL_EQUIP_INTERVAL = 2,
 	POSITION_CHECK_TOLERANCE = 0.5,
 	BUILD_HEIGHT_OFFSET = 12,
-	RESIZE_WAIT_TIME = 1
+	RESIZE_WAIT_TIME = 0.13,
+	WAIT_BEFORE_RESIZE = 0.15
 }
 
 -- ============================================================================
@@ -57,7 +58,7 @@ end
 
 local function equipAllTools()
 	if not LocalPlayer.Character then return end
-	
+
 	for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
 		if tool:IsA("Tool") then
 			tool.Parent = LocalPlayer.Character
@@ -68,7 +69,7 @@ end
 local function findBuildTools()
 	local tools = {}
 	local locations = {LocalPlayer.Character, LocalPlayer.Backpack}
-	
+
 	for _, location in pairs(locations) do
 		if location then
 			for _, item in pairs(location:GetChildren()) do
@@ -82,13 +83,13 @@ local function findBuildTools()
 			end
 		end
 	end
-	
+
 	return tools
 end
 
 local function findShapeTool()
 	local locations = {LocalPlayer.Character, LocalPlayer.Backpack}
-	
+
 	for _, location in pairs(locations) do
 		if location then
 			for _, item in pairs(location:GetChildren()) do
@@ -102,15 +103,32 @@ local function findShapeTool()
 			end
 		end
 	end
-	
+
 	return nil
 end
 
 local function getPlayerBricksFolder()
 	local bricksFolder = workspace:FindFirstChild("Bricks")
 	if not bricksFolder then return nil end
-	
+
 	return bricksFolder:FindFirstChild(LocalPlayer.Name)
+end
+
+-- ============================================================================
+-- GET NEWEST BRICK
+-- ============================================================================
+local function getNewestBrick()
+	local playerFolder = getPlayerBricksFolder()
+	if not playerFolder then return nil end
+
+	local bricks = {}
+	for _, brick in pairs(playerFolder:GetChildren()) do
+		if brick:IsA("BasePart") and brick.Name == "Brick" then
+			table.insert(bricks, brick)
+		end
+	end
+
+	return bricks[#bricks]
 end
 
 -- ============================================================================
@@ -122,7 +140,7 @@ local function lockPosition(targetPos)
 	if positionLock then
 		positionLock:Disconnect()
 	end
-	
+
 	positionLock = RunService.RenderStepped:Connect(function()
 		local char = LocalPlayer.Character
 		if char and char:FindFirstChild("HumanoidRootPart") then
@@ -147,10 +165,10 @@ end
 local function findBlockNear(targetPos, searchRadius)
 	local playerFolder = getPlayerBricksFolder()
 	if not playerFolder then return nil end
-	
+
 	local closestBrick = nil
 	local closestDist = searchRadius or CONFIG.POSITION_CHECK_TOLERANCE
-	
+
 	for _, brick in pairs(playerFolder:GetChildren()) do
 		if brick:IsA("BasePart") and brick.Name == "Brick" then
 			local dist = (brick.Position - targetPos).Magnitude
@@ -160,7 +178,7 @@ local function findBlockNear(targetPos, searchRadius)
 			end
 		end
 	end
-	
+
 	return closestBrick
 end
 
@@ -172,11 +190,11 @@ local function calculateResizeFaces(targetSize, targetPos, actualPos)
 	local offsetX = actualPos.X - targetPos.X
 	local offsetY = actualPos.Y - targetPos.Y
 	local offsetZ = actualPos.Z - targetPos.Z
-	
+
 	local growX = sizeX - 1
 	local growY = sizeY - 1
 	local growZ = sizeZ - 1
-	
+
 	local rightResize, leftResize
 	if sizeX % 2 == 1 then
 		rightResize = growX / 2
@@ -190,7 +208,7 @@ local function calculateResizeFaces(targetSize, targetPos, actualPos)
 			leftResize = growX / 2 - 0.5
 		end
 	end
-	
+
 	local topResize, bottomResize
 	if sizeY % 2 == 1 then
 		topResize = growY / 2
@@ -204,7 +222,7 @@ local function calculateResizeFaces(targetSize, targetPos, actualPos)
 			bottomResize = growY / 2 - 0.5
 		end
 	end
-	
+
 	local frontResize, backResize
 	if sizeZ % 2 == 1 then
 		frontResize = growZ / 2
@@ -218,7 +236,7 @@ local function calculateResizeFaces(targetSize, targetPos, actualPos)
 			backResize = growZ / 2 + 0.5
 		end
 	end
-	
+
 	return {
 		Left = leftResize,
 		Right = rightResize,
@@ -238,60 +256,66 @@ local function resizeBlock(brick, targetSize, targetPos)
 		warn("Shape tool not found!")
 		return false
 	end
-	
+
 	if not brick then
 		warn("No brick provided to resize!")
 		return false
 	end
-	
+
+	-- Wait before starting resize
+	task.wait(CONFIG.WAIT_BEFORE_RESIZE)
+
 	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not hrp then
 		warn("No HumanoidRootPart found!")
 		return false
 	end
-	
+
 	local hrpPos = hrp.Position
 	local actualPos = brick.Position
 	local resizeFaces = calculateResizeFaces(targetSize, targetPos, actualPos)
-	
+
 	print(string.format("\n=== RESIZING BLOCK ==="))
-	print(string.format("Brick: %s", tostring(brick)))
 	print(string.format("Target Size: %.1fx%.1fx%.1f", targetSize.X, targetSize.Y, targetSize.Z))
 	print(string.format("Target Pos: (%.1f, %.1f, %.1f)", targetPos.X, targetPos.Y, targetPos.Z))
 	print(string.format("Actual Pos: (%.1f, %.1f, %.1f)", actualPos.X, actualPos.Y, actualPos.Z))
-	print(string.format("Offset: (%.1f, %.1f, %.1f)", actualPos.X - targetPos.X, actualPos.Y - targetPos.Y, actualPos.Z - targetPos.Z))
 	print("\nRESIZE PLAN:")
-	print(string.format("  Left:   %.1f studs", resizeFaces.Left))
-	print(string.format("  Right:  %.1f studs", resizeFaces.Right))
-	print(string.format("  Top:    %.1f studs", resizeFaces.Top))
-	print(string.format("  Bottom: %.1f studs", resizeFaces.Bottom))
-	print(string.format("  Front:  %.1f studs", resizeFaces.Front))
-	print(string.format("  Back:   %.1f studs", resizeFaces.Back))
-	
+	print(string.format("  Left:   %.0f studs", resizeFaces.Left))
+	print(string.format("  Right:  %.0f studs", resizeFaces.Right))
+	print(string.format("  Top:    %.0f studs", resizeFaces.Top))
+	print(string.format("  Bottom: %.0f studs", resizeFaces.Bottom))
+	print(string.format("  Front:  %.0f studs", resizeFaces.Front))
+	print(string.format("  Back:   %.0f studs", resizeFaces.Back))
+
 	local faceOrder = {
-		{face = Enum.NormalId.Left, amount = resizeFaces.Left, name = "Left"},
-		{face = Enum.NormalId.Right, amount = resizeFaces.Right, name = "Right"},
-		{face = Enum.NormalId.Top, amount = resizeFaces.Top, name = "Top"},
-		{face = Enum.NormalId.Bottom, amount = resizeFaces.Bottom, name = "Bottom"},
-		{face = Enum.NormalId.Front, amount = resizeFaces.Front, name = "Front"},
-		{face = Enum.NormalId.Back, amount = resizeFaces.Back, name = "Back"}
+		{face = Enum.NormalId.Left, amount = math.floor(resizeFaces.Left), name = "Left"},
+		{face = Enum.NormalId.Right, amount = math.floor(resizeFaces.Right), name = "Right"},
+		{face = Enum.NormalId.Top, amount = math.floor(resizeFaces.Top), name = "Top"},
+		{face = Enum.NormalId.Bottom, amount = math.floor(resizeFaces.Bottom), name = "Bottom"},
+		{face = Enum.NormalId.Front, amount = math.floor(resizeFaces.Front), name = "Front"},
+		{face = Enum.NormalId.Back, amount = math.floor(resizeFaces.Back), name = "Back"}
 	}
-	
+
 	for _, faceData in ipairs(faceOrder) do
-		local amount = faceData.amount
-		if amount > 0 then
-			print(string.format("\nResizing %s face: %.1f studs", faceData.name, amount))
-			
-			for i = 1, math.floor(amount) do
+		if faceData.amount > 0 then
+			print(string.format("\nResizing %s face: %d times", faceData.name, faceData.amount))
+
+			for i = 1, faceData.amount do
+				local currentBrick = getNewestBrick()
+				if not currentBrick then
+					warn("Lost track of brick!")
+					return false
+				end
+
 				pcall(function()
-					shapeTool.event:FireServer(brick, faceData.face, hrpPos, "increase")
+					shapeTool.event:FireServer(currentBrick, faceData.face, hrpPos, "increase")
 				end)
 				print(string.format("  %s: Increase #%d", faceData.name, i))
 				task.wait(CONFIG.RESIZE_WAIT_TIME)
 			end
 		end
 	end
-	
+
 	print("=== RESIZE COMPLETE ===\n")
 	return true
 end
@@ -301,30 +325,30 @@ end
 -- ============================================================================
 local function parseBlocks(buildStr)
 	local blocks = {}
-	
+
 	for blockData in buildStr:gmatch("|([^|]+)") do
 		local colorHex = blockData:sub(1, 6)
 		local materialSymbol = blockData:sub(7, 7)
 		local rest = blockData:sub(8)
-		
+
 		local canCollide = true
 		if rest:sub(1, 1) == "^" then
 			canCollide = false
 			rest = rest:sub(2)
 		end
-		
+
 		local sizeData, posData = rest:match("([^%.]+)%.(.+)")
 		if sizeData and posData then
 			local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
 			local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
-			
+
 			if sizeX and posX then
 				local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
 				local centerPos = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
-				
+
 				local needsResize = (size ~= Vector3.new(4, 4, 4))
 				local needsShapeResize = needsResize and (size ~= Vector3.new(1, 1, 1))
-				
+
 				table.insert(blocks, {
 					size = size,
 					centerPos = centerPos,
@@ -337,7 +361,7 @@ local function parseBlocks(buildStr)
 			end
 		end
 	end
-	
+
 	return blocks
 end
 
@@ -348,7 +372,7 @@ local function createPreviews(blocks)
 	local folder = Instance.new("Folder")
 	folder.Name = "BuildPreview"
 	folder.Parent = workspace
-	
+
 	for i, blockData in ipairs(blocks) do
 		local preview = Instance.new("Part")
 		preview.Name = "Preview_" .. i
@@ -360,10 +384,10 @@ local function createPreviews(blocks)
 		preview.Color = blockData.color
 		preview.Transparency = 0.6
 		preview.Parent = folder
-		
+
 		blockData.preview = preview
 	end
-	
+
 	return folder
 end
 
@@ -375,51 +399,51 @@ local function placeBlock(blockData, buildTools, blockIndex, totalBlocks)
 		warn("No build tools available!")
 		return false
 	end
-	
+
 	local buildPos = blockData.centerPos + Vector3.new(0, CONFIG.BUILD_HEIGHT_OFFSET, 0)
 	lockPosition(buildPos)
 	task.wait(0.1)
-	
+
 	local existing = findBlockNear(blockData.centerPos, 1)
 	if existing then
 		blockData.placedBrick = existing
-		
+
 		if blockData.needsShapeResize then
 			resizeBlock(existing, blockData.size, blockData.centerPos)
 		end
-		
+
 		return true
 	end
-	
+
 	local placeMode = blockData.needsResize and "detailed" or "normal"
 	local placePos = blockData.centerPos
-	
+
 	local toolIndex = 0
 	local startTime = tick()
-	
+
 	while tick() - startTime < CONFIG.PLACEMENT_TIMEOUT do
 		toolIndex = (toolIndex % #buildTools) + 1
 		local bt = buildTools[toolIndex]
-		
+
 		pcall(function()
 			bt.event:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, placeMode)
 		end)
-		
+
 		task.wait(0.05)
-		
+
 		local brick = findBlockNear(blockData.centerPos, 3)
 		if brick then
 			blockData.placedBrick = brick
 			print(string.format("✓ [%d/%d] Block placed at (%.1f, %.1f, %.1f)", blockIndex, totalBlocks, brick.Position.X, brick.Position.Y, brick.Position.Z))
-			
+
 			if blockData.needsShapeResize then
 				resizeBlock(brick, blockData.size, blockData.centerPos)
 			end
-			
+
 			return true
 		end
 	end
-	
+
 	return false
 end
 
@@ -428,52 +452,52 @@ end
 -- ============================================================================
 local function main()
 	print("=== AUTO-BUILD STARTING ===")
-	
+
 	local blocks = parseBlocks(buildString)
 	print("Loaded " .. #blocks .. " blocks to build")
-	
+
 	if #blocks == 0 then
 		warn("No blocks found in build string!")
 		return
 	end
-	
+
 	local previewFolder = createPreviews(blocks)
 	print("Created preview visualization")
-	
+
 	equipAllTools()
 	task.wait(0.5)
-	
+
 	local buildTools = findBuildTools()
 	if #buildTools == 0 then
 		warn("No build tools found! Make sure you have Build tools equipped.")
 		return
 	end
 	print("Found " .. #buildTools .. " build tools")
-	
+
 	local shapeTool = findShapeTool()
 	if shapeTool then
 		print("Found Shape tool")
 	else
 		warn("Shape tool not found! Detailed blocks won't be resized correctly.")
 	end
-	
+
 	task.spawn(function()
 		while true do
 			task.wait(CONFIG.TOOL_EQUIP_INTERVAL)
 			equipAllTools()
 		end
 	end)
-	
+
 	local successCount = 0
 	local failCount = 0
 	local totalBlocks = #blocks
-	
+
 	for i, blockData in ipairs(blocks) do
 		local success = placeBlock(blockData, buildTools, i, totalBlocks)
-		
+
 		if success then
 			successCount = successCount + 1
-			
+
 			if blockData.preview then
 				pcall(function() blockData.preview:Destroy() end)
 			end
@@ -481,22 +505,22 @@ local function main()
 			failCount = failCount + 1
 			warn(string.format("✗ [%d/%d] Block FAILED", i, totalBlocks))
 		end
-		
+
 		unlockPosition()
 		task.wait(0.05)
-		
+
 		if i % 20 == 0 then
 			buildTools = findBuildTools()
 		end
 	end
-	
+
 	print(string.format("\n=== BUILD COMPLETE ===\nSuccess: %d | Failed: %d", successCount, failCount))
-	
+
 	task.wait(1)
 	if previewFolder then
 		pcall(function() previewFolder:Destroy() end)
 	end
-	
+
 	print("\n=== ALL DONE ===")
 end
 
