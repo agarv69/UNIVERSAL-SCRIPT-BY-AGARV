@@ -1,4 +1,4 @@
--- OPTIMIZED AUTO-BUILD SCRIPT (PLACEMENT + CONDITIONAL RESIZE)
+-- OPTIMIZED AUTO-BUILD SCRIPT (PLACEMENT ONLY - NO RESIZE)
 -- Paste your build string below:
 local buildString = "|7C5C46@4,4,4.-6.0,26.0,-22.0||7C5C46@4,4,4.-2.0,26.0,-22.0||7C5C46@4,4,4.2.0,26.0,-22.0||4B974B@4,4,4.6.0,26.0,-22.0||C0C0C0@4,4,4.-6.0,26.0,-30.0||C0C0C0@4,4,4.2.0,26.0,-26.0||C0C0C0@4,4,4.6.0,26.0,-30.0||C0C0C0@4,4,4.-2.0,26.0,-30.0||C0C0C0@4,4,4.-6.0,26.0,-2.0||C0C0C0@4,4,4.-6.0,26.0,-6.0||C0C0C0@4,4,4.-10.0,26.0,-6.0||C0C0C0@4,4,4.-14.0,26.0,-6.0||C0C0C0@4,4,4.-10.0,26.0,2.0||C0C0C0@4,4,4.-6.0,26.0,2.0||C0C0C0@4,4,4.-14.0,26.0,2.0||C0C0C0@4,4,4.-14.0,26.0,-2.0||C0C0C0@4,2,4.26.0,25.0,-10.0||C0C0C0@4,2,4.26.0,25.0,-6.0||C0C0C0@4,2,4.26.0,25.0,-2.0||C0C0C0@4,2,4.26.0,25.0,2.0||C0C0C0@4,2,4.26.0,27.0,-10.0||C0C0C0@4,2,4.26.0,27.0,-6.0||C0C0C0@4,2,4.26.0,27.0,-2.0||C0C0C0@4,2,4.26.0,29.0,-6.0||C0C0C0@4,2,4.26.0,31.0,-6.0||C0C0C0@4,2,4.26.0,33.0,-6.0||C0C0C0@1,1,1.24.5,28.5,-3.5||C0C0C0@1,1,1.25.5,28.5,-3.5||C0C0C0@1,1,1.26.5,28.5,-3.5||C0C0C0@1,1,1.27.5,28.5,-3.5||C0C0C0@1,1,1.24.5,28.5,-2.5||C0C0C0@1,1,1.25.5,28.5,-2.5||C0C0C0@1,1,1.26.5,28.5,-2.5||C0C0C0@1,1,1.27.5,28.5,-2.5||C0C0C0@1,1,1.24.5,28.5,-1.5||C0C0C0@1,1,1.25.5,28.5,-1.5||C0C0C0@1,1,1.26.5,28.5,-1.5||C0C0C0@1,1,1.27.5,28.5,-1.5||C0C0C0@1,1,1.24.5,29.5,-3.5||C0C0C0@1,1,1.25.5,29.5,-3.5||C0C0C0@1,1,1.26.5,29.5,-3.5||C0C0C0@1,1,1.27.5,29.5,-3.5||C0C0C0@1,1,1.24.5,29.5,-2.5||C0C0C0@1,1,1.25.5,29.5,-2.5||C0C0C0@1,1,1.26.5,29.5,-2.5||C0C0C0@1,1,1.27.5,29.5,-2.5||C0C0C0@1,1,1.25.5,30.5,-3.5||C0C0C0@1,1,1.24.5,30.5,-3.5||C0C0C0@1,1,1.26.5,30.5,-3.5||C0C0C0@1,1,1.27.5,30.5,-3.5||C0C0C0@1,1,7.13.5,24.5,14.5||C0C0C0@1,1,1.13.5,24.5,10.5||C0C0C0@4,1,1.12.0,24.5,18.5||C0C0C0@4,1,1.16.0,24.5,18.5||C0C0C0@1,1,1.7.5,24.5,16.5||C0C0C0@1,1,3.7.5,24.5,14.5||C0C0C0@1,1,2.7.5,24.5,12.0||C0C0C0@2,1,1.6.0,24.5,16.5||C0C0C0@3,1,1.5.5,24.5,11.5||C0C0C0@3,1,1.5.5,24.5,13.5||C0C0C0@1,1,1.4.5,24.5,16.5||C0C0C0@2,1,1.-1.0,24.5,16.5||C0C0C0@1,1,1.0.5,24.5,16.5||C0C0C0@1,1,1.1.5,24.5,16.5||C0C0C0@1,1,1.2.5,24.5,15.5||C0C0C0@1,1,1.2.5,24.5,14.5||C0C0C0@3,1,1.0.5,24.5,13.5||C0C0C0@1,1,1.-1.5,24.5,12.5||C0C0C0@4,1,1.1.0,24.5,11.5||C0C0C0@1,1,12.-5.5,24.5,17.0||C0C0C0@9,1,1.-5.5,24.5,24.5|"
 
@@ -14,9 +14,7 @@ local CONFIG = {
 	PLACEMENT_CHECK_INTERVAL = 0.1,
 	TOOL_EQUIP_INTERVAL = 2,
 	POSITION_CHECK_TOLERANCE = 0.5,
-	BUILD_HEIGHT_OFFSET = 12,
-	RESIZE_TIMEOUT = 10,
-	RESIZE_CHECK_INTERVAL = 0.08
+	BUILD_HEIGHT_OFFSET = 12
 }
 
 -- ============================================================================
@@ -85,19 +83,6 @@ local function findBuildTools()
 	end
 	
 	return tools
-end
-
-local function findShapeTool()
-	return LocalPlayer.Backpack:FindFirstChild("Shape")
-		or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Shape"))
-end
-
-local function getShapeEvent()
-	local tool = findShapeTool()
-	if tool then
-		return tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
-	end
-	return nil
 end
 
 local function getPlayerBricksFolder()
@@ -226,81 +211,6 @@ local function createPreviews(blocks)
 end
 
 -- ============================================================================
--- BLOCK RESIZING
--- ============================================================================
-local function resizeBlock(brick, targetSize)
-	-- Check if already correct size
-	if brick.Size.X == targetSize.X and brick.Size.Y == targetSize.Y and brick.Size.Z == targetSize.Z then
-		return true
-	end
-	
-	local shapeEvent = getShapeEvent()
-	if not shapeEvent then
-		warn("Shape tool event not found!")
-		return false
-	end
-	
-	print(string.format("Resizing block from %s to %s", tostring(brick.Size), tostring(targetSize)))
-	
-	local startTime = tick()
-	local maxIterations = 60
-	local iterations = 0
-	
-	while tick() - startTime < CONFIG.RESIZE_TIMEOUT and iterations < maxIterations do
-		local currentSize = brick.Size
-		
-		-- Check if we've reached target size
-		if currentSize.X == targetSize.X and currentSize.Y == targetSize.Y and currentSize.Z == targetSize.Z then
-			print("✓ Resize complete!")
-			return true
-		end
-		
-		iterations = iterations + 1
-		local pos = brick.Position
-		local size = brick.Size
-		
-		-- Resize X axis
-		if currentSize.X ~= targetSize.X then
-			pcall(function()
-				local rightPos = Vector3.new(pos.X + size.X/2, pos.Y, pos.Z)
-				shapeEvent:FireServer(brick, Enum.NormalId.Right, rightPos, currentSize.X < targetSize.X and "increase" or "decrease")
-			end)
-			task.wait(CONFIG.RESIZE_CHECK_INTERVAL)
-		end
-		
-		-- Resize Y axis
-		if currentSize.Y ~= targetSize.Y then
-			pcall(function()
-				local topPos = Vector3.new(pos.X, pos.Y + size.Y/2, pos.Z)
-				shapeEvent:FireServer(brick, Enum.NormalId.Top, topPos, currentSize.Y < targetSize.Y and "increase" or "decrease")
-			end)
-			task.wait(CONFIG.RESIZE_CHECK_INTERVAL)
-		end
-		
-		-- Resize Z axis
-		if currentSize.Z ~= targetSize.Z then
-			pcall(function()
-				local backPos = Vector3.new(pos.X, pos.Y, pos.Z - size.Z/2)
-				shapeEvent:FireServer(brick, Enum.NormalId.Back, backPos, currentSize.Z < targetSize.Z and "increase" or "decrease")
-			end)
-			task.wait(CONFIG.RESIZE_CHECK_INTERVAL)
-		end
-		
-		task.wait(0.1)
-	end
-	
-	-- Final check
-	local finalSize = brick.Size
-	local success = finalSize.X == targetSize.X and finalSize.Y == targetSize.Y and finalSize.Z == targetSize.Z
-	
-	if not success then
-		warn(string.format("Resize timeout! Current: %s, Target: %s", tostring(finalSize), tostring(targetSize)))
-	end
-	
-	return success
-end
-
--- ============================================================================
 -- BLOCK PLACEMENT
 -- ============================================================================
 local function placeBlock(blockData, buildTools)
@@ -317,29 +227,13 @@ local function placeBlock(blockData, buildTools)
 	-- Check if already exists
 	local existing = findBlockNear(blockData.centerPos, 1)
 	if existing then
-		print("Block already exists at position, checking size...")
 		blockData.placedBrick = existing
-		
-		-- If block needs resize and current size doesn't match, resize it
-		if blockData.needsResize then
-			if existing.Size ~= blockData.size then
-				print("Existing block needs resizing...")
-				unlockPosition()
-				return resizeBlock(existing, blockData.size)
-			else
-				print("Existing block already correct size, skipping resize")
-				return true
-			end
-		end
-		
 		return true
 	end
 	
-	-- Place the block (always use detailed mode if it needs resizing)
+	-- Always place at center for both normal and detailed
 	local placeMode = blockData.needsResize and "detailed" or "normal"
 	local placePos = blockData.centerPos
-	
-	print(string.format("Placing block in '%s' mode at %s", placeMode, tostring(placePos)))
 	
 	-- Try placement with each tool until success
 	local toolIndex = 0
@@ -359,28 +253,10 @@ local function placeBlock(blockData, buildTools)
 		local brick = findBlockNear(blockData.centerPos, 3)
 		if brick then
 			blockData.placedBrick = brick
-			print("Block placed successfully!")
-			
-			-- If this block needs resizing, do it now
-			if blockData.needsResize then
-				unlockPosition()
-				task.wait(0.1)
-				
-				-- Check if size already matches (sometimes detailed mode places at correct size)
-				if brick.Size == blockData.size then
-					print("Block placed at correct size, skipping resize")
-					return true
-				else
-					print("Block needs resizing after placement...")
-					return resizeBlock(brick, blockData.size)
-				end
-			end
-			
 			return true
 		end
 	end
 	
-	warn("Block placement timeout!")
 	return false
 end
 
@@ -415,19 +291,6 @@ local function main()
 	end
 	print("Found " .. #buildTools .. " build tools")
 	
-	-- Check for Shape tool if any blocks need resizing
-	local needsShapeTool = false
-	for _, blockData in ipairs(blocks) do
-		if blockData.needsResize then
-			needsShapeTool = true
-			break
-		end
-	end
-	
-	if needsShapeTool and not findShapeTool() then
-		warn("WARNING: Some blocks need resizing but Shape tool not found!")
-	end
-	
 	-- Tool re-equip loop
 	task.spawn(function()
 		while true do
@@ -445,7 +308,7 @@ local function main()
 		
 		if success then
 			successCount = successCount + 1
-			print(string.format("✓ [%d/%d] Block complete", i, #blocks))
+			print(string.format("✓ [%d/%d] Block placed", i, #blocks))
 			
 			-- Destroy preview
 			if blockData.preview then
