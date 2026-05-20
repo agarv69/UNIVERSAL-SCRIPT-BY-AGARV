@@ -159,6 +159,11 @@ local script = G2L["6"];
 	
 	button.MouseButton1Click:Connect(function()
 		if not isBuilding then
+			-- Check if visuals are enabled
+			if not _G.visualsEnabled then
+				return
+			end
+	
 			-- START BUILD
 			local buildString = textbox.Text
 	
@@ -167,8 +172,25 @@ local script = G2L["6"];
 			end
 	
 			isBuilding = true
+			_G.autobuildRunning = true
 			button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 			button.Text = "Stop Build"
+	
+			-- Hide visuals
+			local visualFolder = workspace:FindFirstChild("BuildVisuals")
+			if visualFolder then
+				visualFolder:Destroy()
+			end
+			local handles = game.CoreGui:FindFirstChild("Handles")
+			if handles then
+				handles:Destroy()
+			end
+	
+			-- Reset import button
+			local importButton = script.Parent.Parent:FindFirstChild("second")
+			if importButton then
+				importButton.Text = "Import Build"
+			end
 	
 			-- Set the build string globally
 			_G.buildString = buildString
@@ -176,11 +198,20 @@ local script = G2L["6"];
 			-- Run the autobuild script
 			task.spawn(function()
 				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/Open-Source-Scripts/refs/heads/main/autobuild.lua"))()
+	
+				-- Reset after build finishes
+				isBuilding = false
+				_G.autobuildRunning = false
+				_G.visualsEnabled = false
+				button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+				button.Text = "Start Build"
 			end)
 		else
 			-- STOP BUILD
 			_G.stopautobuild = true
 			isBuilding = false
+			_G.autobuildRunning = false
+			_G.visualsEnabled = false
 			button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 			button.Text = "Start Build"
 		end
@@ -190,14 +221,13 @@ task.spawn(C_6);
 -- StarterGui.ScreenGui.Frame.main.import.import
 local function C_9()
 local script = G2L["9"];
-	-- PUT THIS SCRIPT UNDER A BUTTON
+	-- PUT THIS SCRIPT UNDER THE IMPORT BUTTON
 	local button = script.Parent
 	local textbox = script.Parent.Parent.json
 	
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local RunService = game:GetService("RunService")
-	local UserInputService = game:GetService("UserInputService")
 	
 	-- ============================================================================
 	-- PARSE BUILD STRING
@@ -269,22 +299,54 @@ local script = G2L["9"];
 	end
 	
 	-- ============================================================================
-	-- VISUAL CREATION WITH DRAG HANDLES (IN-GAME)
+	-- VISUAL CREATION WITH DRAG HANDLES
 	-- ============================================================================
 	local visualFolder = nil
-	local selectedPart = nil
-	local arcHandles = nil
-	local selectionBox = nil
+	local centerPart = nil
+	local handles = nil
+	local currentString = ""
+	local visualsShowing = false
+	local originalButtonText = button.Text
+	local originalCenterPos = Vector3.new(0, 0, 0)
 	
-	local function createVisuals(blocks)
-		-- Cleanup old visuals
+	local function cleanupVisuals()
 		if visualFolder then
 			visualFolder:Destroy()
+			visualFolder = nil
 		end
+		if handles then
+			handles:Destroy()
+			handles = nil
+		end
+		centerPart = nil
+		visualsShowing = false
+		_G.visualsEnabled = false
+		_G.buildOffset = Vector3.new(0, 0, 0)
+		button.Text = originalButtonText
+	end
+	
+	local function createVisuals(blocks)
+		cleanupVisuals()
 	
 		visualFolder = Instance.new("Folder")
 		visualFolder.Name = "BuildVisuals"
 		visualFolder.Parent = workspace
+	
+		local totalPos = Vector3.new(0, 0, 0)
+		for i, blockData in ipairs(blocks) do
+			totalPos = totalPos + blockData.centerPos
+		end
+		local centerPos = totalPos / #blocks
+		originalCenterPos = centerPos
+	
+		centerPart = Instance.new("Part")
+		centerPart.Name = "CenterHandle"
+		centerPart.Size = Vector3.new(2, 2, 2)
+		centerPart.Position = centerPos
+		centerPart.Anchored = true
+		centerPart.CanCollide = false
+		centerPart.Transparency = 1
+		centerPart.Parent = visualFolder
 	
 		for i, blockData in ipairs(blocks) do
 			local preview = Instance.new("Part")
@@ -299,101 +361,107 @@ local script = G2L["9"];
 			preview.Parent = visualFolder
 		end
 	
-		print("Created " .. #blocks .. " visual blocks")
+		visualsShowing = true
+		_G.visualsEnabled = true
+		_G.buildOffset = Vector3.new(0, 0, 0)
+		button.Text = "Remove Import"
 	end
 	
 	local function createDragHandles()
-		-- Create ArcHandles (works in-game)
-		arcHandles = Instance.new("ArcHandles")
-		arcHandles.Parent = game.CoreGui
-		arcHandles.Adornee = nil
+		handles = Instance.new("Handles")
+		handles.Parent = game.CoreGui
+		handles.Style = Enum.HandlesStyle.Movement
+		handles.Adornee = centerPart
 	
-		-- Create SelectionBox
-		selectionBox = Instance.new("SelectionBox")
-		selectionBox.LineThickness = 0.05
-		selectionBox.Color3 = Color3.fromRGB(0, 255, 0)
-		selectionBox.Parent = game.CoreGui
-		selectionBox.Adornee = nil
+		local isDragging = false
+		local startPositions = {}
 	
-		local mouse = LocalPlayer:GetMouse()
-		local dragStart = nil
-		local startPos = nil
+		handles.MouseButton1Down:Connect(function(face)
+			isDragging = true
+			workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
 	
-		-- Select part on click
-		mouse.Button1Down:Connect(function()
-			local target = mouse.Target
-			if target and target.Parent == visualFolder then
-				selectedPart = target
-				arcHandles.Adornee = target
-				selectionBox.Adornee = target
-			else
-				selectedPart = nil
-				arcHandles.Adornee = nil
-				selectionBox.Adornee = nil
-			end
-		end)
-	
-		-- Mouse drag for 1 stud snap movement
-		arcHandles.MouseButton1Down:Connect(function(axis)
-			if selectedPart then
-				dragStart = axis
-				startPos = selectedPart.Position
-			end
-		end)
-	
-		arcHandles.MouseDrag:Connect(function(axis, relativeAngle, deltaRadius)
-			if selectedPart and startPos then
-				local direction = Vector3.new()
-	
-				if axis == Enum.Axis.X then
-					direction = Vector3.new(1, 0, 0)
-				elseif axis == Enum.Axis.Y then
-					direction = Vector3.new(0, 1, 0)
-				elseif axis == Enum.Axis.Z then
-					direction = Vector3.new(0, 0, 1)
+			startPositions = {}
+			for _, child in pairs(visualFolder:GetChildren()) do
+				if child:IsA("BasePart") then
+					startPositions[child] = child.Position
 				end
-	
-				-- Calculate movement distance and snap to 1 stud
-				local distance = math.deg(relativeAngle) / 15 -- Convert angle to distance approximation
-				local snappedDistance = math.round(distance)
-	
-				selectedPart.Position = startPos + (direction * snappedDistance)
 			end
 		end)
 	
-		arcHandles.MouseButton1Up:Connect(function()
-			dragStart = nil
-			startPos = nil
+		handles.MouseDrag:Connect(function(face, distance)
+			if not isDragging then return end
+	
+			local direction = Vector3.new()
+	
+			if face == Enum.NormalId.Right then
+				direction = Vector3.new(1, 0, 0)
+			elseif face == Enum.NormalId.Left then
+				direction = Vector3.new(-1, 0, 0)
+			elseif face == Enum.NormalId.Top then
+				direction = Vector3.new(0, 1, 0)
+			elseif face == Enum.NormalId.Bottom then
+				direction = Vector3.new(0, -1, 0)
+			elseif face == Enum.NormalId.Front then
+				direction = Vector3.new(0, 0, -1)
+			elseif face == Enum.NormalId.Back then
+				direction = Vector3.new(0, 0, 1)
+			end
+	
+			local snappedDistance = math.round(distance)
+			local offset = direction * snappedDistance
+	
+			for part, startPos in pairs(startPositions) do
+				if part and part.Parent then
+					part.Position = startPos + offset
+				end
+			end
+	
+			-- Update build offset
+			_G.buildOffset = centerPart.Position - originalCenterPos
+		end)
+	
+		handles.MouseButton1Up:Connect(function()
+			isDragging = false
+			workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+			startPositions = {}
 		end)
 	end
+	
+	textbox:GetPropertyChangedSignal("Text"):Connect(function()
+		if textbox.Text ~= currentString and visualsShowing then
+			cleanupVisuals()
+		end
+	end)
 	
 	-- ============================================================================
 	-- BUTTON CLICK
 	-- ============================================================================
 	button.MouseButton1Click:Connect(function()
+		-- Check if autobuild is running
+		if _G.autobuildRunning then
+			return
+		end
+	
 		local buildString = textbox.Text
 	
 		if buildString == "" or buildString == "Put your build file..." then
-			warn("No build string!")
+			return
+		end
+	
+		if visualsShowing and buildString == currentString then
+			cleanupVisuals()
 			return
 		end
 	
 		local blocks = parseBlocks(buildString)
 	
 		if #blocks == 0 then
-			warn("Failed to parse blocks!")
 			return
 		end
 	
+		currentString = buildString
 		createVisuals(blocks)
-	
-		if not arcHandles then
-			createDragHandles()
-		end
-	
-		button.Text = "Visuals Created!"
-		task.wait(1)
-		button.Text = button.Name
+		createDragHandles()
 	end)
 end;
 task.spawn(C_9);
@@ -443,19 +511,35 @@ local script = G2L["c"];
 	
 			local buildString = ""
 	
-			for _, playerFolder in pairs(bricksFolder:GetChildren()) do
-				for _, brick in pairs(playerFolder:GetChildren()) do
-					if brick:IsA("BasePart") and brick.Name == "Brick" then
-						local colorHex = hexFromColor(brick.Color)
-						local mat = MaterialToSymbol[brick.Material] or "@"
-						local collide = brick.CanCollide and "" or "^"
-						local size = brick.Size
-						local pos = brick.Position
+			for _, child in pairs(bricksFolder:GetChildren()) do
+				-- Check if it's a brick directly in Bricks folder
+				if child:IsA("BasePart") and child.Name == "Brick" then
+					local colorHex = hexFromColor(child.Color)
+					local mat = MaterialToSymbol[child.Material] or "@"
+					local collide = child.CanCollide and "" or "^"
+					local size = child.Size
+					local pos = child.Position
 	
-						buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
-							colorHex, mat, collide,
-							math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
-							pos.X, pos.Y, pos.Z)
+					buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
+						colorHex, mat, collide,
+						math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
+						pos.X, pos.Y, pos.Z)
+	
+					-- Check if it's a player folder
+				elseif child:IsA("Folder") then
+					for _, brick in pairs(child:GetChildren()) do
+						if brick:IsA("BasePart") and brick.Name == "Brick" then
+							local colorHex = hexFromColor(brick.Color)
+							local mat = MaterialToSymbol[brick.Material] or "@"
+							local collide = brick.CanCollide and "" or "^"
+							local size = brick.Size
+							local pos = brick.Position
+	
+							buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
+								colorHex, mat, collide,
+								math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
+								pos.X, pos.Y, pos.Z)
+						end
 					end
 				end
 			end
