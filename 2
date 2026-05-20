@@ -7,7 +7,7 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 10 | Scripts: 2 | Modules: 0 | Tags: 0
+-- Instances: 15 | Scripts: 4 | Modules: 0 | Tags: 0
 local G2L = {};
 
 -- StarterGui.ScreenGui
@@ -58,6 +58,7 @@ G2L["6"]["Name"] = [[build]];
 
 -- StarterGui.ScreenGui.Frame.main.json
 G2L["7"] = Instance.new("TextBox", G2L["4"]);
+G2L["7"]["CursorPosition"] = -1;
 G2L["7"]["Name"] = [[json]];
 G2L["7"]["BorderSizePixel"] = 0;
 G2L["7"]["TextWrapped"] = true;
@@ -66,37 +67,85 @@ G2L["7"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["7"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["7"]["PlaceholderText"] = [[Put your build file...]];
-G2L["7"]["Size"] = UDim2.new(1, -80, 1, 0);
+G2L["7"]["Size"] = UDim2.new(0.8, -80, 1, 0);
 G2L["7"]["Position"] = UDim2.new(0, 80, 0, 0);
 G2L["7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["7"]["Text"] = [[]];
 
 
--- StarterGui.ScreenGui.Frame.second
-G2L["8"] = Instance.new("Frame", G2L["2"]);
+-- StarterGui.ScreenGui.Frame.main.import
+G2L["8"] = Instance.new("TextButton", G2L["4"]);
+G2L["8"]["TextWrapped"] = true;
 G2L["8"]["BorderSizePixel"] = 0;
-G2L["8"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["8"]["Size"] = UDim2.new(1, 0, 0, 50);
+G2L["8"]["TextSize"] = 14;
+G2L["8"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["8"]["BackgroundColor3"] = Color3.fromRGB(255, 239, 0);
+G2L["8"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["8"]["Size"] = UDim2.new(0.93333, -220, 1, 0);
 G2L["8"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["8"]["Name"] = [[second]];
+G2L["8"]["Text"] = [[Import Build]];
+G2L["8"]["Name"] = [[import]];
+G2L["8"]["Position"] = UDim2.new(0.96667, -50, 0, 0);
+
+
+-- StarterGui.ScreenGui.Frame.main.import.import
+G2L["9"] = Instance.new("LocalScript", G2L["8"]);
+G2L["9"]["Name"] = [[import]];
+
+
+-- StarterGui.ScreenGui.Frame.second
+G2L["a"] = Instance.new("Frame", G2L["2"]);
+G2L["a"]["BorderSizePixel"] = 0;
+G2L["a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["a"]["Size"] = UDim2.new(1, 0, 0, 50);
+G2L["a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["a"]["Name"] = [[second]];
 
 
 -- StarterGui.ScreenGui.Frame.second.copybuilds
-G2L["9"] = Instance.new("TextButton", G2L["8"]);
-G2L["9"]["BorderSizePixel"] = 0;
-G2L["9"]["TextSize"] = 14;
-G2L["9"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["9"]["BackgroundColor3"] = Color3.fromRGB(0, 174, 4);
-G2L["9"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["9"]["Size"] = UDim2.new(1.73333, -220, 1, 0);
-G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["9"]["Text"] = [[Copy Server Builds to Json]];
-G2L["9"]["Name"] = [[copybuilds]];
+G2L["b"] = Instance.new("TextButton", G2L["a"]);
+G2L["b"]["BorderSizePixel"] = 0;
+G2L["b"]["TextSize"] = 14;
+G2L["b"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["b"]["BackgroundColor3"] = Color3.fromRGB(0, 174, 4);
+G2L["b"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["b"]["Size"] = UDim2.new(1.73333, -220, 1, 0);
+G2L["b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["b"]["Text"] = [[Copy Server Builds to Json]];
+G2L["b"]["Name"] = [[copybuilds]];
 
 
 -- StarterGui.ScreenGui.Frame.second.copybuilds.copybuilds
-G2L["a"] = Instance.new("LocalScript", G2L["9"]);
-G2L["a"]["Name"] = [[copybuilds]];
+G2L["c"] = Instance.new("LocalScript", G2L["b"]);
+G2L["c"]["Name"] = [[copybuilds]];
+
+
+-- StarterGui.ScreenGui.Frame.third
+G2L["d"] = Instance.new("Frame", G2L["2"]);
+G2L["d"]["BorderSizePixel"] = 0;
+G2L["d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["d"]["Size"] = UDim2.new(1, 0, -0.14, 50);
+G2L["d"]["Position"] = UDim2.new(0, 0, 0.66667, 0);
+G2L["d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["d"]["Name"] = [[third]];
+
+
+-- StarterGui.ScreenGui.Frame.third.copybuildsYOURS
+G2L["e"] = Instance.new("TextButton", G2L["d"]);
+G2L["e"]["BorderSizePixel"] = 0;
+G2L["e"]["TextSize"] = 14;
+G2L["e"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["e"]["BackgroundColor3"] = Color3.fromRGB(0, 125, 3);
+G2L["e"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["e"]["Size"] = UDim2.new(1, 0, 0, 30);
+G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["e"]["Text"] = [[Copy Your Blocks to .json (PRIV SERVER NOT SUPPORTED)]];
+G2L["e"]["Name"] = [[copybuildsYOURS]];
+
+
+-- StarterGui.ScreenGui.Frame.third.copybuildsYOURS.copybuildsYOURS
+G2L["f"] = Instance.new("LocalScript", G2L["e"]);
+G2L["f"]["Name"] = [[copybuildsYOURS]];
 
 
 -- StarterGui.ScreenGui.Frame.main.build.build
@@ -138,9 +187,264 @@ local script = G2L["6"];
 	end)
 end;
 task.spawn(C_6);
+-- StarterGui.ScreenGui.Frame.main.import.import
+local function C_9()
+local script = G2L["9"];
+	-- PUT THIS SCRIPT UNDER A BUTTON
+	local button = script.Parent
+	local textbox = script.Parent.Parent.json
+	
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local RunService = game:GetService("RunService")
+	local UserInputService = game:GetService("UserInputService")
+	
+	-- ============================================================================
+	-- PARSE BUILD STRING
+	-- ============================================================================
+	local function hexToColor(hex)
+		local r = tonumber(hex:sub(1, 2), 16) / 255
+		local g = tonumber(hex:sub(3, 4), 16) / 255
+		local b = tonumber(hex:sub(5, 6), 16) / 255
+		return Color3.new(r, g, b)
+	end
+	
+	local SymbolToMaterial = {
+		["!"] = Enum.Material.SmoothPlastic,
+		["@"] = Enum.Material.Plastic,
+		["#"] = Enum.Material.CeramicTiles,
+		["$"] = Enum.Material.Brick,
+		["%"] = Enum.Material.WoodPlanks,
+		["^"] = Enum.Material.Ice,
+		["&"] = Enum.Material.Grass,
+		["*"] = Enum.Material.Sand,
+		["("] = Enum.Material.Snow,
+		[")"] = Enum.Material.Glass,
+		["-"] = Enum.Material.Wood,
+		["_"] = Enum.Material.Slate,
+		["="] = Enum.Material.Pebble,
+		["+"] = Enum.Material.Marble,
+		["["] = Enum.Material.Granite,
+		["]"] = Enum.Material.DiamondPlate,
+		["{"] = Enum.Material.Metal,
+		["}"] = Enum.Material.Asphalt,
+		["~"] = Enum.Material.Concrete,
+		["`"] = Enum.Material.Pavement,
+		["?"] = Enum.Material.Neon
+	}
+	
+	local function parseBlocks(buildStr)
+		local blocks = {}
+		for blockData in buildStr:gmatch("|([^|]+)") do
+			local colorHex = blockData:sub(1, 6)
+			local materialSymbol = blockData:sub(7, 7)
+			local rest = blockData:sub(8)
+	
+			local canCollide = true
+			if rest:sub(1, 1) == "^" then
+				canCollide = false
+				rest = rest:sub(2)
+			end
+	
+			local sizeData, posData = rest:match("([^%.]+)%.(.+)")
+			if sizeData and posData then
+				local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
+				local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
+	
+				if sizeX and posX then
+					local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
+					local centerPos = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
+	
+					table.insert(blocks, {
+						size = size,
+						centerPos = centerPos,
+						color = hexToColor(colorHex),
+						material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic,
+						canCollide = canCollide
+					})
+				end
+			end
+		end
+		return blocks
+	end
+	
+	-- ============================================================================
+	-- VISUAL CREATION WITH DRAG HANDLES
+	-- ============================================================================
+	local visualFolder = nil
+	local centerPart = nil
+	local handles = nil
+	local currentString = ""
+	local visualsShowing = false
+	local originalButtonText = button.Text
+	
+	local function cleanupVisuals()
+		if visualFolder then
+			visualFolder:Destroy()
+			visualFolder = nil
+		end
+		if handles then
+			handles:Destroy()
+			handles = nil
+		end
+		centerPart = nil
+		visualsShowing = false
+		button.Text = originalButtonText
+	end
+	
+	local function createVisuals(blocks)
+		-- Cleanup old visuals
+		cleanupVisuals()
+	
+		visualFolder = Instance.new("Folder")
+		visualFolder.Name = "BuildVisuals"
+		visualFolder.Parent = workspace
+	
+		-- Calculate center of all blocks
+		local totalPos = Vector3.new(0, 0, 0)
+		for i, blockData in ipairs(blocks) do
+			totalPos = totalPos + blockData.centerPos
+		end
+		local centerPos = totalPos / #blocks
+	
+		-- Create invisible center part for the handles
+		centerPart = Instance.new("Part")
+		centerPart.Name = "CenterHandle"
+		centerPart.Size = Vector3.new(2, 2, 2)
+		centerPart.Position = centerPos
+		centerPart.Anchored = true
+		centerPart.CanCollide = false
+		centerPart.Transparency = 1
+		centerPart.Parent = visualFolder
+	
+		-- Create all visual blocks
+		for i, blockData in ipairs(blocks) do
+			local preview = Instance.new("Part")
+			preview.Name = "Visual_" .. i
+			preview.Size = blockData.size
+			preview.CFrame = CFrame.new(blockData.centerPos)
+			preview.Anchored = true
+			preview.CanCollide = false
+			preview.Material = blockData.material
+			preview.Color = blockData.color
+			preview.Transparency = 0.5
+			preview.Parent = visualFolder
+		end
+	
+		visualsShowing = true
+		button.Text = "Hide Visuals"
+		print("Created " .. #blocks .. " visual blocks")
+	end
+	
+	local function createDragHandles()
+		-- Create Handles (movement arrows)
+		handles = Instance.new("Handles")
+		handles.Parent = game.CoreGui
+		handles.Style = Enum.HandlesStyle.Movement
+		handles.Adornee = centerPart
+	
+		local isDragging = false
+		local startPositions = {}
+		local originalCameraType = workspace.CurrentCamera.CameraType
+	
+		-- Mouse drag handler
+		handles.MouseButton1Down:Connect(function(face)
+			isDragging = true
+	
+			-- Lock camera
+			workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
+	
+			-- Store starting positions of all blocks
+			startPositions = {}
+			for _, child in pairs(visualFolder:GetChildren()) do
+				if child:IsA("BasePart") then
+					startPositions[child] = child.Position
+				end
+			end
+		end)
+	
+		handles.MouseDrag:Connect(function(face, distance)
+			if not isDragging then return end
+	
+			local direction = Vector3.new()
+	
+			if face == Enum.NormalId.Right then
+				direction = Vector3.new(1, 0, 0)
+			elseif face == Enum.NormalId.Left then
+				direction = Vector3.new(-1, 0, 0)
+			elseif face == Enum.NormalId.Top then
+				direction = Vector3.new(0, 1, 0)
+			elseif face == Enum.NormalId.Bottom then
+				direction = Vector3.new(0, -1, 0)
+			elseif face == Enum.NormalId.Front then
+				direction = Vector3.new(0, 0, -1)
+			elseif face == Enum.NormalId.Back then
+				direction = Vector3.new(0, 0, 1)
+			end
+	
+			-- Snap to 1 stud grid
+			local snappedDistance = math.round(distance)
+			local offset = direction * snappedDistance
+	
+			-- Move all blocks
+			for part, startPos in pairs(startPositions) do
+				if part and part.Parent then
+					part.Position = startPos + offset
+				end
+			end
+		end)
+	
+		handles.MouseButton1Up:Connect(function()
+			isDragging = false
+	
+			-- Unlock camera
+			workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+	
+			startPositions = {}
+		end)
+	end
+	
+	-- Watch for textbox changes - cleanup visuals when string changes
+	textbox:GetPropertyChangedSignal("Text"):Connect(function()
+		if textbox.Text ~= currentString and visualsShowing then
+			cleanupVisuals()
+		end
+	end)
+	
+	-- ============================================================================
+	-- BUTTON CLICK
+	-- ============================================================================
+	button.MouseButton1Click:Connect(function()
+		local buildString = textbox.Text
+	
+		if buildString == "" or buildString == "Put your build file..." then
+			warn("No build string!")
+			return
+		end
+	
+		-- If visuals are showing and same string, hide them
+		if visualsShowing and buildString == currentString then
+			cleanupVisuals()
+			return
+		end
+	
+		-- Parse and show new visuals
+		local blocks = parseBlocks(buildString)
+	
+		if #blocks == 0 then
+			warn("Failed to parse blocks!")
+			return
+		end
+	
+		currentString = buildString
+		createVisuals(blocks)
+		createDragHandles()
+	end)
+end;
+task.spawn(C_9);
 -- StarterGui.ScreenGui.Frame.second.copybuilds.copybuilds
-local function C_a()
-local script = G2L["a"];
+local function C_c()
+local script = G2L["c"];
 	-- PUT THIS SCRIPT UNDER THE "copybuilds" BUTTON
 	local button = script.Parent
 	local Players = game:GetService("Players")
@@ -216,6 +520,86 @@ local script = G2L["a"];
 		end
 	end)
 end;
-task.spawn(C_a);
+task.spawn(C_c);
+-- StarterGui.ScreenGui.Frame.third.copybuildsYOURS.copybuildsYOURS
+local function C_f()
+local script = G2L["f"];
+	-- PUT THIS SCRIPT UNDER THE "copybuilds" BUTTON
+	local button = script.Parent
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local function hexFromColor(color)
+		return string.format("%02X%02X%02X", 
+			math.floor(color.R * 255), 
+			math.floor(color.G * 255), 
+			math.floor(color.B * 255))
+	end
+	
+	local MaterialToSymbol = {
+		[Enum.Material.SmoothPlastic] = "!",
+		[Enum.Material.Plastic] = "@",
+		[Enum.Material.CeramicTiles] = "#",
+		[Enum.Material.Brick] = "$",
+		[Enum.Material.WoodPlanks] = "%",
+		[Enum.Material.Ice] = "^",
+		[Enum.Material.Grass] = "&",
+		[Enum.Material.Sand] = "*",
+		[Enum.Material.Snow] = "(",
+		[Enum.Material.Glass] = ")",
+		[Enum.Material.Wood] = "-",
+		[Enum.Material.Slate] = "_",
+		[Enum.Material.Pebble] = "=",
+		[Enum.Material.Marble] = "+",
+		[Enum.Material.Granite] = "[",
+		[Enum.Material.DiamondPlate] = "]",
+		[Enum.Material.Metal] = "{",
+		[Enum.Material.Asphalt] = "}",
+		[Enum.Material.Concrete] = "~",
+		[Enum.Material.Pavement] = "`",
+		[Enum.Material.Neon] = "?"
+	}
+	
+	button.MouseButton1Click:Connect(function()
+		local success = pcall(function()
+			local bricksFolder = workspace:FindFirstChild("Bricks")
+			if not bricksFolder then error("No bricks") end
+	
+			local playerFolder = bricksFolder:FindFirstChild(LocalPlayer.Name)
+			if not playerFolder then error("No player folder") end
+	
+			local buildString = ""
+	
+			for _, brick in pairs(playerFolder:GetChildren()) do
+				if brick:IsA("BasePart") and brick.Name == "Brick" then
+					local colorHex = hexFromColor(brick.Color)
+					local mat = MaterialToSymbol[brick.Material] or "@"
+					local collide = brick.CanCollide and "" or "^"
+					local size = brick.Size
+					local pos = brick.Position
+	
+					buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
+						colorHex, mat, collide,
+						math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
+						pos.X, pos.Y, pos.Z)
+				end
+			end
+	
+			buildString = buildString .. "|"
+			setclipboard(buildString)
+	
+			button.Text = "Copied to clipboard!"
+			task.wait(1)
+			button.Text = "Copy Your Blocks to .json (PRIV SERVER NOT SUPPORTED)"
+		end)
+	
+		if not success then
+			button.Text = "Failed to copy"
+			task.wait(1)
+			button.Text = "Copy Your Blocks to .json (PRIV SERVER NOT SUPPORTED)"
+		end
+	end)
+end;
+task.spawn(C_f);
 
 return G2L["1"], require;
