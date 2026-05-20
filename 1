@@ -1,608 +1,621 @@
--- OPTIMIZED AUTO-BUILD SCRIPT (CORNER PLACEMENT WITH RESIZING AND PAINTING)
--- Paste your build string below:
-local buildString = "|7C5C46@4,4,4.-6.0,26.0,-22.0||7C5C46@4,4,4.-2.0,26.0,-22.0||7C5C46@4,4,4.2.0,26.0,-22.0||4B974B@4,4,4.6.0,26.0,-22.0||C0C0C0@4,4,4.-6.0,26.0,-30.0||C0C0C0@4,4,4.2.0,26.0,-26.0||C0C0C0@4,4,4.6.0,26.0,-30.0||C0C0C0@4,4,4.-2.0,26.0,-30.0||C0C0C0@4,4,4.-6.0,26.0,-2.0||C0C0C0@4,4,4.-6.0,26.0,-6.0||C0C0C0@4,4,4.-10.0,26.0,-6.0||C0C0C0@4,4,4.-14.0,26.0,-6.0||C0C0C0@4,4,4.-10.0,26.0,2.0||C0C0C0@4,4,4.-6.0,26.0,2.0||C0C0C0@4,4,4.-14.0,26.0,2.0||C0C0C0@4,4,4.-14.0,26.0,-2.0||C0C0C0@4,2,4.26.0,25.0,-10.0||C0C0C0@4,2,4.26.0,25.0,-6.0||C0C0C0@4,2,4.26.0,25.0,-2.0||C0C0C0@4,2,4.26.0,25.0,2.0||C0C0C0@4,2,4.26.0,27.0,-10.0||C0C0C0@4,2,4.26.0,27.0,-6.0||C0C0C0@4,2,4.26.0,27.0,-2.0||C0C0C0@4,2,4.26.0,29.0,-6.0||C0C0C0@4,2,4.26.0,31.0,-6.0||C0C0C0@4,2,4.26.0,33.0,-6.0||C0C0C0@1,1,1.24.5,28.5,-3.5||C0C0C0@1,1,1.25.5,28.5,-3.5||C0C0C0@1,1,1.26.5,28.5,-3.5||C0C0C0@1,1,1.27.5,28.5,-3.5||C0C0C0@1,1,1.24.5,28.5,-2.5||C0C0C0@1,1,1.25.5,28.5,-2.5||C0C0C0@1,1,1.26.5,28.5,-2.5||C0C0C0@1,1,1.27.5,28.5,-2.5||C0C0C0@1,1,1.24.5,28.5,-1.5||C0C0C0@1,1,1.25.5,28.5,-1.5||C0C0C0@1,1,1.26.5,28.5,-1.5||C0C0C0@1,1,1.27.5,28.5,-1.5||C0C0C0@1,1,1.24.5,29.5,-3.5||C0C0C0@1,1,1.25.5,29.5,-3.5||C0C0C0@1,1,1.26.5,29.5,-3.5||C0C0C0@1,1,1.27.5,29.5,-3.5||C0C0C0@1,1,1.24.5,29.5,-2.5||C0C0C0@1,1,1.25.5,29.5,-2.5||C0C0C0@1,1,1.26.5,29.5,-2.5||C0C0C0@1,1,1.27.5,29.5,-2.5||C0C0C0@1,1,1.25.5,30.5,-3.5||C0C0C0@1,1,1.24.5,30.5,-3.5||C0C0C0@1,1,1.26.5,30.5,-3.5||C0C0C0@1,1,1.27.5,30.5,-3.5||C0C0C0@1,1,7.13.5,24.5,14.5||C0C0C0@1,1,1.13.5,24.5,10.5||C0C0C0@4,1,1.12.0,24.5,18.5||C0C0C0@4,1,1.16.0,24.5,18.5||C0C0C0@1,1,1.7.5,24.5,16.5||C0C0C0@1,1,3.7.5,24.5,14.5||C0C0C0@1,1,2.7.5,24.5,12.0||C0C0C0@2,1,1.6.0,24.5,16.5||C0C0C0@3,1,1.5.5,24.5,11.5||C0C0C0@3,1,1.5.5,24.5,13.5||C0C0C0@1,1,1.4.5,24.5,16.5||C0C0C0@2,1,1.-1.0,24.5,16.5||C0C0C0@1,1,1.0.5,24.5,16.5||C0C0C0@1,1,1.1.5,24.5,16.5||C0C0C0@1,1,1.2.5,24.5,15.5||C0C0C0@1,1,1.2.5,24.5,14.5||C0C0C0@3,1,1.0.5,24.5,13.5||C0C0C0@1,1,1.-1.5,24.5,12.5||C0C0C0@4,1,1.1.0,24.5,11.5||C0C0C0@1,1,12.-5.5,24.5,17.0||C0C0C0@9,1,1.-5.5,24.5,24.5|"
+--[=[
+ d888b  db    db d888888b      .d888b.      db      db    db  .d8b.  
+88' Y8b 88    88   `88'        VP  `8D      88      88    88 d8' `8b 
+88      88    88    88            odD'      88      88    88 88ooo88 
+88  ooo 88    88    88          .88'        88      88    88 88~~~88 
+88. ~8~ 88b  d88   .88.        j88.         88booo. 88b  d88 88   88    @uniquadev
+ Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
+]=]
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
+-- Instances: 15 | Scripts: 4 | Modules: 0 | Tags: 0
+local G2L = {};
 
--- ============================================================================
--- CONFIGURATION
--- ============================================================================
-local CONFIG = {
-	PLACEMENT_TIMEOUT = 5,
-	PLACEMENT_CHECK_INTERVAL = 0.1,
-	TOOL_EQUIP_INTERVAL = 2,
-	POSITION_CHECK_TOLERANCE = 0.5,
-	BUILD_HEIGHT_OFFSET = 12
-}
+-- StarterGui.ScreenGui
+G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 
--- ============================================================================
--- MATERIAL LOOKUP
--- ============================================================================
-local SymbolToMaterial = {
-	["!"] = Enum.Material.SmoothPlastic,
-	["@"] = Enum.Material.Plastic,
-	["#"] = Enum.Material.CeramicTiles,
-	["$"] = Enum.Material.Brick,
-	["%"] = Enum.Material.WoodPlanks,
-	["^"] = Enum.Material.Ice,
-	["&"] = Enum.Material.Grass,
-	["*"] = Enum.Material.Sand,
-	["("] = Enum.Material.Snow,
-	[")"] = Enum.Material.Glass,
-	["-"] = Enum.Material.Wood,
-	["_"] = Enum.Material.Slate,
-	["="] = Enum.Material.Pebble,
-	["+"] = Enum.Material.Marble,
-	["["] = Enum.Material.Granite,
-	["]"] = Enum.Material.DiamondPlate,
-	["{"] = Enum.Material.Metal,
-	["}"] = Enum.Material.Asphalt,
-	["~"] = Enum.Material.Concrete,
-	["`"] = Enum.Material.Pavement,
-	["?"] = Enum.Material.Neon
-}
 
--- ============================================================================
--- MATERIAL NAME MAPPING (for Paint tool)
--- ============================================================================
-local MaterialToPaintName = {
-	[Enum.Material.SmoothPlastic] = "smooth",
-	[Enum.Material.Plastic] = "plastic",
-	[Enum.Material.CeramicTiles] = "tiles",
-	[Enum.Material.Brick] = "bricks",
-	[Enum.Material.WoodPlanks] = "planks",
-	[Enum.Material.Ice] = "ice",
-	[Enum.Material.Grass] = "grass",
-	[Enum.Material.Sand] = "sand",
-	[Enum.Material.Snow] = "snow",
-	[Enum.Material.Glass] = "glass",
-	[Enum.Material.Wood] = "wood",
-	[Enum.Material.Slate] = "stone",
-	[Enum.Material.Pebble] = "pebble",
-	[Enum.Material.Marble] = "marble",
-	[Enum.Material.Granite] = "granite",
-	[Enum.Material.DiamondPlate] = "steel",
-	[Enum.Material.Metal] = "metal",
-	[Enum.Material.Asphalt] = "asphalt",
-	[Enum.Material.Concrete] = "concrete",
-	[Enum.Material.Pavement] = "pavement",
-	[Enum.Material.Neon] = "neon"
-}
+-- StarterGui.ScreenGui.Frame
+G2L["2"] = Instance.new("Frame", G2L["1"]);
+G2L["2"]["BorderSizePixel"] = 0;
+G2L["2"]["BackgroundColor3"] = Color3.fromRGB(132, 132, 132);
+G2L["2"]["Size"] = UDim2.new(0, 300, 0, 150);
+G2L["2"]["Position"] = UDim2.new(0.41865, 0, 0.38137, 0);
+G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 
--- ============================================================================
--- UTILITY FUNCTIONS
--- ============================================================================
-local function hexToColor(hex)
-	local r = tonumber(hex:sub(1, 2), 16) / 255
-	local g = tonumber(hex:sub(3, 4), 16) / 255
-	local b = tonumber(hex:sub(5, 6), 16) / 255
-	return Color3.new(r, g, b)
-end
 
-local function equipAllTools()
-	if not LocalPlayer.Character then return end
+-- StarterGui.ScreenGui.Frame.UIListLayout
+G2L["3"] = Instance.new("UIListLayout", G2L["2"]);
 
-	for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-		if tool:IsA("Tool") then
-			tool.Parent = LocalPlayer.Character
-		end
-	end
-end
 
-local function findBuildTools()
-	local tools = {}
-	local locations = {LocalPlayer.Character, LocalPlayer.Backpack}
 
-	for _, location in pairs(locations) do
-		if location then
-			for _, item in pairs(location:GetChildren()) do
-				if item:IsA("Tool") and item.Name == "Build" then
-					local remote = item:FindFirstChild("Script", true) 
-						and item.Script:FindFirstChild("Event")
-					if remote then
-						table.insert(tools, {tool = item, event = remote})
-					end
-				end
+-- StarterGui.ScreenGui.Frame.main
+G2L["4"] = Instance.new("Frame", G2L["2"]);
+G2L["4"]["BorderSizePixel"] = 0;
+G2L["4"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["4"]["Size"] = UDim2.new(1, 0, 0, 50);
+G2L["4"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["4"]["Name"] = [[main]];
+
+
+-- StarterGui.ScreenGui.Frame.main.build
+G2L["5"] = Instance.new("TextButton", G2L["4"]);
+G2L["5"]["BorderSizePixel"] = 0;
+G2L["5"]["TextSize"] = 14;
+G2L["5"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["5"]["BackgroundColor3"] = Color3.fromRGB(0, 255, 9);
+G2L["5"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["5"]["Size"] = UDim2.new(1, -220, 1, 0);
+G2L["5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["5"]["Text"] = [[Start Build]];
+G2L["5"]["Name"] = [[build]];
+
+
+-- StarterGui.ScreenGui.Frame.main.build.build
+G2L["6"] = Instance.new("LocalScript", G2L["5"]);
+G2L["6"]["Name"] = [[build]];
+
+
+-- StarterGui.ScreenGui.Frame.main.json
+G2L["7"] = Instance.new("TextBox", G2L["4"]);
+G2L["7"]["CursorPosition"] = -1;
+G2L["7"]["Name"] = [[json]];
+G2L["7"]["BorderSizePixel"] = 0;
+G2L["7"]["TextWrapped"] = true;
+G2L["7"]["TextSize"] = 14;
+G2L["7"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["7"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["7"]["PlaceholderText"] = [[Put your build file...]];
+G2L["7"]["Size"] = UDim2.new(0.8, -80, 1, 0);
+G2L["7"]["Position"] = UDim2.new(0, 80, 0, 0);
+G2L["7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["7"]["Text"] = [[]];
+
+
+-- StarterGui.ScreenGui.Frame.main.import
+G2L["8"] = Instance.new("TextButton", G2L["4"]);
+G2L["8"]["TextWrapped"] = true;
+G2L["8"]["BorderSizePixel"] = 0;
+G2L["8"]["TextSize"] = 14;
+G2L["8"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["8"]["BackgroundColor3"] = Color3.fromRGB(255, 239, 0);
+G2L["8"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["8"]["Size"] = UDim2.new(0.93333, -220, 1, 0);
+G2L["8"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["8"]["Text"] = [[Import Build]];
+G2L["8"]["Name"] = [[import]];
+G2L["8"]["Position"] = UDim2.new(0.96667, -50, 0, 0);
+
+
+-- StarterGui.ScreenGui.Frame.main.import.import
+G2L["9"] = Instance.new("LocalScript", G2L["8"]);
+G2L["9"]["Name"] = [[import]];
+
+
+-- StarterGui.ScreenGui.Frame.second
+G2L["a"] = Instance.new("Frame", G2L["2"]);
+G2L["a"]["BorderSizePixel"] = 0;
+G2L["a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["a"]["Size"] = UDim2.new(1, 0, 0, 50);
+G2L["a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["a"]["Name"] = [[second]];
+
+
+-- StarterGui.ScreenGui.Frame.second.copybuilds
+G2L["b"] = Instance.new("TextButton", G2L["a"]);
+G2L["b"]["BorderSizePixel"] = 0;
+G2L["b"]["TextSize"] = 14;
+G2L["b"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["b"]["BackgroundColor3"] = Color3.fromRGB(0, 174, 4);
+G2L["b"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["b"]["Size"] = UDim2.new(1.73333, -220, 1, 0);
+G2L["b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["b"]["Text"] = [[Copy Server Builds to Json]];
+G2L["b"]["Name"] = [[copybuilds]];
+
+
+-- StarterGui.ScreenGui.Frame.second.copybuilds.copybuilds
+G2L["c"] = Instance.new("LocalScript", G2L["b"]);
+G2L["c"]["Name"] = [[copybuilds]];
+
+
+-- StarterGui.ScreenGui.Frame.third
+G2L["d"] = Instance.new("Frame", G2L["2"]);
+G2L["d"]["BorderSizePixel"] = 0;
+G2L["d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["d"]["Size"] = UDim2.new(1, 0, -0.14, 50);
+G2L["d"]["Position"] = UDim2.new(0, 0, 0.66667, 0);
+G2L["d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["d"]["Name"] = [[third]];
+
+
+-- StarterGui.ScreenGui.Frame.third.copybuildsYOURS
+G2L["e"] = Instance.new("TextButton", G2L["d"]);
+G2L["e"]["BorderSizePixel"] = 0;
+G2L["e"]["TextSize"] = 14;
+G2L["e"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["e"]["BackgroundColor3"] = Color3.fromRGB(0, 125, 3);
+G2L["e"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["e"]["Size"] = UDim2.new(1, 0, 0, 30);
+G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["e"]["Text"] = [[Copy Your Blocks to .json (PRIV SERVER NOT SUPPORTED)]];
+G2L["e"]["Name"] = [[copybuildsYOURS]];
+
+
+-- StarterGui.ScreenGui.Frame.third.copybuildsYOURS.copybuildsYOURS
+G2L["f"] = Instance.new("LocalScript", G2L["e"]);
+G2L["f"]["Name"] = [[copybuildsYOURS]];
+
+
+-- StarterGui.ScreenGui.Frame.main.build.build
+local function C_6()
+local script = G2L["6"];
+	-- PUT THIS SCRIPT UNDER THE "build" BUTTON
+	local button = script.Parent
+	local textbox = script.Parent.Parent.json
+	
+	local isBuilding = false
+	
+	button.MouseButton1Click:Connect(function()
+		if not isBuilding then
+			-- START BUILD
+			local buildString = textbox.Text
+	
+			if buildString == "" or buildString == "Put your build file..." then
+				return
 			end
-		end
-	end
-
-	return tools
-end
-
-local function findShapeTool()
-	local locations = {LocalPlayer.Character, LocalPlayer.Backpack}
-
-	for _, location in pairs(locations) do
-		if location then
-			for _, item in pairs(location:GetChildren()) do
-				if item:IsA("Tool") and item.Name == "Shape" then
-					local remote = item:FindFirstChild("Script", true) 
-						and item.Script:FindFirstChild("Event")
-					if remote then
-						return {tool = item, event = remote}
-					end
-				end
-			end
-		end
-	end
-
-	return nil
-end
-
-local function findPaintTool()
-	local locations = {LocalPlayer.Character, LocalPlayer.Backpack}
 	
-	for _, location in pairs(locations) do
-		if location then
-			for _, item in pairs(location:GetChildren()) do
-				if item:IsA("Tool") and item.Name == "Paint" then
-					local remote = item:FindFirstChild("Script", true) 
-						and item.Script:FindFirstChild("Event")
-					if remote then
-						return {tool = item, event = remote}
-					end
-				end
-			end
-		end
-	end
+			isBuilding = true
+			button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+			button.Text = "Stop Build"
 	
-	return nil
-end
-
-local function getPlayerBricksFolder()
-	local bricksFolder = workspace:FindFirstChild("Bricks")
-	if not bricksFolder then return nil end
-
-	return bricksFolder:FindFirstChild(LocalPlayer.Name)
-end
-
-local function getNewestBrick()
-	local playerFolder = getPlayerBricksFolder()
-	if not playerFolder then return nil end
-
-	local bricks = {}
-	for _, brick in pairs(playerFolder:GetChildren()) do
-		if brick:IsA("BasePart") and brick.Name == "Brick" then
-			table.insert(bricks, brick)
-		end
-	end
-
-	return bricks[#bricks]
-end
-
--- ============================================================================
--- POSITION LOCKING
--- ============================================================================
-local positionLock = nil
-
-local function lockPosition(targetPos)
-	if positionLock then
-		positionLock:Disconnect()
-	end
-
-	positionLock = RunService.RenderStepped:Connect(function()
-		local char = LocalPlayer.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			local hrp = char.HumanoidRootPart
-			hrp.CFrame = CFrame.new(targetPos)
-			hrp.AssemblyLinearVelocity = Vector3.zero
-			hrp.AssemblyAngularVelocity = Vector3.zero
-		end
-	end)
-end
-
-local function unlockPosition()
-	if positionLock then
-		positionLock:Disconnect()
-		positionLock = nil
-	end
-end
-
--- ============================================================================
--- BLOCK DETECTION
--- ============================================================================
-local function findBlockNear(targetPos, searchRadius)
-	local playerFolder = getPlayerBricksFolder()
-	if not playerFolder then return nil end
-
-	local closestBrick = nil
-	local closestDist = searchRadius or CONFIG.POSITION_CHECK_TOLERANCE
-
-	for _, brick in pairs(playerFolder:GetChildren()) do
-		if brick:IsA("BasePart") and brick.Name == "Brick" then
-			local dist = (brick.Position - targetPos).Magnitude
-			if dist < closestDist then
-				closestBrick = brick
-				closestDist = dist
-			end
-		end
-	end
-
-	return closestBrick
-end
-
--- ============================================================================
--- CALCULATE CORNER POSITION
--- ============================================================================
-local function getCornerPosition(centerPos, size)
-	-- Place at bottom-left-back corner INSIDE the visual
-	-- The detailed block (1x1x1) starts at this corner
-	local halfSize = size / 2
-	return Vector3.new(
-		centerPos.X - halfSize.X + 0.5,  -- Left edge + half of 1 stud
-		centerPos.Y - halfSize.Y + 0.5,  -- Bottom edge + half of 1 stud
-		centerPos.Z - halfSize.Z + 0.5   -- Back edge + half of 1 stud
-	)
-end
-
--- ============================================================================
--- PAINT BLOCK
--- ============================================================================
-local function paintBlock(brick, color, material)
-	local paintTool = findPaintTool()
-	if not paintTool then
-		warn("Paint tool not found!")
-		return false
-	end
+			-- Set the build string globally
+			_G.buildString = buildString
 	
-	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not hrp then
-		warn("No HumanoidRootPart found!")
-		return false
-	end
-	
-	local materialName = MaterialToPaintName[material] or "smooth"
-	
-	pcall(function()
-		paintTool.event:FireServer(brick, Enum.NormalId.Left, hrp.Position, "both 🤝", color, materialName, "")
-	end)
-	
-	print(string.format("  Painted: Color(%.2f, %.2f, %.2f) Material=%s", color.R, color.G, color.B, materialName))
-	
-	return true
-end
-
--- ============================================================================
--- SHAPE TOOL RESIZING (CORNER MODE)
--- ============================================================================
-local function resizeBlock(brick, targetSize)
-	local shapeTool = findShapeTool()
-	if not shapeTool then
-		warn("Shape tool not found!")
-		return false
-	end
-
-	if not brick then
-		warn("No brick provided to resize!")
-		return false
-	end
-
-	-- Wait before starting resize
-	task.wait(0.15)
-
-	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not hrp then
-		warn("No HumanoidRootPart found!")
-		return false
-	end
-
-	local hrpPos = hrp.Position
-
-	print(string.format("\n=== RESIZING BLOCK (CORNER MODE) ==="))
-	print(string.format("Target Size: %.1fx%.1fx%.1f", targetSize.X, targetSize.Y, targetSize.Z))
-
-	-- Calculate how many times to resize each face
-	-- Starting from 1x1x1, we need to grow to targetSize
-	local rightResizes = math.floor(targetSize.X - 1)  -- X dimension
-	local topResizes = math.floor(targetSize.Y - 1)    -- Y dimension
-	local backResizes = math.floor(targetSize.Z - 1)   -- Z dimension (BACK not Front)
-
-	print(string.format("Right: %d times, Top: %d times, Back: %d times", rightResizes, topResizes, backResizes))
-
-	-- Resize Right face (X dimension)
-	if rightResizes > 0 then
-		print(string.format("\nResizing Right face %d times", rightResizes))
-		for i = 1, rightResizes do
-			local currentBrick = getNewestBrick()
-			if not currentBrick then
-				warn("Lost track of brick!")
-				return false
-			end
-
-			pcall(function()
-				shapeTool.event:FireServer(currentBrick, Enum.NormalId.Right, hrpPos, "increase")
+			-- Run the autobuild script
+			task.spawn(function()
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/Open-Source-Scripts/refs/heads/main/autobuild.lua"))()
 			end)
-			print(string.format("  Right: Increase #%d", i))
-			task.wait(0.18)
-		end
-	end
-
-	-- Resize Top face (Y dimension)
-	if topResizes > 0 then
-		print(string.format("\nResizing Top face %d times", topResizes))
-		for i = 1, topResizes do
-			local currentBrick = getNewestBrick()
-			if not currentBrick then
-				warn("Lost track of brick!")
-				return false
-			end
-
-			pcall(function()
-				shapeTool.event:FireServer(currentBrick, Enum.NormalId.Top, hrpPos, "increase")
-			end)
-			print(string.format("  Top: Increase #%d", i))
-			task.wait(0.18)
-		end
-	end
-
-	-- Resize Back face (Z dimension)
-	if backResizes > 0 then
-		print(string.format("\nResizing Back face %d times", backResizes))
-		for i = 1, backResizes do
-			local currentBrick = getNewestBrick()
-			if not currentBrick then
-				warn("Lost track of brick!")
-				return false
-			end
-
-			pcall(function()
-				shapeTool.event:FireServer(currentBrick, Enum.NormalId.Back, hrpPos, "increase")
-			end)
-			print(string.format("  Back: Increase #%d", i))
-			task.wait(0.18)
-		end
-	end
-
-	print("=== RESIZE COMPLETE ===\n")
-
-	return true
-end
-
--- ============================================================================
--- PARSE BUILD STRING
--- ============================================================================
-local function parseBlocks(buildStr)
-	local blocks = {}
-
-	for blockData in buildStr:gmatch("|([^|]+)") do
-		local colorHex = blockData:sub(1, 6)
-		local materialSymbol = blockData:sub(7, 7)
-		local rest = blockData:sub(8)
-
-		local canCollide = true
-		if rest:sub(1, 1) == "^" then
-			canCollide = false
-			rest = rest:sub(2)
-		end
-
-		local sizeData, posData = rest:match("([^%.]+)%.(.+)")
-		if sizeData and posData then
-			local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
-			local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
-
-			if sizeX and posX then
-				local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
-				local centerPos = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
-
-				local needsResize = (size ~= Vector3.new(4, 4, 4))
-
-				table.insert(blocks, {
-					size = size,
-					centerPos = centerPos,
-					color = hexToColor(colorHex),
-					material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic,
-					canCollide = canCollide,
-					needsResize = needsResize
-				})
-			end
-		end
-	end
-
-	return blocks
-end
-
--- ============================================================================
--- VISUALIZATION
--- ============================================================================
-local function createPreviews(blocks)
-	local folder = Instance.new("Folder")
-	folder.Name = "BuildPreview"
-	folder.Parent = workspace
-
-	for i, blockData in ipairs(blocks) do
-		local preview = Instance.new("Part")
-		preview.Name = "Preview_" .. i
-		preview.Size = blockData.size
-		preview.CFrame = CFrame.new(blockData.centerPos)
-		preview.Anchored = true
-		preview.CanCollide = false
-		preview.Material = blockData.material
-		preview.Color = blockData.color
-		preview.Transparency = 0.6
-		preview.Parent = folder
-
-		blockData.preview = preview
-	end
-
-	return folder
-end
-
--- ============================================================================
--- BLOCK PLACEMENT
--- ============================================================================
-local function placeBlock(blockData, buildTools, blockIndex, totalBlocks)
-	if #buildTools == 0 then
-		warn("No build tools available!")
-		return false
-	end
-
-	local buildPos = blockData.centerPos + Vector3.new(0, CONFIG.BUILD_HEIGHT_OFFSET, 0)
-	lockPosition(buildPos)
-	task.wait(0.15)  -- Wait after teleporting
-
-	-- Paint the newest block with correct color and material
-	local newestBrick = getNewestBrick()
-	if newestBrick then
-		paintBlock(newestBrick, blockData.color, blockData.material)
-	end
-
-	-- Check if already exists
-	local existing = findBlockNear(blockData.centerPos, 1)
-	if existing then
-		blockData.placedBrick = existing
-		return true
-	end
-
-	-- Determine placement position
-	local placeMode = blockData.needsResize and "detailed" or "normal"
-	local placePos
-
-	if blockData.needsResize then
-		-- Place at corner INSIDE the visual
-		placePos = getCornerPosition(blockData.centerPos, blockData.size)
-	else
-		-- Normal 4x4x4 block at center
-		placePos = blockData.centerPos
-	end
-
-	-- Try placement with each tool until success
-	local toolIndex = 0
-	local startTime = tick()
-
-	while tick() - startTime < CONFIG.PLACEMENT_TIMEOUT do
-		toolIndex = (toolIndex % #buildTools) + 1
-		local bt = buildTools[toolIndex]
-
-		pcall(function()
-			bt.event:FireServer(workspace.Terrain, Enum.NormalId.Top, placePos, placeMode)
-		end)
-
-		task.wait(0.05)
-
-		-- Check if block appeared
-		local brick = findBlockNear(placePos, 3)
-		if brick then
-			blockData.placedBrick = brick
-			print(string.format("✓ [%d/%d] Block placed at (%.1f, %.1f, %.1f)", blockIndex, totalBlocks, brick.Position.X, brick.Position.Y, brick.Position.Z))
-
-			-- Paint the block
-			paintBlock(brick, blockData.color, blockData.material)
-
-			-- If it needs resizing and isn't 1x1x1, resize it
-			if blockData.needsResize and blockData.size ~= Vector3.new(1, 1, 1) then
-				resizeBlock(brick, blockData.size)
-				-- Wait after resizing before moving to next block
-				task.wait(0.08)
-			else
-				-- Wait for normal/already detailed blocks
-				task.wait(0.04)
-			end
-
-			return true
-		end
-	end
-
-	return false
-end
-
--- ============================================================================
--- MAIN BUILD PROCESS
--- ============================================================================
-local function main()
-	print("=== AUTO-BUILD STARTING ===")
-
-	-- Parse blocks
-	local blocks = parseBlocks(buildString)
-	print("Loaded " .. #blocks .. " blocks to build")
-
-	if #blocks == 0 then
-		warn("No blocks found in build string!")
-		return
-	end
-
-	-- Create previews
-	local previewFolder = createPreviews(blocks)
-	print("Created preview visualization")
-
-	-- Equip tools
-	equipAllTools()
-	task.wait(0.5)
-
-	-- Find build tools
-	local buildTools = findBuildTools()
-	if #buildTools == 0 then
-		warn("No build tools found! Make sure you have Build tools equipped.")
-		return
-	end
-	print("Found " .. #buildTools .. " build tools")
-
-	-- Check for shape tool
-	local shapeTool = findShapeTool()
-	if shapeTool then
-		print("Found Shape tool")
-	else
-		warn("Shape tool not found! Detailed blocks won't be resized correctly.")
-	end
-
-	-- Check for paint tool
-	local paintTool = findPaintTool()
-	if paintTool then
-		print("Found Paint tool")
-	else
-		warn("Paint tool not found! Blocks won't be painted.")
-	end
-
-	-- Tool re-equip loop
-	task.spawn(function()
-		while true do
-			task.wait(CONFIG.TOOL_EQUIP_INTERVAL)
-			equipAllTools()
-		end
-	end)
-
-	-- Build blocks
-	local successCount = 0
-	local failCount = 0
-	local totalBlocks = #blocks
-
-	for i, blockData in ipairs(blocks) do
-		local success = placeBlock(blockData, buildTools, i, totalBlocks)
-
-		if success then
-			successCount = successCount + 1
-
-			-- Destroy preview
-			if blockData.preview then
-				pcall(function() blockData.preview:Destroy() end)
-			end
 		else
-			failCount = failCount + 1
-			warn(string.format("✗ [%d/%d] Block FAILED", i, totalBlocks))
+			-- STOP BUILD
+			_G.stopautobuild = true
+			isBuilding = false
+			button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+			button.Text = "Start Build"
 		end
-
-		-- Unlock after this block is done
-		unlockPosition()
-		task.wait(0.05)
-
-		-- Refresh build tools periodically
-		if i % 20 == 0 then
-			buildTools = findBuildTools()
+	end)
+end;
+task.spawn(C_6);
+-- StarterGui.ScreenGui.Frame.main.import.import
+local function C_9()
+local script = G2L["9"];
+	-- PUT THIS SCRIPT UNDER A BUTTON
+	local button = script.Parent
+	local textbox = script.Parent.Parent.json
+	
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local RunService = game:GetService("RunService")
+	local UserInputService = game:GetService("UserInputService")
+	
+	-- ============================================================================
+	-- PARSE BUILD STRING
+	-- ============================================================================
+	local function hexToColor(hex)
+		local r = tonumber(hex:sub(1, 2), 16) / 255
+		local g = tonumber(hex:sub(3, 4), 16) / 255
+		local b = tonumber(hex:sub(5, 6), 16) / 255
+		return Color3.new(r, g, b)
+	end
+	
+	local SymbolToMaterial = {
+		["!"] = Enum.Material.SmoothPlastic,
+		["@"] = Enum.Material.Plastic,
+		["#"] = Enum.Material.CeramicTiles,
+		["$"] = Enum.Material.Brick,
+		["%"] = Enum.Material.WoodPlanks,
+		["^"] = Enum.Material.Ice,
+		["&"] = Enum.Material.Grass,
+		["*"] = Enum.Material.Sand,
+		["("] = Enum.Material.Snow,
+		[")"] = Enum.Material.Glass,
+		["-"] = Enum.Material.Wood,
+		["_"] = Enum.Material.Slate,
+		["="] = Enum.Material.Pebble,
+		["+"] = Enum.Material.Marble,
+		["["] = Enum.Material.Granite,
+		["]"] = Enum.Material.DiamondPlate,
+		["{"] = Enum.Material.Metal,
+		["}"] = Enum.Material.Asphalt,
+		["~"] = Enum.Material.Concrete,
+		["`"] = Enum.Material.Pavement,
+		["?"] = Enum.Material.Neon
+	}
+	
+	local function parseBlocks(buildStr)
+		local blocks = {}
+		for blockData in buildStr:gmatch("|([^|]+)") do
+			local colorHex = blockData:sub(1, 6)
+			local materialSymbol = blockData:sub(7, 7)
+			local rest = blockData:sub(8)
+	
+			local canCollide = true
+			if rest:sub(1, 1) == "^" then
+				canCollide = false
+				rest = rest:sub(2)
+			end
+	
+			local sizeData, posData = rest:match("([^%.]+)%.(.+)")
+			if sizeData and posData then
+				local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
+				local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
+	
+				if sizeX and posX then
+					local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
+					local centerPos = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
+	
+					table.insert(blocks, {
+						size = size,
+						centerPos = centerPos,
+						color = hexToColor(colorHex),
+						material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic,
+						canCollide = canCollide
+					})
+				end
+			end
 		end
+		return blocks
 	end
-
-	print(string.format("\n=== BUILD COMPLETE ===\nSuccess: %d | Failed: %d", successCount, failCount))
-
-	-- Cleanup
-	task.wait(1)
-	if previewFolder then
-		pcall(function() previewFolder:Destroy() end)
+	
+	-- ============================================================================
+	-- VISUAL CREATION WITH DRAG HANDLES
+	-- ============================================================================
+	local visualFolder = nil
+	local centerPart = nil
+	local handles = nil
+	local currentString = ""
+	local visualsShowing = false
+	local originalButtonText = button.Text
+	
+	local function cleanupVisuals()
+		if visualFolder then
+			visualFolder:Destroy()
+			visualFolder = nil
+		end
+		if handles then
+			handles:Destroy()
+			handles = nil
+		end
+		centerPart = nil
+		visualsShowing = false
+		button.Text = originalButtonText
 	end
+	
+	local function createVisuals(blocks)
+		-- Cleanup old visuals
+		cleanupVisuals()
+	
+		visualFolder = Instance.new("Folder")
+		visualFolder.Name = "BuildVisuals"
+		visualFolder.Parent = workspace
+	
+		-- Calculate center of all blocks
+		local totalPos = Vector3.new(0, 0, 0)
+		for i, blockData in ipairs(blocks) do
+			totalPos = totalPos + blockData.centerPos
+		end
+		local centerPos = totalPos / #blocks
+	
+		-- Create invisible center part for the handles
+		centerPart = Instance.new("Part")
+		centerPart.Name = "CenterHandle"
+		centerPart.Size = Vector3.new(2, 2, 2)
+		centerPart.Position = centerPos
+		centerPart.Anchored = true
+		centerPart.CanCollide = false
+		centerPart.Transparency = 1
+		centerPart.Parent = visualFolder
+	
+		-- Create all visual blocks
+		for i, blockData in ipairs(blocks) do
+			local preview = Instance.new("Part")
+			preview.Name = "Visual_" .. i
+			preview.Size = blockData.size
+			preview.CFrame = CFrame.new(blockData.centerPos)
+			preview.Anchored = true
+			preview.CanCollide = false
+			preview.Material = blockData.material
+			preview.Color = blockData.color
+			preview.Transparency = 0.5
+			preview.Parent = visualFolder
+		end
+	
+		visualsShowing = true
+		button.Text = "Hide Visuals"
+		print("Created " .. #blocks .. " visual blocks")
+	end
+	
+	local function createDragHandles()
+		-- Create Handles (movement arrows)
+		handles = Instance.new("Handles")
+		handles.Parent = game.CoreGui
+		handles.Style = Enum.HandlesStyle.Movement
+		handles.Adornee = centerPart
+	
+		local isDragging = false
+		local startPositions = {}
+		local originalCameraType = workspace.CurrentCamera.CameraType
+	
+		-- Mouse drag handler
+		handles.MouseButton1Down:Connect(function(face)
+			isDragging = true
+	
+			-- Lock camera
+			workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
+	
+			-- Store starting positions of all blocks
+			startPositions = {}
+			for _, child in pairs(visualFolder:GetChildren()) do
+				if child:IsA("BasePart") then
+					startPositions[child] = child.Position
+				end
+			end
+		end)
+	
+		handles.MouseDrag:Connect(function(face, distance)
+			if not isDragging then return end
+	
+			local direction = Vector3.new()
+	
+			if face == Enum.NormalId.Right then
+				direction = Vector3.new(1, 0, 0)
+			elseif face == Enum.NormalId.Left then
+				direction = Vector3.new(-1, 0, 0)
+			elseif face == Enum.NormalId.Top then
+				direction = Vector3.new(0, 1, 0)
+			elseif face == Enum.NormalId.Bottom then
+				direction = Vector3.new(0, -1, 0)
+			elseif face == Enum.NormalId.Front then
+				direction = Vector3.new(0, 0, -1)
+			elseif face == Enum.NormalId.Back then
+				direction = Vector3.new(0, 0, 1)
+			end
+	
+			-- Snap to 1 stud grid
+			local snappedDistance = math.round(distance)
+			local offset = direction * snappedDistance
+	
+			-- Move all blocks
+			for part, startPos in pairs(startPositions) do
+				if part and part.Parent then
+					part.Position = startPos + offset
+				end
+			end
+		end)
+	
+		handles.MouseButton1Up:Connect(function()
+			isDragging = false
+	
+			-- Unlock camera
+			workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+	
+			startPositions = {}
+		end)
+	end
+	
+	-- Watch for textbox changes - cleanup visuals when string changes
+	textbox:GetPropertyChangedSignal("Text"):Connect(function()
+		if textbox.Text ~= currentString and visualsShowing then
+			cleanupVisuals()
+		end
+	end)
+	
+	-- ============================================================================
+	-- BUTTON CLICK
+	-- ============================================================================
+	button.MouseButton1Click:Connect(function()
+		local buildString = textbox.Text
+	
+		if buildString == "" or buildString == "Put your build file..." then
+			warn("No build string!")
+			return
+		end
+	
+		-- If visuals are showing and same string, hide them
+		if visualsShowing and buildString == currentString then
+			cleanupVisuals()
+			return
+		end
+	
+		-- Parse and show new visuals
+		local blocks = parseBlocks(buildString)
+	
+		if #blocks == 0 then
+			warn("Failed to parse blocks!")
+			return
+		end
+	
+		currentString = buildString
+		createVisuals(blocks)
+		createDragHandles()
+	end)
+end;
+task.spawn(C_9);
+-- StarterGui.ScreenGui.Frame.second.copybuilds.copybuilds
+local function C_c()
+local script = G2L["c"];
+	-- PUT THIS SCRIPT UNDER THE "copybuilds" BUTTON
+	local button = script.Parent
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local function hexFromColor(color)
+		return string.format("%02X%02X%02X", 
+			math.floor(color.R * 255), 
+			math.floor(color.G * 255), 
+			math.floor(color.B * 255))
+	end
+	
+	local MaterialToSymbol = {
+		[Enum.Material.SmoothPlastic] = "!",
+		[Enum.Material.Plastic] = "@",
+		[Enum.Material.CeramicTiles] = "#",
+		[Enum.Material.Brick] = "$",
+		[Enum.Material.WoodPlanks] = "%",
+		[Enum.Material.Ice] = "^",
+		[Enum.Material.Grass] = "&",
+		[Enum.Material.Sand] = "*",
+		[Enum.Material.Snow] = "(",
+		[Enum.Material.Glass] = ")",
+		[Enum.Material.Wood] = "-",
+		[Enum.Material.Slate] = "_",
+		[Enum.Material.Pebble] = "=",
+		[Enum.Material.Marble] = "+",
+		[Enum.Material.Granite] = "[",
+		[Enum.Material.DiamondPlate] = "]",
+		[Enum.Material.Metal] = "{",
+		[Enum.Material.Asphalt] = "}",
+		[Enum.Material.Concrete] = "~",
+		[Enum.Material.Pavement] = "`",
+		[Enum.Material.Neon] = "?"
+	}
+	
+	button.MouseButton1Click:Connect(function()
+		local success = pcall(function()
+			local bricksFolder = workspace:FindFirstChild("Bricks")
+			if not bricksFolder then error("No bricks") end
+	
+			local buildString = ""
+	
+			for _, child in pairs(bricksFolder:GetChildren()) do
+				-- Check if it's a brick directly in Bricks folder
+				if child:IsA("BasePart") and child.Name == "Brick" then
+					local colorHex = hexFromColor(child.Color)
+					local mat = MaterialToSymbol[child.Material] or "@"
+					local collide = child.CanCollide and "" or "^"
+					local size = child.Size
+					local pos = child.Position
+	
+					buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
+						colorHex, mat, collide,
+						math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
+						pos.X, pos.Y, pos.Z)
+	
+					-- Check if it's a player folder
+				elseif child:IsA("Folder") then
+					for _, brick in pairs(child:GetChildren()) do
+						if brick:IsA("BasePart") and brick.Name == "Brick" then
+							local colorHex = hexFromColor(brick.Color)
+							local mat = MaterialToSymbol[brick.Material] or "@"
+							local collide = brick.CanCollide and "" or "^"
+							local size = brick.Size
+							local pos = brick.Position
+	
+							buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
+								colorHex, mat, collide,
+								math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
+								pos.X, pos.Y, pos.Z)
+						end
+					end
+				end
+			end
+	
+			buildString = buildString .. "|"
+			setclipboard(buildString)
+	
+			button.Text = "Copied to clipboard!"
+			task.wait(1)
+			button.Text = "Copy Server Builds to .json"
+		end)
+	
+		if not success then
+			button.Text = "Failed to copy"
+			task.wait(1)
+			button.Text = "Copy Server Builds to .json"
+		end
+	end)
+end;
+task.spawn(C_c);
+-- StarterGui.ScreenGui.Frame.third.copybuildsYOURS.copybuildsYOURS
+local function C_f()
+local script = G2L["f"];
+	-- PUT THIS SCRIPT UNDER THE "copybuilds" BUTTON
+	local button = script.Parent
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	
+	local function hexFromColor(color)
+		return string.format("%02X%02X%02X", 
+			math.floor(color.R * 255), 
+			math.floor(color.G * 255), 
+			math.floor(color.B * 255))
+	end
+	
+	local MaterialToSymbol = {
+		[Enum.Material.SmoothPlastic] = "!",
+		[Enum.Material.Plastic] = "@",
+		[Enum.Material.CeramicTiles] = "#",
+		[Enum.Material.Brick] = "$",
+		[Enum.Material.WoodPlanks] = "%",
+		[Enum.Material.Ice] = "^",
+		[Enum.Material.Grass] = "&",
+		[Enum.Material.Sand] = "*",
+		[Enum.Material.Snow] = "(",
+		[Enum.Material.Glass] = ")",
+		[Enum.Material.Wood] = "-",
+		[Enum.Material.Slate] = "_",
+		[Enum.Material.Pebble] = "=",
+		[Enum.Material.Marble] = "+",
+		[Enum.Material.Granite] = "[",
+		[Enum.Material.DiamondPlate] = "]",
+		[Enum.Material.Metal] = "{",
+		[Enum.Material.Asphalt] = "}",
+		[Enum.Material.Concrete] = "~",
+		[Enum.Material.Pavement] = "`",
+		[Enum.Material.Neon] = "?"
+	}
+	
+	button.MouseButton1Click:Connect(function()
+		local success = pcall(function()
+			local bricksFolder = workspace:FindFirstChild("Bricks")
+			if not bricksFolder then error("No bricks") end
+	
+			local playerFolder = bricksFolder:FindFirstChild(LocalPlayer.Name)
+			if not playerFolder then error("No player folder") end
+	
+			local buildString = ""
+	
+			for _, brick in pairs(playerFolder:GetChildren()) do
+				if brick:IsA("BasePart") and brick.Name == "Brick" then
+					local colorHex = hexFromColor(brick.Color)
+					local mat = MaterialToSymbol[brick.Material] or "@"
+					local collide = brick.CanCollide and "" or "^"
+					local size = brick.Size
+					local pos = brick.Position
+	
+					buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
+						colorHex, mat, collide,
+						math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
+						pos.X, pos.Y, pos.Z)
+				end
+			end
+	
+			buildString = buildString .. "|"
+			setclipboard(buildString)
+	
+			button.Text = "Copied to clipboard!"
+			task.wait(1)
+			button.Text = "Copy Your Blocks to .json (PRIV SERVER NOT SUPPORTED)"
+		end)
+	
+		if not success then
+			button.Text = "Failed to copy"
+			task.wait(1)
+			button.Text = "Copy Your Blocks to .json (PRIV SERVER NOT SUPPORTED)"
+		end
+	end)
+end;
+task.spawn(C_f);
 
-	print("\n=== ALL DONE ===")
-end
-
--- Run
-main()
+return G2L["1"], require;
