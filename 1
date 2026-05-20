@@ -159,6 +159,11 @@ local script = G2L["6"];
 	
 	button.MouseButton1Click:Connect(function()
 		if not isBuilding then
+			-- Check if visuals are enabled
+			if not _G.visualsEnabled then
+				return
+			end
+	
 			-- START BUILD
 			local buildString = textbox.Text
 	
@@ -167,8 +172,29 @@ local script = G2L["6"];
 			end
 	
 			isBuilding = true
+			_G.autobuildRunning = true
 			button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 			button.Text = "Stop Build"
+	
+			-- Destroy import visuals AND reset import button state
+			local visualFolder = workspace:FindFirstChild("BuildVisuals")
+			if visualFolder then
+				visualFolder:Destroy()
+			end
+	
+			local handles = game.CoreGui:FindFirstChild("Handles")
+			if handles then
+				handles:Destroy()
+			end
+	
+			-- Reset import button text AND state
+			local importButton = script.Parent.Parent:FindFirstChild("second")
+			if importButton then
+				importButton.Text = "Import Build"
+				-- Reset the import script's internal state by calling its cleanup
+				_G.visualsEnabled = false
+				_G.forceImportReset = true  -- Signal to import script to reset
+			end
 	
 			-- Set the build string globally
 			_G.buildString = buildString
@@ -176,11 +202,18 @@ local script = G2L["6"];
 			-- Run the autobuild script
 			task.spawn(function()
 				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/Open-Source-Scripts/refs/heads/main/autobuild.lua"))()
+	
+				-- Reset after build finishes
+				isBuilding = false
+				_G.autobuildRunning = false
+				button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+				button.Text = "Start Build"
 			end)
 		else
 			-- STOP BUILD
 			_G.stopautobuild = true
 			isBuilding = false
+			_G.autobuildRunning = false
 			button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 			button.Text = "Start Build"
 		end
@@ -190,14 +223,13 @@ task.spawn(C_6);
 -- StarterGui.ScreenGui.Frame.main.import.import
 local function C_9()
 local script = G2L["9"];
-	-- PUT THIS SCRIPT UNDER A BUTTON
+	-- PUT THIS SCRIPT UNDER THE IMPORT BUTTON
 	local button = script.Parent
 	local textbox = script.Parent.Parent.json
 	
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local RunService = game:GetService("RunService")
-	local UserInputService = game:GetService("UserInputService")
 	
 	-- ============================================================================
 	-- PARSE BUILD STRING
@@ -277,6 +309,7 @@ local script = G2L["9"];
 	local currentString = ""
 	local visualsShowing = false
 	local originalButtonText = button.Text
+	local originalCenterPos = Vector3.new(0, 0, 0)
 	
 	local function cleanupVisuals()
 		if visualFolder then
@@ -289,25 +322,25 @@ local script = G2L["9"];
 		end
 		centerPart = nil
 		visualsShowing = false
+		_G.visualsEnabled = false
+		_G.buildOffset = Vector3.new(0, 0, 0)
 		button.Text = originalButtonText
 	end
 	
 	local function createVisuals(blocks)
-		-- Cleanup old visuals
 		cleanupVisuals()
 	
 		visualFolder = Instance.new("Folder")
 		visualFolder.Name = "BuildVisuals"
 		visualFolder.Parent = workspace
 	
-		-- Calculate center of all blocks
 		local totalPos = Vector3.new(0, 0, 0)
 		for i, blockData in ipairs(blocks) do
 			totalPos = totalPos + blockData.centerPos
 		end
 		local centerPos = totalPos / #blocks
+		originalCenterPos = centerPos
 	
-		-- Create invisible center part for the handles
 		centerPart = Instance.new("Part")
 		centerPart.Name = "CenterHandle"
 		centerPart.Size = Vector3.new(2, 2, 2)
@@ -317,7 +350,6 @@ local script = G2L["9"];
 		centerPart.Transparency = 1
 		centerPart.Parent = visualFolder
 	
-		-- Create all visual blocks
 		for i, blockData in ipairs(blocks) do
 			local preview = Instance.new("Part")
 			preview.Name = "Visual_" .. i
@@ -332,12 +364,12 @@ local script = G2L["9"];
 		end
 	
 		visualsShowing = true
-		button.Text = "Hide Visuals"
-		print("Created " .. #blocks .. " visual blocks")
+		_G.visualsEnabled = true
+		_G.buildOffset = Vector3.new(0, 0, 0)
+		button.Text = "Remove Import"
 	end
 	
 	local function createDragHandles()
-		-- Create Handles (movement arrows)
 		handles = Instance.new("Handles")
 		handles.Parent = game.CoreGui
 		handles.Style = Enum.HandlesStyle.Movement
@@ -345,16 +377,11 @@ local script = G2L["9"];
 	
 		local isDragging = false
 		local startPositions = {}
-		local originalCameraType = workspace.CurrentCamera.CameraType
 	
-		-- Mouse drag handler
 		handles.MouseButton1Down:Connect(function(face)
 			isDragging = true
-	
-			-- Lock camera
 			workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
 	
-			-- Store starting positions of all blocks
 			startPositions = {}
 			for _, child in pairs(visualFolder:GetChildren()) do
 				if child:IsA("BasePart") then
@@ -382,29 +409,26 @@ local script = G2L["9"];
 				direction = Vector3.new(0, 0, 1)
 			end
 	
-			-- Snap to 1 stud grid
 			local snappedDistance = math.round(distance)
 			local offset = direction * snappedDistance
 	
-			-- Move all blocks
 			for part, startPos in pairs(startPositions) do
 				if part and part.Parent then
 					part.Position = startPos + offset
 				end
 			end
+	
+			-- Update build offset
+			_G.buildOffset = centerPart.Position - originalCenterPos
 		end)
 	
 		handles.MouseButton1Up:Connect(function()
 			isDragging = false
-	
-			-- Unlock camera
 			workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-	
 			startPositions = {}
 		end)
 	end
 	
-	-- Watch for textbox changes - cleanup visuals when string changes
 	textbox:GetPropertyChangedSignal("Text"):Connect(function()
 		if textbox.Text ~= currentString and visualsShowing then
 			cleanupVisuals()
@@ -415,24 +439,32 @@ local script = G2L["9"];
 	-- BUTTON CLICK
 	-- ============================================================================
 	button.MouseButton1Click:Connect(function()
-		local buildString = textbox.Text
-	
-		if buildString == "" or buildString == "Put your build file..." then
-			warn("No build string!")
+		-- Check if autobuild is running
+		if _G.autobuildRunning then
 			return
 		end
 	
-		-- If visuals are showing and same string, hide them
+		-- Check if we need to force reset
+		if _G.forceImportReset then
+			visualsShowing = false
+			currentString = ""
+			_G.forceImportReset = false
+		end
+	
+		local buildString = textbox.Text
+	
+		if buildString == "" or buildString == "Put your build file..." then
+			return
+		end
+	
 		if visualsShowing and buildString == currentString then
 			cleanupVisuals()
 			return
 		end
 	
-		-- Parse and show new visuals
 		local blocks = parseBlocks(buildString)
 	
 		if #blocks == 0 then
-			warn("Failed to parse blocks!")
 			return
 		end
 	
@@ -447,93 +479,9 @@ local function C_c()
 local script = G2L["c"];
 	-- PUT THIS SCRIPT UNDER THE "copybuilds" BUTTON
 	local button = script.Parent
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	
-	local function hexFromColor(color)
-		return string.format("%02X%02X%02X", 
-			math.floor(color.R * 255), 
-			math.floor(color.G * 255), 
-			math.floor(color.B * 255))
-	end
-	
-	local MaterialToSymbol = {
-		[Enum.Material.SmoothPlastic] = "!",
-		[Enum.Material.Plastic] = "@",
-		[Enum.Material.CeramicTiles] = "#",
-		[Enum.Material.Brick] = "$",
-		[Enum.Material.WoodPlanks] = "%",
-		[Enum.Material.Ice] = "^",
-		[Enum.Material.Grass] = "&",
-		[Enum.Material.Sand] = "*",
-		[Enum.Material.Snow] = "(",
-		[Enum.Material.Glass] = ")",
-		[Enum.Material.Wood] = "-",
-		[Enum.Material.Slate] = "_",
-		[Enum.Material.Pebble] = "=",
-		[Enum.Material.Marble] = "+",
-		[Enum.Material.Granite] = "[",
-		[Enum.Material.DiamondPlate] = "]",
-		[Enum.Material.Metal] = "{",
-		[Enum.Material.Asphalt] = "}",
-		[Enum.Material.Concrete] = "~",
-		[Enum.Material.Pavement] = "`",
-		[Enum.Material.Neon] = "?"
-	}
 	
 	button.MouseButton1Click:Connect(function()
-		local success = pcall(function()
-			local bricksFolder = workspace:FindFirstChild("Bricks")
-			if not bricksFolder then error("No bricks") end
-	
-			local buildString = ""
-	
-			for _, child in pairs(bricksFolder:GetChildren()) do
-				-- Check if it's a brick directly in Bricks folder
-				if child:IsA("BasePart") and child.Name == "Brick" then
-					local colorHex = hexFromColor(child.Color)
-					local mat = MaterialToSymbol[child.Material] or "@"
-					local collide = child.CanCollide and "" or "^"
-					local size = child.Size
-					local pos = child.Position
-	
-					buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
-						colorHex, mat, collide,
-						math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
-						pos.X, pos.Y, pos.Z)
-	
-					-- Check if it's a player folder
-				elseif child:IsA("Folder") then
-					for _, brick in pairs(child:GetChildren()) do
-						if brick:IsA("BasePart") and brick.Name == "Brick" then
-							local colorHex = hexFromColor(brick.Color)
-							local mat = MaterialToSymbol[brick.Material] or "@"
-							local collide = brick.CanCollide and "" or "^"
-							local size = brick.Size
-							local pos = brick.Position
-	
-							buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
-								colorHex, mat, collide,
-								math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
-								pos.X, pos.Y, pos.Z)
-						end
-					end
-				end
-			end
-	
-			buildString = buildString .. "|"
-			setclipboard(buildString)
-	
-			button.Text = "Copied to clipboard!"
-			task.wait(1)
-			button.Text = "Copy Server Builds to .json"
-		end)
-	
-		if not success then
-			button.Text = "Failed to copy"
-			task.wait(1)
-			button.Text = "Copy Server Builds to .json"
-		end
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/UNIVERSAL-SCRIPT-BY-AGARV/refs/heads/main/!%20autobuildclipboard"))()
 	end)
 end;
 task.spawn(C_c);
