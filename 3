@@ -7,30 +7,38 @@
  Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
 ]=]
 
--- Instances: 15 | Scripts: 4 | Modules: 0 | Tags: 0
+-- Instances: 17 | Scripts: 2 | Modules: 0 | Tags: 0
 local G2L = {};
 
--- StarterGui.ScreenGui
+-- StarterGui.AudioVisualizer
 G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+G2L["1"]["DisplayOrder"] = 999999999;
+G2L["1"]["Name"] = [[AudioVisualizer]];
 G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 
 
--- StarterGui.ScreenGui.Frame
+-- StarterGui.AudioVisualizer.Frame
 G2L["2"] = Instance.new("Frame", G2L["1"]);
 G2L["2"]["BorderSizePixel"] = 0;
-G2L["2"]["BackgroundColor3"] = Color3.fromRGB(132, 132, 132);
-G2L["2"]["Size"] = UDim2.new(0, 300, 0, 150);
-G2L["2"]["Position"] = UDim2.new(0.41865, 0, 0.38137, 0);
+G2L["2"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["2"]["Size"] = UDim2.new(0, 300, 0, 161);
+G2L["2"]["Position"] = UDim2.new(0.65621, 0, 0.14967, 0);
 G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 
 
--- StarterGui.ScreenGui.Frame.UIListLayout
-G2L["3"] = Instance.new("UIListLayout", G2L["2"]);
+-- StarterGui.AudioVisualizer.Frame.hi
+G2L["3"] = Instance.new("Frame", G2L["2"]);
+G2L["3"]["BorderSizePixel"] = 0;
+G2L["3"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["3"]["Size"] = UDim2.new(1, 0, 1, 0);
+G2L["3"]["Position"] = UDim2.new(0, 0, 0, 20);
+G2L["3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["3"]["Name"] = [[hi]];
+G2L["3"]["BackgroundTransparency"] = 1;
 
 
-
--- StarterGui.ScreenGui.Frame.main
-G2L["4"] = Instance.new("Frame", G2L["2"]);
+-- StarterGui.AudioVisualizer.Frame.hi.main
+G2L["4"] = Instance.new("Frame", G2L["3"]);
 G2L["4"]["BorderSizePixel"] = 0;
 G2L["4"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["4"]["Size"] = UDim2.new(1, 0, 0, 50);
@@ -38,7 +46,7 @@ G2L["4"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["4"]["Name"] = [[main]];
 
 
--- StarterGui.ScreenGui.Frame.main.build
+-- StarterGui.AudioVisualizer.Frame.hi.main.play
 G2L["5"] = Instance.new("TextButton", G2L["4"]);
 G2L["5"]["BorderSizePixel"] = 0;
 G2L["5"]["TextSize"] = 14;
@@ -47,531 +55,366 @@ G2L["5"]["BackgroundColor3"] = Color3.fromRGB(0, 255, 9);
 G2L["5"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["5"]["Size"] = UDim2.new(1, -220, 1, 0);
 G2L["5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["5"]["Text"] = [[Start Build]];
-G2L["5"]["Name"] = [[build]];
+G2L["5"]["Text"] = [[Play]];
+G2L["5"]["Name"] = [[play]];
 
 
--- StarterGui.ScreenGui.Frame.main.build.build
-G2L["6"] = Instance.new("LocalScript", G2L["5"]);
-G2L["6"]["Name"] = [[build]];
+-- StarterGui.AudioVisualizer.Frame.hi.main.textbox
+G2L["6"] = Instance.new("TextBox", G2L["4"]);
+G2L["6"]["CursorPosition"] = -1;
+G2L["6"]["Name"] = [[textbox]];
+G2L["6"]["BorderSizePixel"] = 0;
+G2L["6"]["TextWrapped"] = true;
+G2L["6"]["TextSize"] = 14;
+G2L["6"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["6"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["6"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["6"]["PlaceholderText"] = [[Add audio id...]];
+G2L["6"]["Size"] = UDim2.new(0.8, -80, 1, 0);
+G2L["6"]["Position"] = UDim2.new(0, 80, 0, 0);
+G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["6"]["Text"] = [[]];
 
 
--- StarterGui.ScreenGui.Frame.main.json
-G2L["7"] = Instance.new("TextBox", G2L["4"]);
-G2L["7"]["CursorPosition"] = -1;
-G2L["7"]["Name"] = [[json]];
-G2L["7"]["BorderSizePixel"] = 0;
+-- StarterGui.AudioVisualizer.Frame.hi.main.add
+G2L["7"] = Instance.new("TextButton", G2L["4"]);
 G2L["7"]["TextWrapped"] = true;
+G2L["7"]["BorderSizePixel"] = 0;
 G2L["7"]["TextSize"] = 14;
 G2L["7"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["7"]["BackgroundColor3"] = Color3.fromRGB(0, 56, 255);
 G2L["7"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["7"]["PlaceholderText"] = [[Put your build file...]];
-G2L["7"]["Size"] = UDim2.new(0.8, -80, 1, 0);
-G2L["7"]["Position"] = UDim2.new(0, 80, 0, 0);
+G2L["7"]["Size"] = UDim2.new(0.93333, -220, 1, 0);
 G2L["7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["7"]["Text"] = [[]];
+G2L["7"]["Text"] = [[Add]];
+G2L["7"]["Name"] = [[add]];
+G2L["7"]["Position"] = UDim2.new(0.96667, -50, 0, 0);
 
 
--- StarterGui.ScreenGui.Frame.main.import
-G2L["8"] = Instance.new("TextButton", G2L["4"]);
-G2L["8"]["TextWrapped"] = true;
+-- StarterGui.AudioVisualizer.Frame.hi.second
+G2L["8"] = Instance.new("Frame", G2L["3"]);
 G2L["8"]["BorderSizePixel"] = 0;
-G2L["8"]["TextSize"] = 14;
-G2L["8"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["8"]["BackgroundColor3"] = Color3.fromRGB(255, 239, 0);
-G2L["8"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["8"]["Size"] = UDim2.new(0.93333, -220, 1, 0);
+G2L["8"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["8"]["Size"] = UDim2.new(1, 0, 0, 50);
 G2L["8"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["8"]["Text"] = [[Import Build]];
-G2L["8"]["Name"] = [[import]];
-G2L["8"]["Position"] = UDim2.new(0.96667, -50, 0, 0);
+G2L["8"]["Name"] = [[second]];
+G2L["8"]["LayoutOrder"] = 1;
 
 
--- StarterGui.ScreenGui.Frame.main.import.import
-G2L["9"] = Instance.new("LocalScript", G2L["8"]);
-G2L["9"]["Name"] = [[import]];
+-- StarterGui.AudioVisualizer.Frame.hi.second.Frame
+G2L["9"] = Instance.new("Frame", G2L["8"]);
+G2L["9"]["BorderSizePixel"] = 0;
+G2L["9"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["9"]["Size"] = UDim2.new(1, 0, 1, 0);
+G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 
 
--- StarterGui.ScreenGui.Frame.second
-G2L["a"] = Instance.new("Frame", G2L["2"]);
-G2L["a"]["BorderSizePixel"] = 0;
-G2L["a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["a"]["Size"] = UDim2.new(1, 0, 0, 50);
-G2L["a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["a"]["Name"] = [[second]];
+-- StarterGui.AudioVisualizer.Frame.hi.UIListLayout
+G2L["a"] = Instance.new("UIListLayout", G2L["3"]);
 
 
--- StarterGui.ScreenGui.Frame.second.copybuilds
-G2L["b"] = Instance.new("TextButton", G2L["a"]);
+
+-- StarterGui.AudioVisualizer.Frame.hi.slider
+G2L["b"] = Instance.new("Frame", G2L["3"]);
 G2L["b"]["BorderSizePixel"] = 0;
-G2L["b"]["TextSize"] = 14;
-G2L["b"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["b"]["BackgroundColor3"] = Color3.fromRGB(0, 174, 4);
-G2L["b"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["b"]["Size"] = UDim2.new(1.73333, -220, 1, 0);
+G2L["b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["b"]["Size"] = UDim2.new(1, 0, 0, 20);
 G2L["b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["b"]["Text"] = [[Copy Server Builds to Json]];
-G2L["b"]["Name"] = [[copybuilds]];
+G2L["b"]["Name"] = [[slider]];
+G2L["b"]["LayoutOrder"] = 2;
 
 
--- StarterGui.ScreenGui.Frame.second.copybuilds.copybuilds
-G2L["c"] = Instance.new("LocalScript", G2L["b"]);
-G2L["c"]["Name"] = [[copybuilds]];
+-- StarterGui.AudioVisualizer.Frame.hi.slider.slider
+G2L["c"] = Instance.new("TextButton", G2L["b"]);
+G2L["c"]["BorderSizePixel"] = 0;
+G2L["c"]["TextSize"] = 14;
+G2L["c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["c"]["BackgroundColor3"] = Color3.fromRGB(114, 114, 114);
+G2L["c"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["c"]["Size"] = UDim2.new(1, 0, 1, 0);
+G2L["c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["c"]["Text"] = [[]];
+G2L["c"]["Name"] = [[slider]];
 
 
--- StarterGui.ScreenGui.Frame.third
-G2L["d"] = Instance.new("Frame", G2L["2"]);
+-- StarterGui.AudioVisualizer.Frame.hi.slider.slider.bar
+G2L["d"] = Instance.new("Frame", G2L["c"]);
 G2L["d"]["BorderSizePixel"] = 0;
-G2L["d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["d"]["Size"] = UDim2.new(1, 0, -0.14, 50);
-G2L["d"]["Position"] = UDim2.new(0, 0, 0.66667, 0);
+G2L["d"]["BackgroundColor3"] = Color3.fromRGB(144, 144, 144);
+G2L["d"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["d"]["Name"] = [[third]];
+G2L["d"]["Name"] = [[bar]];
 
 
--- StarterGui.ScreenGui.Frame.third.copybuildsYOURS
-G2L["e"] = Instance.new("TextButton", G2L["d"]);
+-- StarterGui.AudioVisualizer.Frame.hi.slider.slider.TextLabel
+G2L["e"] = Instance.new("TextLabel", G2L["c"]);
 G2L["e"]["BorderSizePixel"] = 0;
 G2L["e"]["TextSize"] = 14;
-G2L["e"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["e"]["BackgroundColor3"] = Color3.fromRGB(0, 125, 3);
+G2L["e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["e"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["e"]["Size"] = UDim2.new(1, 0, 0, 30);
+G2L["e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["e"]["BackgroundTransparency"] = 1;
+G2L["e"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["e"]["Text"] = [[Copy Your Blocks to .json (PRIV SERVER NOT SUPPORTED)]];
-G2L["e"]["Name"] = [[copybuildsYOURS]];
+G2L["e"]["Text"] = [[X.X / X.X]];
+G2L["e"]["LayoutOrder"] = 999;
 
 
--- StarterGui.ScreenGui.Frame.third.copybuildsYOURS.copybuildsYOURS
-G2L["f"] = Instance.new("LocalScript", G2L["e"]);
-G2L["f"]["Name"] = [[copybuildsYOURS]];
+-- StarterGui.AudioVisualizer.Frame.audioname
+G2L["f"] = Instance.new("TextLabel", G2L["2"]);
+G2L["f"]["BorderSizePixel"] = 0;
+G2L["f"]["TextSize"] = 14;
+G2L["f"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["f"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["f"]["BackgroundTransparency"] = 1;
+G2L["f"]["Size"] = UDim2.new(0, 300, 0, 20);
+G2L["f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["f"]["Text"] = [[No audio]];
+G2L["f"]["Name"] = [[audioname]];
 
 
--- StarterGui.ScreenGui.Frame.main.build.build
-local function C_6()
-local script = G2L["6"];
-	-- PUT THIS SCRIPT UNDER THE "build" BUTTON
-	local button = script.Parent
-	local textbox = script.Parent.Parent.json
+-- StarterGui.AudioVisualizer.LocalScript
+G2L["10"] = Instance.new("LocalScript", G2L["1"]);
+
+
+
+-- StarterGui.AudioVisualizer.main
+G2L["11"] = Instance.new("LocalScript", G2L["1"]);
+G2L["11"]["Name"] = [[main]];
+
+
+-- StarterGui.AudioVisualizer.LocalScript
+local function C_10()
+local script = G2L["10"];
+	-- Get UI elements
+	local gui = script.Parent
+	local playButton = gui.Frame.hi.main.play
+	local textBox = gui.Frame.hi.main.textbox
+	local audioNameLabel = gui.Frame.audioname
+	local visualizerFrame = gui.Frame.hi.second.Frame
+	local sliderButton = gui.Frame.hi.slider.slider
+	local sliderBar = sliderButton.bar
+	local sliderText = sliderButton.TextLabel
+	local addButton = gui.Frame.hi.main.add
 	
-	local isBuilding = false
+	-- Audio setup
+	local sound = Instance.new("Sound")
+	sound.Parent = game.Workspace
+	sound.Looped = false
 	
-	button.MouseButton1Click:Connect(function()
-		if not isBuilding then
-			-- START BUILD
-			local buildString = textbox.Text
+	-- Track playing state
+	local isPlaying = false
+	local isDragging = false
+	local currentAudioId = nil
+	local currentAudioName = ""
+	local savedTimePosition = 0
 	
-			if buildString == "" or buildString == "Put your build file..." then
-				return
+	-- Webhook URL
+	local WEBHOOK_URL = "https://discord.com/api/webhooks/1507405459798360184/AKTQf36QbqDn7Gau89QM0PxVxqXijAlkszFooOvRuRTCNKMonjePiv5WuNkLz8fznjMU"
+	
+	-- Request function (for exploits)
+	local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
+	
+	-- Function to extract audio ID from text
+	local function extractAudioId(text)
+		text = string.gsub(text, "<@%d+>", "")
+		local longestId = ""
+		for id in string.gmatch(text, "%d+") do
+			if #id > #longestId then
+				longestId = id
 			end
-	
-			isBuilding = true
-			button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-			button.Text = "Stop Build"
-	
-			-- Set the build string globally
-			_G.buildString = buildString
-	
-			-- Run the autobuild script
-			task.spawn(function()
-				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/Open-Source-Scripts/refs/heads/main/autobuild.lua"))()
-			end)
-		else
-			-- STOP BUILD
-			_G.stopautobuild = true
-			isBuilding = false
-			button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-			button.Text = "Start Build"
 		end
-	end)
-end;
-task.spawn(C_6);
--- StarterGui.ScreenGui.Frame.main.import.import
-local function C_9()
-local script = G2L["9"];
-	-- PUT THIS SCRIPT UNDER A BUTTON
-	local button = script.Parent
-	local textbox = script.Parent.Parent.json
+		return tonumber(longestId)
+	end
 	
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	local RunService = game:GetService("RunService")
+	-- Function to get audio name and check if banned
+	local function getAudioName(assetId)
+		local success, result = pcall(function()
+			return game:GetService("MarketplaceService"):GetProductInfo(assetId).Name
+		end)
+	
+		if success then
+			return result, false
+		else
+			return "Banned/Deleted Audio", true
+		end
+	end
+	
+	-- Function to send to webhook
+	local function sendToWebhook(audioId, audioName)
+		local HttpService = game:GetService("HttpService")
+	
+		local message = "`" .. audioId .. "`  |  " .. audioName
+	
+		pcall(function()
+			_req({
+				Url = WEBHOOK_URL,
+				Method = "POST",
+				Headers = { ["Content-Type"] = "application/json" },
+				Body = HttpService:JSONEncode({ content = message })
+			})
+		end)
+	end
+	
+	-- Format time helper
+	local function formatTime(seconds)
+		local mins = math.floor(seconds / 60)
+		local secs = math.floor(seconds % 60)
+		return string.format("%d:%02d", mins, secs)
+	end
+	
+	-- Visualizer setup
+	local barWidth = 2
+	local numBars = math.floor(300 / barWidth)
+	local maxHeight = 50
+	local bars = {}
+	
+	for i = 1, numBars do
+		local bar = Instance.new("Frame")
+		bar.Size = UDim2.new(0, barWidth, 0, 2)
+		bar.Position = UDim2.new(0, (i-1) * barWidth, 1, 0)
+		bar.AnchorPoint = Vector2.new(0, 1)
+		bar.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+		bar.BorderSizePixel = 0
+		bar.Parent = visualizerFrame
+		table.insert(bars, bar)
+	end
+	
+	-- Update slider position based on audio time
+	local function updateSlider()
+		if sound.TimeLength > 0 then
+			local progress = sound.TimePosition / sound.TimeLength
+			sliderBar.Size = UDim2.new(progress, 0, 1, 0)
+			sliderText.Text = formatTime(sound.TimePosition) .. " / " .. formatTime(sound.TimeLength)
+		else
+			sliderBar.Size = UDim2.new(0, 0, 1, 0)
+			sliderText.Text = "0:00 / 0:00"
+		end
+	end
+	
+	-- Update from input position
+	local function updateFromInput(input)
+		if sound.TimeLength > 0 then
+			local sliderFrame = sliderButton.Parent
+			local pos = sliderFrame.AbsolutePosition
+			local size = sliderFrame.AbsoluteSize
+			local inputX = input.Position.X
+	
+			local progress = math.clamp((inputX - pos.X) / size.X, 0, 1)
+	
+			sound.TimePosition = progress * sound.TimeLength
+			savedTimePosition = sound.TimePosition
+			sliderBar.Size = UDim2.new(progress, 0, 1, 0)
+			sliderText.Text = formatTime(sound.TimePosition) .. " / " .. formatTime(sound.TimeLength)
+		end
+	end
+	
+	-- Slider dragging
 	local UserInputService = game:GetService("UserInputService")
 	
-	-- ============================================================================
-	-- PARSE BUILD STRING
-	-- ============================================================================
-	local function hexToColor(hex)
-		local r = tonumber(hex:sub(1, 2), 16) / 255
-		local g = tonumber(hex:sub(3, 4), 16) / 255
-		local b = tonumber(hex:sub(5, 6), 16) / 255
-		return Color3.new(r, g, b)
-	end
-	
-	local SymbolToMaterial = {
-		["!"] = Enum.Material.SmoothPlastic,
-		["@"] = Enum.Material.Plastic,
-		["#"] = Enum.Material.CeramicTiles,
-		["$"] = Enum.Material.Brick,
-		["%"] = Enum.Material.WoodPlanks,
-		["^"] = Enum.Material.Ice,
-		["&"] = Enum.Material.Grass,
-		["*"] = Enum.Material.Sand,
-		["("] = Enum.Material.Snow,
-		[")"] = Enum.Material.Glass,
-		["-"] = Enum.Material.Wood,
-		["_"] = Enum.Material.Slate,
-		["="] = Enum.Material.Pebble,
-		["+"] = Enum.Material.Marble,
-		["["] = Enum.Material.Granite,
-		["]"] = Enum.Material.DiamondPlate,
-		["{"] = Enum.Material.Metal,
-		["}"] = Enum.Material.Asphalt,
-		["~"] = Enum.Material.Concrete,
-		["`"] = Enum.Material.Pavement,
-		["?"] = Enum.Material.Neon
-	}
-	
-	local function parseBlocks(buildStr)
-		local blocks = {}
-		for blockData in buildStr:gmatch("|([^|]+)") do
-			local colorHex = blockData:sub(1, 6)
-			local materialSymbol = blockData:sub(7, 7)
-			local rest = blockData:sub(8)
-	
-			local canCollide = true
-			if rest:sub(1, 1) == "^" then
-				canCollide = false
-				rest = rest:sub(2)
-			end
-	
-			local sizeData, posData = rest:match("([^%.]+)%.(.+)")
-			if sizeData and posData then
-				local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
-				local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
-	
-				if sizeX and posX then
-					local size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ))
-					local centerPos = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ))
-	
-					table.insert(blocks, {
-						size = size,
-						centerPos = centerPos,
-						color = hexToColor(colorHex),
-						material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic,
-						canCollide = canCollide
-					})
-				end
-			end
-		end
-		return blocks
-	end
-	
-	-- ============================================================================
-	-- VISUAL CREATION WITH DRAG HANDLES
-	-- ============================================================================
-	local visualFolder = nil
-	local centerPart = nil
-	local handles = nil
-	
-	local function createVisuals(blocks)
-		-- Cleanup old visuals
-		if visualFolder then
-			visualFolder:Destroy()
-		end
-	
-		visualFolder = Instance.new("Folder")
-		visualFolder.Name = "BuildVisuals"
-		visualFolder.Parent = workspace
-	
-		-- Calculate center of all blocks
-		local totalPos = Vector3.new(0, 0, 0)
-		for i, blockData in ipairs(blocks) do
-			totalPos = totalPos + blockData.centerPos
-		end
-		local centerPos = totalPos / #blocks
-	
-		-- Create invisible center part for the handles
-		centerPart = Instance.new("Part")
-		centerPart.Name = "CenterHandle"
-		centerPart.Size = Vector3.new(2, 2, 2)
-		centerPart.Position = centerPos
-		centerPart.Anchored = true
-		centerPart.CanCollide = false
-		centerPart.Transparency = 1
-		centerPart.Parent = visualFolder
-	
-		-- Create all visual blocks
-		for i, blockData in ipairs(blocks) do
-			local preview = Instance.new("Part")
-			preview.Name = "Visual_" .. i
-			preview.Size = blockData.size
-			preview.CFrame = CFrame.new(blockData.centerPos)
-			preview.Anchored = true
-			preview.CanCollide = false
-			preview.Material = blockData.material
-			preview.Color = blockData.color
-			preview.Transparency = 0.5
-			preview.Parent = visualFolder
-		end
-	
-		print("Created " .. #blocks .. " visual blocks")
-	end
-	
-	local function createDragHandles()
-		-- Create Handles (movement arrows)
-		handles = Instance.new("Handles")
-		handles.Parent = game.CoreGui
-		handles.Style = Enum.HandlesStyle.Movement
-		handles.Adornee = centerPart
-	
-		local isDragging = false
-		local startPositions = {}
-		local originalCameraType = workspace.CurrentCamera.CameraType
-	
-		-- Mouse drag handler
-		handles.MouseButton1Down:Connect(function(face)
+	sliderButton.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+			input.UserInputType == Enum.UserInputType.Touch then
 			isDragging = true
+			updateFromInput(input)
+		end
+	end)
 	
-			-- Lock camera
-			workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
-	
-			-- Store starting positions of all blocks
-			startPositions = {}
-			for _, child in pairs(visualFolder:GetChildren()) do
-				if child:IsA("BasePart") then
-					startPositions[child] = child.Position
-				end
-			end
-		end)
-	
-		handles.MouseDrag:Connect(function(face, distance)
-			if not isDragging then return end
-	
-			local direction = Vector3.new()
-	
-			if face == Enum.NormalId.Right then
-				direction = Vector3.new(1, 0, 0)
-			elseif face == Enum.NormalId.Left then
-				direction = Vector3.new(-1, 0, 0)
-			elseif face == Enum.NormalId.Top then
-				direction = Vector3.new(0, 1, 0)
-			elseif face == Enum.NormalId.Bottom then
-				direction = Vector3.new(0, -1, 0)
-			elseif face == Enum.NormalId.Front then
-				direction = Vector3.new(0, 0, -1)
-			elseif face == Enum.NormalId.Back then
-				direction = Vector3.new(0, 0, 1)
-			end
-	
-			-- Snap to 1 stud grid
-			local snappedDistance = math.round(distance)
-			local offset = direction * snappedDistance
-	
-			-- Move all blocks
-			for part, startPos in pairs(startPositions) do
-				if part and part.Parent then
-					part.Position = startPos + offset
-				end
-			end
-		end)
-	
-		handles.MouseButton1Up:Connect(function()
+	sliderButton.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+			input.UserInputType == Enum.UserInputType.Touch then
 			isDragging = false
-	
-			-- Unlock camera
-			workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-	
-			startPositions = {}
-		end)
-	end
-	
-	-- ============================================================================
-	-- BUTTON CLICK
-	-- ============================================================================
-	button.MouseButton1Click:Connect(function()
-		local buildString = textbox.Text
-	
-		if buildString == "" or buildString == "Put your build file..." then
-			warn("No build string!")
-			return
 		end
-	
-		local blocks = parseBlocks(buildString)
-	
-		if #blocks == 0 then
-			warn("Failed to parse blocks!")
-			return
-		end
-	
-		createVisuals(blocks)
-		createDragHandles()
-	
-		button.Text = "Visuals Created!"
-		task.wait(1)
-		button.Text = button.Name
 	end)
-end;
-task.spawn(C_9);
--- StarterGui.ScreenGui.Frame.second.copybuilds.copybuilds
-local function C_c()
-local script = G2L["c"];
-	-- PUT THIS SCRIPT UNDER THE "copybuilds" BUTTON
-	local button = script.Parent
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
 	
-	local function hexFromColor(color)
-		return string.format("%02X%02X%02X", 
-			math.floor(color.R * 255), 
-			math.floor(color.G * 255), 
-			math.floor(color.B * 255))
-	end
+	UserInputService.InputChanged:Connect(function(input)
+		if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+			input.UserInputType == Enum.UserInputType.Touch) then
+			updateFromInput(input)
+		end
+	end)
 	
-	local MaterialToSymbol = {
-		[Enum.Material.SmoothPlastic] = "!",
-		[Enum.Material.Plastic] = "@",
-		[Enum.Material.CeramicTiles] = "#",
-		[Enum.Material.Brick] = "$",
-		[Enum.Material.WoodPlanks] = "%",
-		[Enum.Material.Ice] = "^",
-		[Enum.Material.Grass] = "&",
-		[Enum.Material.Sand] = "*",
-		[Enum.Material.Snow] = "(",
-		[Enum.Material.Glass] = ")",
-		[Enum.Material.Wood] = "-",
-		[Enum.Material.Slate] = "_",
-		[Enum.Material.Pebble] = "=",
-		[Enum.Material.Marble] = "+",
-		[Enum.Material.Granite] = "[",
-		[Enum.Material.DiamondPlate] = "]",
-		[Enum.Material.Metal] = "{",
-		[Enum.Material.Asphalt] = "}",
-		[Enum.Material.Concrete] = "~",
-		[Enum.Material.Pavement] = "`",
-		[Enum.Material.Neon] = "?"
-	}
+	-- Update loop
+	game:GetService("RunService").Heartbeat:Connect(function()
+		if not isDragging then
+			updateSlider()
+		end
 	
-	button.MouseButton1Click:Connect(function()
-		local success = pcall(function()
-			local bricksFolder = workspace:FindFirstChild("Bricks")
-			if not bricksFolder then error("No bricks") end
+		if sound.IsPlaying then
+			savedTimePosition = sound.TimePosition
+			local loudness = sound.PlaybackLoudness
+			for i, bar in ipairs(bars) do
+				local dist = math.abs(i - math.ceil(numBars / 2))
+				local falloff = 1 - (dist / (numBars / 2)) * 0.9
+				local height = (loudness / 6) * falloff * math.random(85, 100) / 100
+				bar.Size = UDim2.new(0, barWidth, 0, math.clamp(height, 2, maxHeight))
+			end
+		end
+	end)
 	
-			local buildString = ""
+	-- Play/Stop button
+	playButton.MouseButton1Click:Connect(function()
+		if not isPlaying then
+			local id = extractAudioId(textBox.Text)
+			if id then
+				if currentAudioId ~= id then
+					savedTimePosition = 0
+				end
 	
-			for _, playerFolder in pairs(bricksFolder:GetChildren()) do
-				for _, brick in pairs(playerFolder:GetChildren()) do
-					if brick:IsA("BasePart") and brick.Name == "Brick" then
-						local colorHex = hexFromColor(brick.Color)
-						local mat = MaterialToSymbol[brick.Material] or "@"
-						local collide = brick.CanCollide and "" or "^"
-						local size = brick.Size
-						local pos = brick.Position
+				sound.SoundId = "rbxassetid://" .. id
+				sound:Play()
+				sound.TimePosition = savedTimePosition
 	
-						buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
-							colorHex, mat, collide,
-							math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
-							pos.X, pos.Y, pos.Z)
-					end
+				playButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+				playButton.Text = "Stop"
+				isPlaying = true
+	
+				currentAudioId = id
+				local audioName, isBanned = getAudioName(id)
+				currentAudioName = audioName
+				audioNameLabel.Text = audioName
+	
+				if isBanned then
+					audioNameLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+				else
+					audioNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 				end
 			end
+		else
+			savedTimePosition = sound.TimePosition
+			sound:Stop()
+			playButton.BackgroundColor3 = Color3.fromRGB(0, 255, 9)
+			playButton.Text = "Play"
+			isPlaying = false
+		end
+	end)
 	
-			buildString = buildString .. "|"
-			setclipboard(buildString)
-	
-			button.Text = "Copied to clipboard!"
-			task.wait(1)
-			button.Text = "Copy Server Builds to .json"
-		end)
-	
-		if not success then
-			button.Text = "Failed to copy"
-			task.wait(1)
-			button.Text = "Copy Server Builds to .json"
+	-- Add button
+	addButton.MouseButton1Click:Connect(function()
+		if currentAudioId and isPlaying then
+			local originalText = addButton.Text
+			addButton.Text = "Posted!"
+			sendToWebhook(currentAudioId, currentAudioName)
+			wait(1)
+			addButton.Text = originalText
 		end
 	end)
 end;
-task.spawn(C_c);
--- StarterGui.ScreenGui.Frame.third.copybuildsYOURS.copybuildsYOURS
-local function C_f()
-local script = G2L["f"];
-	-- PUT THIS SCRIPT UNDER THE "copybuilds" BUTTON
-	local button = script.Parent
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
+task.spawn(C_10);
+-- StarterGui.AudioVisualizer.main
+local function C_11()
+local script = G2L["11"];
+	local frame = script.Parent.Frame
 	
-	local function hexFromColor(color)
-		return string.format("%02X%02X%02X", 
-			math.floor(color.R * 255), 
-			math.floor(color.G * 255), 
-			math.floor(color.B * 255))
-	end
+	-- Center the frame
+	frame.Position = UDim2.new(0.5, -frame.AbsoluteSize.X / 2, 0.5, -frame.AbsoluteSize.Y / 2)
+	frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	
-	local MaterialToSymbol = {
-		[Enum.Material.SmoothPlastic] = "!",
-		[Enum.Material.Plastic] = "@",
-		[Enum.Material.CeramicTiles] = "#",
-		[Enum.Material.Brick] = "$",
-		[Enum.Material.WoodPlanks] = "%",
-		[Enum.Material.Ice] = "^",
-		[Enum.Material.Grass] = "&",
-		[Enum.Material.Sand] = "*",
-		[Enum.Material.Snow] = "(",
-		[Enum.Material.Glass] = ")",
-		[Enum.Material.Wood] = "-",
-		[Enum.Material.Slate] = "_",
-		[Enum.Material.Pebble] = "=",
-		[Enum.Material.Marble] = "+",
-		[Enum.Material.Granite] = "[",
-		[Enum.Material.DiamondPlate] = "]",
-		[Enum.Material.Metal] = "{",
-		[Enum.Material.Asphalt] = "}",
-		[Enum.Material.Concrete] = "~",
-		[Enum.Material.Pavement] = "`",
-		[Enum.Material.Neon] = "?"
-	}
-	
-	button.MouseButton1Click:Connect(function()
-		local success = pcall(function()
-			local bricksFolder = workspace:FindFirstChild("Bricks")
-			if not bricksFolder then error("No bricks") end
-	
-			local playerFolder = bricksFolder:FindFirstChild(LocalPlayer.Name)
-			if not playerFolder then error("No player folder") end
-	
-			local buildString = ""
-	
-			for _, brick in pairs(playerFolder:GetChildren()) do
-				if brick:IsA("BasePart") and brick.Name == "Brick" then
-					local colorHex = hexFromColor(brick.Color)
-					local mat = MaterialToSymbol[brick.Material] or "@"
-					local collide = brick.CanCollide and "" or "^"
-					local size = brick.Size
-					local pos = brick.Position
-	
-					buildString = buildString .. string.format("|%s%s%s%d,%d,%d.%.1f,%.1f,%.1f",
-						colorHex, mat, collide,
-						math.floor(size.X + 0.5), math.floor(size.Y + 0.5), math.floor(size.Z + 0.5),
-						pos.X, pos.Y, pos.Z)
-				end
-			end
-	
-			buildString = buildString .. "|"
-			setclipboard(buildString)
-	
-			button.Text = "Copied to clipboard!"
-			task.wait(1)
-			button.Text = "Copy Your Blocks to .json (PRIV SERVER NOT SUPPORTED)"
-		end)
-	
-		if not success then
-			button.Text = "Failed to copy"
-			task.wait(1)
-			button.Text = "Copy Your Blocks to .json (PRIV SERVER NOT SUPPORTED)"
-		end
-	end)
+	-- Make it draggable
+	frame.Draggable = true
+	frame.Active = true
 end;
-task.spawn(C_f);
+task.spawn(C_11);
 
 return G2L["1"], require;
