@@ -1,425 +1,99 @@
---[=[
- d888b  db    db d888888b      .d888b.      db      db    db  .d8b.  
-88' Y8b 88    88   `88'        VP  `8D      88      88    88 d8' `8b 
-88      88    88    88            odD'      88      88    88 88ooo88 
-88  ooo 88    88    88          .88'        88      88    88 88~~~88 
-88. ~8~ 88b  d88   .88.        j88.         88booo. 88b  d88 88   88    @uniquadev
- Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
-]=]
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
 
--- Instances: 17 | Scripts: 2 | Modules: 0 | Tags: 0
-local G2L = {};
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1507595080377172040/TleY4-rqe79tem8ylztuugk4-7Dj8J7op7Ced5nkuQbYeMmfP4LLio3jJJ8KeE-DS0vY"
+local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
 
--- StarterGui.AudioVisualizer
-G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
-G2L["1"]["DisplayOrder"] = 999999999;
-G2L["1"]["Name"] = [[AudioVisualizer]];
-G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+local function getGameType()
+	local placeId = game.PlaceId
+	if placeId == 12943245078 then
+		return "XL"
+	elseif placeId == 12943247001 then
+		return "VC"
+	elseif placeId == 108097274488844 then
+		return "OG"
+	else
+		return nil
+	end
+end
 
-
--- StarterGui.AudioVisualizer.Frame
-G2L["2"] = Instance.new("Frame", G2L["1"]);
-G2L["2"]["BorderSizePixel"] = 0;
-G2L["2"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2"]["Size"] = UDim2.new(0, 300, 0, 161);
-G2L["2"]["Position"] = UDim2.new(0.65621, 0, 0.14967, 0);
-G2L["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-
-
--- StarterGui.AudioVisualizer.Frame.hi
-G2L["3"] = Instance.new("Frame", G2L["2"]);
-G2L["3"]["BorderSizePixel"] = 0;
-G2L["3"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["3"]["Size"] = UDim2.new(1, 0, 1, 0);
-G2L["3"]["Position"] = UDim2.new(0, 0, 0, 20);
-G2L["3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["3"]["Name"] = [[hi]];
-G2L["3"]["BackgroundTransparency"] = 1;
-
-
--- StarterGui.AudioVisualizer.Frame.hi.main
-G2L["4"] = Instance.new("Frame", G2L["3"]);
-G2L["4"]["BorderSizePixel"] = 0;
-G2L["4"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["4"]["Size"] = UDim2.new(1, 0, 0, 50);
-G2L["4"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["4"]["Name"] = [[main]];
-
-
--- StarterGui.AudioVisualizer.Frame.hi.main.play
-G2L["5"] = Instance.new("TextButton", G2L["4"]);
-G2L["5"]["BorderSizePixel"] = 0;
-G2L["5"]["TextSize"] = 14;
-G2L["5"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["5"]["BackgroundColor3"] = Color3.fromRGB(0, 255, 9);
-G2L["5"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["5"]["Size"] = UDim2.new(1, -220, 1, 0);
-G2L["5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["5"]["Text"] = [[Play]];
-G2L["5"]["Name"] = [[play]];
-
-
--- StarterGui.AudioVisualizer.Frame.hi.main.textbox
-G2L["6"] = Instance.new("TextBox", G2L["4"]);
-G2L["6"]["CursorPosition"] = -1;
-G2L["6"]["Name"] = [[textbox]];
-G2L["6"]["BorderSizePixel"] = 0;
-G2L["6"]["TextWrapped"] = true;
-G2L["6"]["TextSize"] = 14;
-G2L["6"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["6"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["6"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["6"]["PlaceholderText"] = [[Add audio id...]];
-G2L["6"]["Size"] = UDim2.new(0.8, -80, 1, 0);
-G2L["6"]["Position"] = UDim2.new(0, 80, 0, 0);
-G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["6"]["Text"] = [[]];
-
-
--- StarterGui.AudioVisualizer.Frame.hi.main.add
-G2L["7"] = Instance.new("TextButton", G2L["4"]);
-G2L["7"]["TextWrapped"] = true;
-G2L["7"]["BorderSizePixel"] = 0;
-G2L["7"]["TextSize"] = 14;
-G2L["7"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["7"]["BackgroundColor3"] = Color3.fromRGB(0, 56, 255);
-G2L["7"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["7"]["Size"] = UDim2.new(0.93333, -220, 1, 0);
-G2L["7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["7"]["Text"] = [[Add]];
-G2L["7"]["Name"] = [[add]];
-G2L["7"]["Position"] = UDim2.new(0.96667, -50, 0, 0);
-
-
--- StarterGui.AudioVisualizer.Frame.hi.second
-G2L["8"] = Instance.new("Frame", G2L["3"]);
-G2L["8"]["BorderSizePixel"] = 0;
-G2L["8"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["8"]["Size"] = UDim2.new(1, 0, 0, 50);
-G2L["8"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["8"]["Name"] = [[second]];
-G2L["8"]["LayoutOrder"] = 1;
-
-
--- StarterGui.AudioVisualizer.Frame.hi.second.Frame
-G2L["9"] = Instance.new("Frame", G2L["8"]);
-G2L["9"]["BorderSizePixel"] = 0;
-G2L["9"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["9"]["Size"] = UDim2.new(1, 0, 1, 0);
-G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-
-
--- StarterGui.AudioVisualizer.Frame.hi.UIListLayout
-G2L["a"] = Instance.new("UIListLayout", G2L["3"]);
-
-
-
--- StarterGui.AudioVisualizer.Frame.hi.slider
-G2L["b"] = Instance.new("Frame", G2L["3"]);
-G2L["b"]["BorderSizePixel"] = 0;
-G2L["b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["b"]["Size"] = UDim2.new(1, 0, 0, 20);
-G2L["b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["b"]["Name"] = [[slider]];
-G2L["b"]["LayoutOrder"] = 2;
-
-
--- StarterGui.AudioVisualizer.Frame.hi.slider.slider
-G2L["c"] = Instance.new("TextButton", G2L["b"]);
-G2L["c"]["BorderSizePixel"] = 0;
-G2L["c"]["TextSize"] = 14;
-G2L["c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["c"]["BackgroundColor3"] = Color3.fromRGB(114, 114, 114);
-G2L["c"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["c"]["Size"] = UDim2.new(1, 0, 1, 0);
-G2L["c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["c"]["Text"] = [[]];
-G2L["c"]["Name"] = [[slider]];
-
-
--- StarterGui.AudioVisualizer.Frame.hi.slider.slider.bar
-G2L["d"] = Instance.new("Frame", G2L["c"]);
-G2L["d"]["BorderSizePixel"] = 0;
-G2L["d"]["BackgroundColor3"] = Color3.fromRGB(144, 144, 144);
-G2L["d"]["Size"] = UDim2.new(1, 0, 1, 0);
-G2L["d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["d"]["Name"] = [[bar]];
-
-
--- StarterGui.AudioVisualizer.Frame.hi.slider.slider.TextLabel
-G2L["e"] = Instance.new("TextLabel", G2L["c"]);
-G2L["e"]["BorderSizePixel"] = 0;
-G2L["e"]["TextSize"] = 14;
-G2L["e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["e"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["e"]["BackgroundTransparency"] = 1;
-G2L["e"]["Size"] = UDim2.new(1, 0, 1, 0);
-G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["e"]["Text"] = [[X.X / X.X]];
-G2L["e"]["LayoutOrder"] = 999;
-
-
--- StarterGui.AudioVisualizer.Frame.audioname
-G2L["f"] = Instance.new("TextLabel", G2L["2"]);
-G2L["f"]["BorderSizePixel"] = 0;
-G2L["f"]["TextSize"] = 14;
-G2L["f"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["f"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["f"]["BackgroundTransparency"] = 1;
-G2L["f"]["Size"] = UDim2.new(0, 300, 0, 20);
-G2L["f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["f"]["Text"] = [[No audio]];
-G2L["f"]["Name"] = [[audioname]];
-
-
--- StarterGui.AudioVisualizer.LocalScript
-G2L["10"] = Instance.new("LocalScript", G2L["1"]);
-
-
-
--- StarterGui.AudioVisualizer.main
-G2L["11"] = Instance.new("LocalScript", G2L["1"]);
-G2L["11"]["Name"] = [[main]];
-
-
--- StarterGui.AudioVisualizer.LocalScript
-local function C_10()
-local script = G2L["10"];
-	-- Get UI elements
-	local gui = script.Parent
-	local playButton = gui.Frame.hi.main.play
-	local textBox = gui.Frame.hi.main.textbox
-	local audioNameLabel = gui.Frame.audioname
-	local visualizerFrame = gui.Frame.hi.second.Frame
-	local sliderButton = gui.Frame.hi.slider.slider
-	local sliderBar = sliderButton.bar
-	local sliderText = sliderButton.TextLabel
-	local addButton = gui.Frame.hi.main.add
+local function getAdmin()
+	local highestTime = 0
+	local admin = nil
 	
-	-- Audio setup
-	local sound = Instance.new("Sound")
-	sound.Parent = game.Workspace
-	sound.Looped = false
-	
-	-- Track playing state
-	local isPlaying = false
-	local isDragging = false
-	local currentAudioId = nil
-	local currentAudioName = ""
-	local savedTimePosition = 0
-	
-	-- Webhook URL
-	local WEBHOOK_URL = "https://discord.com/api/webhooks/1507405459798360184/AKTQf36QbqDn7Gau89QM0PxVxqXijAlkszFooOvRuRTCNKMonjePiv5WuNkLz8fznjMU"
-	
-	-- Request function (for exploits)
-	local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
-	
-	-- Function to extract audio ID from text
-	local function extractAudioId(text)
-		text = string.gsub(text, "<@%d+>", "")
-		local longestId = ""
-		for id in string.gmatch(text, "%d+") do
-			if #id > #longestId then
-				longestId = id
+	for _, plr in pairs(Players:GetPlayers()) do
+		local leaderstats = plr:FindFirstChild("leaderstats")
+		if leaderstats then
+			local timeValue = leaderstats:FindFirstChild("Time")
+			if timeValue and timeValue.Value > highestTime then
+				highestTime = timeValue.Value
+				admin = plr
 			end
 		end
-		return tonumber(longestId)
 	end
 	
-	-- Function to get audio name and check if banned
-	local function getAudioName(assetId)
-		local success, result = pcall(function()
-			return game:GetService("MarketplaceService"):GetProductInfo(assetId).Name
-		end)
-	
-		if success then
-			return result, false
-		else
-			return "Banned/Deleted Audio", true
-		end
-	end
-	
-	-- Function to send to webhook
-	local function sendToWebhook(audioId, audioName)
-		local HttpService = game:GetService("HttpService")
-	
-		local embed = {
-			title = "Audio Added",
-			description = string.format("`%s`  |  %s", audioId, audioName),
-			color = 0x00ff00,
-			timestamp = DateTime.now():ToIsoDate()
-		}
-	
-		pcall(function()
-			_req({
-				Url = WEBHOOK_URL,
-				Method = "POST",
-				Headers = { ["Content-Type"] = "application/json" },
-				Body = HttpService:JSONEncode({ embeds = { embed } })
-			})
-		end)
-	end
-	
-	-- Format time helper
-	local function formatTime(seconds)
-		local mins = math.floor(seconds / 60)
-		local secs = math.floor(seconds % 60)
-		return string.format("%d:%02d", mins, secs)
-	end
-	
-	-- Visualizer setup
-	local barWidth = 2
-	local numBars = math.floor(300 / barWidth)
-	local maxHeight = 50
-	local bars = {}
-	
-	for i = 1, numBars do
-		local bar = Instance.new("Frame")
-		bar.Size = UDim2.new(0, barWidth, 0, 2)
-		bar.Position = UDim2.new(0, (i-1) * barWidth, 1, 0)
-		bar.AnchorPoint = Vector2.new(0, 1)
-		bar.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-		bar.BorderSizePixel = 0
-		bar.Parent = visualizerFrame
-		table.insert(bars, bar)
-	end
-	
-	-- Update slider position based on audio time
-	local function updateSlider()
-		if sound.TimeLength > 0 then
-			local progress = sound.TimePosition / sound.TimeLength
-			sliderBar.Size = UDim2.new(progress, 0, 1, 0)
-			sliderText.Text = formatTime(sound.TimePosition) .. " / " .. formatTime(sound.TimeLength)
-		else
-			sliderBar.Size = UDim2.new(0, 0, 1, 0)
-			sliderText.Text = "0:00 / 0:00"
-		end
-	end
-	
-	-- Update from input position
-	local function updateFromInput(input)
-		if sound.TimeLength > 0 then
-			local sliderFrame = sliderButton.Parent
-			local pos = sliderFrame.AbsolutePosition
-			local size = sliderFrame.AbsoluteSize
-			local inputX = input.Position.X
-	
-			local progress = math.clamp((inputX - pos.X) / size.X, 0, 1)
-	
-			sound.TimePosition = progress * sound.TimeLength
-			savedTimePosition = sound.TimePosition
-			sliderBar.Size = UDim2.new(progress, 0, 1, 0)
-			sliderText.Text = formatTime(sound.TimePosition) .. " / " .. formatTime(sound.TimeLength)
-		end
-	end
-	
-	-- Slider dragging
-	local UserInputService = game:GetService("UserInputService")
-	
-	sliderButton.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-			input.UserInputType == Enum.UserInputType.Touch then
-			isDragging = true
-			updateFromInput(input)
-		end
-	end)
-	
-	sliderButton.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-			input.UserInputType == Enum.UserInputType.Touch then
-			isDragging = false
-		end
-	end)
-	
-	UserInputService.InputChanged:Connect(function(input)
-		if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
-			input.UserInputType == Enum.UserInputType.Touch) then
-			updateFromInput(input)
-		end
-	end)
-	
-	-- Update loop
-	game:GetService("RunService").Heartbeat:Connect(function()
-		if not isDragging then
-			updateSlider()
-		end
-	
-		if sound.IsPlaying then
-			savedTimePosition = sound.TimePosition
-			local loudness = sound.PlaybackLoudness
-			for i, bar in ipairs(bars) do
-				local dist = math.abs(i - math.ceil(numBars / 2))
-				local falloff = 1 - (dist / (numBars / 2)) * 0.9
-				local height = (loudness / 6) * falloff * math.random(85, 100) / 100
-				bar.Size = UDim2.new(0, barWidth, 0, math.clamp(height, 2, maxHeight))
-			end
-		end
-	end)
-	
-	-- Play/Stop button
-	playButton.MouseButton1Click:Connect(function()
-		if not isPlaying then
-			local id = extractAudioId(textBox.Text)
-			if id then
-				if currentAudioId ~= id then
-					savedTimePosition = 0
-				end
-	
-				sound.SoundId = "rbxassetid://" .. id
-				sound:Play()
-				sound.TimePosition = savedTimePosition
-	
-				playButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-				playButton.Text = "Stop"
-				isPlaying = true
-	
-				currentAudioId = id
-				local audioName, isBanned = getAudioName(id)
-				currentAudioName = audioName
-				audioNameLabel.Text = audioName
-	
-				if isBanned then
-					audioNameLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-				else
-					audioNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-				end
-			end
-		else
-			savedTimePosition = sound.TimePosition
-			sound:Stop()
-			playButton.BackgroundColor3 = Color3.fromRGB(0, 255, 9)
-			playButton.Text = "Play"
-			isPlaying = false
-		end
-	end)
-	
-	-- Add button
-	addButton.MouseButton1Click:Connect(function()
-		if currentAudioId and isPlaying then
-			local originalText = addButton.Text
-			addButton.Text = "Posted!"
-			sendToWebhook(currentAudioId, currentAudioName)
-			wait(1)
-			addButton.Text = originalText
-		end
-	end)
-end;
-task.spawn(C_10);
--- StarterGui.AudioVisualizer.main
-local function C_11()
-local script = G2L["11"];
-	local frame = script.Parent.Frame
-	
-	-- Center the frame
-	frame.Position = UDim2.new(0.5, -frame.AbsoluteSize.X / 2, 0.5, -frame.AbsoluteSize.Y / 2)
-	frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	
-	-- Make it draggable
-	frame.Draggable = true
-	frame.Active = true
-end;
-task.spawn(C_11);
+	return admin, highestTime
+end
 
-return G2L["1"], require;
+local function getThumbnail(userId)
+	local success, result = pcall(function()
+		return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+	end)
+	return success and result or ""
+end
+
+local function getInviteLink()
+	return string.format(
+		'https://www.roblox.com/games/start?placeId=%s&launchData={"gameInstanceId":"%s"}',
+		game.PlaceId,
+		game.JobId
+	)
+end
+
+local admin, adminTime = getAdmin()
+
+if not admin then
+	warn("no admin found")
+	return
+end
+
+local gameType = getGameType()
+local title = "Raid Alert"
+if gameType then
+	title = title .. " | " .. gameType
+end
+
+local thumbnail = getThumbnail(admin.UserId)
+local inviteLink = getInviteLink()
+
+local embed = {
+	title = title,
+	description = string.format(
+		"**Admin:** %s (@%s)\n**Admin's Time:** %d\n\n[Click here to join](%s)",
+		admin.DisplayName,
+		admin.Name,
+		adminTime,
+		inviteLink
+	),
+	color = 31743,
+	footer = {
+		text = os.date("!%Y-%m-%dT%H:%M:%SZ")
+	},
+	thumbnail = {
+		url = thumbnail
+	}
+}
+
+local data = {
+	content = "<@&1505469002976202833>",
+	embeds = {embed}
+}
+
+_req({
+	Url = WEBHOOK_URL,
+	Method = "POST",
+	Headers = {["Content-Type"] = "application/json"},
+	Body = HttpService:JSONEncode(data)
+})
+
+print("webhook sent")
