@@ -1,58 +1,88 @@
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
 
-local function getBricksFolder()
-	return workspace:FindFirstChild("Bricks")
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1507595080377172040/TleY4-rqe79tem8ylztuugk4-7Dj8J7op7Ced5nkuQbYeMmfP4LLio3jJJ8KeE-DS0vY"
+
+-- Check what request function is available
+local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
+
+if not _req then
+	warn("NO REQUEST FUNCTION FOUND")
+	return
 end
 
-local function findClosestBrick()
-	local bricksFolder = getBricksFolder()
-	if not bricksFolder then return nil end
-	
-	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not hrp then return nil end
-	
-	local closestBrick = nil
-	local closestDist = math.huge
-	
-	for _, child in pairs(bricksFolder:GetDescendants()) do
-		if child:IsA("BasePart") and child.Name == "Brick" then
-			local dist = (child.Position - hrp.Position).Magnitude
-			if dist < closestDist then
-				closestDist = dist
-				closestBrick = child
+print("using request function:", _req)
+
+local function getGameType()
+	local placeId = game.PlaceId
+	if placeId == 12943245078 then return "XL"
+	elseif placeId == 12943247001 then return "VC"
+	elseif placeId == 108097274488844 then return "OG"
+	else return nil end
+end
+
+local function getAdmin()
+	local highestTime = 0
+	local admin = nil
+	for _, plr in pairs(Players:GetPlayers()) do
+		local leaderstats = plr:FindFirstChild("leaderstats")
+		if leaderstats then
+			local timeValue = leaderstats:FindFirstChild("Time")
+			if timeValue and timeValue.Value > highestTime then
+				highestTime = timeValue.Value
+				admin = plr
 			end
 		end
 	end
-	
-	return closestBrick
+	return admin, highestTime
 end
 
-local function snapToGrid(position)
-	return Vector3.new(
-		math.round(position.X),
-		math.round(position.Y),
-		math.round(position.Z)
-	)
+local function getThumbnail(userId)
+	local success, result = pcall(function()
+		return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+	end)
+	return success and result or ""
 end
 
--- Main execution
-local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-if not hrp then
-	warn("HRP not found!")
-	return
+local admin, adminTime = getAdmin()
+if not admin then warn("no admin") return end
+
+local gameType = getGameType()
+local title = gameType and ("Raid Alert | " .. gameType) or "Raid Alert"
+local thumbnail = getThumbnail(admin.UserId)
+local inviteLink = string.format('https://www.roblox.com/games/start?placeId=%s&launchData={"gameInstanceId":"%s"}', game.PlaceId, game.JobId)
+
+local embed = {
+	title = title,
+	description = string.format("**Admin:** %s (@%s)\n**Admin's Time:** %d\n\n[Click here to join](%s)", admin.DisplayName, admin.Name, adminTime, inviteLink),
+	color = 31743,
+	thumbnail = {url = thumbnail},
+	timestamp = DateTime.now():ToIsoDate()
+}
+
+local data = {
+	content = "<@&1505469002976202833>",
+	embeds = {embed}
+}
+
+local body = HttpService:JSONEncode(data)
+print("JSON body:", body)
+
+local success, response = pcall(function()
+	return _req({
+		Url = WEBHOOK_URL,
+		Method = "POST",
+		Headers = {["Content-Type"] = "application/json"},
+		Body = body
+	})
+end)
+
+if success then
+	print("request succeeded")
+	if response then
+		print("status code:", response.StatusCode)
+		print("response body:", response.Body)
+	end
+else
+	warn("request failed:", response)
 end
-
-local closestBrick = findClosestBrick()
-if not closestBrick then
-	warn("No bricks found!")
-	return
-end
-
--- Snap HRP position to grid
-local snappedPos = snapToGrid(hrp.Position)
-
--- Move brick to snapped HRP position
-closestBrick.Position = snappedPos
-
-print("Moved brick to snapped position:", snappedPos)
