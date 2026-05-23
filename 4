@@ -4,23 +4,19 @@ local HttpService = game:GetService("HttpService")
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1507595080377172040/TleY4-rqe79tem8ylztuugk4-7Dj8J7op7Ced5nkuQbYeMmfP4LLio3jJJ8KeE-DS0vY"
 local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
 
+if not _req then warn("no request function") return end
+
 local function getGameType()
 	local placeId = game.PlaceId
-	if placeId == 12943245078 then
-		return "XL"
-	elseif placeId == 12943247001 then
-		return "VC"
-	elseif placeId == 108097274488844 then
-		return "OG"
-	else
-		return nil
-	end
+	if placeId == 12943245078 then return "XL"
+	elseif placeId == 12943247001 then return "VC"
+	elseif placeId == 108097274488844 then return "OG"
+	else return nil end
 end
 
 local function getAdmin()
 	local highestTime = 0
 	local admin = nil
-	
 	for _, plr in pairs(Players:GetPlayers()) do
 		local leaderstats = plr:FindFirstChild("leaderstats")
 		if leaderstats then
@@ -31,58 +27,35 @@ local function getAdmin()
 			end
 		end
 	end
-	
 	return admin, highestTime
 end
 
-local function getThumbnail(userId)
-	local success, result = pcall(function()
-		return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-	end)
-	return success and result or ""
-end
-
-local function getInviteLink()
-	return string.format(
-		'https://www.roblox.com/games/start?placeId=%s&launchData={"gameInstanceId":"%s"}',
-		game.PlaceId,
-		game.JobId
-	)
-end
-
 local admin, adminTime = getAdmin()
-
-if not admin then
-	warn("no admin found")
-	return
-end
+if not admin then warn("no admin") return end
 
 local gameType = getGameType()
-local title = "Raid Alert"
-if gameType then
-	title = title .. " | " .. gameType
-end
+local title = gameType and ("Raid Alert | " .. gameType) or "Raid Alert"
+local inviteLink = string.format('https://www.roblox.com/games/start?placeId=%s&launchData={"gameInstanceId":"%s"}', game.PlaceId, game.JobId)
 
-local thumbnail = getThumbnail(admin.UserId)
-local inviteLink = getInviteLink()
+-- Get thumbnail URL properly
+local thumbnailUrl = ""
+local success, result = pcall(function()
+	return Players:GetUserThumbnailAsync(admin.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+end)
+if success and result and result ~= "" then
+	thumbnailUrl = result
+end
 
 local embed = {
 	title = title,
-	description = string.format(
-		"**Admin:** %s (@%s)\n**Admin's Time:** %d\n\n[Click here to join](%s)",
-		admin.DisplayName,
-		admin.Name,
-		adminTime,
-		inviteLink
-	),
-	color = 31743,
-	footer = {
-		text = os.date("!%Y-%m-%dT%H:%M:%SZ")
-	},
-	thumbnail = {
-		url = thumbnail
-	}
+	description = string.format("**Admin:** %s (@%s)\n**Admin's Time:** %d\n\n[Click here to join](%s)", admin.DisplayName, admin.Name, adminTime, inviteLink),
+	color = 31743
 }
+
+-- Only add thumbnail if URL exists
+if thumbnailUrl ~= "" then
+	embed.thumbnail = {url = thumbnailUrl}
+end
 
 local data = {
 	content = "<@&1505469002976202833>",
@@ -96,4 +69,4 @@ _req({
 	Body = HttpService:JSONEncode(data)
 })
 
-print("webhook sent")
+print("sent")
