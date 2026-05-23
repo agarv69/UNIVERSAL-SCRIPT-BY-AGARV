@@ -1,81 +1,61 @@
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
 
-local function findBuildTool()
-	local locations = {LocalPlayer.Character, LocalPlayer.Backpack}
-	
-	for _, location in pairs(locations) do
-		if location then
-			for _, item in pairs(location:GetChildren()) do
-				if item:IsA("Tool") and item.Name == "Build" then
-					local remote = item:FindFirstChild("Script", true) and item.Script:FindFirstChild("Event")
-					if remote then
-						return {tool = item, event = remote}
-					end
-				end
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1507595080377172040/TleY4-rqe79tem8ylztuugk4-7Dj8J7op7Ced5nkuQbYeMmfP4LLio3jJJ8KeE-DS0vY"
+local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
+
+local function getGameType()
+	local placeId = game.PlaceId
+	if placeId == 12943245078 then return "XL"
+	elseif placeId == 12943247001 then return "VC"
+	elseif placeId == 108097274488844 then return "OG"
+	else return nil end
+end
+
+local function getAdmin()
+	local highestTime = 0
+	local admin = nil
+	for _, plr in pairs(Players:GetPlayers()) do
+		local leaderstats = plr:FindFirstChild("leaderstats")
+		if leaderstats then
+			local timeValue = leaderstats:FindFirstChild("Time")
+			if timeValue and timeValue.Value > highestTime then
+				highestTime = timeValue.Value
+				admin = plr
 			end
 		end
 	end
-	
-	return nil
+	return admin, highestTime
 end
 
-local function findClosestBrick()
-	local bricksFolder = workspace:FindFirstChild("Bricks")
-	if not bricksFolder then return nil end
-	
-	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not hrp then return nil end
-	
-	local closestBrick = nil
-	local closestDist = math.huge
-	
-	for _, child in pairs(bricksFolder:GetDescendants()) do
-		if child:IsA("BasePart") and child.Name == "Brick" then
-			local dist = (child.Position - hrp.Position).Magnitude
-			if dist < closestDist then
-				closestDist = dist
-				closestBrick = child
-			end
-		end
-	end
-	
-	return closestBrick
+local function getThumbnail(userId)
+	local success, result = pcall(function()
+		return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+	end)
+	return success and result or ""
 end
 
-local function snapToGrid(position)
-	return Vector3.new(
-		math.round(position.X / 4) * 4 + 2,
-		math.round(position.Y / 4) * 4 + 2,
-		math.round(position.Z / 4) * 4 + 2
-	)
-end
+local admin, adminTime = getAdmin()
+if not admin then warn("no admin") return end
 
--- Main execution
-local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-if not hrp then
-	warn("HRP not found!")
-	return
-end
+local gameType = getGameType()
+local title = gameType and ("Raid Alert | " .. gameType) or "Raid Alert"
+local thumbnail = getThumbnail(admin.UserId)
+local inviteLink = string.format('https://www.roblox.com/games/start?placeId=%s&launchData={"gameInstanceId":"%s"}', game.PlaceId, game.JobId)
 
-local buildTool = findBuildTool()
-if not buildTool then
-	warn("Build tool not found!")
-	return
-end
+local embed = {
+	title = title,
+	description = string.format("**Admin:** %s (@%s)\n**Admin's Time:** %d\n\n[Click here to join](%s)", admin.DisplayName, admin.Name, adminTime, inviteLink),
+	color = 31743,
+	thumbnail = {url = thumbnail},
+	timestamp = DateTime.now():ToIsoDate()
+}
 
-local sourceBrick = findClosestBrick()
-if not sourceBrick then
-	warn("No brick found to copy properties from!")
-	return
-end
+_req({
+	Url = WEBHOOK_URL,
+	Method = "POST",
+	Headers = {["Content-Type"] = "application/json"},
+	Body = HttpService:JSONEncode({content = "<@&1505469002976202833>", embeds = {embed}})
+})
 
--- Calculate position 4 studs in front of player
-local lookDirection = hrp.CFrame.LookVector
-local placePos = hrp.Position + (lookDirection * 4)
-placePos = snapToGrid(placePos)
-
--- Place block using the source brick's face (this copies its properties)
-buildTool.event:FireServer(sourceBrick, Enum.NormalId.Top, placePos, "normal")
-
-print("Placed block at:", placePos, "with properties from brick:", sourceBrick)
+print("sent")
