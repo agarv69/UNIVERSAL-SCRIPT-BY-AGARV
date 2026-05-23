@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
-
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1507595080377172040/TleY4-rqe79tem8ylztuugk4-7Dj8J7op7Ced5nkuQbYeMmfP4LLio3jJJ8KeE-DS0vY"
 local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
 
@@ -28,26 +27,21 @@ local function getAdmin()
 	return admin, highestTime
 end
 
-local function getThumbnail(userId)
-	local success, result = pcall(function()
-		return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-	end)
-	return success and result or ""
-end
-
 local admin, adminTime = getAdmin()
 if not admin then warn("no admin") return end
 
 local gameType = getGameType()
 local title = gameType and ("Raid Alert | " .. gameType) or "Raid Alert"
-local thumbnail = getThumbnail(admin.UserId)
-local inviteLink = string.format('https://www.roblox.com/games/start?placeId=%s&launchData={"gameInstanceId":"%s"}', game.PlaceId, game.JobId)
+local inviteLink = string.format('https://www.roblox.com/games/start?placeId=%s&gameInstanceId=%s', game.PlaceId, game.JobId)
+
+local rawThumbnail = Players:GetUserThumbnailAsync(admin.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+local thumbnailUrl = string.gsub(rawThumbnail, " ", "%%20")
 
 local embed = {
 	title = title,
 	description = string.format("**Admin:** %s (@%s)\n**Admin's Time:** %d\n\n[Click here to join](%s)", admin.DisplayName, admin.Name, adminTime, inviteLink),
 	color = 31743,
-	thumbnail = {url = thumbnail},
+	thumbnail = {url = thumbnailUrl},
 	timestamp = DateTime.now():ToIsoDate()
 }
 
