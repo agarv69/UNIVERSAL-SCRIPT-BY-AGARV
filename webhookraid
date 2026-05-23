@@ -1,0 +1,52 @@
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1507595080377172040/TleY4-rqe79tem8ylztuugk4-7Dj8J7op7Ced5nkuQbYeMmfP4LLio3jJJ8KeE-DS0vY"
+local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
+
+local function getGameType()
+	local placeId = game.PlaceId
+	if placeId == 12943245078 then return "XL"
+	elseif placeId == 12943247001 then return "VC"
+	elseif placeId == 108097274488844 then return "OG"
+	else return nil end
+end
+
+local function getAdmin()
+	local highestTime = 0
+	local admin = nil
+	for _, plr in pairs(Players:GetPlayers()) do
+		local leaderstats = plr:FindFirstChild("leaderstats")
+		if leaderstats then
+			local timeValue = leaderstats:FindFirstChild("Time")
+			if timeValue and timeValue.Value > highestTime then
+				highestTime = timeValue.Value
+				admin = plr
+			end
+		end
+	end
+	return admin, highestTime
+end
+
+local admin, adminTime = getAdmin()
+if not admin then warn("no admin") return end
+
+local gameType = getGameType()
+local title = gameType and ("Raid Alert | " .. gameType) or "Raid Alert"
+local inviteLink = string.format('https://www.roblox.com/games/start?placeId=%s&gameInstanceId=%s', game.PlaceId, game.JobId)
+
+local embed = {
+	title = title,
+	description = string.format("**Admin:** %s (@%s)\n**Admin's Time:** %d\n\n[Click here to join](%s)", admin.DisplayName, admin.Name, adminTime, inviteLink),
+	color = 31743,
+	timestamp = DateTime.now():ToIsoDate()
+}
+
+_req({
+	Url = WEBHOOK_URL,
+	Method = "POST",
+	Headers = {["Content-Type"] = "application/json"},
+	Body = HttpService:JSONEncode({content = "<@&1505469002976202833>", embeds = {embed}})
+})
+
+print("sent")
