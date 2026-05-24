@@ -1,4 +1,4 @@
--- Just copies the block data string, nothing else
+-- Just copies the block data string, including sprays
 local MaterialSymbols = {
 	[Enum.Material.SmoothPlastic] = "!",
 	[Enum.Material.Plastic] = "@",
@@ -23,6 +23,15 @@ local MaterialSymbols = {
 	[Enum.Material.Neon] = "?"
 }
 
+local FaceSymbols = {
+	[Enum.NormalId.Left] = "L",
+	[Enum.NormalId.Right] = "R",
+	[Enum.NormalId.Top] = "T",
+	[Enum.NormalId.Bottom] = "Bo",
+	[Enum.NormalId.Front] = "F",
+	[Enum.NormalId.Back] = "Ba"
+}
+
 local function colorToHex(color3)
 	local r = math.floor(color3.R * 255)
 	local g = math.floor(color3.G * 255)
@@ -32,6 +41,34 @@ end
 
 local function hasDecimal(num)
 	return num % 1 ~= 0
+end
+
+local function getSprayData(brick)
+	local sprays = {}
+	
+	for _, child in pairs(brick:GetChildren()) do
+		if child:IsA("Decal") or child:IsA("Texture") then
+			local face = child.Face
+			local text = child.Texture or ""
+			
+			-- Extract spray text if it's in the format we expect
+			-- Assuming spray text is stored in a StringValue or the Texture property contains the text
+			local sprayText = ""
+			local textValue = child:FindFirstChild("SprayText") -- Adjust based on how your game stores spray text
+			if textValue and textValue:IsA("StringValue") then
+				sprayText = textValue.Value
+			end
+			
+			local colorHex = colorToHex(child.Color3 or Color3.new(1, 1, 1))
+			local faceSymbol = FaceSymbols[face]
+			
+			if faceSymbol then
+				table.insert(sprays, string.format('%s"%s""%s"', faceSymbol, sprayText, colorHex))
+			end
+		end
+	end
+	
+	return sprays
 end
 
 local bricksFolder = workspace:FindFirstChild("Bricks")
@@ -44,19 +81,28 @@ local skippedCount = 0
 for _, descendant in pairs(bricksFolder:GetDescendants()) do
 	if descendant:IsA("BasePart") and descendant.Name == "Brick" then
 		if not descendant.Anchored then skippedCount += 1 continue end
+		
 		local size = descendant.Size
 		if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then skippedCount += 1 continue end
-
+		
 		local materialSymbol = MaterialSymbols[descendant.Material] or "!"
 		local colorHex = colorToHex(descendant.Color)
 		local cf = descendant.CFrame
 		local canCollideMarker = descendant.CanCollide and "" or "^"
-
+		
+		-- Get spray data
+		local sprays = getSprayData(descendant)
+		local sprayString = ""
+		if #sprays > 0 then
+			sprayString = "." .. table.concat(sprays, "..")
+		end
+		
 		buildString = buildString .. string.format(
-			"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f|",
+			"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f%s.|",
 			colorHex, materialSymbol, canCollideMarker,
 			size.X, size.Y, size.Z,
-			cf.X, cf.Y, cf.Z
+			cf.X, cf.Y, cf.Z,
+			sprayString
 		)
 		blockCount += 1
 	end
