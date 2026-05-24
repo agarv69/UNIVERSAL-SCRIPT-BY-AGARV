@@ -47,23 +47,17 @@ local function getSprayData(brick)
 	local sprays = {}
 	
 	for _, child in pairs(brick:GetChildren()) do
-		if child:IsA("Decal") or child:IsA("Texture") then
-			local face = child.Face
-			local text = child.Texture or ""
-			
-			-- Extract spray text if it's in the format we expect
-			-- Assuming spray text is stored in a StringValue or the Texture property contains the text
-			local sprayText = ""
-			local textValue = child:FindFirstChild("SprayText") -- Adjust based on how your game stores spray text
-			if textValue and textValue:IsA("StringValue") then
-				sprayText = textValue.Value
-			end
-			
-			local colorHex = colorToHex(child.Color3 or Color3.new(1, 1, 1))
-			local faceSymbol = FaceSymbols[face]
-			
-			if faceSymbol then
-				table.insert(sprays, string.format('%s"%s""%s"', faceSymbol, sprayText, colorHex))
+		if child.Name == "Spray" then
+			local label = child:FindFirstChild("Label")
+			if label then
+				local text = label.Text or ""
+				local colorHex = colorToHex(label.TextColor3)
+				local face = child.Face
+				local faceSymbol = FaceSymbols[face]
+				
+				if faceSymbol then
+					table.insert(sprays, string.format('%s"%s""%s"', faceSymbol, text, colorHex))
+				end
 			end
 		end
 	end
