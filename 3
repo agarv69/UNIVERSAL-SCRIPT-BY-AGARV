@@ -6319,7 +6319,7 @@ G2L["2b0"]["TextColor3"] = Color3.fromRGB(0, 124, 255);
 G2L["2b0"]["BackgroundColor3"] = Color3.fromRGB(21, 21, 21);
 G2L["2b0"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["2b0"]["BorderMode"] = Enum.BorderMode.Inset;
-G2L["2b0"]["PlaceholderText"] = [[(400)]];
+G2L["2b0"]["PlaceholderText"] = [[(0.5)]];
 G2L["2b0"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["2b0"]["BorderColor3"] = Color3.fromRGB(51, 51, 51);
 G2L["2b0"]["Text"] = [[]];
@@ -10497,7 +10497,7 @@ local script = G2L["b"];
 			maxPlayers
 		)
 	
-		TitleText.Text = "AGAR WARE | v3.0.0-alpha.7.1 | " .. statsText
+		TitleText.Text = "AGAR WARE | v3.0.0-alpha.8 | " .. statsText
 		TitleText.RichText = true
 	end)
 end;
@@ -13202,31 +13202,32 @@ local script = G2L["22b"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	
+	local respawnEnabled = false
+	local respawnConnection = nil
+	
 	_G.CreateToggle({
 		frame = "RespawnAtDeath",
 		groupbox = script,
 		tooltip = "On respawn, you'll respawn where you last were.",
 		callback = function(isEnabled)
+			respawnEnabled = isEnabled
 			if isEnabled then
-				-- Save position every second
 				task.spawn(function()
-					while true do
+					while respawnEnabled do
 						task.wait(1)
 						local character = LocalPlayer.Character
 						if character then
 							local humanoid = character:FindFirstChildOfClass("Humanoid")
 							local hrp = character:FindFirstChild("HumanoidRootPart")
-							-- Only save if alive
 							if hrp and humanoid and humanoid.Health > 0 then
 								_G.LastRespawnPosition = hrp.CFrame
 							end
 						end
 					end
 				end)
-	
-				-- Watch for respawns
-				LocalPlayer.CharacterAdded:Connect(function(character)
-					if _G.LastRespawnPosition then
+				if respawnConnection then respawnConnection:Disconnect() end
+				respawnConnection = LocalPlayer.CharacterAdded:Connect(function(character)
+					if respawnEnabled and _G.LastRespawnPosition then
 						local hrp = character:WaitForChild("HumanoidRootPart")
 						task.wait(0.01)
 						hrp.CFrame = _G.LastRespawnPosition
@@ -13234,6 +13235,10 @@ local script = G2L["22b"];
 				end)
 			else
 				_G.LastRespawnPosition = nil
+				if respawnConnection then
+					respawnConnection:Disconnect()
+					respawnConnection = nil
+				end
 			end
 		end
 	})
@@ -13309,15 +13314,16 @@ local script = G2L["27c"];
 		callback = function(isEnabled)
 			maxZoomEnabled = isEnabled
 			if isEnabled then
+				game.Players.LocalPlayer.CameraMaxZoomDistance = maxZoomValue
 				maxZoomLoop = RunService.Heartbeat:Connect(function()
-					LocalPlayer.CameraMaxZoomDistance = maxZoomValue
+					game.Players.LocalPlayer.CameraMaxZoomDistance = maxZoomValue
 				end)
 			else
 				if maxZoomLoop then
 					maxZoomLoop:Disconnect()
 					maxZoomLoop = nil
 				end
-				LocalPlayer.CameraMaxZoomDistance = 400
+				game.Players.LocalPlayer.CameraMaxZoomDistance = 400
 			end
 		end
 	})
@@ -13328,18 +13334,19 @@ local script = G2L["27c"];
 		textboxcolor = "frameColor",
 		hovercolor = true,
 		callback = function(text)
-			local num = tonumber(text)
-			if num then
-				maxZoomValue = num
-				if maxZoomEnabled then
-					LocalPlayer.CameraMaxZoomDistance = maxZoomValue
+			if text:lower() == "inf" then
+				maxZoomValue = math.huge
+			else
+				local num = tonumber(text)
+				if num then
+					maxZoomValue = num
 				end
+			end
+			if maxZoomEnabled then
+				game.Players.LocalPlayer.CameraMaxZoomDistance = maxZoomValue
 			end
 		end
 	})
-	
-	
-	
 	
 	
 	
@@ -13356,15 +13363,16 @@ local script = G2L["27c"];
 		callback = function(isEnabled)
 			minZoomEnabled = isEnabled
 			if isEnabled then
+				game.Players.LocalPlayer.CameraMinZoomDistance = minZoomValue
 				minZoomLoop = RunService.Heartbeat:Connect(function()
-					LocalPlayer.CameraMinZoomDistance = minZoomValue
+					game.Players.LocalPlayer.CameraMinZoomDistance = minZoomValue
 				end)
 			else
 				if minZoomLoop then
 					minZoomLoop:Disconnect()
 					minZoomLoop = nil
 				end
-				LocalPlayer.CameraMinZoomDistance = 0.5
+				game.Players.LocalPlayer.CameraMinZoomDistance = 0.5
 			end
 		end
 	})
@@ -13379,7 +13387,7 @@ local script = G2L["27c"];
 			if num then
 				minZoomValue = num
 				if minZoomEnabled then
-					LocalPlayer.CameraMinZoomDistance = minZoodValue
+					game.Players.LocalPlayer.CameraMinZoomDistance = minZoomValue
 				end
 			end
 		end
