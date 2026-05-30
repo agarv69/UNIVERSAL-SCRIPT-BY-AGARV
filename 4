@@ -14958,47 +14958,89 @@ end;
 task.spawn(C_464);
 local function C_465()
 local script=_i["465"];
-local function checkListIntegrity()
-	
-	local originalBlacklist = {}
-	local originalWhitelist = {}
-	local originalOwners = {}
+local URL = "https://raw.githubusercontent.com/agarvsocooolsmith/Scripts/refs/heads/main/UserLists"
 
-	for _, id in ipairs(_G.AgarWareUserList.AgarWareBlacklisted) do
-		originalBlacklist[id] = true
-	end
-	for _, id in ipairs(_G.AgarWareUserList.AgarWareWhitelisted) do
-		originalWhitelist[id] = true
-	end
-	for _, id in ipairs(_G.AgarWareUserList.AgarWareOwners) do
-		originalOwners[id] = true
-	end
-
-	
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/agarvsocooolsmith/Scripts/refs/heads/main/UserLists"))()
-
-	
-	for _, id in ipairs(_G.AgarWareUserList.AgarWareWhitelisted) do
-		if not originalWhitelist[id] then
-			print("TAMPERED: " .. id .. " was added to whitelist")
+local function getIdsFromRaw(rawText, listName)
+	local ids = {}
+	local inList = false
+	for line in rawText:gmatch("[^\n]+") do
+		if line:find(listName) then
+			inList = true
+		elseif inList then
+			if line:find("}") then break end
+			local id = line:match("(%d+)")
+			if id then
+				ids[tonumber(id)] = true
+			end
 		end
 	end
+	return ids
+end
+
+local function getStringsFromRaw(rawText, listName)
+	local ids = {}
+	local inList = false
+	for line in rawText:gmatch("[^\n]+") do
+		if line:find(listName) then
+			inList = true
+		elseif inList then
+			if line:find("}") then break end
+			local id = line:match('"([^"]+)"')
+			if id then
+				ids[id] = true
+			end
+		end
+	end
+	return ids
+end
+
+local function checkTamper()
+	if not _G.AgarWareUserList then
+		warn("AgarWareUserList not defined yet")
+		return
+	end
+	local success, rawText = pcall(function()
+		return game:HttpGet(URL)
+	end)
+	if not success then
+		warn("Failed to fetch URL")
+		return
+	end
+	local realOwners = getIdsFromRaw(rawText, "AgarWareOwners")
+	local realWhitelist = getIdsFromRaw(rawText, "AgarWareWhitelisted")
+	local realBlacklist = getIdsFromRaw(rawText, "AgarWareBlacklisted")
+	local realHWIDBanned = getStringsFromRaw(rawText, "AgarWareHWIDBanned")
+	local tampered = false
 	for _, id in ipairs(_G.AgarWareUserList.AgarWareOwners) do
-		if not originalOwners[id] then
-			print("TAMPERED: " .. id .. " was added to owners")
+		if not realOwners[id] then
+			print("TAMPERED: " .. tostring(id) .. " was added to owners")
+			tampered = true
+		end
+	end
+	for _, id in ipairs(_G.AgarWareUserList.AgarWareWhitelisted) do
+		if not realWhitelist[id] then
+			print("TAMPERED: " .. tostring(id) .. " was added to whitelist")
+			tampered = true
 		end
 	end
 	for _, id in ipairs(_G.AgarWareUserList.AgarWareBlacklisted) do
-		if not originalBlacklist[id] then
-			print("TAMPERED: " .. id .. " was removed from blacklist")
+		if not realBlacklist[id] then
+			print("TAMPERED: " .. tostring(id) .. " was removed from blacklist")
+			tampered = true
+		end
+	end
+	for _, hwid in ipairs(_G.AgarWareUserList.AgarWareHWIDBanned) do
+		if not realHWIDBanned[hwid] then
+			print("TAMPERED: " .. tostring(hwid) .. " was removed from hwid ban list")
+			tampered = true
 		end
 	end
 end
 
 task.spawn(function()
 	while true do
+		checkTamper()
 		task.wait(10)
-		checkListIntegrity()
 	end
 end)
 end;
