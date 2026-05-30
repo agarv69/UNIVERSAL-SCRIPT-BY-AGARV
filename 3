@@ -1,10 +1,16 @@
 --[[
-
-SCRIPTS:  9
-INSTANCES:  23
-MODULES:  0
+https://discord.gg/7fDasxV2Ht
+full source, enjoy
+                                                                                    
+  :::.      .,-:::::/   :::.    :::::::..       .::    .   .::::::.    :::::::..  .,::::::  
+  ;;`;;   ,;;-'````'    ;;`;;   ;;;;``;;;;      ';;,  ;;  ;;;' ;;`;;   ;;;;``;;;; ;;;;''''  
+ ,[[ '[[, [[[   [[[[[[/,[[ '[[,  [[[,/[[['       '[[, [[, [[' ,[[ '[[,  [[[,/[[['  [[cccc   
+c$$$cc$$$c"$$c.    "$$c$$$cc$$$c $$$$$$c           Y$c$$$c$P c$$$cc$$$c $$$$$$c    $$""""   
+ 888   888,`Y8bo,,,o88o888   888,888b "88bo,        "88"888   888   888,888b "88bo,888oo,__ 
+ YMM   ""`   `'YMUP"YMMYMM   ""` MMMM   "W"          "M "M"   YMM   ""` MMMM   "W" """"YUMMM                                                      
 
 ]]
+
 
 local _i={};
 _i["1"]=Instance.new("ScreenGui",game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
@@ -35,207 +41,285 @@ _i["4"]=Instance.new("UIStroke",_i["3"]);
 _i["4"]["Thickness"]=2;
 _i["4"]["Transparency"]=0.61;
 _i["4"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
-_i["5"]=Instance.new("TextButton",_i["2"]);
-_i["5"]["TextWrapped"]=true;
-_i["5"]["BorderSizePixel"]=0;
-_i["5"]["TextScaled"]=true;
-_i["5"]["BackgroundColor3"]=Color3.fromRGB(0, 115, 203);
-_i["5"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["5"]["BorderMode"]=Enum.BorderMode.Inset;
-_i["5"]["TextSize"]=11;
-_i["5"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
-_i["5"]["Size"]=UDim2.new(0, 50, 0, 50);
-_i["5"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["5"]["Text"]=[[Copy to Clipboard]];
-_i["5"]["Position"]=UDim2.new(0.85714, 0, 0.39667, 0);
-_i["5"]["Name"]=[[Copy]];
-_i["6"]=Instance.new("UIStroke",_i["5"]);
-_i["6"]["Thickness"]=2;
-_i["6"]["Transparency"]=0.61;
-_i["6"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
-_i["7"]=Instance.new("LocalScript",_i["5"]);
-_i["7"].Name="Copy";
-_i["8"]=Instance.new("TextLabel",_i["2"]);
-_i["8"]["TextWrapped"]=true;
-_i["8"]["BorderSizePixel"]=0;
-_i["8"]["RichText"]=true;
-_i["8"]["TextScaled"]=true;
-_i["8"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
-_i["8"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["8"]["TextXAlignment"]=Enum.TextXAlignment.Left;
-_i["8"]["TextTransparency"]=0.36;
-_i["8"]["TextSize"]=14;
-_i["8"]["Size"]=UDim2.new(0, 350, 0, 30);
-_i["8"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
-_i["8"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["8"]["Text"]=[[Blocks: 0/X<br/>Char: X]];
-_i["8"]["BackgroundTransparency"]=1;
-_i["8"]["Name"]=[[Display]];
-_i["8"]["Position"]=UDim2.new(0, 0, 0.9, 0);
-_i["9"]=Instance.new("UIPadding",_i["8"]);
-_i["9"]["PaddingTop"]=UDim.new(0, 3);
-_i["9"]["PaddingBottom"]=UDim.new(0, 3);
-_i["9"]["PaddingLeft"]=UDim.new(0, 3);
-_i["a"]=Instance.new("LocalScript",_i["8"]);
-_i["a"].Name="display";
-_i["b"]=Instance.new("TextLabel",_i["2"]);
-_i["b"]["BorderSizePixel"]=0;
-_i["b"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
-_i["b"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["b"]["TextXAlignment"]=Enum.TextXAlignment.Left;
-_i["b"]["TextSize"]=12;
-_i["b"]["Size"]=UDim2.new(0, 350, 0, 20);
-_i["b"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
-_i["b"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["b"]["Text"]=[[auto build by agarv | discord.gg/7fDasxV2H]];
-_i["b"]["BackgroundTransparency"]=1;
-_i["b"]["Name"]=[[Title]];
-_i["c"]=Instance.new("UIPadding",_i["b"]);
-_i["c"]["PaddingTop"]=UDim.new(0, 2);
-_i["c"]["PaddingBottom"]=UDim.new(0, 2);
-_i["c"]["PaddingLeft"]=UDim.new(0, 5);
-_i["d"]=Instance.new("TextButton",_i["2"]);
-_i["d"]["BorderSizePixel"]=0;
-_i["d"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
-_i["d"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["d"]["TextSize"]=14;
-_i["d"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
-_i["d"]["Size"]=UDim2.new(0, 30, 0, 20);
-_i["d"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["d"]["Text"]=[[X]];
-_i["d"]["BackgroundTransparency"]=1;
-_i["d"]["Position"]=UDim2.new(0.91429, 0, 0, 0);
-_i["d"]["Name"]=[[CLOSE]];
-_i["e"]=Instance.new("LocalScript",_i["d"]);
-_i["e"].Name="closegui";
-_i["f"]=Instance.new("LocalScript",_i["2"]);
-_i["f"].Name="main";
-_i["10"]=Instance.new("TextButton",_i["2"]);
-_i["10"]["TextWrapped"]=true;
-_i["10"]["BorderSizePixel"]=0;
-_i["10"]["BackgroundColor3"]=Color3.fromRGB(201, 38, 38);
-_i["10"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["10"]["BorderMode"]=Enum.BorderMode.Inset;
-_i["10"]["TextSize"]=14;
-_i["10"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
-_i["10"]["Size"]=UDim2.new(0, 50, 0, 25);
-_i["10"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["10"]["Text"]=[[Clear]];
-_i["10"]["Position"]=UDim2.new(0.85714, 0, 0.81667, 0);
-_i["10"]["Name"]=[[Clear]];
-_i["11"]=Instance.new("UIStroke",_i["10"]);
-_i["11"]["Thickness"]=2;
-_i["11"]["Transparency"]=0.61;
-_i["11"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
-_i["12"]=Instance.new("LocalScript",_i["10"]);
-_i["12"].Name="ClearText";
-_i["13"]=Instance.new("TextButton",_i["2"]);
-_i["13"]["TextWrapped"]=true;
-_i["13"]["BorderSizePixel"]=0;
-_i["13"]["BackgroundColor3"]=Color3.fromRGB(203, 196, 0);
-_i["13"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["13"]["BorderMode"]=Enum.BorderMode.Inset;
-_i["13"]["TextSize"]=14;
-_i["13"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
-_i["13"]["Size"]=UDim2.new(0, 50, 0, 50);
-_i["13"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["13"]["Text"]=[[Import Build]];
-_i["13"]["Position"]=UDim2.new(0.85714, 0, 0.23333, 0);
-_i["13"]["Name"]=[[Import]];
-_i["14"]=Instance.new("UIStroke",_i["13"]);
-_i["14"]["Thickness"]=2;
-_i["14"]["Transparency"]=0.61;
-_i["14"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
-_i["15"]=Instance.new("LocalScript",_i["13"]);
-_i["15"].Name="LocalScript";
-_i["16"]=Instance.new("TextButton",_i["2"]);
-_i["16"]["TextWrapped"]=true;
-_i["16"]["BorderSizePixel"]=0;
-_i["16"]["BackgroundColor3"]=Color3.fromRGB(0, 201, 188);
-_i["16"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["16"]["BorderMode"]=Enum.BorderMode.Inset;
-_i["16"]["TextSize"]=14;
-_i["16"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
-_i["16"]["Size"]=UDim2.new(0, 50, 0, 50);
-_i["16"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["16"]["Text"]=[[Save Builds]];
-_i["16"]["Position"]=UDim2.new(0.85714, 0, 0.56667, 0);
-_i["16"]["Name"]=[[Save]];
-_i["17"]=Instance.new("UIStroke",_i["16"]);
-_i["17"]["Thickness"]=2;
-_i["17"]["Transparency"]=0.61;
-_i["17"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
-_i["18"]=Instance.new("LocalScript",_i["16"]);
-_i["18"].Name="save";
-_i["19"]=Instance.new("TextButton",_i["2"]);
-_i["19"]["TextWrapped"]=true;
-_i["19"]["BorderSizePixel"]=0;
-_i["19"]["BackgroundColor3"]=Color3.fromRGB(0, 201, 188);
-_i["19"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["19"]["BorderMode"]=Enum.BorderMode.Inset;
-_i["19"]["TextSize"]=14;
-_i["19"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
-_i["19"]["Size"]=UDim2.new(0, 50, 0, 25);
-_i["19"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["19"]["Text"]=[[All]];
-_i["19"]["Position"]=UDim2.new(0.85714, 0, 0.73333, 0);
-_i["19"]["Name"]=[[SaveChange]];
-_i["1a"]=Instance.new("UIStroke",_i["19"]);
-_i["1a"]["Thickness"]=2;
-_i["1a"]["Transparency"]=0.61;
-_i["1a"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
-_i["1b"]=Instance.new("TextButton",_i["2"]);
-_i["1b"]["BorderSizePixel"]=0;
-_i["1b"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
-_i["1b"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["1b"]["TextTransparency"]=0.33;
-_i["1b"]["TextSize"]=14;
-_i["1b"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
-_i["1b"]["Size"]=UDim2.new(0, 30, 0, 30);
-_i["1b"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["1b"]["Text"]=[[?]];
-_i["1b"]["BackgroundTransparency"]=1;
-_i["1b"]["Position"]=UDim2.new(0.91429, 0, 0.9, 0);
-_i["1b"]["Name"]=[[HELP]];
-_i["1c"]=Instance.new("LocalScript",_i["1b"]);
-_i["1c"].Name="closegui";
-_i["1d"]=Instance.new("ScrollingFrame",_i["2"]);
-_i["1d"]["ScrollingDirection"]=Enum.ScrollingDirection.Y;
-_i["1d"]["BorderSizePixel"]=0;
-_i["1d"]["CanvasSize"]=UDim2.new(0, 0, 0, 0);
-_i["1d"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
-_i["1d"]["AutomaticCanvasSize"]=Enum.AutomaticSize.Y;
-_i["1d"]["Size"]=UDim2.new(0, 299, 0, 250);
-_i["1d"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
-_i["1d"]["ScrollBarThickness"]=8;
-_i["1d"]["Active"]=true;
-_i["1d"]["BackgroundTransparency"]=1;
-_i["1d"]["Position"]=UDim2.new(0.00208, 0, 0.06558, 0);
-_i["1e"]=Instance.new("TextBox",_i["1d"]);
-_i["1e"]["TextWrapped"]=true;
-_i["1e"]["TextYAlignment"]=Enum.TextYAlignment.Top;
-_i["1e"]["BackgroundColor3"]=Color3.fromRGB(18, 18, 18);
-_i["1e"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-_i["1e"]["TextXAlignment"]=Enum.TextXAlignment.Left;
-_i["1e"]["BorderMode"]=Enum.BorderMode.Inset;
-_i["1e"]["TextTransparency"]=0.3;
-_i["1e"]["TextSize"]=12;
-_i["1e"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
-_i["1e"]["PlaceholderText"]=[[Paste your build file...]];
-_i["1e"]["Size"]=UDim2.new(1, 0, 0, 250);
-_i["1e"]["MultiLine"]=true;
-_i["1e"]["BorderColor3"]=Color3.fromRGB(54, 54, 54);
-_i["1e"]["Text"]=[[]];
-_i["1e"]["ClearTextOnFocus"]=false;
-_i["1f"]=Instance.new("UIPadding",_i["1e"]);
-_i["1f"]["PaddingTop"]=UDim.new(0, 3);
-_i["1f"]["PaddingBottom"]=UDim.new(0, 3);
-_i["1f"]["PaddingRight"]=UDim.new(0, 3);
-_i["1f"]["PaddingLeft"]=UDim.new(0, 3);
-_i["20"]=Instance.new("LocalScript",_i["1e"]);
-_i["20"].Name="autoresize";
-local function C_7()
-local script=_i["7"];
+_i["5"]=Instance.new("LocalScript",_i["3"]);
+_i["5"].Name="build";
+_i["6"]=Instance.new("TextButton",_i["2"]);
+_i["6"]["TextWrapped"]=true;
+_i["6"]["BorderSizePixel"]=0;
+_i["6"]["TextScaled"]=true;
+_i["6"]["BackgroundColor3"]=Color3.fromRGB(0, 115, 203);
+_i["6"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["6"]["BorderMode"]=Enum.BorderMode.Inset;
+_i["6"]["TextSize"]=11;
+_i["6"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
+_i["6"]["Size"]=UDim2.new(0, 50, 0, 50);
+_i["6"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["6"]["Text"]=[[Copy to Clipboard]];
+_i["6"]["Position"]=UDim2.new(0.85714, 0, 0.39667, 0);
+_i["6"]["Name"]=[[Copy]];
+_i["7"]=Instance.new("UIStroke",_i["6"]);
+_i["7"]["Thickness"]=2;
+_i["7"]["Transparency"]=0.61;
+_i["7"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
+_i["8"]=Instance.new("LocalScript",_i["6"]);
+_i["8"].Name="Copy";
+_i["9"]=Instance.new("TextLabel",_i["2"]);
+_i["9"]["TextWrapped"]=true;
+_i["9"]["BorderSizePixel"]=0;
+_i["9"]["RichText"]=true;
+_i["9"]["TextScaled"]=true;
+_i["9"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["9"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["9"]["TextXAlignment"]=Enum.TextXAlignment.Left;
+_i["9"]["TextTransparency"]=0.36;
+_i["9"]["TextSize"]=14;
+_i["9"]["Size"]=UDim2.new(0, 350, 0, 30);
+_i["9"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
+_i["9"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["9"]["Text"]=[[Blocks: 0<br/>Char: 0]];
+_i["9"]["BackgroundTransparency"]=1;
+_i["9"]["Name"]=[[Display]];
+_i["9"]["Position"]=UDim2.new(0, 0, 0.9, 0);
+_i["a"]=Instance.new("UIPadding",_i["9"]);
+_i["a"]["PaddingTop"]=UDim.new(0, 3);
+_i["a"]["PaddingBottom"]=UDim.new(0, 3);
+_i["a"]["PaddingLeft"]=UDim.new(0, 3);
+_i["b"]=Instance.new("LocalScript",_i["9"]);
+_i["b"].Name="display";
+_i["c"]=Instance.new("TextLabel",_i["2"]);
+_i["c"]["BorderSizePixel"]=0;
+_i["c"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["c"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["c"]["TextXAlignment"]=Enum.TextXAlignment.Left;
+_i["c"]["TextSize"]=12;
+_i["c"]["Size"]=UDim2.new(0, 350, 0, 20);
+_i["c"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
+_i["c"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["c"]["Text"]=[[auto build by agarv | discord.gg/7fDasxV2H]];
+_i["c"]["BackgroundTransparency"]=1;
+_i["c"]["Name"]=[[Title]];
+_i["d"]=Instance.new("UIPadding",_i["c"]);
+_i["d"]["PaddingTop"]=UDim.new(0, 2);
+_i["d"]["PaddingBottom"]=UDim.new(0, 2);
+_i["d"]["PaddingLeft"]=UDim.new(0, 5);
+_i["e"]=Instance.new("TextButton",_i["2"]);
+_i["e"]["BorderSizePixel"]=0;
+_i["e"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["e"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["e"]["TextSize"]=14;
+_i["e"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
+_i["e"]["Size"]=UDim2.new(0, 30, 0, 20);
+_i["e"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["e"]["Text"]=[[X]];
+_i["e"]["BackgroundTransparency"]=1;
+_i["e"]["Position"]=UDim2.new(0.91429, 0, 0, 0);
+_i["e"]["Name"]=[[CLOSE]];
+_i["f"]=Instance.new("LocalScript",_i["e"]);
+_i["f"].Name="closegui";
+_i["10"]=Instance.new("LocalScript",_i["2"]);
+_i["10"].Name="main";
+_i["11"]=Instance.new("TextButton",_i["2"]);
+_i["11"]["TextWrapped"]=true;
+_i["11"]["BorderSizePixel"]=0;
+_i["11"]["BackgroundColor3"]=Color3.fromRGB(201, 38, 38);
+_i["11"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["11"]["BorderMode"]=Enum.BorderMode.Inset;
+_i["11"]["TextSize"]=14;
+_i["11"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
+_i["11"]["Size"]=UDim2.new(0, 50, 0, 25);
+_i["11"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["11"]["Text"]=[[Clear]];
+_i["11"]["Position"]=UDim2.new(0.85714, 0, 0.81667, 0);
+_i["11"]["Name"]=[[Clear]];
+_i["12"]=Instance.new("UIStroke",_i["11"]);
+_i["12"]["Thickness"]=2;
+_i["12"]["Transparency"]=0.61;
+_i["12"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
+_i["13"]=Instance.new("LocalScript",_i["11"]);
+_i["13"].Name="ClearText";
+_i["14"]=Instance.new("TextButton",_i["2"]);
+_i["14"]["TextWrapped"]=true;
+_i["14"]["BorderSizePixel"]=0;
+_i["14"]["BackgroundColor3"]=Color3.fromRGB(203, 196, 0);
+_i["14"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["14"]["BorderMode"]=Enum.BorderMode.Inset;
+_i["14"]["TextSize"]=14;
+_i["14"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
+_i["14"]["Size"]=UDim2.new(0, 50, 0, 50);
+_i["14"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["14"]["Text"]=[[Import Build]];
+_i["14"]["Position"]=UDim2.new(0.85714, 0, 0.23333, 0);
+_i["14"]["Name"]=[[Import]];
+_i["15"]=Instance.new("UIStroke",_i["14"]);
+_i["15"]["Thickness"]=2;
+_i["15"]["Transparency"]=0.61;
+_i["15"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
+_i["16"]=Instance.new("LocalScript",_i["14"]);
+_i["16"].Name="import";
+_i["17"]=Instance.new("TextButton",_i["2"]);
+_i["17"]["TextWrapped"]=true;
+_i["17"]["BorderSizePixel"]=0;
+_i["17"]["BackgroundColor3"]=Color3.fromRGB(0, 201, 188);
+_i["17"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["17"]["BorderMode"]=Enum.BorderMode.Inset;
+_i["17"]["TextSize"]=14;
+_i["17"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
+_i["17"]["Size"]=UDim2.new(0, 50, 0, 50);
+_i["17"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["17"]["Text"]=[[Save Builds]];
+_i["17"]["Position"]=UDim2.new(0.85714, 0, 0.56667, 0);
+_i["17"]["Name"]=[[Save]];
+_i["18"]=Instance.new("UIStroke",_i["17"]);
+_i["18"]["Thickness"]=2;
+_i["18"]["Transparency"]=0.61;
+_i["18"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
+_i["19"]=Instance.new("LocalScript",_i["17"]);
+_i["19"].Name="save";
+_i["1a"]=Instance.new("TextButton",_i["2"]);
+_i["1a"]["TextWrapped"]=true;
+_i["1a"]["BorderSizePixel"]=0;
+_i["1a"]["BackgroundColor3"]=Color3.fromRGB(0, 201, 188);
+_i["1a"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["1a"]["BorderMode"]=Enum.BorderMode.Inset;
+_i["1a"]["TextSize"]=14;
+_i["1a"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
+_i["1a"]["Size"]=UDim2.new(0, 50, 0, 25);
+_i["1a"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["1a"]["Text"]=[[All]];
+_i["1a"]["Position"]=UDim2.new(0.85714, 0, 0.73333, 0);
+_i["1a"]["Name"]=[[SaveChange]];
+_i["1b"]=Instance.new("UIStroke",_i["1a"]);
+_i["1b"]["Thickness"]=2;
+_i["1b"]["Transparency"]=0.61;
+_i["1b"]["ApplyStrokeMode"]=Enum.ApplyStrokeMode.Border;
+_i["1c"]=Instance.new("TextButton",_i["2"]);
+_i["1c"]["BorderSizePixel"]=0;
+_i["1c"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["1c"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["1c"]["TextTransparency"]=0.33;
+_i["1c"]["TextSize"]=14;
+_i["1c"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
+_i["1c"]["Size"]=UDim2.new(0, 30, 0, 30);
+_i["1c"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["1c"]["Text"]=[[?]];
+_i["1c"]["BackgroundTransparency"]=1;
+_i["1c"]["Position"]=UDim2.new(0.91429, 0, 0.9, 0);
+_i["1c"]["Name"]=[[HELP]];
+_i["1d"]=Instance.new("LocalScript",_i["1c"]);
+_i["1d"].Name="help";
+_i["1e"]=Instance.new("ScrollingFrame",_i["2"]);
+_i["1e"]["ScrollingDirection"]=Enum.ScrollingDirection.Y;
+_i["1e"]["BorderSizePixel"]=0;
+_i["1e"]["CanvasSize"]=UDim2.new(0, 0, 0, 0);
+_i["1e"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["1e"]["AutomaticCanvasSize"]=Enum.AutomaticSize.Y;
+_i["1e"]["Size"]=UDim2.new(0, 299, 0, 250);
+_i["1e"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["1e"]["ScrollBarThickness"]=8;
+_i["1e"]["Active"]=true;
+_i["1e"]["BackgroundTransparency"]=1;
+_i["1e"]["Position"]=UDim2.new(0.00208, 0, 0.06558, 0);
+_i["1f"]=Instance.new("TextBox",_i["1e"]);
+_i["1f"]["TextWrapped"]=true;
+_i["1f"]["TextYAlignment"]=Enum.TextYAlignment.Top;
+_i["1f"]["BackgroundColor3"]=Color3.fromRGB(18, 18, 18);
+_i["1f"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["1f"]["TextXAlignment"]=Enum.TextXAlignment.Left;
+_i["1f"]["BorderMode"]=Enum.BorderMode.Inset;
+_i["1f"]["TextTransparency"]=0.3;
+_i["1f"]["TextSize"]=12;
+_i["1f"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
+_i["1f"]["PlaceholderText"]=[[Paste your build file...]];
+_i["1f"]["Size"]=UDim2.new(1, 0, 0, 250);
+_i["1f"]["MultiLine"]=true;
+_i["1f"]["BorderColor3"]=Color3.fromRGB(54, 54, 54);
+_i["1f"]["Text"]=[[]];
+_i["1f"]["ClearTextOnFocus"]=false;
+_i["20"]=Instance.new("UIPadding",_i["1f"]);
+_i["20"]["PaddingTop"]=UDim.new(0, 3);
+_i["20"]["PaddingBottom"]=UDim.new(0, 3);
+_i["20"]["PaddingRight"]=UDim.new(0, 3);
+_i["20"]["PaddingLeft"]=UDim.new(0, 3);
+_i["21"]=Instance.new("LocalScript",_i["1f"]);
+_i["21"].Name="autoresize";
+_i["22"]=Instance.new("TextLabel",_i["2"]);
+_i["22"]["TextWrapped"]=true;
+_i["22"]["BorderSizePixel"]=0;
+_i["22"]["RichText"]=true;
+_i["22"]["TextScaled"]=true;
+_i["22"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["22"]["FontFace"]=Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["22"]["TextXAlignment"]=Enum.TextXAlignment.Right;
+_i["22"]["TextTransparency"]=0.36;
+_i["22"]["TextSize"]=14;
+_i["22"]["Size"]=UDim2.new(0, 300, 0, 30);
+_i["22"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
+_i["22"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["22"]["Text"]=[[FPS: X<br/>Ping: Xms]];
+_i["22"]["BackgroundTransparency"]=1;
+_i["22"]["Name"]=[[Performance]];
+_i["22"]["Position"]=UDim2.new(0, 0, 0.9, 0);
+_i["23"]=Instance.new("UIPadding",_i["22"]);
+_i["23"]["PaddingTop"]=UDim.new(0, 3);
+_i["23"]["PaddingBottom"]=UDim.new(0, 3);
+_i["23"]["PaddingLeft"]=UDim.new(0, 3);
+_i["24"]=Instance.new("LocalScript",_i["22"]);
+_i["24"].Name="performance";
+_i["25"]=Instance.new("UIScale",_i["1"]);
+_i["25"]["Scale"]=0.82;
+local function C_5()
+local script=_i["5"];
+local button = script.Parent
+local textbox = button.Parent.ScrollingFrame.TextBox
+
+local isBuilding = false
+
+button.MouseButton1Click:Connect(function()
+	if not isBuilding then
+		if not _G.visualsEnabled then return end
+
+		local buildString = textbox.Text
+		if buildString == "" then return end
+
+		isBuilding = true
+		_G.autobuildRunning = true
+		button.BackgroundColor3 = Color3.fromRGB(200, 37, 37)
+		button.Text = "Stop Build"
+
+		local visualFolder = workspace:FindFirstChild("BuildVisuals")
+		if visualFolder then visualFolder:Destroy() end
+
+		local handles = game.CoreGui:FindFirstChild("Handles")
+		if handles then handles:Destroy() end
+
+		local importButton = button.Parent:FindFirstChild("Import")
+		if importButton then
+			importButton.Text = "Import Build"
+			_G.visualsEnabled = false
+			_G.forceImportReset = true
+		end
+
+		_G.buildString = buildString
+
+		task.spawn(function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/agarvsocooolsmith/Scripts/refs/heads/main/AUTOBUILDSOURCE.lua"))()
+			isBuilding = false
+			_G.autobuildRunning = false
+			button.BackgroundColor3 = Color3.fromRGB(0, 203, 0)
+			button.Text = "Start Build"
+		end)
+	else
+		_G.stopautobuild = true
+		isBuilding = false
+		_G.autobuildRunning = false
+		button.BackgroundColor3 = Color3.fromRGB(0, 203, 0)
+		button.Text = "Start Build"
+	end
+end)
+end;
+task.spawn(C_5);
+local function C_8()
+local script=_i["8"];
 local button = script.Parent
 local textbox = button.Parent.ScrollingFrame.TextBox
 local defaultText = button.Text
@@ -247,9 +331,9 @@ button.MouseButton1Click:Connect(function()
 	button.Text = defaultText
 end)
 end;
-task.spawn(C_7);
-local function C_a()
-local script=_i["a"];
+task.spawn(C_8);
+local function C_b()
+local script=_i["b"];
 local textlabel = script.Parent
 local textbox = textlabel.Parent.ScrollingFrame.TextBox
 
@@ -259,15 +343,21 @@ local function update()
 	for _ in text:gmatch("|[^|]+|") do
 		blockCount = blockCount + 1
 	end
-	textlabel.Text = "Blocks: 0/" .. blockCount .. "<br/>Char: " .. #text
+	textlabel.Text = "Blocks: " .. blockCount .. "<br/>Char: " .. #text
 end
 
 textbox:GetPropertyChangedSignal("Text"):Connect(update)
+task.spawn(function()
+	while true do
+		task.wait(1)
+		update()
+	end
+end)
 update()
 end;
-task.spawn(C_a);
-local function C_e()
-local script=_i["e"];
+task.spawn(C_b);
+local function C_f()
+local script=_i["f"];
 local button = script.Parent
 local gui = button.Parent.Parent
 
@@ -287,9 +377,9 @@ button.MouseButton1Click:Connect(function()
 	})
 end)
 end;
-task.spawn(C_e);
-local function C_f()
-local script=_i["f"];
+task.spawn(C_f);
+local function C_10()
+local script=_i["10"];
 local frame = script.Parent
 local screenGui = frame.Parent
 
@@ -332,9 +422,9 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
 	end
 end)
 end;
-task.spawn(C_f);
-local function C_12()
-local script=_i["12"];
+task.spawn(C_10);
+local function C_13()
+local script=_i["13"];
 local button = script.Parent
 local textbox = button.Parent.ScrollingFrame.TextBox
 
@@ -342,9 +432,9 @@ button.MouseButton1Click:Connect(function()
 	textbox.Text = ""
 end)
 end;
-task.spawn(C_12);
-local function C_15()
-local script=_i["15"];
+task.spawn(C_13);
+local function C_16()
+local script=_i["16"];
 local button = script.Parent
 local textbox = button.Parent.ScrollingFrame.TextBox
 
@@ -544,9 +634,9 @@ button.MouseButton1Click:Connect(function()
 	createDragHandles()
 end)
 end;
-task.spawn(C_15);
-local function C_18()
-local script=_i["18"];
+task.spawn(C_16);
+local function C_19()
+local script=_i["19"];
 local save = script.Parent
 local savemode = save.Parent.SaveChange
 local textbox = save.Parent.ScrollingFrame.TextBox
@@ -660,31 +750,52 @@ save.MouseButton1Click:Connect(function()
 	textbox.Text = buildString
 end)
 end;
-task.spawn(C_18);
-local function C_1c()
-local script=_i["1c"];
+task.spawn(C_19);
+local function C_1d()
+local script=_i["1d"];
 local button = script.Parent
-local gui = button.Parent.Parent
+local textbox = button.Parent.ScrollingFrame.TextBox
+
+local helpText = [[HOW TO USE AUTOBUILD:
+
+1. First go in a private server with the build you want to save
+
+2. Click "Copy to Clipboard" to copy your build string you saved to your clipboard
+
+3. Pasted the build string you copied into the text
+
+4. Click "Import Build" to preview your build
+
+5. Drag the arrows to move the build to where you want it
+
+6. Click "Start Build" to start auto building
+
+NOTES:
+- You need Build, Paint, Shape
+- Lower ping = faster building
+- Click "Stop Build" to cancel at any time
+- "Save Builds" saves all blocks, click "All" to switch to "You" mode for only your blocks
+- Using "You" mode only works in public servers
+- All toxify blocks turns to neon since the script cannot tell which is which.
+
+
+PRESS CLEAR TO CLEAR THIS TEXT]]
+
+local showing = false
 
 button.MouseButton1Click:Connect(function()
-	local bindfunc = Instance.new("BindableFunction")
-	function bindfunc.OnInvoke(bpress)
-		if bpress == "Yes" then
-			gui:Destroy()
-		end
+	if not showing then
+		textbox.Text = helpText
+		showing = true
+	else
+		textbox.Text = ""
+		showing = false
 	end
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Close GUI",
-		Text = "Are you sure you want to close?",
-		Callback = bindfunc,
-		Button1 = "Yes",
-		Button2 = "No"
-	})
 end)
 end;
-task.spawn(C_1c);
-local function C_20()
-local script=_i["20"];
+task.spawn(C_1d);
+local function C_21()
+local script=_i["21"];
 local textbox = script.Parent
 local TextService = game:GetService("TextService")
 
@@ -708,6 +819,28 @@ task.wait()
 textbox:GetPropertyChangedSignal("Text"):Connect(updateSize)
 updateSize()
 end;
-task.spawn(C_20);
+task.spawn(C_21);
+local function C_24()
+local script=_i["24"];
+local label = script.Parent
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local fps = 0
+local lastTime = tick()
+
+RunService.RenderStepped:Connect(function()
+	local now = tick()
+	fps = math.round(1 / (now - lastTime))
+	lastTime = now
+end)
+
+while task.wait(0.1) do
+	local ping = math.round(LocalPlayer:GetNetworkPing() * 1000)
+	label.Text = string.format("FPS: %d<br/>Ping: %dms", fps, ping)
+end
+end;
+task.spawn(C_24);
 
 return _i["1"], require;
