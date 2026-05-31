@@ -1,964 +1,370 @@
---[=[
- d888b  db    db d888888b      .d888b.      db      db    db  .d8b.  
-88' Y8b 88    88   `88'        VP  `8D      88      88    88 d8' `8b 
-88      88    88    88            odD'      88      88    88 88ooo88 
-88  ooo 88    88    88          .88'        88      88    88 88~~~88 
-88. ~8~ 88b  d88   .88.        j88.         88booo. 88b  d88 88   88    @uniquadev
- Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
-]=]
-
--- Instances: 36 | Scripts: 11 | Modules: 0 | Tags: 0
-local G2L = {};
-
--- StarterGui.AUTOBUILD
-G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
-G2L["1"]["DisplayOrder"] = 999;
-G2L["1"]["Name"] = [[AUTOBUILD]];
-G2L["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
-G2L["1"]["ResetOnSpawn"] = false;
-
-
--- StarterGui.AUTOBUILD.MAIN
-G2L["2"] = Instance.new("Frame", G2L["1"]);
-G2L["2"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["2"]["Size"] = UDim2.new(0, 350, 0, 300);
-G2L["2"]["Position"] = UDim2.new(0.60493, 0, 0.46785, 0);
-G2L["2"]["BorderColor3"] = Color3.fromRGB(54, 54, 54);
-G2L["2"]["Name"] = [[MAIN]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Build
-G2L["3"] = Instance.new("TextButton", G2L["2"]);
-G2L["3"]["TextWrapped"] = true;
-G2L["3"]["BorderSizePixel"] = 0;
-G2L["3"]["TextSize"] = 14;
-G2L["3"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["3"]["BackgroundColor3"] = Color3.fromRGB(0, 203, 0);
-G2L["3"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["3"]["BorderMode"] = Enum.BorderMode.Inset;
-G2L["3"]["Size"] = UDim2.new(0, 50, 0, 50);
-G2L["3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["3"]["Text"] = [[Start Build]];
-G2L["3"]["Name"] = [[Build]];
-G2L["3"]["Position"] = UDim2.new(0.85714, 0, 0.06667, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.Build.UIStroke
-G2L["4"] = Instance.new("UIStroke", G2L["3"]);
-G2L["4"]["Transparency"] = 0.61;
-G2L["4"]["Thickness"] = 2;
-G2L["4"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
-G2L["4"]["BorderStrokePosition"] = Enum.BorderStrokePosition.Inner;
-
-
--- StarterGui.AUTOBUILD.MAIN.Build.build
-G2L["5"] = Instance.new("LocalScript", G2L["3"]);
-G2L["5"]["Name"] = [[build]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Copy
-G2L["6"] = Instance.new("TextButton", G2L["2"]);
-G2L["6"]["TextWrapped"] = true;
-G2L["6"]["BorderSizePixel"] = 0;
-G2L["6"]["TextSize"] = 11;
-G2L["6"]["TextScaled"] = true;
-G2L["6"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["6"]["BackgroundColor3"] = Color3.fromRGB(0, 115, 203);
-G2L["6"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["6"]["BorderMode"] = Enum.BorderMode.Inset;
-G2L["6"]["Size"] = UDim2.new(0, 50, 0, 50);
-G2L["6"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["6"]["Text"] = [[Copy to Clipboard]];
-G2L["6"]["Name"] = [[Copy]];
-G2L["6"]["Position"] = UDim2.new(0.85714, 0, 0.39667, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.Copy.UIStroke
-G2L["7"] = Instance.new("UIStroke", G2L["6"]);
-G2L["7"]["Transparency"] = 0.61;
-G2L["7"]["Thickness"] = 2;
-G2L["7"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
-G2L["7"]["BorderStrokePosition"] = Enum.BorderStrokePosition.Inner;
-
-
--- StarterGui.AUTOBUILD.MAIN.Copy.Copy
-G2L["8"] = Instance.new("LocalScript", G2L["6"]);
-G2L["8"]["Name"] = [[Copy]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Display
-G2L["9"] = Instance.new("TextLabel", G2L["2"]);
-G2L["9"]["TextWrapped"] = true;
-G2L["9"]["BorderSizePixel"] = 0;
-G2L["9"]["TextSize"] = 14;
-G2L["9"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["9"]["TextTransparency"] = 0.36;
-G2L["9"]["TextScaled"] = true;
-G2L["9"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["9"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["9"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["9"]["BackgroundTransparency"] = 1;
-G2L["9"]["RichText"] = true;
-G2L["9"]["Size"] = UDim2.new(0, 350, 0, 30);
-G2L["9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["9"]["Text"] = [[Blocks: 0/X<br/>Char: X]];
-G2L["9"]["Name"] = [[Display]];
-G2L["9"]["Position"] = UDim2.new(0, 0, 0.9, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.Display.UIPadding
-G2L["a"] = Instance.new("UIPadding", G2L["9"]);
-G2L["a"]["PaddingTop"] = UDim.new(0, 3);
-G2L["a"]["PaddingLeft"] = UDim.new(0, 3);
-G2L["a"]["PaddingBottom"] = UDim.new(0, 3);
-
-
--- StarterGui.AUTOBUILD.MAIN.Display.display
-G2L["b"] = Instance.new("LocalScript", G2L["9"]);
-G2L["b"]["Name"] = [[display]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Title
-G2L["c"] = Instance.new("TextLabel", G2L["2"]);
-G2L["c"]["BorderSizePixel"] = 0;
-G2L["c"]["TextSize"] = 12;
-G2L["c"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["c"]["BackgroundTransparency"] = 1;
-G2L["c"]["Size"] = UDim2.new(0, 350, 0, 20);
-G2L["c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["c"]["Text"] = [[auto build by agarv | discord.gg/7fDasxV2H]];
-G2L["c"]["Name"] = [[Title]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Title.UIPadding
-G2L["d"] = Instance.new("UIPadding", G2L["c"]);
-G2L["d"]["PaddingTop"] = UDim.new(0, 2);
-G2L["d"]["PaddingLeft"] = UDim.new(0, 5);
-G2L["d"]["PaddingBottom"] = UDim.new(0, 2);
-
-
--- StarterGui.AUTOBUILD.MAIN.CLOSE
-G2L["e"] = Instance.new("TextButton", G2L["2"]);
-G2L["e"]["BorderSizePixel"] = 0;
-G2L["e"]["TextSize"] = 14;
-G2L["e"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["e"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["e"]["BackgroundTransparency"] = 1;
-G2L["e"]["Size"] = UDim2.new(0, 30, 0, 20);
-G2L["e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["e"]["Text"] = [[X]];
-G2L["e"]["Name"] = [[CLOSE]];
-G2L["e"]["Position"] = UDim2.new(0.91429, 0, 0, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.CLOSE.closegui
-G2L["f"] = Instance.new("LocalScript", G2L["e"]);
-G2L["f"]["Name"] = [[closegui]];
-
-
--- StarterGui.AUTOBUILD.MAIN.main
-G2L["10"] = Instance.new("LocalScript", G2L["2"]);
-G2L["10"]["Name"] = [[main]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Clear
-G2L["11"] = Instance.new("TextButton", G2L["2"]);
-G2L["11"]["TextWrapped"] = true;
-G2L["11"]["BorderSizePixel"] = 0;
-G2L["11"]["TextSize"] = 14;
-G2L["11"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["11"]["BackgroundColor3"] = Color3.fromRGB(201, 38, 38);
-G2L["11"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["11"]["BorderMode"] = Enum.BorderMode.Inset;
-G2L["11"]["Size"] = UDim2.new(0, 50, 0, 25);
-G2L["11"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["11"]["Text"] = [[Clear]];
-G2L["11"]["Name"] = [[Clear]];
-G2L["11"]["Position"] = UDim2.new(0.85714, 0, 0.81667, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.Clear.UIStroke
-G2L["12"] = Instance.new("UIStroke", G2L["11"]);
-G2L["12"]["Transparency"] = 0.61;
-G2L["12"]["Thickness"] = 2;
-G2L["12"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
-G2L["12"]["BorderStrokePosition"] = Enum.BorderStrokePosition.Inner;
-
-
--- StarterGui.AUTOBUILD.MAIN.Clear.ClearText
-G2L["13"] = Instance.new("LocalScript", G2L["11"]);
-G2L["13"]["Name"] = [[ClearText]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Import
-G2L["14"] = Instance.new("TextButton", G2L["2"]);
-G2L["14"]["TextWrapped"] = true;
-G2L["14"]["BorderSizePixel"] = 0;
-G2L["14"]["TextSize"] = 14;
-G2L["14"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["14"]["BackgroundColor3"] = Color3.fromRGB(203, 196, 0);
-G2L["14"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["14"]["BorderMode"] = Enum.BorderMode.Inset;
-G2L["14"]["Size"] = UDim2.new(0, 50, 0, 50);
-G2L["14"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["14"]["Text"] = [[Import Build]];
-G2L["14"]["Name"] = [[Import]];
-G2L["14"]["Position"] = UDim2.new(0.85714, 0, 0.23333, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.Import.UIStroke
-G2L["15"] = Instance.new("UIStroke", G2L["14"]);
-G2L["15"]["Transparency"] = 0.61;
-G2L["15"]["Thickness"] = 2;
-G2L["15"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
-G2L["15"]["BorderStrokePosition"] = Enum.BorderStrokePosition.Inner;
-
-
--- StarterGui.AUTOBUILD.MAIN.Import.import
-G2L["16"] = Instance.new("LocalScript", G2L["14"]);
-G2L["16"]["Name"] = [[import]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Save
-G2L["17"] = Instance.new("TextButton", G2L["2"]);
-G2L["17"]["TextWrapped"] = true;
-G2L["17"]["BorderSizePixel"] = 0;
-G2L["17"]["TextSize"] = 14;
-G2L["17"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["17"]["BackgroundColor3"] = Color3.fromRGB(0, 201, 188);
-G2L["17"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["17"]["BorderMode"] = Enum.BorderMode.Inset;
-G2L["17"]["Size"] = UDim2.new(0, 50, 0, 50);
-G2L["17"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["17"]["Text"] = [[Save Builds]];
-G2L["17"]["Name"] = [[Save]];
-G2L["17"]["Position"] = UDim2.new(0.85714, 0, 0.56667, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.Save.UIStroke
-G2L["18"] = Instance.new("UIStroke", G2L["17"]);
-G2L["18"]["Transparency"] = 0.61;
-G2L["18"]["Thickness"] = 2;
-G2L["18"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
-G2L["18"]["BorderStrokePosition"] = Enum.BorderStrokePosition.Inner;
-
-
--- StarterGui.AUTOBUILD.MAIN.Save.save
-G2L["19"] = Instance.new("LocalScript", G2L["17"]);
-G2L["19"]["Name"] = [[save]];
-
-
--- StarterGui.AUTOBUILD.MAIN.SaveChange
-G2L["1a"] = Instance.new("TextButton", G2L["2"]);
-G2L["1a"]["TextWrapped"] = true;
-G2L["1a"]["BorderSizePixel"] = 0;
-G2L["1a"]["TextSize"] = 14;
-G2L["1a"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1a"]["BackgroundColor3"] = Color3.fromRGB(0, 201, 188);
-G2L["1a"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["1a"]["BorderMode"] = Enum.BorderMode.Inset;
-G2L["1a"]["Size"] = UDim2.new(0, 50, 0, 25);
-G2L["1a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1a"]["Text"] = [[All]];
-G2L["1a"]["Name"] = [[SaveChange]];
-G2L["1a"]["Position"] = UDim2.new(0.85714, 0, 0.73333, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.SaveChange.UIStroke
-G2L["1b"] = Instance.new("UIStroke", G2L["1a"]);
-G2L["1b"]["Transparency"] = 0.61;
-G2L["1b"]["Thickness"] = 2;
-G2L["1b"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
-G2L["1b"]["BorderStrokePosition"] = Enum.BorderStrokePosition.Inner;
-
-
--- StarterGui.AUTOBUILD.MAIN.HELP
-G2L["1c"] = Instance.new("TextButton", G2L["2"]);
-G2L["1c"]["BorderSizePixel"] = 0;
-G2L["1c"]["TextTransparency"] = 0.33;
-G2L["1c"]["TextSize"] = 14;
-G2L["1c"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1c"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["1c"]["BackgroundTransparency"] = 1;
-G2L["1c"]["Size"] = UDim2.new(0, 30, 0, 30);
-G2L["1c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1c"]["Text"] = [[?]];
-G2L["1c"]["Name"] = [[HELP]];
-G2L["1c"]["Position"] = UDim2.new(0.91429, 0, 0.9, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.HELP.closegui
-G2L["1d"] = Instance.new("LocalScript", G2L["1c"]);
-G2L["1d"]["Name"] = [[closegui]];
-
-
--- StarterGui.AUTOBUILD.MAIN.ScrollingFrame
-G2L["1e"] = Instance.new("ScrollingFrame", G2L["2"]);
-G2L["1e"]["Active"] = true;
-G2L["1e"]["ScrollingDirection"] = Enum.ScrollingDirection.Y;
-G2L["1e"]["BorderSizePixel"] = 0;
-G2L["1e"]["CanvasSize"] = UDim2.new(0, 0, 0, 0);
-G2L["1e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1e"]["AutomaticCanvasSize"] = Enum.AutomaticSize.Y;
-G2L["1e"]["Size"] = UDim2.new(0, 299, 0, 250);
-G2L["1e"]["Position"] = UDim2.new(0.00208, 0, 0.06558, 0);
-G2L["1e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["1e"]["ScrollBarThickness"] = 8;
-G2L["1e"]["BackgroundTransparency"] = 1;
-
-
--- StarterGui.AUTOBUILD.MAIN.ScrollingFrame.TextBox
-G2L["1f"] = Instance.new("TextBox", G2L["1e"]);
-G2L["1f"]["CursorPosition"] = -1;
-G2L["1f"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["1f"]["TextWrapped"] = true;
-G2L["1f"]["TextTransparency"] = 0.3;
-G2L["1f"]["TextSize"] = 12;
-G2L["1f"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["1f"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["1f"]["BackgroundColor3"] = Color3.fromRGB(18, 18, 18);
-G2L["1f"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["1f"]["BorderMode"] = Enum.BorderMode.Inset;
-G2L["1f"]["MultiLine"] = true;
-G2L["1f"]["ClearTextOnFocus"] = false;
-G2L["1f"]["PlaceholderText"] = [[Paste your build file...]];
-G2L["1f"]["Size"] = UDim2.new(1, 0, 0, 250);
-G2L["1f"]["BorderColor3"] = Color3.fromRGB(54, 54, 54);
-G2L["1f"]["Text"] = [[]];
-
-
--- StarterGui.AUTOBUILD.MAIN.ScrollingFrame.TextBox.UIPadding
-G2L["20"] = Instance.new("UIPadding", G2L["1f"]);
-G2L["20"]["PaddingTop"] = UDim.new(0, 3);
-G2L["20"]["PaddingRight"] = UDim.new(0, 3);
-G2L["20"]["PaddingLeft"] = UDim.new(0, 3);
-G2L["20"]["PaddingBottom"] = UDim.new(0, 3);
-
-
--- StarterGui.AUTOBUILD.MAIN.ScrollingFrame.TextBox.autoresize
-G2L["21"] = Instance.new("LocalScript", G2L["1f"]);
-G2L["21"]["Name"] = [[autoresize]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Performance
-G2L["22"] = Instance.new("TextLabel", G2L["2"]);
-G2L["22"]["TextWrapped"] = true;
-G2L["22"]["BorderSizePixel"] = 0;
-G2L["22"]["TextSize"] = 14;
-G2L["22"]["TextXAlignment"] = Enum.TextXAlignment.Right;
-G2L["22"]["TextTransparency"] = 0.36;
-G2L["22"]["TextScaled"] = true;
-G2L["22"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["22"]["FontFace"] = Font.new([[rbxasset://fonts/families/Inconsolata.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["22"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["22"]["BackgroundTransparency"] = 1;
-G2L["22"]["RichText"] = true;
-G2L["22"]["Size"] = UDim2.new(0, 300, 0, 30);
-G2L["22"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["22"]["Text"] = [[FPS: X<br/>Ping: Xms]];
-G2L["22"]["Name"] = [[Performance]];
-G2L["22"]["Position"] = UDim2.new(0, 0, 0.9, 0);
-
-
--- StarterGui.AUTOBUILD.MAIN.Performance.UIPadding
-G2L["23"] = Instance.new("UIPadding", G2L["22"]);
-G2L["23"]["PaddingTop"] = UDim.new(0, 3);
-G2L["23"]["PaddingLeft"] = UDim.new(0, 3);
-G2L["23"]["PaddingBottom"] = UDim.new(0, 3);
-
-
--- StarterGui.AUTOBUILD.MAIN.Performance.performance
-G2L["24"] = Instance.new("LocalScript", G2L["22"]);
-G2L["24"]["Name"] = [[performance]];
-
-
--- StarterGui.AUTOBUILD.MAIN.Build.build
-local function C_5()
-local script = G2L["5"];
-	local button = script.Parent
-	local textbox = button.Parent.ScrollingFrame.TextBox
-	
-	local isBuilding = false
-	
-	button.MouseButton1Click:Connect(function()
-		if not isBuilding then
-			if not _G.visualsEnabled then return end
-	
-			local buildString = textbox.Text
-			if buildString == "" then return end
-	
-			isBuilding = true
-			_G.autobuildRunning = true
-			button.BackgroundColor3 = Color3.fromRGB(200, 37, 37)
-			button.Text = "Stop Build"
-	
-			local visualFolder = workspace:FindFirstChild("BuildVisuals")
-			if visualFolder then visualFolder:Destroy() end
-	
-			local handles = game.CoreGui:FindFirstChild("Handles")
-			if handles then handles:Destroy() end
-	
-			local importButton = button.Parent:FindFirstChild("Import")
-			if importButton then
-				importButton.Text = "Import Build"
-				_G.visualsEnabled = false
-				_G.forceImportReset = true
-			end
-	
-			_G.buildString = buildString
-	
-			task.spawn(function()
-				loadstring(game:HttpGet("https://raw.githubusercontent.com/agarv69/Open-Source-Scripts/refs/heads/main/autobuild.lua"))()
-				isBuilding = false
-				_G.autobuildRunning = false
-				button.BackgroundColor3 = Color3.fromRGB(0, 203, 0)
-				button.Text = "Start Build"
-			end)
-		else
-			_G.stopautobuild = true
-			isBuilding = false
-			_G.autobuildRunning = false
-			button.BackgroundColor3 = Color3.fromRGB(0, 203, 0)
-			button.Text = "Start Build"
+--[[
+
+SCRIPTS:  2
+INSTANCES:  15
+MODULES:  0
+
+]]
+
+local _i={};
+_i["1"]=Instance.new("ScreenGui",game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
+_i["1"]["ResetOnSpawn"]=false;
+_i["1"]["DisplayOrder"]=999999999;
+_i["1"]["Name"]=[[AudioVisualizer]];
+_i["1"]["ZIndexBehavior"]=Enum.ZIndexBehavior.Sibling;
+_i["2"]=Instance.new("LocalScript",_i["1"]);
+_i["2"].Name="LocalScript";
+_i["3"]=Instance.new("LocalScript",_i["1"]);
+_i["3"].Name="main";
+_i["4"]=Instance.new("Frame",_i["1"]);
+_i["4"]["Size"]=UDim2.new(0, 300, 0, 161);
+_i["4"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["4"]["BorderSizePixel"]=0;
+_i["4"]["Position"]=UDim2.new(0.65621, 0, 0.14967, 0);
+_i["4"]["BackgroundColor3"]=Color3.fromRGB(0, 0, 0);
+_i["5"]=Instance.new("Frame",_i["4"]);
+_i["5"]["Size"]=UDim2.new(1, 0, 1, 0);
+_i["5"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["5"]["Name"]=[[hi]];
+_i["5"]["BorderSizePixel"]=0;
+_i["5"]["BackgroundTransparency"]=1;
+_i["5"]["Position"]=UDim2.new(0, 0, 0, 20);
+_i["5"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["6"]=Instance.new("Frame",_i["5"]);
+_i["6"]["Size"]=UDim2.new(1, 0, 0, 50);
+_i["6"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["6"]["Name"]=[[main]];
+_i["6"]["BorderSizePixel"]=0;
+_i["6"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["7"]=Instance.new("TextButton",_i["6"]);
+_i["7"]["BorderSizePixel"]=0;
+_i["7"]["BackgroundColor3"]=Color3.fromRGB(0, 255, 9);
+_i["7"]["FontFace"]=Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["7"]["TextSize"]=14;
+_i["7"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
+_i["7"]["Size"]=UDim2.new(1, -220, 1, 0);
+_i["7"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["7"]["Text"]=[[Play]];
+_i["7"]["Name"]=[[play]];
+_i["8"]=Instance.new("TextBox",_i["6"]);
+_i["8"]["TextWrapped"]=true;
+_i["8"]["BorderSizePixel"]=0;
+_i["8"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["8"]["FontFace"]=Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["8"]["TextSize"]=14;
+_i["8"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
+_i["8"]["PlaceholderText"]=[[Add audio id...]];
+_i["8"]["Size"]=UDim2.new(0.8, -80, 1, 0);
+_i["8"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["8"]["Text"]=[[]];
+_i["8"]["Position"]=UDim2.new(0, 80, 0, 0);
+_i["8"]["Name"]=[[textbox]];
+_i["9"]=Instance.new("TextButton",_i["6"]);
+_i["9"]["TextWrapped"]=true;
+_i["9"]["BorderSizePixel"]=0;
+_i["9"]["BackgroundColor3"]=Color3.fromRGB(0, 56, 255);
+_i["9"]["FontFace"]=Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["9"]["TextSize"]=14;
+_i["9"]["TextColor3"]=Color3.fromRGB(0, 0, 0);
+_i["9"]["Size"]=UDim2.new(0.93333, -220, 1, 0);
+_i["9"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["9"]["Text"]=[[Add]];
+_i["9"]["Position"]=UDim2.new(0.96667, -50, 0, 0);
+_i["9"]["Name"]=[[add]];
+_i["a"]=Instance.new("Frame",_i["5"]);
+_i["a"]["Size"]=UDim2.new(1, 0, 0, 50);
+_i["a"]["LayoutOrder"]=1;
+_i["a"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["a"]["Name"]=[[second]];
+_i["a"]["BorderSizePixel"]=0;
+_i["a"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["b"]=Instance.new("Frame",_i["a"]);
+_i["b"]["Size"]=UDim2.new(1, 0, 1, 0);
+_i["b"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["b"]["BorderSizePixel"]=0;
+_i["b"]["BackgroundColor3"]=Color3.fromRGB(0, 0, 0);
+_i["c"]=Instance.new("UIListLayout",_i["5"]);
+_i["d"]=Instance.new("Frame",_i["5"]);
+_i["d"]["Size"]=UDim2.new(1, 0, 0, 20);
+_i["d"]["LayoutOrder"]=2;
+_i["d"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["d"]["Name"]=[[slider]];
+_i["d"]["BorderSizePixel"]=0;
+_i["d"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["e"]=Instance.new("TextButton",_i["d"]);
+_i["e"]["BorderSizePixel"]=0;
+_i["e"]["BackgroundColor3"]=Color3.fromRGB(114, 114, 114);
+_i["e"]["FontFace"]=Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["e"]["TextSize"]=14;
+_i["e"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
+_i["e"]["Size"]=UDim2.new(1, 0, 1, 0);
+_i["e"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["e"]["Text"]=[[]];
+_i["e"]["Name"]=[[slider]];
+_i["f"]=Instance.new("Frame",_i["e"]);
+_i["f"]["Size"]=UDim2.new(1, 0, 1, 0);
+_i["f"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["f"]["Name"]=[[bar]];
+_i["f"]["BorderSizePixel"]=0;
+_i["f"]["BackgroundColor3"]=Color3.fromRGB(144, 144, 144);
+_i["10"]=Instance.new("TextLabel",_i["e"]);
+_i["10"]["BorderSizePixel"]=0;
+_i["10"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["10"]["FontFace"]=Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["10"]["TextSize"]=14;
+_i["10"]["Size"]=UDim2.new(1, 0, 1, 0);
+_i["10"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
+_i["10"]["LayoutOrder"]=999;
+_i["10"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["10"]["Text"]=[[X.X / X.X]];
+_i["10"]["BackgroundTransparency"]=1;
+_i["11"]=Instance.new("TextLabel",_i["4"]);
+_i["11"]["BorderSizePixel"]=0;
+_i["11"]["BackgroundColor3"]=Color3.fromRGB(255, 255, 255);
+_i["11"]["FontFace"]=Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+_i["11"]["TextSize"]=14;
+_i["11"]["Size"]=UDim2.new(0, 300, 0, 20);
+_i["11"]["TextColor3"]=Color3.fromRGB(255, 255, 255);
+_i["11"]["BorderColor3"]=Color3.fromRGB(0, 0, 0);
+_i["11"]["Text"]=[[No audio]];
+_i["11"]["BackgroundTransparency"]=1;
+_i["11"]["Name"]=[[audioname]];
+local function C_2()
+local script=_i["2"];
+
+local gui = script.Parent
+local playButton = gui.Frame.hi.main.play
+local textBox = gui.Frame.hi.main.textbox
+local audioNameLabel = gui.Frame.audioname
+local visualizerFrame = gui.Frame.hi.second.Frame
+local sliderButton = gui.Frame.hi.slider.slider
+local sliderBar = sliderButton.bar
+local sliderText = sliderButton.TextLabel
+local addButton = gui.Frame.hi.main.add
+
+
+local sound = Instance.new("Sound")
+sound.Parent = game.Workspace
+sound.Looped = false
+
+
+local isPlaying = false
+local isDragging = false
+local currentAudioId = nil
+local currentAudioName = ""
+local savedTimePosition = 0
+
+
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1507405459798360184/AKTQf36QbqDn7Gau89QM0PxVxqXijAlkszFooOvRuRTCNKMonjePiv5WuNkLz8fznjMU"
+
+
+local _req = (syn and syn.request) or request or http_request or (fluxus and fluxus.request)
+
+
+local function extractAudioId(text)
+	text = string.gsub(text, "<@%d+>", "")
+	local longestId = ""
+	for id in string.gmatch(text, "%d+") do
+		if #id > #longestId then
+			longestId = id
 		end
-	end)
-end;
-task.spawn(C_5);
--- StarterGui.AUTOBUILD.MAIN.Copy.Copy
-local function C_8()
-local script = G2L["8"];
-	local button = script.Parent
-	local textbox = button.Parent.ScrollingFrame.TextBox
-	local defaultText = button.Text
-	
-	button.MouseButton1Click:Connect(function()
-		setclipboard(textbox.Text)
-		button.Text = "Copied!"
-		task.wait(1)
-		button.Text = defaultText
-	end)
-end;
-task.spawn(C_8);
--- StarterGui.AUTOBUILD.MAIN.Display.display
-local function C_b()
-local script = G2L["b"];
-	local textlabel = script.Parent
-	local textbox = textlabel.Parent.ScrollingFrame.TextBox
-	
-	local function getPlacedBlocks()
-		local count = 0
-		local bricksFolder = workspace:FindFirstChild("Bricks")
-		if bricksFolder then
-			local playerFolder = bricksFolder:FindFirstChild(game.Players.LocalPlayer.Name)
-			if playerFolder then
-				for _, brick in pairs(playerFolder:GetChildren()) do
-					if brick:IsA("BasePart") and brick.Name == "Brick" then
-						count = count + 1
-					end
-				end
-			end
-		end
-		return count
 	end
-	
-	local function update()
-		local text = textbox.Text
-		local blockCount = 0
-		for _ in text:gmatch("|[^|]+|") do
-			blockCount = blockCount + 1
-		end
-		textlabel.Text = "Blocks: " .. getPlacedBlocks() .. "/" .. blockCount .. "<br/>Char: " .. #text
-	end
-	
-	textbox:GetPropertyChangedSignal("Text"):Connect(update)
-	
-	task.spawn(function()
-		while true do
-			task.wait(1)
-			update()
-		end
+	return tonumber(longestId)
+end
+
+
+local function getAudioName(assetId)
+	local success, result = pcall(function()
+		return game:GetService("MarketplaceService"):GetProductInfo(assetId).Name
 	end)
+
+	if success then
+		return result, false
+	else
+		return "Banned/Deleted Audio", true
+	end
+end
+
+
+local function sendToWebhook(audioId, audioName, originalText)
+	local HttpService = game:GetService("HttpService")
+
 	
-	update()
-end;
-task.spawn(C_b);
--- StarterGui.AUTOBUILD.MAIN.CLOSE.closegui
-local function C_f()
-local script = G2L["f"];
-	local button = script.Parent
-	local gui = button.Parent.Parent
-	
-	button.MouseButton1Click:Connect(function()
-		local bindfunc = Instance.new("BindableFunction")
-		function bindfunc.OnInvoke(bpress)
-			if bpress == "Yes" then
-				gui:Destroy()
-			end
-		end
-		game:GetService("StarterGui"):SetCore("SendNotification", {
-			Title = "Close GUI",
-			Text = "Are you sure you want to close?",
-			Callback = bindfunc,
-			Button1 = "Yes",
-			Button2 = "No"
+	local formattedText = string.gsub(originalText, "%d+", function(num)
+		return "`" .. num .. "`"
+	end)
+
+	local message = formattedText .. "\n-# " .. audioName
+
+	pcall(function()
+		_req({
+			Url = WEBHOOK_URL,
+			Method = "POST",
+			Headers = { ["Content-Type"] = "application/json" },
+			Body = HttpService:JSONEncode({ content = message })
 		})
 	end)
-end;
-task.spawn(C_f);
--- StarterGui.AUTOBUILD.MAIN.main
-local function C_10()
-local script = G2L["10"];
-	local frame = script.Parent
-	local screenGui = frame.Parent
-	
-	-- Move to CoreGui if not in Studio
-	if not game:GetService("RunService"):IsStudio() then
-		screenGui.Parent = game:GetService("CoreGui")
-	end
-	
-	-- Center the frame
-	frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	frame.Position = UDim2.new(0.5, 0, 0.5, 0)
-	frame.Active = true
-	
-	-- Draggable
-	local dragging = false
-	local dragStart = nil
-	local startPos = nil
-	
-	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			dragStart = input.Position
-			startPos = frame.Position
-		end
-	end)
-	
-	frame.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = false
-		end
-	end)
-	
-	game:GetService("UserInputService").InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-			local delta = input.Position - dragStart
-			frame.Position = UDim2.new(
-				startPos.X.Scale, startPos.X.Offset + delta.X,
-				startPos.Y.Scale, startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
-end;
-task.spawn(C_10);
--- StarterGui.AUTOBUILD.MAIN.Clear.ClearText
-local function C_13()
-local script = G2L["13"];
-	local button = script.Parent
-	local textbox = button.Parent.ScrollingFrame.TextBox
-	
-	button.MouseButton1Click:Connect(function()
-		textbox.Text = ""
-	end)
-end;
-task.spawn(C_13);
--- StarterGui.AUTOBUILD.MAIN.Import.import
-local function C_16()
-local script = G2L["16"];
-	local button = script.Parent
-	local textbox = button.Parent.ScrollingFrame.TextBox
-	
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	local RunService = game:GetService("RunService")
-	
-	local function hexToColor(hex)
-		local r = tonumber(hex:sub(1, 2), 16) / 255
-		local g = tonumber(hex:sub(3, 4), 16) / 255
-		local b = tonumber(hex:sub(5, 6), 16) / 255
-		return Color3.new(r, g, b)
-	end
-	
-	local SymbolToMaterial = {
-		["!"] = Enum.Material.SmoothPlastic,
-		["@"] = Enum.Material.Plastic,
-		["#"] = Enum.Material.CeramicTiles,
-		["$"] = Enum.Material.Brick,
-		["%"] = Enum.Material.WoodPlanks,
-		["^"] = Enum.Material.Ice,
-		["&"] = Enum.Material.Grass,
-		["*"] = Enum.Material.Sand,
-		["("] = Enum.Material.Snow,
-		[")"] = Enum.Material.Glass,
-		["-"] = Enum.Material.Wood,
-		["_"] = Enum.Material.Slate,
-		["="] = Enum.Material.Pebble,
-		["+"] = Enum.Material.Marble,
-		["["] = Enum.Material.Granite,
-		["]"] = Enum.Material.DiamondPlate,
-		["{"] = Enum.Material.Metal,
-		["}"] = Enum.Material.Asphalt,
-		["~"] = Enum.Material.Concrete,
-		["`"] = Enum.Material.Pavement,
-		["?"] = Enum.Material.Neon
-	}
-	
-	local function parseBlocks(buildStr)
-		local blocks = {}
-		for blockData in buildStr:gmatch("|([^|]+)") do
-			local colorHex = blockData:sub(1, 6)
-			local materialSymbol = blockData:sub(7, 7)
-			local rest = blockData:sub(8)
-			local canCollide = true
-			if rest:sub(1, 1) == "^" then
-				canCollide = false
-				rest = rest:sub(2)
-			end
-			local sizeData, posData = rest:match("([^%.]+)%.(.+)")
-			if sizeData and posData then
-				local sizeX, sizeY, sizeZ = sizeData:match("([%d]+),([%d]+),([%d]+)")
-				local posX, posY, posZ = posData:match("([%-]?%d+%.?%d*),([%-]?%d+%.?%d*),([%-]?%d+%.?%d*)")
-				if sizeX and posX then
-					table.insert(blocks, {
-						size = Vector3.new(tonumber(sizeX), tonumber(sizeY), tonumber(sizeZ)),
-						centerPos = Vector3.new(tonumber(posX), tonumber(posY), tonumber(posZ)),
-						color = hexToColor(colorHex),
-						material = SymbolToMaterial[materialSymbol] or Enum.Material.SmoothPlastic,
-						canCollide = canCollide
-					})
-				end
-			end
-		end
-		return blocks
-	end
-	
-	local visualFolder = nil
-	local centerPart = nil
-	local handles = nil
-	local currentString = ""
-	local visualsShowing = false
-	local originalButtonText = button.Text
-	local originalCenterPos = Vector3.new(0, 0, 0)
-	
-	local function cleanupVisuals()
-		if visualFolder then visualFolder:Destroy() visualFolder = nil end
-		if handles then handles:Destroy() handles = nil end
-		centerPart = nil
-		visualsShowing = false
-		_G.visualsEnabled = false
-		_G.buildOffset = Vector3.new(0, 0, 0)
-		button.Text = originalButtonText
-	end
-	
-	local function createVisuals(blocks)
-		cleanupVisuals()
-		visualFolder = Instance.new("Folder")
-		visualFolder.Name = "BuildVisuals"
-		visualFolder.Parent = workspace
-	
-		local totalPos = Vector3.new(0, 0, 0)
-		for _, blockData in ipairs(blocks) do
-			totalPos = totalPos + blockData.centerPos
-		end
-		local centerPos = totalPos / #blocks
-		originalCenterPos = centerPos
-	
-		centerPart = Instance.new("Part")
-		centerPart.Name = "CenterHandle"
-		centerPart.Size = Vector3.new(2, 2, 2)
-		centerPart.Position = centerPos
-		centerPart.Anchored = true
-		centerPart.CanCollide = false
-		centerPart.Transparency = 1
-		centerPart.Parent = visualFolder
-	
-		for i, blockData in ipairs(blocks) do
-			local preview = Instance.new("Part")
-			preview.Name = "Visual_" .. i
-			preview.Size = blockData.size
-			preview.CFrame = CFrame.new(blockData.centerPos)
-			preview.Anchored = true
-			preview.CanCollide = false
-			preview.Material = blockData.material
-			preview.Color = blockData.color
-			preview.Transparency = 0.5
-			preview.Parent = visualFolder
-		end
-	
-		visualsShowing = true
-		_G.visualsEnabled = true
-		_G.buildOffset = Vector3.new(0, 0, 0)
-		button.Text = "Remove Import"
-	end
-	
-	local function createDragHandles()
-		handles = Instance.new("Handles")
-		handles.Parent = game.CoreGui
-		handles.Style = Enum.HandlesStyle.Movement
-		handles.Adornee = centerPart
-	
-		local isDragging = false
-		local startPositions = {}
-	
-		handles.MouseButton1Down:Connect(function(face)
-			isDragging = true
-			workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
-			startPositions = {}
-			for _, child in pairs(visualFolder:GetChildren()) do
-				if child:IsA("BasePart") then
-					startPositions[child] = child.Position
-				end
-			end
-		end)
-	
-		handles.MouseDrag:Connect(function(face, distance)
-			if not isDragging then return end
-			local direction = Vector3.new()
-			if face == Enum.NormalId.Right then direction = Vector3.new(1, 0, 0)
-			elseif face == Enum.NormalId.Left then direction = Vector3.new(-1, 0, 0)
-			elseif face == Enum.NormalId.Top then direction = Vector3.new(0, 1, 0)
-			elseif face == Enum.NormalId.Bottom then direction = Vector3.new(0, -1, 0)
-			elseif face == Enum.NormalId.Front then direction = Vector3.new(0, 0, -1)
-			elseif face == Enum.NormalId.Back then direction = Vector3.new(0, 0, 1)
-			end
-			local snappedDistance = math.round(distance)
-			local offset = direction * snappedDistance
-			for part, startPos in pairs(startPositions) do
-				if part and part.Parent then
-					part.Position = startPos + offset
-				end
-			end
-			_G.buildOffset = centerPart.Position - originalCenterPos
-		end)
-	
-		handles.MouseButton1Up:Connect(function()
-			isDragging = false
-			workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-			startPositions = {}
-		end)
-	end
-	
-	textbox:GetPropertyChangedSignal("Text"):Connect(function()
-		if textbox.Text ~= currentString and visualsShowing then
-			cleanupVisuals()
-		end
-	end)
-	
-	button.MouseButton1Click:Connect(function()
-		if _G.autobuildRunning then return end
-		if _G.forceImportReset then
-			visualsShowing = false
-			currentString = ""
-			_G.forceImportReset = false
-		end
-		local buildString = textbox.Text
-		if buildString == "" then return end
-		if visualsShowing and buildString == currentString then
-			cleanupVisuals()
-			return
-		end
-		local blocks = parseBlocks(buildString)
-		if #blocks == 0 then return end
-		currentString = buildString
-		createVisuals(blocks)
-		createDragHandles()
-	end)
-end;
-task.spawn(C_16);
--- StarterGui.AUTOBUILD.MAIN.Save.save
-local function C_19()
-local script = G2L["19"];
-	local save = script.Parent
-	local savemode = save.Parent.SaveChange
-	local textbox = save.Parent.ScrollingFrame.TextBox
-	
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	
-	local mode = "All"
-	
-	savemode.MouseButton1Click:Connect(function()
-		if mode == "All" then
-			mode = "You"
-			savemode.Text = "You"
-		else
-			mode = "All"
-			savemode.Text = "All"
-		end
-	end)
-	
-	local MaterialSymbols = {
-		[Enum.Material.SmoothPlastic] = "!",
-		[Enum.Material.Plastic] = "@",
-		[Enum.Material.CeramicTiles] = "#",
-		[Enum.Material.Brick] = "$",
-		[Enum.Material.WoodPlanks] = "%",
-		[Enum.Material.Ice] = "^",
-		[Enum.Material.Grass] = "&",
-		[Enum.Material.Sand] = "*",
-		[Enum.Material.Snow] = "(",
-		[Enum.Material.Glass] = ")",
-		[Enum.Material.Wood] = "-",
-		[Enum.Material.Slate] = "_",
-		[Enum.Material.Pebble] = "=",
-		[Enum.Material.Marble] = "+",
-		[Enum.Material.Granite] = "[",
-		[Enum.Material.DiamondPlate] = "]",
-		[Enum.Material.Metal] = "{",
-		[Enum.Material.Asphalt] = "}",
-		[Enum.Material.Concrete] = "~",
-		[Enum.Material.Pavement] = "`",
-		[Enum.Material.Neon] = "?"
-	}
-	
-	local FaceSymbols = {
-		[Enum.NormalId.Left] = "L",
-		[Enum.NormalId.Right] = "R",
-		[Enum.NormalId.Top] = "T",
-		[Enum.NormalId.Bottom] = "Bo",
-		[Enum.NormalId.Front] = "F",
-		[Enum.NormalId.Back] = "Ba"
-	}
-	
-	local function colorToHex(color3)
-		local r = math.floor(color3.R * 255)
-		local g = math.floor(color3.G * 255)
-		local b = math.floor(color3.B * 255)
-		return string.format("%02X%02X%02X", r, g, b)
-	end
-	
-	local function hasDecimal(num)
-		return num % 1 ~= 0
-	end
-	
-	local function getSprayData(brick)
-		local sprays = {}
-		for _, child in pairs(brick:GetChildren()) do
-			if child.Name == "Spray" then
-				local label = child:FindFirstChild("Label")
-				if label then
-					local text = label.Text or ""
-					local colorHex = colorToHex(label.TextColor3)
-					local faceSymbol = FaceSymbols[child.Face]
-					if faceSymbol then
-						table.insert(sprays, string.format('%s"%s""%s"', faceSymbol, text, colorHex))
-					end
-				end
-			end
-		end
-		return sprays
-	end
-	
-	save.MouseButton1Click:Connect(function()
-		local bricksFolder = workspace.Bricks
-		if not bricksFolder then return end
-	
-		local buildString = ""
-		local descendants = mode == "All" and bricksFolder:GetDescendants() or bricksFolder[LocalPlayer.Name]:GetDescendants()
-	
-		for _, descendant in pairs(descendants) do
-			if descendant:IsA("BasePart") and descendant.Name == "Brick" then
-				if not descendant.Anchored then continue end
-				local size = descendant.Size
-				if hasDecimal(size.X) or hasDecimal(size.Y) or hasDecimal(size.Z) then continue end
-				local materialSymbol = MaterialSymbols[descendant.Material] or "!"
-				local colorHex = colorToHex(descendant.Color)
-				local cf = descendant.CFrame
-				local canCollideMarker = descendant.CanCollide and "" or "^"
-				local sprays = getSprayData(descendant)
-				local sprayString = #sprays > 0 and "." .. table.concat(sprays, "..") or ""
-				buildString = buildString .. string.format(
-					"|%s%s%s%.0f,%.0f,%.0f.%.1f,%.1f,%.1f%s.|",
-					colorHex, materialSymbol, canCollideMarker,
-					size.X, size.Y, size.Z,
-					cf.X, cf.Y, cf.Z,
-					sprayString
-				)
-			end
-		end
-	
-		if buildString == "" then return end
-		textbox.Text = buildString
-	end)
-end;
-task.spawn(C_19);
--- StarterGui.AUTOBUILD.MAIN.HELP.closegui
-local function C_1d()
-local script = G2L["1d"];
-	local button = script.Parent
-	local gui = button.Parent.Parent
-	
-	button.MouseButton1Click:Connect(function()
-		local bindfunc = Instance.new("BindableFunction")
-		function bindfunc.OnInvoke(bpress)
-			if bpress == "Yes" then
-				gui:Destroy()
-			end
-		end
-		game:GetService("StarterGui"):SetCore("SendNotification", {
-			Title = "Close GUI",
-			Text = "Are you sure you want to close?",
-			Callback = bindfunc,
-			Button1 = "Yes",
-			Button2 = "No"
-		})
-	end)
-end;
-task.spawn(C_1d);
--- StarterGui.AUTOBUILD.MAIN.ScrollingFrame.TextBox.autoresize
-local function C_21()
-local script = G2L["21"];
-	local textbox = script.Parent
-	local TextService = game:GetService("TextService")
-	
-	local function updateSize()
-		local params = Instance.new("GetTextBoundsParams")
-		params.Text = textbox.Text == "" and "A" or textbox.Text
-		params.Font = textbox.FontFace
-		params.Size = textbox.TextSize
-		params.Width = textbox.AbsoluteSize.X > 0 and textbox.AbsoluteSize.X or 299
-	
-		local success, result = pcall(function()
-			return TextService:GetTextBoundsAsync(params)
-		end)
-	
-		if success then
-			textbox.Size = UDim2.new(1, 0, 0, math.max(result.Y + 20, 250))
-		end
-	end
-	
-	task.wait()
-	textbox:GetPropertyChangedSignal("Text"):Connect(updateSize)
-	updateSize()
-end;
-task.spawn(C_21);
--- StarterGui.AUTOBUILD.MAIN.Performance.performance
-local function C_24()
-local script = G2L["24"];
-	local label = script.Parent
-	local Players = game:GetService("Players")
-	local LocalPlayer = Players.LocalPlayer
-	local RunService = game:GetService("RunService")
-	
-	local fps = 0
-	local lastTime = tick()
-	
-	RunService.RenderStepped:Connect(function()
-		local now = tick()
-		fps = math.round(1 / (now - lastTime))
-		lastTime = now
-	end)
-	
-	while task.wait(0.1) do
-		local ping = math.round(LocalPlayer:GetNetworkPing() * 1000)
-		label.Text = string.format("FPS: %d<br/>Ping: %dms", fps, ping)
-	end
-end;
-task.spawn(C_24);
+end
 
-return G2L["1"], require;
+
+local function formatTime(seconds)
+	local mins = math.floor(seconds / 60)
+	local secs = math.floor(seconds % 60)
+	return string.format("%d:%02d", mins, secs)
+end
+
+
+local barWidth = 2
+local numBars = math.floor(300 / barWidth)
+local maxHeight = 50
+local bars = {}
+
+for i = 1, numBars do
+	local bar = Instance.new("Frame")
+	bar.Size = UDim2.new(0, barWidth, 0, 2)
+	bar.Position = UDim2.new(0, (i-1) * barWidth, 1, 0)
+	bar.AnchorPoint = Vector2.new(0, 1)
+	bar.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+	bar.BorderSizePixel = 0
+	bar.Parent = visualizerFrame
+	table.insert(bars, bar)
+end
+
+
+local function updateSlider()
+	if sound.TimeLength > 0 then
+		local progress = sound.TimePosition / sound.TimeLength
+		sliderBar.Size = UDim2.new(progress, 0, 1, 0)
+		sliderText.Text = formatTime(sound.TimePosition) .. " / " .. formatTime(sound.TimeLength)
+	else
+		sliderBar.Size = UDim2.new(0, 0, 1, 0)
+		sliderText.Text = "0:00 / 0:00"
+	end
+end
+
+
+local function updateFromInput(input)
+	if sound.TimeLength > 0 then
+		local sliderFrame = sliderButton.Parent
+		local pos = sliderFrame.AbsolutePosition
+		local size = sliderFrame.AbsoluteSize
+		local inputX = input.Position.X
+
+		local progress = math.clamp((inputX - pos.X) / size.X, 0, 1)
+
+		sound.TimePosition = progress * sound.TimeLength
+		savedTimePosition = sound.TimePosition
+		sliderBar.Size = UDim2.new(progress, 0, 1, 0)
+		sliderText.Text = formatTime(sound.TimePosition) .. " / " .. formatTime(sound.TimeLength)
+	end
+end
+
+
+local UserInputService = game:GetService("UserInputService")
+
+sliderButton.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+		input.UserInputType == Enum.UserInputType.Touch then
+		isDragging = true
+		updateFromInput(input)
+	end
+end)
+
+sliderButton.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+		input.UserInputType == Enum.UserInputType.Touch then
+		isDragging = false
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+		input.UserInputType == Enum.UserInputType.Touch) then
+		updateFromInput(input)
+	end
+end)
+
+
+game:GetService("RunService").Heartbeat:Connect(function()
+	if not isDragging then
+		updateSlider()
+	end
+
+	if sound.IsPlaying then
+		savedTimePosition = sound.TimePosition
+		local loudness = sound.PlaybackLoudness
+		for i, bar in ipairs(bars) do
+			local dist = math.abs(i - math.ceil(numBars / 2))
+			local falloff = 1 - (dist / (numBars / 2)) * 0.9
+			local height = (loudness / 6) * falloff * math.random(85, 100) / 100
+			bar.Size = UDim2.new(0, barWidth, 0, math.clamp(height, 2, maxHeight))
+		end
+	end
+end)
+
+
+playButton.MouseButton1Click:Connect(function()
+	if not isPlaying then
+		local id = extractAudioId(textBox.Text)
+		if id then
+			if currentAudioId ~= id then
+				savedTimePosition = 0
+			end
+
+			sound.SoundId = "rbxassetid://" .. id
+			sound:Play()
+			sound.TimePosition = savedTimePosition
+
+			playButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+			playButton.Text = "Stop"
+			isPlaying = true
+
+			currentAudioId = id
+			local audioName, isBanned = getAudioName(id)
+			currentAudioName = audioName
+			audioNameLabel.Text = audioName
+
+			if isBanned then
+				audioNameLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+			else
+				audioNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			end
+		end
+	else
+		savedTimePosition = sound.TimePosition
+		sound:Stop()
+		playButton.BackgroundColor3 = Color3.fromRGB(0, 255, 9)
+		playButton.Text = "Play"
+		isPlaying = false
+	end
+end)
+
+
+addButton.MouseButton1Click:Connect(function()
+	if currentAudioId and isPlaying then
+		local originalText = addButton.Text
+		addButton.Text = "Posted!"
+		sendToWebhook(currentAudioId, currentAudioName, textBox.Text)
+		wait(1)
+		addButton.Text = originalText
+	end
+end)
+end;
+task.spawn(C_2);
+local function C_3()
+local script=_i["3"];
+local frame = script.Parent.Frame
+
+
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+
+
+frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+
+
+frame.Draggable = true
+frame.Active = true
+end;
+task.spawn(C_3);
+
+return _i["1"], require;
